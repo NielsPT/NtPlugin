@@ -1,0 +1,34 @@
+BasedOnStyle: webkit
+ColumnLimit: 88
+IndentWidth: 2
+TabWidth: 2
+AccessModifierOffset: -2
+BreakBeforeBraces: Custom
+BreakBeforeBinaryOperators: NonAssignment
+BraceWrapping:
+   AfterFunction: false
+BreakConstructorInitializers: BeforeColon
+BreakBinaryOperations: RespectPrecedence
+BreakAfterOpenBracketFunction: true
+AlwaysBreakTemplateDeclarations: Yes
+IndentPPDirectives: BeforeHash
+AlignConsecutiveAssignments: 
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+AlignConsecutiveMacros: 
+  Enabled: false
+AlignOperants: AlignAfterOperator
+AlignAfterOpenBracket: DontAlign
+AllowAllArgumentsOnNextLine: true
+BinPackArguments: false
+BinPackParameters: "OnePerLine"
+AlignTrailingComments: 
+  Kind: Always
+AllowShortBlocksOnASingleLine: Always
+AllowShortEnumsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+# ExperimentalAutoDetectBinPacking: false
+AllowAllParametersOfDeclarationOnNextLine: true
+# PenaltyReturnTypeOnItsOwnLine: 1000000
