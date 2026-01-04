@@ -15,8 +15,6 @@
 
 #include "NtKnob.h"
 #include "NtMeter.h"
-typedef juce::AudioProcessorValueTreeState::SliderAttachment SA;
-typedef juce::AudioProcessorValueTreeState::ButtonAttachment BA;
 
 //==============================================================================
 /**
@@ -32,6 +30,7 @@ public:
   //==============================================================================
   void paint(juce::Graphics&) override;
   void resized() override;
+  // juce::Component* getParameterByName(juce::String name);
 
 private:
   // This reference is provided as a quick way for your editor to
@@ -41,61 +40,19 @@ private:
   NtFx::MonoMeterDbScale meterScale;
   NtFx::KnobLookAndFeel knobLookAndFeel;
 
-  // sd::SoundMeter::MetersComponent outputMeters;
-  // sd::SoundMeter::MetersComponent gainReductionMeter;
-
-  juce::Slider threshSlider;
-  juce::Slider ratioSlider;
-  juce::Slider kneeSlider;
-  juce::Slider tAttSlider;
-  juce::Slider tRelSlider;
-  juce::Slider tRmsSlider;
-  juce::Slider makeupSlider;
-  juce::Slider mixSlider;
-
-  std::unique_ptr<SA> p_threshSliderAttachment;
-  std::unique_ptr<SA> p_ratioSliderAttachment;
-  std::unique_ptr<SA> p_kneeSliderAttachment;
-  std::unique_ptr<SA> p_tAttSliderAttachment;
-  std::unique_ptr<SA> p_tRelSliderAttachment;
-  std::unique_ptr<SA> p_tRmsSliderAttachment;
-  std::unique_ptr<SA> p_makeupSliderAttachment;
-  std::unique_ptr<SA> p_mixSliderAttachment;
-
-  juce::TextButton bypassToggle;
-  juce::TextButton feedbackToggle;
-  juce::TextButton linToggle;
-  juce::TextButton rmsToggle;
-
-  std::unique_ptr<BA> p_bypassToggleAttachment;
-  std::unique_ptr<BA> p_feedbackToggleAttachment;
-  std::unique_ptr<BA> p_linToggleAttachment;
-  std::unique_ptr<BA> p_rmsToggleAttachment;
-
-  juce::TextButton resetButton;
-
-  juce::Label threshLabel;
-  juce::Label ratioLabel;
-  juce::Label kneeLabel;
-  juce::Label tAttLabel;
-  juce::Label tRelLabel;
-  juce::Label tRmsLabel;
-  juce::Label makeupLabel;
-  juce::Label mixLabel;
-
-  juce::Label inMeterLabel;
-  juce::Label outMeterLabel;
-  juce::Label grMeterLabel;
-
-  // juce::Label frameCounterLabel;
-  // int frameCounter = 0;
+  std::vector<std::string> meterLabelStrings = { "IN", "OUT", "GR" };
 
   std::vector<juce::Slider*> allSliders;
   std::vector<juce::Label*> allSliderLabels;
+  std::vector<juce::Slider*> allSmallSliders;
+  std::vector<juce::Label*> allSmallSliderLabels;
   std::vector<juce::Label*> allMeterLabels;
   std::vector<juce::TextButton*> allToggles;
-  std::vector<std::unique_ptr<SA>*> allSliderAttachments;
-  std::vector<std::unique_ptr<BA>*> allToggleAttachments;
+  std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>>
+      allSliderAttachments;
+  std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>>
+      allToggleAttachments;
+  std::vector<juce::Rectangle<int>> borderedAreas;
 
   float sliderWidth     = 50;
   float entryHeight     = 20;
@@ -103,6 +60,7 @@ private:
   float buttonHeight    = 30;
   float buttonWidth     = 100;
   bool popupIsDisplayed = false;
+  bool isInitialized    = false;
 
   void displayErrorValPopup(std::string message);
   void sliderValueChanged(juce::Slider* slider) override;
@@ -110,5 +68,11 @@ private:
   void buttonClicked(juce::Button* button) override;
   void timerCallback() override;
   void drawGui();
+  void initSlider(NtFx::FloatParameterSpec<float>* p_spec,
+      juce::Slider* p_slider,
+      juce::Label* p_label);
+  void initToggle(NtFx::BoolParameterSpec* p_spec, juce::TextButton* p_button);
+
+  void calcSliderRowsCols(int nSliders, int& nRows, int& nColumns);
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtCompressorAudioProcessorEditor)
 };

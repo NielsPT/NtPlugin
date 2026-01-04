@@ -24,7 +24,8 @@ NtCompressorAudioProcessor::NtCompressorAudioProcessor()
   #endif
               )
 #endif
-    , parameters(*this,
+      ,
+      parameters(*this,
           nullptr,
           juce::Identifier("NtCompressor_01"),
           createParameterLayout()) {
@@ -200,6 +201,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 NtCompressorAudioProcessor::createParameterLayout() {
   juce::AudioProcessorValueTreeState::ParameterLayout parameters;
   for (auto p : this->plug.floatParameters) {
+    std::string name(p.name);
+    std::replace(name.begin(), name.end(), '_', ' ');
+    parameters.add(std::make_unique<juce::AudioParameterFloat>(
+        p.name, name, p.minVal, p.maxVal, p.defaultVal));
+  }
+  for (auto p : this->plug.floatParametersSmall) {
     std::string name(p.name);
     std::replace(name.begin(), name.end(), '_', ' ');
     parameters.add(std::make_unique<juce::AudioParameterFloat>(

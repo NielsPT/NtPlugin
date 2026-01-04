@@ -5,6 +5,11 @@
 #include <string>
 namespace NtFx {
 
+struct MeterArea : public juce::Component {
+  std::vector<juce::Component> meters;
+  void paint(juce::Graphics& g) override { auto area = this->getLocalBounds(); }
+};
+
 struct MonoMeter : public juce::Component {
   float minVal_db        = -45;
   float maxVal_db        = 0;
@@ -80,6 +85,7 @@ struct MonoMeter : public juce::Component {
     this->peakLast_db = peak_db;
     this->nActiveDots =
         (peak_db + this->maxVal_db - this->minVal_db) / this->dbPrDot - 1;
+    // if (this->invert) { this->nActiveDots -= 1; }
     if (this->nActiveDots < 0) { this->nActiveDots = 0; }
     if ((!this->invert && peak_db > this->holdVal_db)
         || (this->invert && peak_db < this->holdVal_db)) {

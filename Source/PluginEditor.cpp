@@ -20,13 +20,12 @@ NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
       juce::TextButton::ColourIds::buttonColourId, juce::Colours::black);
   getLookAndFeel().setColour(
       juce::TextButton::ColourIds::buttonOnColourId, juce::Colours::grey);
-  // getLookAndFeel().setColour(
-  //     juce::Slider::ColourIds::thumbColourId, juce::Colours::white);
   getLookAndFeel().setColour(
       juce::ResizableWindow::ColourIds::backgroundColourId, juce::Colours::black);
 
   int meterRefreshRate_hz = 20;
-  setSize(1000, 500);
+  // TODO: GuiSpec in plug. Contains size, maxrows, etc.
+  setSize(1000, 700);
 
   startTimerHz(meterRefreshRate_hz);
   // TODO: stereo meters.
@@ -60,211 +59,210 @@ NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
     this->meters[i].setPeakHold(2, meterRefreshRate_hz);
   }
 
-  // addAndMakeVisible(this->gainReductionMeter);
-  this->ratioSlider.setSkewFactorFromMidPoint(2.0);
-  this->allSliders = {
-    &this->threshSlider,
-    &this->ratioSlider,
-    &this->kneeSlider,
-    &this->tAttSlider,
-    &this->tRelSlider,
-    &this->tRmsSlider,
-    &this->makeupSlider,
-    &this->mixSlider,
-  };
-  this->allSliderLabels = {
-    &this->threshLabel,
-    &this->ratioLabel,
-    &this->kneeLabel,
-    &this->tAttLabel,
-    &this->tRelLabel,
-    &this->tRmsLabel,
-    &this->makeupLabel,
-    &this->mixLabel,
-  };
-  this->allSliderAttachments = {
-    &this->p_threshSliderAttachment,
-    &this->p_ratioSliderAttachment,
-    &this->p_kneeSliderAttachment,
-    &this->p_tAttSliderAttachment,
-    &this->p_tRelSliderAttachment,
-    &this->p_tRmsSliderAttachment,
-    &this->p_makeupSliderAttachment,
-    &this->p_mixSliderAttachment,
-  };
-  this->allToggles = {
-    &this->rmsToggle,
-    &this->feedbackToggle,
-    &this->linToggle,
-    &this->bypassToggle,
-  };
-  this->allToggleAttachments = {
-    &this->p_rmsToggleAttachment,
-    &this->p_feedbackToggleAttachment,
-    &this->p_linToggleAttachment,
-    &this->p_bypassToggleAttachment,
-  };
-  this->allMeterLabels = {
-    &this->inMeterLabel,
-    &this->grMeterLabel,
-    &this->outMeterLabel,
-  };
+  for (size_t i = 0; i < this->audioProcessor.plug.floatParameters.size(); i++) {
+    std::string name = this->audioProcessor.plug.floatParameters[i].name;
+    this->allSliders.emplace_back(new juce::Slider(name));
+    this->allSliderLabels.emplace_back(new juce::Label(name));
+  }
 
-  constexpr bool placeAbove = false;
+  for (size_t i = 0; i < this->audioProcessor.plug.floatParametersSmall.size(); i++) {
+    std::string name = this->audioProcessor.plug.floatParametersSmall[i].name;
+    this->allSmallSliders.emplace_back(new juce::Slider(name));
+    this->allSmallSliderLabels.emplace_back(new juce::Label(name));
+  }
+
+  for (size_t i = 0; i < this->audioProcessor.plug.boolParameters.size(); i++) {
+    std::string name = this->audioProcessor.plug.boolParameters[i].name;
+    this->allToggles.emplace_back(new juce::TextButton(name));
+  }
+
+  for (size_t i = 0; i < this->meterLabelStrings.size(); i++) {
+    this->allMeterLabels.emplace_back(new juce::Label(this->meterLabelStrings[i]));
+  }
+
+  this->allSliderAttachments.reserve(this->allSliders.size());
   for (size_t i = 0; i < this->allSliders.size(); i++) {
-    this->allSliders[i]->setLookAndFeel(&this->knobLookAndFeel);
-    this->allSliders[i]->setTextBoxStyle(juce::Slider::TextBoxBelow,
-        false,
-        this->sliderWidth * 2 - 2 * this->entryPad,
-        this->entryHeight);
-    this->allSliderLabels[i]->attachToComponent(this->allSliders[i], placeAbove);
-    this->allSliderLabels[i]->setJustificationType(juce::Justification::centred);
-    this->allSliderLabels[i]->setText(this->audioProcessor.plug.floatParameters[i].name,
-        juce::NotificationType::dontSendNotification);
-    this->allSliders[i]->setTextValueSuffix(
-        this->audioProcessor.plug.floatParameters[i].suffix);
-    this->allSliders[i]->setSliderStyle(juce::Slider::SliderStyle::Rotary);
-    this->allSliders[i]->addListener(this);
-    addAndMakeVisible(this->allSliders[i]);
-    addAndMakeVisible(*this->allSliderLabels[i]);
-    this->allSliderAttachments[i]->reset(new SA(this->audioProcessor.parameters,
-        this->audioProcessor.plug.floatParameters[i].name,
-        *this->allSliders[i]));
+    this->initSlider(&this->audioProcessor.plug.floatParameters[i],
+        this->allSliders[i],
+        this->allSliderLabels[i]);
   }
 
-  for (size_t i = 0; i < this->allToggles.size(); i++) {
-    addAndMakeVisible(this->allToggles[i]);
-    this->allToggles[i]->setClickingTogglesState(true);
-    this->allToggles[i]->setToggleable(true);
-    this->allToggles[i]->addListener(this);
-    // this->allToggles[i]->onClick = [this]() { this->audioProcessor.plug.reset(); };
-    this->allToggles[i]->setButtonText(
-        this->audioProcessor.plug.boolParameters[i].name);
-    this->allToggleAttachments[i]->reset(new BA(this->audioProcessor.parameters,
-        this->audioProcessor.plug.boolParameters[i].name,
-        *this->allToggles[i]));
+  for (size_t i = 0; i < this->allSmallSliders.size(); i++) {
+    this->initSlider(&this->audioProcessor.plug.floatParametersSmall[i],
+        this->allSmallSliders[i],
+        this->allSmallSliderLabels[i]);
   }
-  std::vector<std::string> meterLabelStrings = { "IN", "OUT", "GR" };
+
+  this->allToggleAttachments.reserve(this->allToggles.size());
+  for (size_t i = 0; i < this->allToggles.size(); i++) {
+    this->initToggle(&this->audioProcessor.plug.boolParameters[i], this->allToggles[i]);
+  }
+
   for (size_t i = 0; i < this->allMeterLabels.size(); i++) {
     this->addAndMakeVisible(*this->allMeterLabels[i]);
     this->allMeterLabels[i]->setText(
-        meterLabelStrings[i], juce::NotificationType::dontSendNotification);
+        this->meterLabelStrings[i], juce::NotificationType::dontSendNotification);
   }
   this->addAndMakeVisible(this->meterScale);
   // this->addAndMakeVisible(this->frameCounterLabel);
+  // this->ratioSlider.setSkewFactorFromMidPoint(2.0);
+  this->isInitialized = true;
   this->drawGui();
+}
+
+void NtCompressorAudioProcessorEditor::initSlider(
+    NtFx::FloatParameterSpec<float>* p_spec,
+    juce::Slider* p_slider,
+    juce::Label* p_label) {
+  p_slider->setLookAndFeel(&this->knobLookAndFeel);
+  p_slider->setTextBoxStyle(juce::Slider::TextBoxBelow,
+      false,
+      this->sliderWidth * 2 - 2 * this->entryPad,
+      this->entryHeight);
+  constexpr bool placeAbove = false;
+  p_label->attachToComponent(p_slider, placeAbove);
+  p_label->setJustificationType(juce::Justification::centred);
+  std::string name(p_spec->name);
+  std::replace(name.begin(), name.end(), '_', ' ');
+  p_label->setText(name, juce::NotificationType::dontSendNotification);
+  p_slider->setTextValueSuffix(p_spec->suffix);
+  p_slider->setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  p_slider->addListener(this);
+  addAndMakeVisible(p_slider);
+  addAndMakeVisible(p_label);
+  this->allSliderAttachments.emplace_back(
+      new juce::AudioProcessorValueTreeState::SliderAttachment(
+          this->audioProcessor.parameters, p_spec->name, *p_slider));
+  p_slider->setRange(p_spec->minVal, p_spec->maxVal);
+  if (p_spec->skew) { p_slider->setSkewFactorFromMidPoint(p_spec->skew); }
+}
+
+void NtCompressorAudioProcessorEditor::initToggle(
+    NtFx::BoolParameterSpec* p_spec, juce::TextButton* p_button) {
+  addAndMakeVisible(p_button);
+  p_button->setClickingTogglesState(true);
+  p_button->setToggleable(true);
+  p_button->addListener(this);
+  std::string name(p_spec->name);
+  std::replace(name.begin(), name.end(), '_', ' ');
+  p_button->setButtonText(name);
+  this->allToggleAttachments.emplace_back(
+      new juce::AudioProcessorValueTreeState::ButtonAttachment(
+          this->audioProcessor.parameters, p_spec->name, *p_button));
 }
 
 NtCompressorAudioProcessorEditor::~NtCompressorAudioProcessorEditor() { }
 
 void NtCompressorAudioProcessorEditor::paint(juce::Graphics& g) {
   g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
+  size_t pad = 10;
+  g.setColour(juce::Colours::white);
+  for (auto area : this->borderedAreas) {
+    g.drawRoundedRectangle(area.toFloat(), pad, 1.0);
+  }
 }
 
 void NtCompressorAudioProcessorEditor::resized() { this->drawGui(); }
 
 void NtCompressorAudioProcessorEditor::drawGui() {
-  auto area = getLocalBounds();
-  area.removeFromTop(10);
-  area.removeFromLeft(10);
-  area.removeFromBottom(10);
-  area.removeFromRight(10);
+  if (!this->isInitialized) { return; }
+  auto area  = this->getLocalBounds();
+  size_t pad = 10;
+  area.removeFromTop(pad);
+  area.removeFromLeft(pad);
+  area.removeFromBottom(pad);
+  area.removeFromRight(pad);
   auto meterWidth = this->meters[0].getWidth();
   auto meterArea  = area.removeFromLeft((this->meters.size() + 1) * meterWidth);
-  auto labelArea  = meterArea.removeFromTop(this->entryHeight);
+  this->borderedAreas.push_back(meterArea);
+  auto labelArea = meterArea.removeFromTop(this->entryHeight * 2);
+  labelArea.removeFromTop(this->entryHeight);
   for (size_t i = 0; i < this->allMeterLabels.size(); i++) {
     auto oneLabelArea = labelArea.removeFromLeft(2 * meterWidth);
     this->allMeterLabels[i]->setBounds(oneLabelArea);
-    this->allMeterLabels[i]->setJustificationType(juce::Justification::centred);
+    this->allMeterLabels[i]->setJustificationType(juce::Justification::centredBottom);
   }
   for (size_t i = 0; i < this->meters.size(); i++) {
     auto oneMeterArea = meterArea.removeFromLeft(meterWidth);
+    this->borderedAreas.push_back(oneMeterArea);
     this->meters[i].setBounds(oneMeterArea);
   }
   this->meterScale.setBounds(meterArea);
-
-  // GRID STUFF.
-  using Track = juce::Grid::TrackInfo;
-  using Fr    = juce::Grid::Fr;
-  juce::Grid grid;
-  grid.alignContent   = juce::Grid::AlignContent::center;
-  grid.justifyItems   = juce::Grid::JustifyItems::center;
-  grid.justifyContent = juce::Grid::JustifyContent::spaceBetween;
-  grid.templateRows   = {
-    Track(Fr(1)),
-    Track(Fr(2)),
-    Track(Fr(1)),
-    Track(Fr(2)),
-    Track(Fr(1)),
-    Track(Fr(1)),
-  };
-  grid.templateColumns = {
-    Track(Fr(1)),
-    Track(Fr(1)),
-    Track(Fr(1)),
-    Track(Fr(1)),
-    // Track(Fr(1)),
-    // Track(Fr(1)),
-    // Track(Fr(1)),
-  };
-  // for (int i = 0; i < this->allSliders.size(); i++) {
-  //   auto t = Track(Fr(1));
-  //   grid.templateColumns.add(t);
+  auto nSliders = this->audioProcessor.plug.floatParameters.size();
+  int nColumns;
+  int nRows;
+  // if (nSliders < 7) {
+  //   nRows    = 1;
+  //   nColumns = nSliders;
+  // } else if (nSliders < 9) {
+  //   nRows    = 2;
+  //   nColumns = 4;
+  // } else if (nSliders < 11) {
+  //   nRows    = 2;
+  //   nColumns = 5;
+  // } else if (nSliders < 13) {
+  //   nRows    = 3;
+  //   nColumns = 4;
+  // } else if (nSliders < 16) {
+  //   nRows    = 3;
+  //   nColumns = 5;
+  // } else if (nSliders < 19) {
+  //   nRows    = 3;
+  //   nColumns = 6;
+  // } else if (nSliders < 21) {
+  //   nRows    = 4;
+  //   nColumns = 5;
+  // } else if (nSliders < 25) {
+  //   nRows    = 4;
+  //   nColumns = 6;
+  // } else {
+  //   juce::NativeMessageBox::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon,
+  //       "Bad Grid Layout",
+  //       "Too many parameters. Max is 24.");
+  //   return;
   // }
-  grid.items = {
-    juce::GridItem(this->threshLabel),
-    juce::GridItem(this->ratioLabel),
-    juce::GridItem(this->tAttLabel),
-    juce::GridItem(this->tRelLabel),
+  this->calcSliderRowsCols(nSliders, nRows, nColumns);
+  auto totalHeight      = area.getHeight();
+  auto togglesArea      = area.removeFromBottom(totalHeight / 8);
+  auto smallSlidersArea = area.removeFromBottom(totalHeight / 4);
+  auto knobsArea        = area;
+  size_t iSlider        = 0;
+  size_t columnWidth    = knobsArea.getWidth() / nColumns;
+  size_t rowHeight      = knobsArea.getHeight() / nRows;
+  for (size_t i = 0; i < nRows; i++) {
+    auto rowArea = knobsArea.removeFromTop(rowHeight);
+    rowArea.removeFromTop(pad);
+    rowArea.removeFromBottom(pad);
+    for (size_t j = 0; j < nColumns; j++) {
+      if (iSlider >= nSliders) { break; }
+      auto sliderArea = rowArea.removeFromLeft(columnWidth);
+      auto labelArea  = sliderArea.removeFromTop(this->entryHeight);
+      this->allSliders[iSlider]->setBounds(sliderArea);
+      iSlider++;
+    }
+  }
+  auto nSmallSliders           = this->audioProcessor.plug.floatParametersSmall.size();
+  size_t rowHeightSmallSliders = rowHeight;
+  smallSlidersArea.removeFromLeft(pad);
+  smallSlidersArea.removeFromRight(pad);
+  this->borderedAreas.push_back(smallSlidersArea);
 
-    juce::GridItem(this->threshSlider),
-    juce::GridItem(this->ratioSlider),
-    juce::GridItem(this->tAttSlider),
-    juce::GridItem(this->tRelSlider),
+  for (size_t i = 0; i < nSmallSliders; i++) {
+    auto smallSliderArea = smallSlidersArea.removeFromLeft(100);
+    auto labelArea       = smallSliderArea.removeFromTop(this->entryHeight);
+    this->allSmallSliders[i]->setBounds(smallSliderArea);
+  }
 
-    juce::GridItem(this->kneeLabel),
-    juce::GridItem(this->tRmsLabel),
-    juce::GridItem(this->makeupLabel),
-    juce::GridItem(this->mixLabel),
-
-    // juce::GridItem(this->frameCounterLabel),
-    juce::GridItem(this->kneeSlider),
-    juce::GridItem(this->tRmsSlider),
-    juce::GridItem(this->makeupSlider),
-    juce::GridItem(this->mixSlider),
-
-    juce::GridItem(),
-    juce::GridItem(),
-    juce::GridItem(),
-    juce::GridItem(),
-
-    juce::GridItem(this->rmsToggle)
-        .withHeight(this->buttonHeight)
-        .withWidth(this->buttonWidth),
-    juce::GridItem(this->feedbackToggle)
-        .withHeight(this->buttonHeight)
-        .withWidth(this->buttonWidth),
-    juce::GridItem(this->linToggle)
-        .withHeight(this->buttonHeight)
-        .withWidth(this->buttonWidth),
-    juce::GridItem(this->bypassToggle)
-        .withHeight(this->buttonHeight)
-        .withWidth(this->buttonWidth),
-  };
-
-  // for (auto label : this->allSliderLabels) {
-  //   grid.items.add(juce::GridItem(label));
-  // }
-  // for (auto slider : this->allSliders) {
-  //   grid.items.add(juce::GridItem(slider));
-  // }
-  // for (int i = 0; i < 3; i++) {
-  //   grid.items.add(juce::GridItem());
-  // }
-  // for (auto toggle : this->allToggles) {
-  //   grid.items.add(juce::GridItem(toggle));
-  // }
-  grid.performLayout(area);
+  auto togglePad = 20;
+  togglesArea.removeFromTop(togglePad);
+  togglesArea.removeFromBottom(togglePad);
+  auto nToggles = this->audioProcessor.plug.boolParameters.size();
+  for (size_t i = 0; i < nToggles; i++) {
+    auto toggleArea = togglesArea.removeFromLeft(columnWidth);
+    toggleArea.removeFromLeft(togglePad);
+    toggleArea.removeFromRight(togglePad);
+    this->allToggles[i]->setBounds(toggleArea);
+  }
   repaint();
 }
 
@@ -333,37 +331,56 @@ void NtCompressorAudioProcessorEditor::displayErrorValPopup(std::string message)
   this->popupIsDisplayed = true;
 }
 
-void NtCompressorAudioProcessorEditor::sliderValueChanged(juce::Slider* slider) {
-  if (slider == &this->threshSlider) {
-    this->audioProcessor.plug.thresh_db = slider->getValue();
-  } else if (slider == &this->ratioSlider) {
-    this->audioProcessor.plug.ratio = slider->getValue();
-  } else if (slider == &this->kneeSlider) {
-    this->audioProcessor.plug.knee_db = slider->getValue();
-  } else if (slider == &this->tAttSlider) {
-    this->audioProcessor.plug.tAtt_ms = slider->getValue();
-  } else if (slider == &this->tRelSlider) {
-    this->audioProcessor.plug.tRel_ms = slider->getValue();
-  } else if (slider == &this->tRmsSlider) {
-    this->audioProcessor.plug.tRms_ms = slider->getValue();
-  } else if (slider == &this->makeupSlider) {
-    this->audioProcessor.plug.makeup_db = slider->getValue();
-  } else if (slider == &this->mixSlider) {
-    this->audioProcessor.plug.mix_percent = slider->getValue();
+void NtCompressorAudioProcessorEditor::sliderValueChanged(juce::Slider* p_slider) {
+  auto name   = p_slider->getName().toStdString();
+  auto* p_val = this->audioProcessor.plug.getFloatValByName(name);
+  if (!p_val) {
+    juce::NativeMessageBox::showMessageBoxAsync(
+        juce::MessageBoxIconType::WarningIcon, "Bad Name", "Float " + name);
+    return;
   }
+  *p_val = p_slider->getValue();
   this->audioProcessor.plug.update();
 }
 
-void NtCompressorAudioProcessorEditor::buttonClicked(juce::Button* button) {
-  bool val = button->getToggleState();
-  if (button == &this->bypassToggle) {
-    this->audioProcessor.plug.bypassEnable = val;
-  } else if (button == &this->feedbackToggle) {
-    this->audioProcessor.plug.feedbackEnable = val;
-  } else if (button == &this->linToggle) {
-    this->audioProcessor.plug.linEnable = val;
-  } else if (button == &this->rmsToggle) {
-    this->audioProcessor.plug.rmsEnable = val;
+void NtCompressorAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
+  auto name   = p_button->getName().toStdString();
+  auto* p_val = this->audioProcessor.plug.getBoolValByName(name);
+  if (!p_val) {
+    juce::NativeMessageBox::showMessageBoxAsync(
+        juce::MessageBoxIconType::WarningIcon, "Bad Name", "Bool " + name);
+    return;
   }
+  *p_val = p_button->getToggleState();
   this->audioProcessor.plug.update();
+}
+
+void NtCompressorAudioProcessorEditor::calcSliderRowsCols(
+    int nSliders, int& nRows, int& nColumns) {
+  const int maxRows    = 4;
+  const int maxColumns = 6;
+  if (nSliders > maxRows * maxColumns) {
+    juce::NativeMessageBox::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon,
+        "Bad Grid Layout",
+        "Too many parameters. Max is 24.");
+    return;
+  }
+
+  int bestRows    = 1;
+  int bestColumns = nSliders;
+  int minCells    = std::numeric_limits<int>::max();
+
+  for (int r = 1; r <= maxRows; ++r) {
+    int c = (nSliders + r - 1) / r;
+    if (c > maxColumns) { continue; }
+    int cells = r * c;
+    if (cells < minCells) {
+      minCells    = cells;
+      bestRows    = r;
+      bestColumns = c;
+    }
+  }
+
+  nRows    = bestRows;
+  nColumns = bestColumns;
 }

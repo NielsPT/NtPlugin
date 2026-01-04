@@ -9,6 +9,24 @@
 
 #define _T(v) static_cast<T>(v)
 namespace NtFx {
+// TODO: general parameter class.
+template <typename T>
+struct FloatParameterSpec {
+  T* p_val;
+  std::string name;
+  std::string suffix;
+  T minVal { 0.0 };
+  T maxVal { 1.0 };
+  T defaultVal { 0.5 };
+  T skew { 0.0 };
+};
+
+struct BoolParameterSpec {
+  bool* p_val;
+  std::string name;
+  bool defaultVal { false };
+};
+
 constexpr int rmsDelayLineLength     = 16384;
 constexpr bool optimizeDb            = false;
 constexpr bool checkNotFiniteEnabled = true;
@@ -23,19 +41,6 @@ namespace MeterIdx {
   constexpr int grR = 5;
 
 }
-
-struct FloatParameterSpec {
-  std::string name;
-  std::string suffix;
-  double minVal { 0.0 };
-  double maxVal { 1.0 };
-  double defaultVal { 0.5 };
-};
-
-struct BoolParameterSpec {
-  std::string name;
-  bool defaultVal { false };
-};
 
 enum ErrorVal {
   e_none,
@@ -99,8 +104,9 @@ struct CompressorPlugin {
   std::array<T, 3> softClipCoeffs;
   std::array<T, rmsDelayLineLength> rmsDelayLine;
 
-  std::vector<FloatParameterSpec> floatParameters {
+  std::vector<FloatParameterSpec<T>> floatParameters {
     {
+        .p_val      = &this->thresh_db,
         .name       = "Threshold",
         .suffix     = " dB",
         .minVal     = -60.0,
@@ -108,20 +114,17 @@ struct CompressorPlugin {
         .defaultVal = 0.0,
     },
     {
+        .p_val      = &this->ratio,
         .name       = "Ratio",
         .suffix     = "",
         .minVal     = 1.0,
         .maxVal     = 20.0,
         .defaultVal = 2.0,
+        .skew       = 2.0,
     },
+
     {
-        .name       = "Knee",
-        .suffix     = " dB",
-        .minVal     = 0.0,
-        .maxVal     = 24.0,
-        .defaultVal = 0.0,
-    },
-    {
+        .p_val      = &this->tAtt_ms,
         .name       = "Attack",
         .suffix     = " ms",
         .minVal     = 0.01,
@@ -129,6 +132,7 @@ struct CompressorPlugin {
         .defaultVal = 10.0,
     },
     {
+        .p_val      = &this->tRel_ms,
         .name       = "Release",
         .suffix     = " ms",
         .minVal     = 10.0,
@@ -136,13 +140,15 @@ struct CompressorPlugin {
         .defaultVal = 100.0,
     },
     {
-        .name       = "RMS_time",
-        .suffix     = " ms",
-        .minVal     = 1.0,
-        .maxVal     = 80.0,
-        .defaultVal = 20.0,
+        .p_val      = &this->knee_db,
+        .name       = "Knee",
+        .suffix     = " dB",
+        .minVal     = 0.0,
+        .maxVal     = 24.0,
+        .defaultVal = 0.0,
     },
     {
+        .p_val      = &this->makeup_db,
         .name       = "Makeup",
         .suffix     = " dB",
         .minVal     = 0.0,
@@ -150,6 +156,26 @@ struct CompressorPlugin {
         .defaultVal = 0.0,
     },
     {
+        .p_val      = &this->mix_percent,
+        .name       = "Mix",
+        .suffix     = " %",
+        .minVal     = 0.0,
+        .maxVal     = 100.0,
+        .defaultVal = 100.0,
+    },
+  };
+
+  std::vector<FloatParameterSpec<T>> floatParametersSmall = {
+    {
+        .p_val      = &this->tRms_ms,
+        .name       = "RMS_time",
+        .suffix     = " ms",
+        .minVal     = 1.0,
+        .maxVal     = 80.0,
+        .defaultVal = 20.0,
+    },
+    {
+        .p_val      = &this->mix_percent,
         .name       = "Mix",
         .suffix     = " %",
         .minVal     = 0.0,
@@ -160,17 +186,21 @@ struct CompressorPlugin {
 
   std::vector<BoolParameterSpec> boolParameters {
     {
-        .name = "RMS",
+        .p_val = &this->rmsEnable,
+        .name  = "RMS",
     },
     {
-        .name = "Feedback",
+        .p_val = &this->feedbackEnable,
+        .name  = "Feedback",
     },
     {
+        .p_val      = &this->linEnable,
         .name       = "Linear",
         .defaultVal = true,
     },
     {
-        .name = "Bypass",
+        .p_val = &this->bypassEnable,
+        .name  = "Bypass",
     },
   };
 
@@ -378,10 +408,11 @@ struct CompressorPlugin {
     return a_n;
   }
 
-  NTFX_INLINE_MEMBER bool checkNotFinite(T& val, ErrorVal var, T def = _T(0)) noexcept {
+  NTFX_INLINE_MEMBER bool checkNotFinite(
+      T& p_val, ErrorVal var, T def = _T(0)) noexcept {
     if (!checkNotFiniteEnabled) { return true; }
-    if (val == val) { return true; } // Float hack.
-    val = def;
+    if (p_val == p_val) { return true; } // Float hack.
+    p_val = def;
     // reset();
     this->errorVal = var;
     return false;
@@ -399,6 +430,23 @@ struct CompressorPlugin {
     checkNotFinite(tmp, e_meter, def);
     this->peakLevels[idx] = _T(def);
     return tmp;
+  }
+
+  bool* getBoolValByName(std::string name) {
+    for (auto param : this->boolParameters) {
+      if (param.name == name) { return param.p_val; }
+    }
+    return nullptr;
+  }
+
+  T* getFloatValByName(std::string name) {
+    for (auto param : this->floatParameters) {
+      if (param.name == name) { return param.p_val; }
+    }
+    for (auto param : this->floatParametersSmall) {
+      if (param.name == name) { return param.p_val; }
+    }
+    return nullptr;
   }
 
   // T getAndResetPeakIn() noexcept {
