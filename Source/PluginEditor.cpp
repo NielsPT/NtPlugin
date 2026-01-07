@@ -106,8 +106,10 @@ NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
 
   int nRows, nCols;
   this->calcSliderRowsCols(this->allSliders.size(), nRows, nCols);
-  auto height = 400;
+  auto height = 0;
+  height += nRows * 250;
   if (this->audioProcessor.plug.floatParametersSmall.size() != 0) { height += 150; }
+  if (this->audioProcessor.plug.boolParameters.size() != 0) { height += 75; }
   this->setSize(1000, height);
 
   for (size_t i = 0; i < this->meters.size(); i++) {
@@ -194,54 +196,14 @@ void NtCompressorAudioProcessorEditor::drawGui() {
     this->meters[i].setBounds(meterArea.removeFromLeft(meterWidth));
   }
 
-  // auto labelArea = meterArea.removeFromTop(this->entryHeight * 2);
-  // labelArea.removeFromTop(this->entryHeight);
-  // for (size_t i = 0; i < this->allMeterLabels.size(); i++) {
-  //   auto oneLabelArea = labelArea.removeFromLeft(2 * meterWidth);
-  //   this->allMeterLabels[i]->setBounds(oneLabelArea);
-  //   this->allMeterLabels[i]->setJustificationType(juce::Justification::centredBottom);
-  // }
-  // for (size_t i = 0; i < this->meters.size(); i++) {
-  //   auto oneMeterArea = meterArea.removeFromLeft(meterWidth);
-  //   this->borderedAreas.push_back(oneMeterArea);
-  //   this->meters[i].setBounds(oneMeterArea);
-  // }
   this->meterScale.setBounds(meterArea);
+
   auto nSliders = this->audioProcessor.plug.floatParameters.size();
   int nColumns;
   int nRows;
-  // if (nSliders < 7) {
-  //   nRows    = 1;
-  //   nColumns = nSliders;
-  // } else if (nSliders < 9) {
-  //   nRows    = 2;
-  //   nColumns = 4;
-  // } else if (nSliders < 11) {
-  //   nRows    = 2;
-  //   nColumns = 5;
-  // } else if (nSliders < 13) {
-  //   nRows    = 3;
-  //   nColumns = 4;
-  // } else if (nSliders < 16) {
-  //   nRows    = 3;
-  //   nColumns = 5;
-  // } else if (nSliders < 19) {
-  //   nRows    = 3;
-  //   nColumns = 6;
-  // } else if (nSliders < 21) {
-  //   nRows    = 4;
-  //   nColumns = 5;
-  // } else if (nSliders < 25) {
-  //   nRows    = 4;
-  //   nColumns = 6;
-  // } else {
-  //   juce::NativeMessageBox::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon,
-  //       "Bad Grid Layout",
-  //       "Too many parameters. Max is 24.");
-  //   return;
-  // }
   this->calcSliderRowsCols(nSliders, nRows, nColumns);
-  auto totalHeight   = area.getHeight();
+  auto totalHeight = area.getHeight();
+  // TODO: ToggleHeight
   auto togglesArea   = area.removeFromBottom(75);
   auto nSmallSliders = this->audioProcessor.plug.floatParametersSmall.size();
   if (nSmallSliders) {
@@ -258,6 +220,7 @@ void NtCompressorAudioProcessorEditor::drawGui() {
       this->allSmallSliders[i]->setBounds(smallSliderArea);
     }
   }
+
   auto knobsArea     = area;
   size_t iSlider     = 0;
   size_t columnWidth = knobsArea.getWidth() / nColumns;
@@ -293,7 +256,6 @@ void NtCompressorAudioProcessorEditor::drawGui() {
 
 void NtCompressorAudioProcessorEditor::timerCallback() {
   for (size_t i = 0; i < this->meters.size(); i++) {
-    // this->meters[i].refresh(this->audioProcessor.plug.getAndResetPeakLevel(i));
     this->meters[i].refresh(this->audioProcessor.plug.getAndResetPeakLevel(i));
   }
 
