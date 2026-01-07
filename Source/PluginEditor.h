@@ -36,7 +36,8 @@ private:
   // This reference is provided as a quick way for your editor to
   // access the processor object that created it.
   NtCompressorAudioProcessor& audioProcessor;
-  std::array<NtFx::MonoMeter, 6> meters;
+  std::array<NtFx::StereoMeter, 3> meters;
+  // std::array<NtFx::MonoMeter, 6> meters;
   NtFx::MonoMeterDbScale meterScale;
   NtFx::KnobLookAndFeel knobLookAndFeel;
 

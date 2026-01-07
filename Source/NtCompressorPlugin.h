@@ -33,12 +33,9 @@ constexpr bool checkNotFiniteEnabled = true;
 constexpr bool reportNotFiniteState  = false;
 
 namespace MeterIdx {
-  constexpr int xL  = 0;
-  constexpr int xR  = 1;
-  constexpr int yL  = 2;
-  constexpr int yR  = 3;
-  constexpr int grL = 4;
-  constexpr int grR = 5;
+  constexpr int x  = 0;
+  constexpr int y  = 1;
+  constexpr int gr = 2;
 
 }
 
@@ -91,7 +88,7 @@ struct CompressorPlugin {
   T grState  = _T(0.0);
   T rmsAccum = _T(0.0);
 
-  std::array<T, 6> peakLevels;
+  std::array<Stereo<T>, 3> peakLevels;
   // T peakIn  = _T(0.0);
   // T peakGr  = _T(0.0);
   // T peakOut = _T(0.0);
@@ -139,14 +136,7 @@ struct CompressorPlugin {
         .maxVal     = 1000.0,
         .defaultVal = 100.0,
     },
-    {
-        .p_val      = &this->knee_db,
-        .name       = "Knee",
-        .suffix     = " dB",
-        .minVal     = 0.0,
-        .maxVal     = 24.0,
-        .defaultVal = 0.0,
-    },
+
     {
         .p_val      = &this->makeup_db,
         .name       = "Makeup",
@@ -155,17 +145,25 @@ struct CompressorPlugin {
         .maxVal     = 24.0,
         .defaultVal = 0.0,
     },
-    {
-        .p_val      = &this->mix_percent,
-        .name       = "Mix",
-        .suffix     = " %",
-        .minVal     = 0.0,
-        .maxVal     = 100.0,
-        .defaultVal = 100.0,
-    },
+    // {
+    //     .p_val      = &this->mix_percent,
+    //     .name       = "Mix",
+    //     .suffix     = " %",
+    //     .minVal     = 0.0,
+    //     .maxVal     = 100.0,
+    //     .defaultVal = 100.0,
+    // },
   };
 
   std::vector<FloatParameterSpec<T>> floatParametersSmall = {
+    {
+        .p_val      = &this->knee_db,
+        .name       = "Knee",
+        .suffix     = " dB",
+        .minVal     = 0.0,
+        .maxVal     = 24.0,
+        .defaultVal = 0.0,
+    },
     {
         .p_val      = &this->tRms_ms,
         .name       = "RMS_time",
@@ -207,9 +205,11 @@ struct CompressorPlugin {
   // CompressorPlugin() { this->reset(); }
 
   NTFX_INLINE_MEMBER Stereo<T> processSample(Stereo<T> x) noexcept {
-    if (x.l > this->peakLevels[MeterIdx::xL]) { this->peakLevels[MeterIdx::xL] = x.l; }
-    if (x.r > this->peakLevels[MeterIdx::xR]) { this->peakLevels[MeterIdx::xR] = x.r; }
-    if (this->bypassEnable) { return x; }
+    this->updatePeakLevel(x, MeterIdx::x);
+    if (this->bypassEnable) {
+      this->updatePeakLevel(x, MeterIdx::y);
+      return x;
+    }
     // TODO: isfinite in Stereo
     checkNotFinite(x.l, ErrorVal::e_x);
     checkNotFinite(x.r, ErrorVal::e_x);
@@ -225,18 +225,24 @@ struct CompressorPlugin {
     }
     this->grState = gr;
     // TODO: separate gr for left and right/link option
-    // TODO: Method for thus meter thing. Takes a Stereo?
+    // TODO: Method for this meter thing. Takes a Stereo?
     // TODO: separate gr meter?
-    if (gr < this->peakLevels[MeterIdx::grL]) { this->peakLevels[MeterIdx::grL] = gr; }
-    if (gr < this->peakLevels[MeterIdx::grR]) { this->peakLevels[MeterIdx::grR] = gr; }
+    this->updatePeakLevel(gr, MeterIdx::gr, true);
     checkNotFinite(gr, ErrorVal::e_gr, 1);
     Stereo<T> yComp = x * gr;
     this->fbState   = yComp.absMax();
     auto ySoftClip  = softClip5thStereo(yComp * this->makeup_lin);
-    auto y          = this->mix_lin * ySoftClip + (1 - this->mix_lin) * x;
-    if (y.l > this->peakLevels[MeterIdx::yL]) { this->peakLevels[MeterIdx::yL] = y.l; }
-    if (y.r > this->peakLevels[MeterIdx::yR]) { this->peakLevels[MeterIdx::yR] = y.r; }
+    this->updatePeakLevel(ySoftClip, MeterIdx::y);
+    auto y = this->mix_lin * ySoftClip + (1 - this->mix_lin) * x;
     return y;
+  }
+
+  NTFX_INLINE_MEMBER void updatePeakLevel(
+      Stereo<T> val, size_t idx, bool invert = false) noexcept {
+    if ((!invert && val > this->peakLevels[idx])
+        || (invert && val < this->peakLevels[idx])) {
+      this->peakLevels[idx] = val;
+    }
   }
 
   NTFX_INLINE_MEMBER T linSideChain(T x) noexcept {
@@ -418,15 +424,21 @@ struct CompressorPlugin {
     return false;
   }
 
+  NTFX_INLINE_MEMBER bool checkNotFinite(
+      Stereo<T>& p_val, ErrorVal var, T def = _T(0)) noexcept {
+    return this->checkNotFinite(p_val.l, var, def)
+        && this->checkNotFinite(p_val.r, var, def);
+  }
+
   ErrorVal getAndResetErrorVal() noexcept {
     auto tmp       = this->errorVal;
     this->errorVal = ErrorVal::e_none;
     return tmp;
   }
 
-  T getAndResetPeakLevel(size_t idx) noexcept {
-    T tmp   = this->peakLevels[idx];
-    int def = static_cast<int>(idx == MeterIdx::grL || idx == MeterIdx::grR);
+  Stereo<T> getAndResetPeakLevel(size_t idx) noexcept {
+    Stereo<T> tmp = this->peakLevels[idx];
+    int def       = static_cast<int>(idx == MeterIdx::gr);
     checkNotFinite(tmp, e_meter, def);
     this->peakLevels[idx] = _T(def);
     return tmp;

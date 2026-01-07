@@ -3,18 +3,18 @@
 #include <JuceHeader.h>
 #include <array>
 #include <string>
+
+#include "Stereo.h"
+
 namespace NtFx {
 
-struct MeterArea : public juce::Component {
-  std::vector<juce::Component> meters;
-  void paint(juce::Graphics& g) override { auto area = this->getLocalBounds(); }
-};
+struct _MeterBase : public juce::Component { };
 
 struct MonoMeter : public juce::Component {
-  float minVal_db        = -45;
-  float maxVal_db        = 0;
-  int padLeft            = 10;
-  int padRight           = 10;
+  float minVal_db = -45;
+  float maxVal_db = 0;
+  int pad         = 10;
+  // int padRight           = 10;
   int padTop             = 40;
   int padBottom          = 40;
   int dotWidth           = 15;
@@ -39,19 +39,24 @@ struct MonoMeter : public juce::Component {
 
   void lookAndFeelChanged() override { }
 
-  void paint(juce::Graphics& g) {
+  void paint(juce::Graphics& g) override {
+    // TODO: stop if nothings changed.
     int y = this->padTop;
     g.setColour(juce::Colours::white);
-    g.drawText(
-        label, 0, y, this->getWidth(), this->dotWidth, juce::Justification::centred);
+    g.drawText(this->label,
+        0,
+        y,
+        this->getWidth(),
+        this->dotWidth,
+        juce::Justification::centred);
     for (size_t i = 1; i < this->nDots + 1; i++) {
       int y;
       y = this->padTop + i * this->dotDist;
       g.setColour(juce::Colours::white);
-      g.drawEllipse(this->padLeft, y, this->dotWidth, this->dotWidth, 1);
-      float fillPad  = 4;
-      float fillSize = this->dotWidth - fillPad;
-      float fillX    = this->padLeft + fillPad / 2;
+      g.drawEllipse(this->pad, y, this->dotWidth, this->dotWidth, 1);
+      float fillPad  = this->getWidth() * 4.0 / 35.0;
+      float fillSize = this->dotWidth - fillPad; // 15 - 4
+      float fillX    = this->pad + fillPad / 2;
       float fillY    = y + fillPad / 2;
       if ((!this->invert && i > this->nDots - this->nActiveDots)
           || (this->invert && i < this->nDots - this->nActiveDots)) {
@@ -104,6 +109,12 @@ struct MonoMeter : public juce::Component {
         this->iHoldDot = 0;
       }
     }
+    this->pad       = this->getWidth() * 10 / 35;
+    this->dotWidth  = this->getWidth() * 15 / 35;
+    this->padTop    = this->pad;
+    this->padBottom = this->pad;
+    this->dotDist   = this->pad + this->dotWidth;
+
     repaint();
   }
 
@@ -112,7 +123,8 @@ struct MonoMeter : public juce::Component {
     this->refresh();
   }
 
-  int getWidth() { return this->padLeft + this->padRight + this->dotWidth; }
+  // int getWidth() { return this->pad + this->padRight + this->dotWidth; }
+  // int getWidth() {retrun 35;}
 
   void setDecay(float tDecay_s, float refreshRate_hz) {
     float dbPerSecond  = (this->maxVal_db - this->minVal_db) / tDecay_s;
@@ -138,7 +150,7 @@ struct MonoMeterDbScale : public juce::Component {
   MonoMeterDbScale(MonoMeter& m) : _m(m) { }
   void visibilityChanged() override { }
   void lookAndFeelChanged() override { }
-  void paint(juce::Graphics& g) {
+  void paint(juce::Graphics& g) override {
     for (size_t i = 1; i < this->_m.nDots + 1; i++) {
       int y = this->_m.padTop + i * this->_m.dotDist;
       std::string t =
@@ -153,6 +165,52 @@ struct MonoMeterDbScale : public juce::Component {
 struct StereoMeter : public juce::Component {
   MonoMeter l;
   MonoMeter r;
+  juce::Label label;
+
+  StereoMeter(std::string label) : label(label, label) {
+    this->addAndMakeVisible(this->label);
+    this->addAndMakeVisible(this->l);
+    this->addAndMakeVisible(this->r);
+    l.label = "L";
+    r.label = "R";
+  }
+  // TODO
+  void visibilityChanged() override { }
+  void lookAndFeelChanged() override { }
+  void resized() override {
+    this->drawGui();
+    this->repaint();
+  }
+  void drawGui() {
+    auto area      = getLocalBounds();
+    auto labelArea = area.removeFromTop(this->getHeight() * 1.0 / (l.nDots + 1));
+    this->label.setBounds(labelArea);
+    this->label.setJustificationType(juce::Justification::centredBottom);
+    auto lArea = area.removeFromLeft(area.getWidth() / 2.0);
+    l.setBounds(lArea);
+    area.setWidth(lArea.getWidth());
+    r.setBounds(area);
+  }
+  template <typename T>
+  void refresh(Stereo<T> val) {
+    this->l.refresh(val.l);
+    this->r.refresh(val.r);
+  }
+  void setInvert(bool val) {
+    l.setInvert(val);
+    r.setInvert(val);
+  }
+  void setDecay(float a, float b) {
+    l.setDecay(a, b);
+    r.setDecay(a, b);
+  }
+  void setPeakHold(float a, float b) {
+    l.setPeakHold(a, b);
+    r.setPeakHold(a, b);
+  }
+};
+
+class MeterArea {
   // TODO
 };
 
