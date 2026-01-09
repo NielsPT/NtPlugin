@@ -1,36 +1,56 @@
-#pragma once
-#include <array>
 
-#include "Stereo.h"
+#pragma once
+#include <algorithm> // std::max
+#include <array>
+#include <cmath> // std::log10, std::exp, std::floor, std::pow, std::sqrt
+#define NTFX_INLINE_TEMPLATE                                                           \
+  template <typename signal_t>                                                         \
+  __attribute__((always_inline)) static inline
+#define NTFX_INLINE_MEMBER __attribute__((always_inline)) inline
+#define NTFX_INLINE_STATIC __attribute__((always_inline)) inline static
+#define SIGNAL(v) static_cast<signal_t>(v)
 
 namespace NtFx {
+constexpr int rmsDelayLineLength = 16384;
 template <typename signal_t>
 NTFX_INLINE_STATIC signal_t db(signal_t x) noexcept {
   return SIGNAL(20.0) * std::log10(x);
 }
 
 template <typename signal_t>
-struct ProcBlock {
-  virtual void update()                      = 0;
-  virtual signal_t processSample(signal_t x) = 0;
-};
+NTFX_INLINE_STATIC signal_t invDb(signal_t x) noexcept {
+  // if (optimizeDb) { return pow10Opt(x * SIGNAL(0.05)); }
+  return std::pow(SIGNAL(10.0), x * SIGNAL(0.05));
+}
+// template <typename signal_t>
+// struct ProcBlock {
+//   virtual void update()                      = 0;
+//   virtual signal_t processSample(signal_t x) = 0;
+// };
 
 template <typename signal_t>
-struct SideChain : public ProcBlock<signal_t> {
+struct SideChain { // : public ProcBlock<signal_t> {
   signal_t thresh_db = 0;
   signal_t ratio     = 2;
   signal_t knee_db   = 0;
   signal_t tAtt_ms   = 10;
   signal_t tRel_ms   = 100;
   signal_t tRms_ms   = 80;
+  bool rmsEnable     = false;
+  // signal_t fs        = 0;
+  int nRms = 441;
+  int iRms = 0;
+  int fs   = 44100;
 
   signal_t tPeak     = SIGNAL(20.0);
   signal_t alphaAtt  = SIGNAL(0.0);
   signal_t alphaRel  = SIGNAL(0.0);
   signal_t alphaPeak = SIGNAL(0.0);
+  signal_t rmsAccum  = SIGNAL(0.0);
   std::array<signal_t, 2> scState;
+  std::array<signal_t, rmsDelayLineLength> rmsDelayLine;
 
-  virtual void update() noexcept override {
+  virtual void update() noexcept {
     this->alphaAtt = std::exp(-2200.0 / (this->tAtt_ms * this->fs));
     this->alphaRel = std::exp(-2200.0 / (this->tRel_ms * this->fs));
     if (this->alphaRel < this->alphaAtt) { this->alphaRel = this->alphaAtt; }
@@ -40,7 +60,7 @@ struct SideChain : public ProcBlock<signal_t> {
 
   virtual signal_t gainComputer(signal_t x) = 0;
 
-  virtual signal_t processSample(signal_t x) noexcept override {
+  virtual signal_t processSample(signal_t x) noexcept {
     signal_t ySensLast   = this->scState[0];
     signal_t yFilterLast = this->scState[1];
     signal_t xAbs        = std::abs(x);
@@ -59,6 +79,22 @@ struct SideChain : public ProcBlock<signal_t> {
     this->scState[0] = ySensLast;
     this->scState[1] = yFilterLast;
     return invDb(-yFilter);
+  }
+
+  NTFX_INLINE_MEMBER signal_t rmsSensor(signal_t x) noexcept {
+    signal_t _x = x * x;
+    this->rmsAccum += _x - this->rmsDelayLine[this->iRms];
+    this->rmsDelayLine[this->iRms] = _x;
+    this->iRms++;
+    if (this->iRms >= this->nRms) { this->iRms = 0; }
+    // if (checkNotFiniteEnabled && this->rmsAccum < 0) {
+    //   this->errorVal = ErrorVal::;
+    //   return 0;
+    // }
+    signal_t y = std::sqrt(2.0 * this->rmsAccum / this->nRms);
+    // checkNotFinite(y, ErrorVal::e_rmsSensor);
+    if (y != y) { return SIGNAL(0.0); }
+    return y;
   }
 };
 
@@ -81,11 +117,11 @@ struct SideChain_lin : public SideChain<signal_t> {
     } else {
       target = (x / this->thresh_lin) * this->ratio_lin;
     }
+    return target;
   }
 
-  virtual void update() {
+  virtual void update() noexcept override {
     this->thresh_lin    = std::pow(10.0, (this->thresh_db / 20.0));
-    this->makeup_lin    = std::pow(10.0, (this->makeup_db / 20.0));
     this->knee_lin      = std::pow(10.0, (this->knee_db / 20.0));
     double oneOverSqrt2 = 1.0 / std::sqrt(2.0);
     this->ratio_lin     = (1.0 - 1.0 / this->ratio)
@@ -107,6 +143,7 @@ struct SideChain_db : public SideChain<signal_t> {
       signal_t tmp = (x_db - this->thresh_db + this->knee_db / 2);
       y_db         = x_db + (1 / this->ratio - 1) * tmp * tmp / (2 * this->knee_db);
     }
+    return x_db - y_db;
   }
 };
 

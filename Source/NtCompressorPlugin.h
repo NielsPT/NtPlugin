@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-// #include "NtFx.h"
+#include "NtFx.h"
 #include "Stereo.h"
 namespace NtFx {
 
@@ -27,7 +27,7 @@ struct BoolParameterSpec {
   bool defaultVal { false };
 };
 
-constexpr int rmsDelayLineLength     = 16384;
+// constexpr int rmsDelayLineLength     = 16384;
 constexpr bool optimizeDb            = false;
 constexpr bool checkNotFiniteEnabled = true;
 constexpr bool reportNotFiniteState  = false;
@@ -100,11 +100,11 @@ struct CompressorPlugin {
   std::array<signal_t, 2> scState;
   std::array<signal_t, 3> softClipCoeffs;
   std::array<signal_t, rmsDelayLineLength> rmsDelayLine;
-  NtFx::SideChain_db sideChainL_db;
-  NtFx::SideChain_db sideChainR_db;
-  NtFx::SideChain_lin sideChainL_lin;
-  NtFx::SideChain_lin sideChainR_lin;
-  std::vector<NtFx::SideChain*> allSideChains;
+  SideChain_db<signal_t> sideChainL_db;
+  SideChain_db<signal_t> sideChainR_db;
+  SideChain_lin<signal_t> sideChainL_lin;
+  SideChain_lin<signal_t> sideChainR_lin;
+  std::vector<SideChain<signal_t>*> allSideChains;
 
   std::vector<FloatParameterSpec<signal_t>> floatParameters {
     {
@@ -265,9 +265,9 @@ struct CompressorPlugin {
     signal_t ySens       = std::max(xAbs, sensRelease);
     ySensLast            = ySens;
 
-    signal_t target = 0;
+    signal_t target;
     if (ySens < this->thresh_lin / this->knee_lin) {
-      target = 0;
+      target = SIGNAL(0);
     } else if (ySens < this->thresh_lin) {
       target = (ySens / this->thresh_lin)
           * this->ratio_lin
@@ -284,7 +284,7 @@ struct CompressorPlugin {
     yFilterLast      = yFilter;
     this->scState[0] = ySensLast;
     this->scState[1] = yFilterLast;
-    return 1.0 / (yFilter + 1);
+    return SIGNAL(1.0) / (yFilter + 1);
   }
 
   NTFX_INLINE_MEMBER signal_t dbSideChain(signal_t x) noexcept {
@@ -360,7 +360,7 @@ struct CompressorPlugin {
     this->iRms++;
     if (this->iRms >= this->nRms) { this->iRms = 0; }
     if (checkNotFiniteEnabled && this->rmsAccum < 0) {
-      this->errorVal = ErrorVal::;
+      this->errorVal = ErrorVal::e_rmsAccum;
       return 0;
     }
     signal_t y = std::sqrt(2.0 * this->rmsAccum / this->nRms);
