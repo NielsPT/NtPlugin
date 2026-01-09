@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "NtFx.h"
+#include "SideChain.h"
 #include "Stereo.h"
 namespace NtFx {
 
@@ -82,7 +82,7 @@ struct CompressorPlugin {
   signal_t makeup_lin = SIGNAL(1.0);
   // signal_t knee_lin   = SIGNAL(1.0);
   // signal_t ratio_lin  = SIGNAL(1.0);
-  // signal_t mix_lin    = SIGNAL(1.0);
+  signal_t mix_lin = SIGNAL(1.0);
   // signal_t rmsAccum = SIGNAL(0.0);
 
   signal_t fbState = SIGNAL(0.0);
@@ -223,10 +223,10 @@ struct CompressorPlugin {
     signal_t gr;
     if (this->linEnable) {
       // gr = linSideChain(x_sc);
-      gr = sideChainL_lin.processSample(x);
+      gr = sideChainL_lin.processSample(x_sc);
     } else {
       // gr = dbSideChain(x_sc);
-      gr = sideChainL_db.processSample(x);
+      gr = sideChainL_db.processSample(x_sc);
     }
     this->grState = gr;
     // TODO: separate gr for left and right/link option
@@ -368,7 +368,7 @@ struct CompressorPlugin {
     // this->sideChainR_lin.tRms_ms   = this->tRms_ms;
 
     for (size_t i = 0; i < this->allSideChains.size(); i++) {
-      // TODO: SideChainSettings struct?
+      // TODO: SideChainSettings struct
       allSideChains[i]->thresh_db = this->thresh_db;
       allSideChains[i]->ratio     = this->ratio;
       allSideChains[i]->knee_db   = this->knee_db;
