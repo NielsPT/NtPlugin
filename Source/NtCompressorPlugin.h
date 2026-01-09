@@ -74,19 +74,19 @@ struct CompressorPlugin {
   bool rmsEnable      = false;
   bool feedbackEnable = false;
 
-  signal_t tPeak      = SIGNAL(20.0);
-  signal_t alphaAtt   = SIGNAL(0.0);
-  signal_t alphaRel   = SIGNAL(0.0);
-  signal_t alphaPeak  = SIGNAL(0.0);
-  signal_t thresh_lin = SIGNAL(1.0);
+  // signal_t tPeak      = SIGNAL(20.0);
+  // signal_t alphaAtt   = SIGNAL(0.0);
+  // signal_t alphaRel   = SIGNAL(0.0);
+  // signal_t alphaPeak  = SIGNAL(0.0);
+  // signal_t thresh_lin = SIGNAL(1.0);
   signal_t makeup_lin = SIGNAL(1.0);
-  signal_t knee_lin   = SIGNAL(1.0);
-  signal_t ratio_lin  = SIGNAL(1.0);
-  signal_t mix_lin    = SIGNAL(1.0);
+  // signal_t knee_lin   = SIGNAL(1.0);
+  // signal_t ratio_lin  = SIGNAL(1.0);
+  // signal_t mix_lin    = SIGNAL(1.0);
+  // signal_t rmsAccum = SIGNAL(0.0);
 
-  signal_t fbState  = SIGNAL(0.0);
-  signal_t grState  = SIGNAL(0.0);
-  signal_t rmsAccum = SIGNAL(0.0);
+  signal_t fbState = SIGNAL(0.0);
+  signal_t grState = SIGNAL(0.0);
 
   std::array<Stereo<signal_t>, 3> peakLevels;
   // T peakIn  = SIGNAL(0.0);
@@ -97,9 +97,9 @@ struct CompressorPlugin {
   int iRms = 0;
   int fs   = 44100;
 
-  std::array<signal_t, 2> scState;
+  // std::array<signal_t, 2> scState;
   std::array<signal_t, 3> softClipCoeffs;
-  std::array<signal_t, rmsDelayLineLength> rmsDelayLine;
+  // std::array<signal_t, rmsDelayLineLength> rmsDelayLine;
   SideChain_db<signal_t> sideChainL_db;
   SideChain_db<signal_t> sideChainR_db;
   SideChain_lin<signal_t> sideChainL_lin;
@@ -222,9 +222,11 @@ struct CompressorPlugin {
 
     signal_t gr;
     if (this->linEnable) {
-      gr = linSideChain(x_sc);
+      // gr = linSideChain(x_sc);
+      gr = sideChainL_lin.processSample(x);
     } else {
-      gr = dbSideChain(x_sc);
+      // gr = dbSideChain(x_sc);
+      gr = sideChainL_db.processSample(x);
     }
     this->grState = gr;
     // TODO: separate gr for left and right/link option
@@ -248,125 +250,160 @@ struct CompressorPlugin {
     }
   }
 
-  NTFX_INLINE_MEMBER signal_t linSideChain(signal_t x) noexcept {
-    signal_t ySensLast   = this->scState[0];
-    signal_t yFilterLast = this->scState[1];
-    checkNotFinite(ySensLast, ErrorVal::e_ySensLast);
-    checkNotFinite(yFilterLast, ErrorVal::e_yFilterLast);
+  // NTFX_INLINE_MEMBER signal_t linSideChain(signal_t x) noexcept {
+  //   signal_t ySensLast   = this->scState[0];
+  //   signal_t yFilterLast = this->scState[1];
+  //   checkNotFinite(ySensLast, ErrorVal::e_ySensLast);
+  //   checkNotFinite(yFilterLast, ErrorVal::e_yFilterLast);
 
-    signal_t xAbs;
-    if (this->rmsEnable) {
-      xAbs = rmsSensor(x);
-    } else {
-      xAbs = std::abs(x);
-    }
+  //   signal_t xAbs;
+  //   if (this->rmsEnable) {
+  //     xAbs = rmsSensor(x);
+  //   } else {
+  //     xAbs = std::abs(x);
+  //   }
 
-    signal_t sensRelease = this->alphaPeak * ySensLast + (1 - this->alphaPeak) * xAbs;
-    signal_t ySens       = std::max(xAbs, sensRelease);
-    ySensLast            = ySens;
+  //   signal_t sensRelease = this->alphaPeak * ySensLast + (1 - this->alphaPeak) *
+  //   xAbs; signal_t ySens       = std::max(xAbs, sensRelease); ySensLast            =
+  //   ySens;
 
-    signal_t target;
-    if (ySens < this->thresh_lin / this->knee_lin) {
-      target = SIGNAL(0);
-    } else if (ySens < this->thresh_lin) {
-      target = (ySens / this->thresh_lin)
-          * this->ratio_lin
-          * this->thresh_lin
-          / (this->knee_lin * ySens);
-    } else {
-      target = (ySens / this->thresh_lin) * this->ratio_lin;
-    }
+  //   signal_t target;
+  //   if (ySens < this->thresh_lin / this->knee_lin) {
+  //     target = SIGNAL(0);
+  //   } else if (ySens < this->thresh_lin) {
+  //     target = (ySens / this->thresh_lin)
+  //         * this->ratio_lin
+  //         * this->thresh_lin
+  //         / (this->knee_lin * ySens);
+  //   } else {
+  //     target = (ySens / this->thresh_lin) * this->ratio_lin;
+  //   }
 
-    signal_t alpha = this->alphaRel;
-    if (target > yFilterLast) { alpha = this->alphaAtt; }
+  //   signal_t alpha = this->alphaRel;
+  //   if (target > yFilterLast) { alpha = this->alphaAtt; }
 
-    signal_t yFilter = yFilterLast * alpha + target * (1 - alpha);
-    yFilterLast      = yFilter;
-    this->scState[0] = ySensLast;
-    this->scState[1] = yFilterLast;
-    return SIGNAL(1.0) / (yFilter + 1);
-  }
+  //   signal_t yFilter = yFilterLast * alpha + target * (1 - alpha);
+  //   yFilterLast      = yFilter;
+  //   this->scState[0] = ySensLast;
+  //   this->scState[1] = yFilterLast;
+  //   return SIGNAL(1.0) / (yFilter + 1);
+  // }
 
-  NTFX_INLINE_MEMBER signal_t dbSideChain(signal_t x) noexcept {
-    signal_t ySensLast   = this->scState[0];
-    signal_t yFilterLast = this->scState[1];
-    checkNotFinite(ySensLast, ErrorVal::e_ySensLast);
-    checkNotFinite(yFilterLast, ErrorVal::e_yFilterLast);
+  // NTFX_INLINE_MEMBER signal_t dbSideChain(signal_t x) noexcept {
+  //   signal_t ySensLast   = this->scState[0];
+  //   signal_t yFilterLast = this->scState[1];
+  //   checkNotFinite(ySensLast, ErrorVal::e_ySensLast);
+  //   checkNotFinite(yFilterLast, ErrorVal::e_yFilterLast);
 
-    signal_t xAbs;
-    if (this->rmsEnable) {
-      xAbs = rmsSensor(x);
-    } else {
-      xAbs = std::abs(x);
-    }
+  //   signal_t xAbs;
+  //   if (this->rmsEnable) {
+  //     xAbs = rmsSensor(x);
+  //   } else {
+  //     xAbs = std::abs(x);
+  //   }
 
-    signal_t sensRelease = this->alphaPeak * ySensLast + (1 - this->alphaPeak) * xAbs;
-    signal_t ySens       = std::max(xAbs, sensRelease);
-    ySensLast            = ySens;
+  //   signal_t sensRelease = this->alphaPeak * ySensLast + (1 - this->alphaPeak) *
+  //   xAbs; signal_t ySens       = std::max(xAbs, sensRelease); ySensLast            =
+  //   ySens;
 
-    signal_t x_db = db(ySens);
-    signal_t y_db;
-    if ((x_db - this->thresh_db) > (this->knee_db / 2)) {
-      y_db = this->thresh_db + (x_db - this->thresh_db) / this->ratio;
-    } else if ((x_db - this->thresh_db) < -(this->knee_db / 2)) {
-      y_db = x_db;
-    } else {
-      signal_t tmp = (x_db - this->thresh_db + this->knee_db / 2);
-      y_db         = x_db + (1 / this->ratio - 1) * tmp * tmp / (2 * this->knee_db);
-    }
+  //   signal_t x_db = db(ySens);
+  //   signal_t y_db;
+  //   if ((x_db - this->thresh_db) > (this->knee_db / 2)) {
+  //     y_db = this->thresh_db + (x_db - this->thresh_db) / this->ratio;
+  //   } else if ((x_db - this->thresh_db) < -(this->knee_db / 2)) {
+  //     y_db = x_db;
+  //   } else {
+  //     signal_t tmp = (x_db - this->thresh_db + this->knee_db / 2);
+  //     y_db         = x_db + (1 / this->ratio - 1) * tmp * tmp / (2 * this->knee_db);
+  //   }
 
-    signal_t target = x_db - y_db;
+  //   signal_t target = x_db - y_db;
 
-    signal_t alpha = this->alphaRel;
-    if (target > yFilterLast) { alpha = this->alphaAtt; }
+  //   signal_t alpha = this->alphaRel;
+  //   if (target > yFilterLast) { alpha = this->alphaAtt; }
 
-    signal_t yFilter = yFilterLast * alpha + target * (1 - alpha);
-    yFilterLast      = yFilter;
-    this->scState[0] = ySensLast;
-    this->scState[1] = yFilterLast;
-    return invDb(-yFilter);
-  }
+  //   signal_t yFilter = yFilterLast * alpha + target * (1 - alpha);
+  //   yFilterLast      = yFilter;
+  //   this->scState[0] = ySensLast;
+  //   this->scState[1] = yFilterLast;
+  //   return invDb(-yFilter);
+  // }
 
   void update() noexcept {
-    this->alphaAtt = std::exp(-2200.0 / (this->tAtt_ms * this->fs));
-    this->alphaRel = std::exp(-2200.0 / (this->tRel_ms * this->fs));
-    if (this->alphaRel < this->alphaAtt) { this->alphaRel = this->alphaAtt; }
-    this->alphaPeak     = std::exp(-2200.0 / (this->tPeak * this->fs));
-    this->thresh_lin    = std::pow(10.0, (this->thresh_db / 20.0));
-    this->makeup_lin    = std::pow(10.0, (this->makeup_db / 20.0));
-    this->knee_lin      = std::pow(10.0, (this->knee_db / 20.0));
-    double oneOverSqrt2 = 1.0 / std::sqrt(2.0);
-    this->ratio_lin     = (1.0 - 1.0 / this->ratio)
-        * (oneOverSqrt2 - std::pow(oneOverSqrt2 - (this->ratio - 3.0) / 18.0, 5.0));
-    this->nRms    = std::floor(this->tRms_ms * this->fs * 0.001);
+    // this->alphaAtt = std::exp(-2200.0 / (this->tAtt_ms * this->fs));
+    // this->alphaRel = std::exp(-2200.0 / (this->tRel_ms * this->fs));
+    // if (this->alphaRel < this->alphaAtt) { this->alphaRel = this->alphaAtt; }
+    // this->alphaPeak     = std::exp(-2200.0 / (this->tPeak * this->fs));
+    // this->thresh_lin    = std::pow(10.0, (this->thresh_db / 20.0));
+    this->makeup_lin = std::pow(10.0, (this->makeup_db / SIGNAL(20.0)));
+    // this->knee_lin      = std::pow(10.0, (this->knee_db / 20.0));
+    // double oneOverSqrt2 = 1.0 / std::sqrt(2.0);
+    // this->ratio_lin     = (1.0 - 1.0 / this->ratio)
+    // * (oneOverSqrt2 - std::pow(oneOverSqrt2 - (this->ratio - 3.0) / 18.0, 5.0));
+    // this->nRms    = std::floor(this->tRms_ms * this->fs * 0.001);
     this->mix_lin = this->mix_percent / 100.0;
+    // this->sideChainL_db.thresh_db  = this->thresh_db;
+    // this->sideChainL_db.ratio      = this->ratio;
+    // this->sideChainL_db.knee_db    = this->knee_db;
+    // this->sideChainL_db.tAtt_ms    = this->tAtt_ms;
+    // this->sideChainL_db.tRel_ms    = this->tRel_ms;
+    // this->sideChainL_db.tRms_ms    = this->tRms_ms;
+    // this->sideChainR_db.thresh_db  = this->thresh_db;
+    // this->sideChainR_db.ratio      = this->ratio;
+    // this->sideChainR_db.knee_db    = this->knee_db;
+    // this->sideChainR_db.tAtt_ms    = this->tAtt_ms;
+    // this->sideChainR_db.tRel_ms    = this->tRel_ms;
+    // this->sideChainR_db.tRms_ms    = this->tRms_ms;
+    // this->sideChainL_lin.thresh_db = this->thresh_db;
+    // this->sideChainL_lin.ratio     = this->ratio;
+    // this->sideChainL_lin.knee_db   = this->knee_db;
+    // this->sideChainL_lin.tAtt_ms   = this->tAtt_ms;
+    // this->sideChainL_lin.tRel_ms   = this->tRel_ms;
+    // this->sideChainL_lin.tRms_ms   = this->tRms_ms;
+    // this->sideChainR_lin.thresh_db = this->thresh_db;
+    // this->sideChainR_lin.ratio     = this->ratio;
+    // this->sideChainR_lin.knee_db   = this->knee_db;
+    // this->sideChainR_lin.tAtt_ms   = this->tAtt_ms;
+    // this->sideChainR_lin.tRel_ms   = this->tRel_ms;
+    // this->sideChainR_lin.tRms_ms   = this->tRms_ms;
+
+    for (size_t i = 0; i < this->allSideChains.size(); i++) {
+      // TODO: SideChainSettings struct?
+      allSideChains[i]->thresh_db = this->thresh_db;
+      allSideChains[i]->ratio     = this->ratio;
+      allSideChains[i]->knee_db   = this->knee_db;
+      allSideChains[i]->tAtt_ms   = this->tAtt_ms;
+      allSideChains[i]->tRel_ms   = this->tRel_ms;
+      allSideChains[i]->tRms_ms   = this->tRms_ms;
+      allSideChains[i]->update();
+    }
   }
 
   NTFX_INLINE_MEMBER void reset() noexcept {
-    std::fill(this->scState.begin(), this->scState.end(), SIGNAL(0));
-    std::fill(this->rmsDelayLine.begin(), this->rmsDelayLine.end(), SIGNAL(0));
+    // std::fill(this->scState.begin(), this->scState.end(), SIGNAL(0));
+    // std::fill(this->rmsDelayLine.begin(), this->rmsDelayLine.end(), SIGNAL(0));
     std::fill(this->peakLevels.begin(), this->peakLevels.end(), SIGNAL(0));
-    this->rmsAccum = SIGNAL(0);
-    this->fbState  = SIGNAL(0);
+    // this->rmsAccum = SIGNAL(0);
+    this->fbState = SIGNAL(0);
     // this->peakIn   = SIGNAL(0);
     this->peakLevels[MeterIdx::gr] = SIGNAL(1);
     // this->peakOut  = SIGNAL(0);
   }
 
-  NTFX_INLINE_MEMBER signal_t rmsSensor(signal_t x) noexcept {
-    signal_t _x = x * x;
-    this->rmsAccum += _x - this->rmsDelayLine[this->iRms];
-    this->rmsDelayLine[this->iRms] = _x;
-    this->iRms++;
-    if (this->iRms >= this->nRms) { this->iRms = 0; }
-    if (checkNotFiniteEnabled && this->rmsAccum < 0) {
-      this->errorVal = ErrorVal::e_rmsAccum;
-      return 0;
-    }
-    signal_t y = std::sqrt(2.0 * this->rmsAccum / this->nRms);
-    checkNotFinite(y, ErrorVal::e_rmsSensor);
-    return y;
-  }
+  // NTFX_INLINE_MEMBER signal_t rmsSensor(signal_t x) noexcept {
+  //   signal_t _x = x * x;
+  //   this->rmsAccum += _x - this->rmsDelayLine[this->iRms];
+  //   this->rmsDelayLine[this->iRms] = _x;
+  //   this->iRms++;
+  //   if (this->iRms >= this->nRms) { this->iRms = 0; }
+  //   if (checkNotFiniteEnabled && this->rmsAccum < 0) {
+  //     this->errorVal = ErrorVal::e_rmsAccum;
+  //     return 0;
+  //   }
+  //   signal_t y = std::sqrt(2.0 * this->rmsAccum / this->nRms);
+  //   checkNotFinite(y, ErrorVal::e_rmsSensor);
+  //   return y;
+  // }
 
   NTFX_INLINE_MEMBER Stereo<signal_t> softClip5thStereo(Stereo<signal_t> x) noexcept {
     return { softClip5thMono(x.l), softClip5thMono(x.r) };

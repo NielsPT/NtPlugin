@@ -50,6 +50,12 @@ struct SideChain { // : public ProcBlock<signal_t> {
   std::array<signal_t, 2> scState;
   std::array<signal_t, rmsDelayLineLength> rmsDelayLine;
 
+  virtual void reset() noexcept {
+    std::fill(this->scState.begin(), this->scState.end(), SIGNAL(0));
+    std::fill(this->rmsDelayLine.begin(), this->rmsDelayLine.end(), SIGNAL(0));
+    // this->rmsAccum = SIGNAL(0);
+  }
+
   virtual void update() noexcept {
     this->alphaAtt = std::exp(-2200.0 / (this->tAtt_ms * this->fs));
     this->alphaRel = std::exp(-2200.0 / (this->tRel_ms * this->fs));
