@@ -9,7 +9,7 @@ namespace NtFx {
 constexpr int rmsDelayLineLength = 16384;
 
 template <typename signal_t>
-struct SideChain { // : public ProcBlock<signal_t> {
+struct SideChain {
   signal_t thresh_db = -60;
   signal_t ratio     = 2;
   signal_t knee_db   = 0;
@@ -22,18 +22,20 @@ struct SideChain { // : public ProcBlock<signal_t> {
   int iRms = 0;
   int fs   = 44100;
 
-  signal_t tPeak     = SIGNAL(20.0);
-  signal_t alphaAtt  = SIGNAL(0.0);
-  signal_t alphaRel  = SIGNAL(0.0);
-  signal_t alphaPeak = SIGNAL(0.0);
-  signal_t rmsAccum  = SIGNAL(0.0);
-  std::array<signal_t, 2> scState;
+  signal_t tPeak       = SIGNAL(20.0);
+  signal_t alphaAtt    = SIGNAL(0.0);
+  signal_t alphaRel    = SIGNAL(0.0);
+  signal_t alphaPeak   = SIGNAL(0.0);
+  signal_t rmsAccum    = SIGNAL(0.0);
+  signal_t ySensLast   = SIGNAL(0.0);
+  signal_t yFilterLast = SIGNAL(0.0);
   std::array<signal_t, rmsDelayLineLength> rmsDelayLine;
 
   virtual void reset() noexcept {
-    std::fill(this->scState.begin(), this->scState.end(), SIGNAL(0));
     std::fill(this->rmsDelayLine.begin(), this->rmsDelayLine.end(), SIGNAL(0));
-    this->rmsAccum = SIGNAL(0);
+    this->rmsAccum    = SIGNAL(0);
+    this->ySensLast   = SIGNAL(0.0);
+    this->yFilterLast = SIGNAL(0.0);
   }
 
   virtual void update() noexcept {
@@ -49,25 +51,21 @@ struct SideChain { // : public ProcBlock<signal_t> {
   virtual signal_t scaleResult(signal_t x) = 0;
 
   NTFX_INLINE_MEMBER virtual signal_t processSample(signal_t x) noexcept {
-    signal_t ySensLast   = this->scState[0];
-    signal_t yFilterLast = this->scState[1];
-    signal_t xAbs        = std::abs(x);
+    signal_t xAbs = std::abs(x);
     if (this->rmsEnable) { xAbs = this->rmsSensor(x); }
 
-    signal_t sensRelease = this->alphaPeak * ySensLast + (1 - this->alphaPeak) * xAbs;
-    signal_t ySens       = std::max(xAbs, sensRelease);
-    ySensLast            = ySens;
+    signal_t sensRelease =
+        this->alphaPeak * this->ySensLast + (1 - this->alphaPeak) * xAbs;
+    signal_t ySens  = std::max(xAbs, sensRelease);
+    this->ySensLast = ySens;
 
     signal_t target = this->gainComputer(ySens);
     signal_t alpha  = this->alphaRel;
     if (target > yFilterLast) { alpha = this->alphaAtt; }
 
-    signal_t yFilter = yFilterLast * alpha + target * (1 - alpha);
-    yFilterLast      = yFilter;
-    this->scState[0] = ySensLast;
-    this->scState[1] = yFilterLast;
+    signal_t yFilter  = this->yFilterLast * alpha + target * (1 - alpha);
+    this->yFilterLast = yFilter;
     return this->scaleResult(yFilter);
-    // return invDb(-yFilter);
   }
 
   NTFX_INLINE_MEMBER signal_t rmsSensor(signal_t x) noexcept {
