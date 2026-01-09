@@ -8,17 +8,12 @@
 
 namespace NtFx {
 
-struct _MeterBase : public juce::Component { };
-
 struct MonoMeter : public juce::Component {
-  float minVal_db = -45;
-  float maxVal_db = 0;
-  int pad         = 10;
-  // int padRight           = 10;
-  int padTop             = 40;
-  int padBottom          = 40;
-  int dotWidth           = 15;
-  int dotDist            = dotWidth + 10;
+  float minVal_db        = -45;
+  float maxVal_db        = 0;
+  int pad                = 10;
+  int dotWidth           = 0;
+  int dotDist            = 0;
   int nDots              = 15;
   bool invert            = false;
   int nActiveDots        = 0;
@@ -35,13 +30,9 @@ struct MonoMeter : public juce::Component {
   MonoMeter()  = default;
   ~MonoMeter() = default;
 
-  void visibilityChanged() override { }
-
-  void lookAndFeelChanged() override { }
-
   void paint(juce::Graphics& g) override {
     // TODO: stop if nothings changed.
-    int y = this->padTop;
+    int y = this->pad;
     g.setColour(juce::Colours::white);
     g.drawText(this->label,
         0,
@@ -51,7 +42,7 @@ struct MonoMeter : public juce::Component {
         juce::Justification::centred);
     for (size_t i = 1; i < this->nDots + 1; i++) {
       int y;
-      y = this->padTop + i * this->dotDist;
+      y = this->pad + i * this->dotDist;
       g.setColour(juce::Colours::white);
       g.drawEllipse(this->pad, y, this->dotWidth, this->dotWidth, 1);
       float fillPad  = this->getWidth() * 4.0 / 35.0;
@@ -90,7 +81,6 @@ struct MonoMeter : public juce::Component {
     this->peakLast_db = peak_db;
     this->nActiveDots =
         (peak_db + this->maxVal_db - this->minVal_db) / this->dbPrDot - 1;
-    // if (this->invert) { this->nActiveDots -= 1; }
     if (this->nActiveDots < 0) { this->nActiveDots = 0; }
     if ((!this->invert && peak_db > this->holdVal_db)
         || (this->invert && peak_db < this->holdVal_db)) {
@@ -109,11 +99,9 @@ struct MonoMeter : public juce::Component {
         this->iHoldDot = 0;
       }
     }
-    this->pad       = this->getWidth() * 10 / 35;
-    this->dotWidth  = this->getWidth() * 15 / 35;
-    this->padTop    = this->pad;
-    this->padBottom = this->pad;
-    this->dotDist   = this->pad + this->dotWidth;
+    this->pad      = this->getWidth() * 10 / 35;
+    this->dotWidth = this->getWidth() * 15 / 35;
+    this->dotDist  = this->pad + this->dotWidth;
 
     repaint();
   }
@@ -148,15 +136,13 @@ struct MonoMeter : public juce::Component {
 struct MonoMeterDbScale : public juce::Component {
   MonoMeter& _m;
   MonoMeterDbScale(MonoMeter& m) : _m(m) { }
-  void visibilityChanged() override { }
-  void lookAndFeelChanged() override { }
   void paint(juce::Graphics& g) override {
-    for (size_t i = 1; i < this->_m.nDots + 1; i++) {
-      int y = this->_m.padTop + i * this->_m.dotDist;
-      std::string t =
-          "- " + std::to_string(static_cast<int>(this->_m.dbPrDot * (i - 1)));
+    auto offset = this->_m.pad + this->_m.dotDist;
+    for (size_t i = 0; i < this->_m.nDots; i++) {
+      auto y        = i * this->_m.dotDist + offset;
+      std::string t = "- " + std::to_string(static_cast<int>(this->_m.dbPrDot * i));
       g.setColour(juce::Colours::white);
-      g.drawText(t, 0, y, 40, 10, juce::Justification::centredTop);
+      g.drawText(t, 0, y, 40, 10, juce::Justification::centred);
     }
   }
   void resized() override { repaint(); }
@@ -174,9 +160,6 @@ struct StereoMeter : public juce::Component {
     l.label = "L";
     r.label = "R";
   }
-  // TODO
-  void visibilityChanged() override { }
-  void lookAndFeelChanged() override { }
   void resized() override {
     this->drawGui();
     this->repaint();
@@ -191,8 +174,8 @@ struct StereoMeter : public juce::Component {
     area.setWidth(lArea.getWidth());
     r.setBounds(area);
   }
-  template <typename T>
-  void refresh(Stereo<T> val) {
+  template <typename signal_t>
+  void refresh(Stereo<signal_t> val) {
     this->l.refresh(val.l);
     this->r.refresh(val.r);
   }
@@ -210,8 +193,72 @@ struct StereoMeter : public juce::Component {
   }
 };
 
-class MeterArea {
-  // TODO
+struct MeterAreaInOutGr : public juce::Component {
+  StereoMeter in;
+  StereoMeter out;
+  StereoMeter gr;
+  MonoMeterDbScale scale;
+  MeterAreaInOutGr() : in("IN"), out("OUT"), gr("GR"), scale(in.l) {
+    this->gr.setInvert(true);
+    this->addAndMakeVisible(in);
+    this->addAndMakeVisible(out);
+    this->addAndMakeVisible(gr);
+    this->addAndMakeVisible(scale);
+  }
+  void setDecay(float a, float b) {
+    this->in.setDecay(a, b);
+    this->out.setDecay(a, b);
+    this->gr.setDecay(a, b);
+  }
+  void setPeakHold(float a, float b) {
+    this->in.setPeakHold(a, b);
+    this->out.setPeakHold(a, b);
+    this->gr.setPeakHold(a, b);
+  }
+  template <typename signal_t>
+  void refreshIn(Stereo<signal_t> val) {
+    this->in.refresh(val);
+  }
+  template <typename signal_t>
+  void refreshOut(Stereo<signal_t> val) {
+    this->out.refresh(val);
+  }
+  template <typename signal_t>
+  void refreshGr(Stereo<signal_t> val) {
+    this->gr.refresh(val);
+  }
+  template <typename signal_t>
+  void refresh(size_t idx, Stereo<signal_t> val) {
+    switch (idx) {
+    case 0:
+      this->in.refresh(val);
+      break;
+    case 1:
+      this->out.refresh(val);
+      break;
+    case 2:
+      this->gr.refresh(val);
+      break;
+    default:
+      break;
+    }
+  }
+  void resized() override {
+    this->drawGui();
+    this->repaint();
+  }
+  int size() noexcept { return 3; }
+  void drawGui() noexcept {
+    auto area       = this->getLocalBounds();
+    auto totalWidth = area.getWidth();
+    auto scaleWidth = totalWidth / 8;
+    auto meterWidth = scaleWidth * 2;
+    this->in.setBounds(area.removeFromLeft(meterWidth));
+    this->out.setBounds(area.removeFromLeft(meterWidth));
+    this->gr.setBounds(area.removeFromLeft(meterWidth));
+    area.removeFromTop(this->in.label.getHeight());
+    this->scale.setBounds(area);
+  }
 };
 
 } // namespace ntFX

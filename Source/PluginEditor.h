@@ -36,18 +36,16 @@ private:
   // This reference is provided as a quick way for your editor to
   // access the processor object that created it.
   NtCompressorAudioProcessor& audioProcessor;
-  std::array<NtFx::StereoMeter, 3> meters;
-  // std::array<NtFx::MonoMeter, 6> meters;
-  NtFx::MonoMeterDbScale meterScale;
+  NtFx::MeterAreaInOutGr meters;
   NtFx::KnobLookAndFeel knobLookAndFeel;
-
-  std::vector<std::string> meterLabelStrings = { "IN", "OUT", "GR" };
+  // std::vector<std::string> meterLabelStrings = { "IN", "OUT", "GR" };
 
   std::vector<juce::Slider*> allSliders;
   std::vector<juce::Label*> allSliderLabels;
   std::vector<juce::Slider*> allSmallSliders;
   std::vector<juce::Label*> allSmallSliderLabels;
-  std::vector<juce::Label*> allMeterLabels;
+  // std::vector<juce::Label*> allMeterLabels;
+  // TODO: allToggleLabels and on/off text for toggles.
   std::vector<juce::TextButton*> allToggles;
   std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>>
       allSliderAttachments;

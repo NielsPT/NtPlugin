@@ -8,8 +8,9 @@
 
 #pragma once
 
-#include "NtCompressorPlugin.h"
 #include <JuceHeader.h>
+
+#include "NtCompressorPlugin.h"
 //==============================================================================
 /**
  */

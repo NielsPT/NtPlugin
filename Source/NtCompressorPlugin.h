@@ -5,20 +5,20 @@
 #include <string>
 #include <vector>
 
+// #include "NtFx.h"
 #include "Stereo.h"
-
-#define _T(v) static_cast<T>(v)
 namespace NtFx {
+
 // TODO: general parameter class.
-template <typename T>
+template <typename signal_t>
 struct FloatParameterSpec {
-  T* p_val;
+  signal_t* p_val;
   std::string name;
   std::string suffix;
-  T minVal { 0.0 };
-  T maxVal { 1.0 };
-  T defaultVal { 0.5 };
-  T skew { 0.0 };
+  signal_t minVal { 0.0 };
+  signal_t maxVal { 1.0 };
+  signal_t defaultVal { 0.5 };
+  signal_t skew { 0.0 };
 };
 
 struct BoolParameterSpec {
@@ -33,9 +33,9 @@ constexpr bool checkNotFiniteEnabled = true;
 constexpr bool reportNotFiniteState  = false;
 
 namespace MeterIdx {
-  constexpr int x  = 0;
-  constexpr int y  = 1;
-  constexpr int gr = 2;
+  constexpr int in  = 0;
+  constexpr int out = 1;
+  constexpr int gr  = 2;
 
 }
 
@@ -55,53 +55,58 @@ enum ErrorVal {
 };
 
 // TODO: NtPlug baseclass?
-template <typename T>
+template <typename signal_t>
 struct CompressorPlugin {
 
   ErrorVal errorVal;
 
-  T thresh_db   = 0;
-  T ratio       = 2;
-  T knee_db     = 0;
-  T tAtt_ms     = 10;
-  T tRel_ms     = 100;
-  T tRms_ms     = 80;
-  T makeup_db   = 0;
-  T mix_percent = _T(100.0);
+  signal_t thresh_db   = 0;
+  signal_t ratio       = 2;
+  signal_t knee_db     = 0;
+  signal_t tAtt_ms     = 10;
+  signal_t tRel_ms     = 100;
+  signal_t tRms_ms     = 80;
+  signal_t makeup_db   = 0;
+  signal_t mix_percent = SIGNAL(100.0);
 
   bool bypassEnable   = false;
   bool linEnable      = false;
   bool rmsEnable      = false;
   bool feedbackEnable = false;
 
-  T tPeak      = _T(20.0);
-  T alphaAtt   = _T(0.0);
-  T alphaRel   = _T(0.0);
-  T alphaPeak  = _T(0.0);
-  T thresh_lin = _T(1.0);
-  T makeup_lin = _T(1.0);
-  T knee_lin   = _T(1.0);
-  T ratio_lin  = _T(1.0);
-  T mix_lin    = _T(1.0);
+  signal_t tPeak      = SIGNAL(20.0);
+  signal_t alphaAtt   = SIGNAL(0.0);
+  signal_t alphaRel   = SIGNAL(0.0);
+  signal_t alphaPeak  = SIGNAL(0.0);
+  signal_t thresh_lin = SIGNAL(1.0);
+  signal_t makeup_lin = SIGNAL(1.0);
+  signal_t knee_lin   = SIGNAL(1.0);
+  signal_t ratio_lin  = SIGNAL(1.0);
+  signal_t mix_lin    = SIGNAL(1.0);
 
-  T fbState  = _T(0.0);
-  T grState  = _T(0.0);
-  T rmsAccum = _T(0.0);
+  signal_t fbState  = SIGNAL(0.0);
+  signal_t grState  = SIGNAL(0.0);
+  signal_t rmsAccum = SIGNAL(0.0);
 
-  std::array<Stereo<T>, 3> peakLevels;
-  // T peakIn  = _T(0.0);
-  // T peakGr  = _T(0.0);
-  // T peakOut = _T(0.0);
+  std::array<Stereo<signal_t>, 3> peakLevels;
+  // T peakIn  = SIGNAL(0.0);
+  // T peakGr  = SIGNAL(0.0);
+  // T peakOut = SIGNAL(0.0);
 
   int nRms = 441;
   int iRms = 0;
   int fs   = 44100;
 
-  std::array<T, 2> scState;
-  std::array<T, 3> softClipCoeffs;
-  std::array<T, rmsDelayLineLength> rmsDelayLine;
+  std::array<signal_t, 2> scState;
+  std::array<signal_t, 3> softClipCoeffs;
+  std::array<signal_t, rmsDelayLineLength> rmsDelayLine;
+  NtFx::SideChain_db sideChainL_db;
+  NtFx::SideChain_db sideChainR_db;
+  NtFx::SideChain_lin sideChainL_lin;
+  NtFx::SideChain_lin sideChainR_lin;
+  std::vector<NtFx::SideChain*> allSideChains;
 
-  std::vector<FloatParameterSpec<T>> floatParameters {
+  std::vector<FloatParameterSpec<signal_t>> floatParameters {
     {
         .p_val      = &this->thresh_db,
         .name       = "Threshold",
@@ -145,17 +150,9 @@ struct CompressorPlugin {
         .maxVal     = 24.0,
         .defaultVal = 0.0,
     },
-    // {
-    //     .p_val      = &this->mix_percent,
-    //     .name       = "Mix",
-    //     .suffix     = " %",
-    //     .minVal     = 0.0,
-    //     .maxVal     = 100.0,
-    //     .defaultVal = 100.0,
-    // },
   };
 
-  std::vector<FloatParameterSpec<T>> floatParametersSmall = {
+  std::vector<FloatParameterSpec<signal_t>> floatParametersSmall = {
     {
         .p_val      = &this->knee_db,
         .name       = "Knee",
@@ -202,22 +199,28 @@ struct CompressorPlugin {
     },
   };
 
-  // CompressorPlugin() { this->reset(); }
+  CompressorPlugin() {
+    this->allSideChains.push_back(&this->sideChainL_db);
+    this->allSideChains.push_back(&this->sideChainR_db);
+    this->allSideChains.push_back(&this->sideChainL_lin);
+    this->allSideChains.push_back(&this->sideChainR_lin);
+    this->softClipCoeffs = calculateSoftClipCoeffs<2>();
+  }
 
-  NTFX_INLINE_MEMBER Stereo<T> processSample(Stereo<T> x) noexcept {
-    this->updatePeakLevel(x, MeterIdx::x);
+  NTFX_INLINE_MEMBER Stereo<signal_t> processSample(Stereo<signal_t> x) noexcept {
+    this->updatePeakLevel(x, MeterIdx::in);
     if (this->bypassEnable) {
-      this->updatePeakLevel(x, MeterIdx::y);
+      this->updatePeakLevel(x, MeterIdx::out);
       return x;
     }
     // TODO: isfinite in Stereo
     checkNotFinite(x.l, ErrorVal::e_x);
     checkNotFinite(x.r, ErrorVal::e_x);
     checkNotFinite(this->fbState, ErrorVal::e_fbState);
-    T x_sc = this->fbState;
+    signal_t x_sc = this->fbState;
     if (!this->feedbackEnable) { x_sc = x.absMax(); }
 
-    T gr;
+    signal_t gr;
     if (this->linEnable) {
       gr = linSideChain(x_sc);
     } else {
@@ -229,40 +232,40 @@ struct CompressorPlugin {
     // TODO: separate gr meter?
     this->updatePeakLevel(gr, MeterIdx::gr, true);
     checkNotFinite(gr, ErrorVal::e_gr, 1);
-    Stereo<T> yComp = x * gr;
-    this->fbState   = yComp.absMax();
-    auto ySoftClip  = softClip5thStereo(yComp * this->makeup_lin);
-    this->updatePeakLevel(ySoftClip, MeterIdx::y);
+    Stereo<signal_t> yComp = x * gr;
+    this->fbState          = yComp.absMax();
+    auto ySoftClip         = softClip5thStereo(yComp * this->makeup_lin);
+    this->updatePeakLevel(ySoftClip, MeterIdx::out);
     auto y = this->mix_lin * ySoftClip + (1 - this->mix_lin) * x;
     return y;
   }
 
   NTFX_INLINE_MEMBER void updatePeakLevel(
-      Stereo<T> val, size_t idx, bool invert = false) noexcept {
+      Stereo<signal_t> val, size_t idx, bool invert = false) noexcept {
     if ((!invert && val > this->peakLevels[idx])
         || (invert && val < this->peakLevels[idx])) {
       this->peakLevels[idx] = val;
     }
   }
 
-  NTFX_INLINE_MEMBER T linSideChain(T x) noexcept {
-    T ySensLast   = this->scState[0];
-    T yFilterLast = this->scState[1];
+  NTFX_INLINE_MEMBER signal_t linSideChain(signal_t x) noexcept {
+    signal_t ySensLast   = this->scState[0];
+    signal_t yFilterLast = this->scState[1];
     checkNotFinite(ySensLast, ErrorVal::e_ySensLast);
     checkNotFinite(yFilterLast, ErrorVal::e_yFilterLast);
 
-    T xAbs;
+    signal_t xAbs;
     if (this->rmsEnable) {
       xAbs = rmsSensor(x);
     } else {
       xAbs = std::abs(x);
     }
 
-    T sensRelease = this->alphaPeak * ySensLast + (1 - this->alphaPeak) * xAbs;
-    T ySens       = std::max(xAbs, sensRelease);
-    ySensLast     = ySens;
+    signal_t sensRelease = this->alphaPeak * ySensLast + (1 - this->alphaPeak) * xAbs;
+    signal_t ySens       = std::max(xAbs, sensRelease);
+    ySensLast            = ySens;
 
-    T target = 0;
+    signal_t target = 0;
     if (ySens < this->thresh_lin / this->knee_lin) {
       target = 0;
     } else if (ySens < this->thresh_lin) {
@@ -274,50 +277,50 @@ struct CompressorPlugin {
       target = (ySens / this->thresh_lin) * this->ratio_lin;
     }
 
-    T alpha = this->alphaRel;
+    signal_t alpha = this->alphaRel;
     if (target > yFilterLast) { alpha = this->alphaAtt; }
 
-    T yFilter        = yFilterLast * alpha + target * (1 - alpha);
+    signal_t yFilter = yFilterLast * alpha + target * (1 - alpha);
     yFilterLast      = yFilter;
     this->scState[0] = ySensLast;
     this->scState[1] = yFilterLast;
     return 1.0 / (yFilter + 1);
   }
 
-  NTFX_INLINE_MEMBER T dbSideChain(T x) noexcept {
-    T ySensLast   = this->scState[0];
-    T yFilterLast = this->scState[1];
+  NTFX_INLINE_MEMBER signal_t dbSideChain(signal_t x) noexcept {
+    signal_t ySensLast   = this->scState[0];
+    signal_t yFilterLast = this->scState[1];
     checkNotFinite(ySensLast, ErrorVal::e_ySensLast);
     checkNotFinite(yFilterLast, ErrorVal::e_yFilterLast);
 
-    T xAbs;
+    signal_t xAbs;
     if (this->rmsEnable) {
       xAbs = rmsSensor(x);
     } else {
       xAbs = std::abs(x);
     }
 
-    T sensRelease = this->alphaPeak * ySensLast + (1 - this->alphaPeak) * xAbs;
-    T ySens       = std::max(xAbs, sensRelease);
-    ySensLast     = ySens;
+    signal_t sensRelease = this->alphaPeak * ySensLast + (1 - this->alphaPeak) * xAbs;
+    signal_t ySens       = std::max(xAbs, sensRelease);
+    ySensLast            = ySens;
 
-    T x_db = db(ySens);
-    T y_db;
+    signal_t x_db = db(ySens);
+    signal_t y_db;
     if ((x_db - this->thresh_db) > (this->knee_db / 2)) {
       y_db = this->thresh_db + (x_db - this->thresh_db) / this->ratio;
     } else if ((x_db - this->thresh_db) < -(this->knee_db / 2)) {
       y_db = x_db;
     } else {
-      T tmp = (x_db - this->thresh_db + this->knee_db / 2);
-      y_db  = x_db + (1 / this->ratio - 1) * tmp * tmp / (2 * this->knee_db);
+      signal_t tmp = (x_db - this->thresh_db + this->knee_db / 2);
+      y_db         = x_db + (1 / this->ratio - 1) * tmp * tmp / (2 * this->knee_db);
     }
 
-    T target = x_db - y_db;
+    signal_t target = x_db - y_db;
 
-    T alpha = this->alphaRel;
+    signal_t alpha = this->alphaRel;
     if (target > yFilterLast) { alpha = this->alphaAtt; }
 
-    T yFilter        = yFilterLast * alpha + target * (1 - alpha);
+    signal_t yFilter = yFilterLast * alpha + target * (1 - alpha);
     yFilterLast      = yFilter;
     this->scState[0] = ySensLast;
     this->scState[1] = yFilterLast;
@@ -335,73 +338,58 @@ struct CompressorPlugin {
     double oneOverSqrt2 = 1.0 / std::sqrt(2.0);
     this->ratio_lin     = (1.0 - 1.0 / this->ratio)
         * (oneOverSqrt2 - std::pow(oneOverSqrt2 - (this->ratio - 3.0) / 18.0, 5.0));
-    this->nRms           = std::floor(this->tRms_ms * this->fs * 0.001);
-    this->softClipCoeffs = calculateSoftClipCoeffs<2>();
-    this->mix_lin        = this->mix_percent / 100.0;
+    this->nRms    = std::floor(this->tRms_ms * this->fs * 0.001);
+    this->mix_lin = this->mix_percent / 100.0;
   }
 
   NTFX_INLINE_MEMBER void reset() noexcept {
-    std::fill(this->scState.begin(), this->scState.end(), _T(0));
-    std::fill(this->rmsDelayLine.begin(), this->rmsDelayLine.end(), _T(0));
-    std::fill(this->peakLevels.begin(), this->peakLevels.end(), _T(0));
-    this->rmsAccum = _T(0);
-    this->fbState  = _T(0);
-    // this->peakIn   = _T(0);
-    this->peakLevels[1] = _T(1);
-    // this->peakOut  = _T(0);
+    std::fill(this->scState.begin(), this->scState.end(), SIGNAL(0));
+    std::fill(this->rmsDelayLine.begin(), this->rmsDelayLine.end(), SIGNAL(0));
+    std::fill(this->peakLevels.begin(), this->peakLevels.end(), SIGNAL(0));
+    this->rmsAccum = SIGNAL(0);
+    this->fbState  = SIGNAL(0);
+    // this->peakIn   = SIGNAL(0);
+    this->peakLevels[MeterIdx::gr] = SIGNAL(1);
+    // this->peakOut  = SIGNAL(0);
   }
 
-  NTFX_INLINE_MEMBER T rmsSensor(T x) noexcept {
-    if (checkNotFiniteEnabled && this->nRms < 1) {
-      this->errorVal = ErrorVal::e_nRms;
-      return 0;
-    }
-    if (checkNotFiniteEnabled && this->iRms < 0) {
-      this->errorVal = ErrorVal::e_iRms;
-      return 0;
-    }
-
-    T _x = x * x;
+  NTFX_INLINE_MEMBER signal_t rmsSensor(signal_t x) noexcept {
+    signal_t _x = x * x;
     this->rmsAccum += _x - this->rmsDelayLine[this->iRms];
     this->rmsDelayLine[this->iRms] = _x;
     this->iRms++;
     if (this->iRms >= this->nRms) { this->iRms = 0; }
     if (checkNotFiniteEnabled && this->rmsAccum < 0) {
-      this->errorVal = ErrorVal::e_rmsAccum;
+      this->errorVal = ErrorVal::;
       return 0;
     }
-    T y = std::sqrt(2.0 * this->rmsAccum / this->nRms);
+    signal_t y = std::sqrt(2.0 * this->rmsAccum / this->nRms);
     checkNotFinite(y, ErrorVal::e_rmsSensor);
     return y;
   }
 
-  NTFX_INLINE_MEMBER Stereo<T> softClip5thStereo(Stereo<T> x) noexcept {
+  NTFX_INLINE_MEMBER Stereo<signal_t> softClip5thStereo(Stereo<signal_t> x) noexcept {
     return { softClip5thMono(x.l), softClip5thMono(x.r) };
   }
 
-  NTFX_INLINE_MEMBER T softClip5thMono(T x) noexcept {
-    T x_ = x / this->softClipCoeffs[0];
-    if (x_ > 1.0) { return _T(1.0); }
-    if (x_ < -1.0) { return _T(-1.0); }
+  NTFX_INLINE_MEMBER signal_t softClip5thMono(signal_t x) noexcept {
+    signal_t x_ = x / this->softClipCoeffs[0];
+    if (x_ > 1.0) { return SIGNAL(1.0); }
+    if (x_ < -1.0) { return SIGNAL(-1.0); }
     return this->softClipCoeffs[0] * x_
         + this->softClipCoeffs[1] * x_ * x_ * x_
         + this->softClipCoeffs[2] * x_ * x_ * x_ * x_ * x_;
   }
 
-  NTFX_INLINE_STATIC T db(T x) noexcept {
-    // if (optimizeDb) { return _T(20.0) * log10Opt(x); }
-    return _T(20.0) * std::log10(x);
-  }
-
-  NTFX_INLINE_STATIC T invDb(T x) noexcept {
-    // if (optimizeDb) { return pow10Opt(x * _T(0.05)); }
-    return std::pow(_T(10.0), x * _T(0.05));
+  NTFX_INLINE_STATIC signal_t invDb(signal_t x) noexcept {
+    // if (optimizeDb) { return pow10Opt(x * SIGNAL(0.05)); }
+    return std::pow(SIGNAL(10.0), x * SIGNAL(0.05));
   }
 
   template <size_t N>
-  NTFX_INLINE_STATIC std::array<T, N + 1> calculateSoftClipCoeffs() noexcept {
+  NTFX_INLINE_STATIC std::array<signal_t, N + 1> calculateSoftClipCoeffs() noexcept {
     // order = 2 * N + 1
-    std::array<T, N + 1> a_n;
+    std::array<signal_t, N + 1> a_n;
     for (int n = 0; n < N + 1; n++) {
       a_n[n] = (std::pow(-1, n)
           * std::tgamma((2 * N + 1) + 1)
@@ -415,7 +403,7 @@ struct CompressorPlugin {
   }
 
   NTFX_INLINE_MEMBER bool checkNotFinite(
-      T& p_val, ErrorVal var, T def = _T(0)) noexcept {
+      signal_t& p_val, ErrorVal var, signal_t def = SIGNAL(0)) noexcept {
     if (!checkNotFiniteEnabled) { return true; }
     if (p_val == p_val) { return true; } // Float hack.
     p_val = def;
@@ -425,7 +413,7 @@ struct CompressorPlugin {
   }
 
   NTFX_INLINE_MEMBER bool checkNotFinite(
-      Stereo<T>& p_val, ErrorVal var, T def = _T(0)) noexcept {
+      Stereo<signal_t>& p_val, ErrorVal var, signal_t def = SIGNAL(0)) noexcept {
     return this->checkNotFinite(p_val.l, var, def)
         && this->checkNotFinite(p_val.r, var, def);
   }
@@ -436,11 +424,11 @@ struct CompressorPlugin {
     return tmp;
   }
 
-  Stereo<T> getAndResetPeakLevel(size_t idx) noexcept {
-    Stereo<T> tmp = this->peakLevels[idx];
-    int def       = static_cast<int>(idx == MeterIdx::gr);
+  Stereo<signal_t> getAndResetPeakLevel(size_t idx) noexcept {
+    Stereo<signal_t> tmp = this->peakLevels[idx];
+    int def              = static_cast<int>(idx == MeterIdx::gr);
     checkNotFinite(tmp, e_meter, def);
-    this->peakLevels[idx] = _T(def);
+    this->peakLevels[idx] = SIGNAL(def);
     return tmp;
   }
 
@@ -451,7 +439,7 @@ struct CompressorPlugin {
     return nullptr;
   }
 
-  T* getFloatValByName(std::string name) {
+  signal_t* getFloatValByName(std::string name) {
     for (auto param : this->floatParameters) {
       if (param.name == name) { return param.p_val; }
     }
@@ -464,87 +452,87 @@ struct CompressorPlugin {
   // T getAndResetPeakIn() noexcept {
   //   T tmp = this->peakIn;
   //   checkNotFinite(tmp, e_meterIn);
-  //   this->peakIn = _T(0);
+  //   this->peakIn = SIGNAL(0);
   //   return tmp;
   // }
 
   // T getAndResetPeakGr() noexcept {
   //   T tmp = this->peakGr;
   //   checkNotFinite(tmp, e_meterGr);
-  //   this->peakGr = _T(0);
+  //   this->peakGr = SIGNAL(0);
   //   return tmp;
   // }
 
   // T getAndResetPeakOut() noexcept {
   //   T tmp = this->peakOut;
   //   checkNotFinite(tmp, e_meterOut);
-  //   this->peakOut = _T(0);
+  //   this->peakOut = SIGNAL(0);
   //   return tmp;
   // }
 
   // NTFX_INLINE_STATIC T log10Opt(T x) noexcept {
-  //   if (x < _T(1e-4)) { return -4; }
-  //   if (x < _T(1e-3)) { return log10Taylor(x * _T(1e3)); }
-  //   if (x < _T(1e-2)) { return log10Taylor(x * _T(1e2)); }
-  //   if (x < _T(1e-1)) { return log10Taylor(x * _T(1e1)); }
+  //   if (x < SIGNAL(1e-4)) { return -4; }
+  //   if (x < SIGNAL(1e-3)) { return log10Taylor(x * SIGNAL(1e3)); }
+  //   if (x < SIGNAL(1e-2)) { return log10Taylor(x * SIGNAL(1e2)); }
+  //   if (x < SIGNAL(1e-1)) { return log10Taylor(x * SIGNAL(1e1)); }
   //   return log10Taylor(x);
   // }
 
   // NTFX_INLINE_STATIC T log10Taylor(T x) noexcept {
   //   if (x < 0.2) {
-  //     T n = _T(0.325443314844276);
+  //     T n = SIGNAL(0.325443314844276);
   //     return x * 10 * n - 1 - n;
   //   }
   //   T x_    = x - 1;
   //   T mult  = x_ * x_;
-  //   T accum = x_ - mult * _T(1 / 2);
+  //   T accum = x_ - mult * SIGNAL(1 / 2);
   //   mult *= x_;
-  //   accum += mult * _T(1 / 3);
+  //   accum += mult * SIGNAL(1 / 3);
   //   mult *= x_;
-  //   accum -= mult * _T(1 / 4);
+  //   accum -= mult * SIGNAL(1 / 4);
   //   mult *= x_;
-  //   accum += mult * _T(1 / 5);
+  //   accum += mult * SIGNAL(1 / 5);
   //   mult *= x_;
-  //   accum -= mult * _T(1 / 6);
+  //   accum -= mult * SIGNAL(1 / 6);
   //   mult *= x_;
-  //   accum += mult * _T(1 / 7);
+  //   accum += mult * SIGNAL(1 / 7);
   //   mult *= x_;
-  //   accum -= mult * _T(1 / 8);
-  //   return accum * _T(0.434294481903252);
+  //   accum -= mult * SIGNAL(1 / 8);
+  //   return accum * SIGNAL(0.434294481903252);
   // }
 
   // NTFX_INLINE_STATIC T pow10Opt(T x) noexcept {
   //   if (x < -4) { return 0; }
-  //   if (x < -3) { return pow10Taylor(x + 3) * _T(0.001); }
-  //   if (x < -2) { return pow10Taylor(x + 2) * _T(0.01); }
-  //   if (x < -1) { return pow10Taylor(x + 1) * _T(0.1); }
+  //   if (x < -3) { return pow10Taylor(x + 3) * SIGNAL(0.001); }
+  //   if (x < -2) { return pow10Taylor(x + 2) * SIGNAL(0.01); }
+  //   if (x < -1) { return pow10Taylor(x + 1) * SIGNAL(0.1); }
   //   return pow10Taylor(x);
   // }
 
   // NTFX_INLINE_STATIC T pow10Taylor(T x) noexcept {
-  //   T x_    = -x * _T(2.302585092994046);
+  //   T x_    = -x * SIGNAL(2.302585092994046);
   //   T mult  = x_ * x_;
-  //   T accum = mult * _T(0.5);
+  //   T accum = mult * SIGNAL(0.5);
   //   mult *= x_;
-  //   accum -= mult * _T(0.166666666666667);
+  //   accum -= mult * SIGNAL(0.166666666666667);
   //   mult *= x_;
-  //   accum += mult * _T(0.041666666666667);
+  //   accum += mult * SIGNAL(0.041666666666667);
   //   mult *= x_;
-  //   accum -= mult * _T(0.008333333333333);
+  //   accum -= mult * SIGNAL(0.008333333333333);
   //   mult *= x_;
-  //   accum += mult * _T(0.001388888888889);
+  //   accum += mult * SIGNAL(0.001388888888889);
   //   mult *= x_;
-  //   accum -= mult * _T(1.984126984126984e-04);
+  //   accum -= mult * SIGNAL(1.984126984126984e-04);
   //   mult *= x_;
-  //   accum += mult * _T(2.480158730158730e-05);
+  //   accum += mult * SIGNAL(2.480158730158730e-05);
   //   mult *= x_;
-  //   accum -= mult * _T(2.755731922398589e-06);
+  //   accum -= mult * SIGNAL(2.755731922398589e-06);
   //   mult *= x_;
-  //   accum += mult * _T(2.755731922398589e-07);
+  //   accum += mult * SIGNAL(2.755731922398589e-07);
   //   mult *= x_;
-  //   accum -= mult * _T(2.505210838544172e-08);
+  //   accum -= mult * SIGNAL(2.505210838544172e-08);
   //   mult *= x_;
-  //   accum += mult * _T(2.087675698786810e-09);
+  //   accum += mult * SIGNAL(2.087675698786810e-09);
   //   return 1 - x_ * accum;
   // }
 };
