@@ -30,6 +30,7 @@ struct MonoMeter : public juce::Component {
   ~MonoMeter() = default;
 
   void paint(juce::Graphics& g) override {
+    // TODO: isInitialized.
     // TODO: stop if nothings changed.
     int y = this->pad;
     g.setColour(juce::Colours::white);
@@ -45,7 +46,7 @@ struct MonoMeter : public juce::Component {
       g.setColour(juce::Colours::white);
       g.drawEllipse(this->pad, y, this->dotWidth, this->dotWidth, 1);
       float fillPad  = this->getWidth() * 4.0 / 35.0;
-      float fillSize = this->dotWidth - fillPad; // 15 - 4
+      float fillSize = this->dotWidth - fillPad;
       float fillX    = this->pad + fillPad / 2;
       float fillY    = y + fillPad / 2;
       if ((!this->invert && i > this->nDots - this->nActiveDots)
@@ -66,6 +67,7 @@ struct MonoMeter : public juce::Component {
     if (this->peakLast_db != this->peakLast_db) { this->peakLast_db = this->maxVal_db; }
     this->dbPrDot = (this->maxVal_db - this->minVal_db) / this->nDots;
     float peak_db = 20 * std::log10(this->peakVal_lin);
+    if (this->peakVal_lin <= 0) { peak_db = -100; }
     if (this->invert) {
       if (peak_db > this->peakLast_db) {
         peak_db = this->peakLast_db + this->decayRate_db;

@@ -209,7 +209,6 @@ void NtCompressorAudioProcessorEditor::timerCallback() {
     this->meters.refresh(i, this->audioProcessor.plug.getAndResetPeakLevel(i));
   }
 
-  if (!NtFx::reportNotFiniteState) { return; }
   if (this->popupIsDisplayed) {
     if (this->audioProcessor.plug.getAndResetErrorVal() == NtFx::ErrorVal::e_none) {
       this->popupIsDisplayed = false;
@@ -262,9 +261,11 @@ void NtCompressorAudioProcessorEditor::timerCallback() {
 }
 
 void NtCompressorAudioProcessorEditor::displayErrorValPopup(std::string message) {
+  this->popupIsDisplayed = true;
+  DBG("NaN in " + message);
+  if (!NtFx::reportNotFiniteState) { return; }
   juce::NativeMessageBox::showMessageBoxAsync(
       juce::MessageBoxIconType::WarningIcon, "Nonefinite Value", message);
-  this->popupIsDisplayed = true;
 }
 
 void NtCompressorAudioProcessorEditor::sliderValueChanged(juce::Slider* p_slider) {
