@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch AudioPluginHost",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/JUCE/extras/AudioPluginHost/AudioPluginHost_artefacts/AudioPluginHost.app/Contents/MacOS/AudioPluginHost",
+      "cwd": "${workspaceFolder}",
+      "MIMode": "lldb",
+      "preLaunchTask": "CMake: build"
+    },
+    {
+      "name": "Reaper",
+      "type": "cppdbg",
+      "cwd": "${workspaceFolder}",
+      "request": "launch",
+      "program": "/Applications/REAPER.app/Contents/MacOS/REAPER",
+      "internalConsoleOptions": "openOnSessionStart",
+      "MIMode": "lldb",
+      "preLaunchTask": "CMake: build"
+    },
+  ]
+}
