@@ -23,9 +23,9 @@ project(NTFX_COMPRESSOR_1 VERSION 0.1.0)
 # included JUCE directly in your source tree (perhaps as a submodule), you'll need to tell CMake to
 # include that subdirectory as part of the build.
 
-find_package(JUCE CONFIG REQUIRED)        # If you've installed JUCE to your system
+# find_package(JUCE CONFIG REQUIRED)        # If you've installed JUCE to your system
 # or
-# add_subdirectory(JUCE)                    # If you've put JUCE in a subdirectory called JUCE
+add_subdirectory(JUCE)                    # If you've put JUCE in a subdirectory called JUCE
 
 # If you are building a VST2 or AAX plugin, CMake needs to be told where to find these SDKs on your
 # system. This setup should be done before calling `juce_add_plugin`.
@@ -42,6 +42,7 @@ juce_set_aax_sdk_path(/Users/niels/aax-sdk-2-9-0)
 # the formats specified by the FORMATS arguments. This function accepts many optional arguments.
 # Check the readme at `docs/CMake API.md` in the JUCE repo for the full list.
 
+# TODO: Icon
 juce_add_plugin(${NT_PROJECT_NAME}
     # VERSION ...                               # Set this if the plugin version is different to the project version
     # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone

@@ -229,9 +229,6 @@ struct CompressorPlugin {
       gr = sideChainL_db.processSample(x_sc);
     }
     this->grState = gr;
-    // TODO: separate gr for left and right/link option
-    // TODO: Method for this meter thing. Takes a Stereo?
-    // TODO: separate gr meter?
     this->updatePeakLevel(gr, MeterIdx::gr, true);
     checkNotFinite(gr, ErrorVal::e_gr, 1);
     Stereo<signal_t> yComp = x * gr;
@@ -379,7 +376,8 @@ struct CompressorPlugin {
     }
   }
 
-  NTFX_INLINE_MEMBER void reset() noexcept {
+  NTFX_INLINE_MEMBER void reset(int fs) noexcept {
+    this->fs = fs;
     // std::fill(this->scState.begin(), this->scState.end(), SIGNAL(0));
     // std::fill(this->rmsDelayLine.begin(), this->rmsDelayLine.end(), SIGNAL(0));
     std::fill(this->peakLevels.begin(), this->peakLevels.end(), SIGNAL(0));
@@ -388,6 +386,10 @@ struct CompressorPlugin {
     // this->peakIn   = SIGNAL(0);
     this->peakLevels[MeterIdx::gr] = SIGNAL(1);
     // this->peakOut  = SIGNAL(0);
+    for (size_t i = 0; i < this->allSideChains.size(); i++) {
+      this->allSideChains[i].reset(fs);
+    }
+    this->update();
   }
 
   // NTFX_INLINE_MEMBER signal_t rmsSensor(signal_t x) noexcept {
@@ -442,9 +444,8 @@ struct CompressorPlugin {
   NTFX_INLINE_MEMBER bool checkNotFinite(
       signal_t& p_val, ErrorVal var, signal_t def = SIGNAL(0)) noexcept {
     if (!checkNotFiniteEnabled) { return true; }
-    if (p_val == p_val) { return true; } // Float hack.
-    p_val = def;
-    // reset();
+    if (p_val == p_val) { return true; }
+    p_val          = def;
     this->errorVal = var;
     return false;
   }

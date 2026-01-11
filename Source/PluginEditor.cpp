@@ -15,10 +15,6 @@
 NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
     NtCompressorAudioProcessor& p)
     : AudioProcessorEditor(&p), audioProcessor(p) {
-  // : AudioProcessorEditor(&p), audioProcessor(p), meterScale(meters[0]) {
-  // : AudioProcessorEditor(&p), audioProcessor(p), meterScale(meters[0].l),
-  //   meters { std::string("IN"), std::string("OUT"), std::string("GR") } {
-
   this->getLookAndFeel().setColour(
       juce::TextButton::ColourIds::buttonColourId, juce::Colours::black);
   this->getLookAndFeel().setColour(
@@ -43,10 +39,6 @@ NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
     this->allToggles.emplace_back(new juce::TextButton(name));
   }
 
-  // for (size_t i = 0; i < this->meterLabelStrings.size(); i++) {
-  //   this->allMeterLabels.emplace_back(new juce::Label(this->meterLabelStrings[i]));
-  // }
-
   this->allSliderAttachments.reserve(this->allSliders.size());
   for (size_t i = 0; i < this->allSliders.size(); i++) {
     this->initSlider(&this->audioProcessor.plug.floatParameters[i],
@@ -65,12 +57,6 @@ NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
     this->initToggle(&this->audioProcessor.plug.boolParameters[i], this->allToggles[i]);
   }
 
-  // for (size_t i = 0; i < this->allMeterLabels.size(); i++) {
-  //   this->addAndMakeVisible(*this->allMeterLabels[i]);
-  //   this->allMeterLabels[i]->setText(
-  //       this->meterLabelStrings[i], juce::NotificationType::dontSendNotification);
-  // }
-
   // TODO: GuiSpec in plug. Contains size, maxrows, etc.
 
   int nRows, nCols;
@@ -80,13 +66,6 @@ NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
   if (this->audioProcessor.plug.floatParametersSmall.size() != 0) { height += 150; }
   if (this->audioProcessor.plug.boolParameters.size() != 0) { height += 75; }
   this->setSize(1000, height);
-
-  // for (size_t i = 0; i < this->meters.size(); i++) {
-  //   this->addAndMakeVisible(this->meters[i]);
-  //   this->meters[i].setDecay(1, meterRefreshRate_hz);
-  //   this->meters[i].setPeakHold(2, meterRefreshRate_hz);
-  // }
-  // this->meters[2].setInvert(true);
   this->addAndMakeVisible(this->meters);
   int meterRefreshRate_hz = 20;
   this->meters.setDecay(1, meterRefreshRate_hz);
@@ -199,14 +178,12 @@ void NtCompressorAudioProcessorEditor::drawGui() {
   size_t rowHeight   = knobsArea.getHeight() / nRows;
   for (size_t i = 0; i < nRows; i++) {
     auto rowArea = knobsArea.removeFromTop(rowHeight);
-    // this->borderedAreas.push_back(rowArea);
     rowArea.removeFromTop(pad);
     rowArea.removeFromBottom(pad);
     for (size_t j = 0; j < nColumns; j++) {
       if (iSlider >= nSliders) { break; }
       auto sliderArea = rowArea.removeFromLeft(columnWidth);
-      // this->borderedAreas.push_back(sliderArea);
-      auto labelArea = sliderArea.removeFromTop(this->entryHeight);
+      auto labelArea  = sliderArea.removeFromTop(this->entryHeight);
       this->allSliders[iSlider]->setBounds(sliderArea);
       iSlider++;
     }

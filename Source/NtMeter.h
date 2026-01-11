@@ -7,7 +7,6 @@
 #include "Stereo.h"
 
 namespace NtFx {
-
 struct MonoMeter : public juce::Component {
   float minVal_db        = -45;
   float maxVal_db        = 0;
@@ -110,9 +109,6 @@ struct MonoMeter : public juce::Component {
     this->peakVal_lin = level;
     this->refresh();
   }
-
-  // int getWidth() { return this->pad + this->padRight + this->dotWidth; }
-  // int getWidth() {retrun 35;}
 
   void setDecay(float tDecay_s, float refreshRate_hz) {
     float dbPerSecond  = (this->maxVal_db - this->minVal_db) / tDecay_s;
@@ -260,5 +256,4 @@ struct MeterAreaInOutGr : public juce::Component {
     this->scale.setBounds(area);
   }
 };
-
 } // namespace ntFX

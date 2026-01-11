@@ -64,11 +64,7 @@ bool NtCompressorAudioProcessor::isMidiEffect() const {
 
 double NtCompressorAudioProcessor::getTailLengthSeconds() const { return 0.0; }
 
-int NtCompressorAudioProcessor::getNumPrograms() {
-  return 1; // NB: some hosts don't cope very well if you tell them there are 0
-            // programs, so this should be at least 1, even if you're not really
-            // implementing programs.
-}
+int NtCompressorAudioProcessor::getNumPrograms() { return 1; }
 
 int NtCompressorAudioProcessor::getCurrentProgram() { return 0; }
 
@@ -81,20 +77,12 @@ void NtCompressorAudioProcessor::changeProgramName(
 
 //==============================================================================
 void NtCompressorAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
-  // Use this method as the place to do any pre-playback
-  // initialisation that you need..
-  plug.fs = sampleRate;
   plug.update();
-  plug.reset();
-  // juce::NativeMessageBox::showMessageBoxAsync(
-  //     juce::MessageBoxIconType::InfoIcon, "Function called", "prepareToPlay");
+  plug.reset(sampleRate);
 }
 
 juce::AudioChannelSet m_outputFormat;
-void NtCompressorAudioProcessor::releaseResources() {
-  // When playback stops, you can use this as an opportunity to free up any
-  // spare memory, etc.
-}
+void NtCompressorAudioProcessor::releaseResources() { }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
 bool NtCompressorAudioProcessor::isBusesLayoutSupported(
@@ -103,15 +91,9 @@ bool NtCompressorAudioProcessor::isBusesLayoutSupported(
   juce::ignoreUnused(layouts);
   return true;
   #else
-  // This is the place where you check if the layout is supported.
-  // In this template code we only support mono or stereo.
-  // Some plugin hosts, such as certain GarageBand versions, will only
-  // load plugins that support stereo bus layouts.
   if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
       && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
     return false;
-
-    // This checks if the input layout matches the output layout
     #if !JucePlugin_IsSynth
   if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
     return false;
@@ -127,13 +109,6 @@ void NtCompressorAudioProcessor::processBlock(
   juce::ScopedNoDenormals noDenormals;
   auto totalNumInputChannels  = getTotalNumInputChannels();
   auto totalNumOutputChannels = getTotalNumOutputChannels();
-
-  // In case we have more outputs than inputs, this code clears any output
-  // channels that didn't contain input data, (because these aren't
-  // guaranteed to be empty - they may contain garbage).
-  // This is here to avoid people getting screaming feedback
-  // when they first compile a plugin, but obviously you don't need to keep
-  // this code if your algorithm always overwrites all the output channels.
   for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i) {
     buffer.clear(i, 0, buffer.getNumSamples());
   }
@@ -145,10 +120,6 @@ void NtCompressorAudioProcessor::processBlock(
     auto y          = plug.processSample(x);
     leftBuffer[i]   = y.l;
     rightBuffer[i]  = y.r;
-  }
-
-  for (int channel = 0; channel < totalNumInputChannels; ++channel) {
-    setPeakLevel(channel, buffer.getMagnitude(channel, 0, buffer.getNumSamples()));
   }
 }
 
@@ -175,21 +146,6 @@ void NtCompressorAudioProcessor::setStateInformation(
     if (xmlState->hasTagName(parameters.state.getType()))
       parameters.replaceState(juce::ValueTree::fromXml(*xmlState));
 }
-
-void NtCompressorAudioProcessor::setPeakLevel(int channelIndex, float peakLevel) {
-  if (!juce::isPositiveAndBelow(channelIndex, m_peakLevels.size())) return;
-
-  m_peakLevels[channelIndex].store(
-      std::max(peakLevel, m_peakLevels[channelIndex].load()));
-}
-
-float NtCompressorAudioProcessor::getPeakLevel(int channelIndex) {
-  if (!juce::isPositiveAndBelow(channelIndex, m_peakLevels.size())) return 0.0f;
-
-  return m_peakLevels[channelIndex].exchange(0.0f);
-}
-
-float NtCompressorAudioProcessor::getGainReduction() { return this->plug.grState; }
 
 //==============================================================================
 // This creates new instances of the plugin..

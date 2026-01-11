@@ -45,15 +45,11 @@ public:
 
   void getStateInformation(juce::MemoryBlock& destData) override;
   void setStateInformation(const void* data, int sizeInBytes) override;
-  void setPeakLevel(int channelIndex, float peakLevel);
-  float getPeakLevel(int channelIndex);
-  float getGainReduction();
 
   NtFx::CompressorPlugin<float> plug;
   juce::AudioProcessorValueTreeState parameters;
 
 private:
-  std::array<std::atomic<float>, 2> m_peakLevels;
   juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtCompressorAudioProcessor)
 };
