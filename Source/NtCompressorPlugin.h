@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "NtFx.h"
 #include "SideChain.h"
 #include "Stereo.h"
 namespace NtFx {
@@ -27,7 +28,7 @@ struct BoolParameterSpec {
   bool defaultVal { false };
 };
 
-// constexpr int rmsDelayLineLength     = 16384;
+constexpr int rmsDelayLineLength     = 16384;
 constexpr bool optimizeDb            = false;
 constexpr bool checkNotFiniteEnabled = true;
 constexpr bool reportNotFiniteState  = false;
@@ -60,55 +61,58 @@ struct CompressorPlugin {
 
   ErrorVal errorVal;
 
-  signal_t thresh_db   = 0;
-  signal_t ratio       = 2;
-  signal_t knee_db     = 0;
-  signal_t tAtt_ms     = 10;
-  signal_t tRel_ms     = 100;
-  signal_t tRms_ms     = 80;
+  // signal_t thresh_db   = 0;
+  // signal_t ratio       = 2;
+  // signal_t knee_db     = 0;
+  // signal_t tAtt_ms     = 10;
+  // signal_t tRel_ms     = 100;
+  // signal_t tRms_ms     = 80;
+  ScSettings<signal_t> scSettings;
+  ScCoeffs<signal_t> scCoeffs;
+  ScState<signal_t> scState;
   signal_t makeup_db   = 0;
-  signal_t mix_percent = SIGNAL(100.0);
+  signal_t mix_percent = NTFX_SIGNAL(100.0);
 
-  bool bypassEnable   = false;
-  bool linEnable      = false;
-  bool rmsEnable      = false;
+  bool bypassEnable = false;
+  bool linEnable    = false;
+  // bool rmsEnable      = false;
   bool feedbackEnable = false;
 
-  // signal_t tPeak      = SIGNAL(20.0);
-  // signal_t alphaAtt   = SIGNAL(0.0);
-  // signal_t alphaRel   = SIGNAL(0.0);
-  // signal_t alphaPeak  = SIGNAL(0.0);
-  // signal_t thresh_lin = SIGNAL(1.0);
-  signal_t makeup_lin = SIGNAL(1.0);
-  // signal_t knee_lin   = SIGNAL(1.0);
-  // signal_t ratio_lin  = SIGNAL(1.0);
-  signal_t mix_lin = SIGNAL(1.0);
-  // signal_t rmsAccum = SIGNAL(0.0);
+  // signal_t tPeak      = NTFX_SIGNAL(20.0);
+  // signal_t alphaAtt   = NTFX_SIGNAL(0.0);
+  // signal_t alphaRel   = NTFX_SIGNAL(0.0);
+  // signal_t alphaPeak  = NTFX_SIGNAL(0.0);
+  // signal_t thresh_lin = NTFX_SIGNAL(1.0);
+  // signal_t knee_lin   = NTFX_SIGNAL(1.0);
+  // signal_t ratio_lin  = NTFX_SIGNAL(1.0);
 
-  signal_t fbState = SIGNAL(0.0);
-  signal_t grState = SIGNAL(0.0);
+  signal_t mix_lin    = NTFX_SIGNAL(1.0);
+  signal_t makeup_lin = NTFX_SIGNAL(1.0);
+
+  signal_t fbState = NTFX_SIGNAL(0.0);
+  signal_t grState = NTFX_SIGNAL(0.0);
 
   std::array<Stereo<signal_t>, 3> peakLevels;
-  // T peakIn  = SIGNAL(0.0);
-  // T peakGr  = SIGNAL(0.0);
-  // T peakOut = SIGNAL(0.0);
 
   int nRms = 441;
   int iRms = 0;
   int fs   = 44100;
 
   // std::array<signal_t, 2> scState;
-  std::array<signal_t, 3> softClipCoeffs;
   // std::array<signal_t, rmsDelayLineLength> rmsDelayLine;
-  SideChain_db<signal_t> sideChainL_db;
-  SideChain_db<signal_t> sideChainR_db;
-  SideChain_lin<signal_t> sideChainL_lin;
-  SideChain_lin<signal_t> sideChainR_lin;
-  std::vector<SideChain<signal_t>*> allSideChains;
+  // signal_t rmsAccum = NTFX_SIGNAL(0.0);
+
+  std::array<signal_t, 3> softClipCoeffs;
+
+  // SideChain_db<signal_t> sideChainL_db;
+  // SideChain_db<signal_t> sideChainR_db;
+  // SideChain_lin<signal_t> sideChainL_lin;
+  // SideChain_lin<signal_t> sideChainR_lin;
+  // std::vector<SideChain<signal_t>*> allSideChains;
 
   std::vector<FloatParameterSpec<signal_t>> floatParameters {
     {
-        .p_val      = &this->thresh_db,
+        .p_val      = &this->scSettings.thresh_db,
         .name       = "Threshold",
         .suffix     = " dB",
         .minVal     = -60.0,
@@ -116,7 +120,7 @@ struct CompressorPlugin {
         .defaultVal = 0.0,
     },
     {
-        .p_val      = &this->ratio,
+        .p_val      = &this->scSettings.ratio_db,
         .name       = "Ratio",
         .suffix     = "",
         .minVal     = 1.0,
@@ -126,7 +130,7 @@ struct CompressorPlugin {
     },
 
     {
-        .p_val      = &this->tAtt_ms,
+        .p_val      = &this->scSettings.tAtt_ms,
         .name       = "Attack",
         .suffix     = " ms",
         .minVal     = 0.01,
@@ -134,7 +138,7 @@ struct CompressorPlugin {
         .defaultVal = 10.0,
     },
     {
-        .p_val      = &this->tRel_ms,
+        .p_val      = &this->scSettings.tRel_ms,
         .name       = "Release",
         .suffix     = " ms",
         .minVal     = 10.0,
@@ -154,7 +158,7 @@ struct CompressorPlugin {
 
   std::vector<FloatParameterSpec<signal_t>> floatParametersSmall = {
     {
-        .p_val      = &this->knee_db,
+        .p_val      = &this->scSettings.knee_db,
         .name       = "Knee",
         .suffix     = " dB",
         .minVal     = 0.0,
@@ -162,7 +166,7 @@ struct CompressorPlugin {
         .defaultVal = 0.0,
     },
     {
-        .p_val      = &this->tRms_ms,
+        .p_val      = &this->scSettings.tRms_ms,
         .name       = "RMS_time",
         .suffix     = " ms",
         .minVal     = 1.0,
@@ -181,7 +185,7 @@ struct CompressorPlugin {
 
   std::vector<BoolParameterSpec> boolParameters {
     {
-        .p_val = &this->rmsEnable,
+        .p_val = &this->scSettings.rmsEnable,
         .name  = "RMS",
     },
     {
@@ -200,10 +204,10 @@ struct CompressorPlugin {
   };
 
   CompressorPlugin() {
-    this->allSideChains.push_back(&this->sideChainL_db);
-    this->allSideChains.push_back(&this->sideChainR_db);
-    this->allSideChains.push_back(&this->sideChainL_lin);
-    this->allSideChains.push_back(&this->sideChainR_lin);
+    // this->allSideChains.push_back(&this->sideChainL_db);
+    // this->allSideChains.push_back(&this->sideChainR_db);
+    // this->allSideChains.push_back(&this->sideChainL_lin);
+    // this->allSideChains.push_back(&this->sideChainR_lin);
     this->softClipCoeffs = calculateSoftClipCoeffs<2>();
   }
 
@@ -222,11 +226,13 @@ struct CompressorPlugin {
 
     signal_t gr;
     if (this->linEnable) {
+      gr = sideChain_lin(&this->scCoeffs, &this->scState, x_sc);
       // gr = linSideChain(x_sc);
-      gr = sideChainL_lin.processSample(x_sc);
+      // gr = sideChainL_lin.processSample(x_sc);
     } else {
+      gr = sideChain_db(&this->scCoeffs, &this->scState, x_sc);
       // gr = dbSideChain(x_sc);
-      gr = sideChainL_db.processSample(x_sc);
+      // gr = sideChainL_db.processSample(x_sc);
     }
     this->grState = gr;
     this->updatePeakLevel(gr, MeterIdx::gr, true);
@@ -266,7 +272,7 @@ struct CompressorPlugin {
 
   //   signal_t target;
   //   if (ySens < this->thresh_lin / this->knee_lin) {
-  //     target = SIGNAL(0);
+  //     target = NTFX_SIGNAL(0);
   //   } else if (ySens < this->thresh_lin) {
   //     target = (ySens / this->thresh_lin)
   //         * this->ratio_lin
@@ -283,7 +289,7 @@ struct CompressorPlugin {
   //   yFilterLast      = yFilter;
   //   this->scState[0] = ySensLast;
   //   this->scState[1] = yFilterLast;
-  //   return SIGNAL(1.0) / (yFilter + 1);
+  //   return NTFX_SIGNAL(1.0) / (yFilter + 1);
   // }
 
   // NTFX_INLINE_MEMBER signal_t dbSideChain(signal_t x) noexcept {
@@ -332,13 +338,15 @@ struct CompressorPlugin {
     // if (this->alphaRel < this->alphaAtt) { this->alphaRel = this->alphaAtt; }
     // this->alphaPeak     = std::exp(-2200.0 / (this->tPeak * this->fs));
     // this->thresh_lin    = std::pow(10.0, (this->thresh_db / 20.0));
-    this->makeup_lin = std::pow(10.0, (this->makeup_db / SIGNAL(20.0)));
     // this->knee_lin      = std::pow(10.0, (this->knee_db / 20.0));
     // double oneOverSqrt2 = 1.0 / std::sqrt(2.0);
     // this->ratio_lin     = (1.0 - 1.0 / this->ratio)
-    // * (oneOverSqrt2 - std::pow(oneOverSqrt2 - (this->ratio - 3.0) / 18.0, 5.0));
-    // this->nRms    = std::floor(this->tRms_ms * this->fs * 0.001);
-    this->mix_lin = this->mix_percent / 100.0;
+    //     * (oneOverSqrt2 - std::pow(oneOverSqrt2 - (this->ratio - 3.0) / 18.0, 5.0));
+    // this->nRms = std::floor(this->tRms_ms * this->fs * 0.001);
+    this->scCoeffs   = calcSideChainCoeffs(this->fs, &this->scSettings);
+    this->makeup_lin = std::pow(10.0, (this->makeup_db / NTFX_SIGNAL(20.0)));
+    this->mix_lin    = this->mix_percent / 100.0;
+
     // this->sideChainL_db.thresh_db  = this->thresh_db;
     // this->sideChainL_db.ratio      = this->ratio;
     // this->sideChainL_db.knee_db    = this->knee_db;
@@ -364,31 +372,31 @@ struct CompressorPlugin {
     // this->sideChainR_lin.tRel_ms   = this->tRel_ms;
     // this->sideChainR_lin.tRms_ms   = this->tRms_ms;
 
-    for (size_t i = 0; i < this->allSideChains.size(); i++) {
-      // TODO: SideChainSettings struct
-      allSideChains[i]->thresh_db = this->thresh_db;
-      allSideChains[i]->ratio     = this->ratio;
-      allSideChains[i]->knee_db   = this->knee_db;
-      allSideChains[i]->tAtt_ms   = this->tAtt_ms;
-      allSideChains[i]->tRel_ms   = this->tRel_ms;
-      allSideChains[i]->tRms_ms   = this->tRms_ms;
-      allSideChains[i]->update();
-    }
+    // for (size_t i = 0; i < this->allSideChains.size(); i++) {
+    //   // TODO: SideChainSettings struct
+    //   allSideChains[i]->thresh_db = this->thresh_db;
+    //   allSideChains[i]->ratio     = this->ratio;
+    //   allSideChains[i]->knee_db   = this->knee_db;
+    //   allSideChains[i]->tAtt_ms   = this->tAtt_ms;
+    //   allSideChains[i]->tRel_ms   = this->tRel_ms;
+    //   allSideChains[i]->tRms_ms   = this->tRms_ms;
+    //   allSideChains[i]->update();
+    // }
   }
 
   NTFX_INLINE_MEMBER void reset(int fs) noexcept {
     this->fs = fs;
-    // std::fill(this->scState.begin(), this->scState.end(), SIGNAL(0));
-    // std::fill(this->rmsDelayLine.begin(), this->rmsDelayLine.end(), SIGNAL(0));
-    std::fill(this->peakLevels.begin(), this->peakLevels.end(), SIGNAL(0));
-    // this->rmsAccum = SIGNAL(0);
-    this->fbState = SIGNAL(0);
-    // this->peakIn   = SIGNAL(0);
-    this->peakLevels[MeterIdx::gr] = SIGNAL(1);
-    // this->peakOut  = SIGNAL(0);
-    for (size_t i = 0; i < this->allSideChains.size(); i++) {
-      this->allSideChains[i].reset(fs);
-    }
+    // std::fill(this->scState.begin(), this->scState.end(), NTFX_SIGNAL(0));
+    // std::fill(this->rmsDelayLine.begin(), this->rmsDelayLine.end(), NTFX_SIGNAL(0));
+    // this->rmsAccum = NTFX_SIGNAL(0);
+
+    std::fill(this->peakLevels.begin(), this->peakLevels.end(), NTFX_SIGNAL(0));
+    this->peakLevels[MeterIdx::gr] = NTFX_SIGNAL(1);
+    this->fbState                  = NTFX_SIGNAL(0);
+
+    // for (size_t i = 0; i < this->allSideChains.size(); i++) {
+    // this->allSideChains[i].reset(fs);
+    // }
     this->update();
   }
 
@@ -413,16 +421,16 @@ struct CompressorPlugin {
 
   NTFX_INLINE_MEMBER signal_t softClip5thMono(signal_t x) noexcept {
     signal_t x_ = x / this->softClipCoeffs[0];
-    if (x_ > 1.0) { return SIGNAL(1.0); }
-    if (x_ < -1.0) { return SIGNAL(-1.0); }
+    if (x_ > 1.0) { return NTFX_SIGNAL(1.0); }
+    if (x_ < -1.0) { return NTFX_SIGNAL(-1.0); }
     return this->softClipCoeffs[0] * x_
         + this->softClipCoeffs[1] * x_ * x_ * x_
         + this->softClipCoeffs[2] * x_ * x_ * x_ * x_ * x_;
   }
 
   NTFX_INLINE_STATIC signal_t invDb(signal_t x) noexcept {
-    // if (optimizeDb) { return pow10Opt(x * SIGNAL(0.05)); }
-    return std::pow(SIGNAL(10.0), x * SIGNAL(0.05));
+    // if (optimizeDb) { return pow10Opt(x * NTFX_SIGNAL(0.05)); }
+    return std::pow(NTFX_SIGNAL(10.0), x * NTFX_SIGNAL(0.05));
   }
 
   template <size_t N>
@@ -442,7 +450,7 @@ struct CompressorPlugin {
   }
 
   NTFX_INLINE_MEMBER bool checkNotFinite(
-      signal_t& p_val, ErrorVal var, signal_t def = SIGNAL(0)) noexcept {
+      signal_t& p_val, ErrorVal var, signal_t def = NTFX_SIGNAL(0)) noexcept {
     if (!checkNotFiniteEnabled) { return true; }
     if (p_val == p_val) { return true; }
     p_val          = def;
@@ -451,7 +459,7 @@ struct CompressorPlugin {
   }
 
   NTFX_INLINE_MEMBER bool checkNotFinite(
-      Stereo<signal_t>& p_val, ErrorVal var, signal_t def = SIGNAL(0)) noexcept {
+      Stereo<signal_t>& p_val, ErrorVal var, signal_t def = NTFX_SIGNAL(0)) noexcept {
     return this->checkNotFinite(p_val.l, var, def)
         && this->checkNotFinite(p_val.r, var, def);
   }
@@ -466,7 +474,7 @@ struct CompressorPlugin {
     Stereo<signal_t> tmp = this->peakLevels[idx];
     int def              = static_cast<int>(idx == MeterIdx::gr);
     checkNotFinite(tmp, e_meter, def);
-    this->peakLevels[idx] = SIGNAL(def);
+    this->peakLevels[idx] = NTFX_SIGNAL(def);
     return tmp;
   }
 
@@ -490,87 +498,87 @@ struct CompressorPlugin {
   // T getAndResetPeakIn() noexcept {
   //   T tmp = this->peakIn;
   //   checkNotFinite(tmp, e_meterIn);
-  //   this->peakIn = SIGNAL(0);
+  //   this->peakIn = NTFX_SIGNAL(0);
   //   return tmp;
   // }
 
   // T getAndResetPeakGr() noexcept {
   //   T tmp = this->peakGr;
   //   checkNotFinite(tmp, e_meterGr);
-  //   this->peakGr = SIGNAL(0);
+  //   this->peakGr = NTFX_SIGNAL(0);
   //   return tmp;
   // }
 
   // T getAndResetPeakOut() noexcept {
   //   T tmp = this->peakOut;
   //   checkNotFinite(tmp, e_meterOut);
-  //   this->peakOut = SIGNAL(0);
+  //   this->peakOut = NTFX_SIGNAL(0);
   //   return tmp;
   // }
 
   // NTFX_INLINE_STATIC T log10Opt(T x) noexcept {
-  //   if (x < SIGNAL(1e-4)) { return -4; }
-  //   if (x < SIGNAL(1e-3)) { return log10Taylor(x * SIGNAL(1e3)); }
-  //   if (x < SIGNAL(1e-2)) { return log10Taylor(x * SIGNAL(1e2)); }
-  //   if (x < SIGNAL(1e-1)) { return log10Taylor(x * SIGNAL(1e1)); }
+  //   if (x < NTFX_SIGNAL(1e-4)) { return -4; }
+  //   if (x < NTFX_SIGNAL(1e-3)) { return log10Taylor(x * NTFX_SIGNAL(1e3)); }
+  //   if (x < NTFX_SIGNAL(1e-2)) { return log10Taylor(x * NTFX_SIGNAL(1e2)); }
+  //   if (x < NTFX_SIGNAL(1e-1)) { return log10Taylor(x * NTFX_SIGNAL(1e1)); }
   //   return log10Taylor(x);
   // }
 
   // NTFX_INLINE_STATIC T log10Taylor(T x) noexcept {
   //   if (x < 0.2) {
-  //     T n = SIGNAL(0.325443314844276);
+  //     T n = NTFX_SIGNAL(0.325443314844276);
   //     return x * 10 * n - 1 - n;
   //   }
   //   T x_    = x - 1;
   //   T mult  = x_ * x_;
-  //   T accum = x_ - mult * SIGNAL(1 / 2);
+  //   T accum = x_ - mult * NTFX_SIGNAL(1 / 2);
   //   mult *= x_;
-  //   accum += mult * SIGNAL(1 / 3);
+  //   accum += mult * NTFX_SIGNAL(1 / 3);
   //   mult *= x_;
-  //   accum -= mult * SIGNAL(1 / 4);
+  //   accum -= mult * NTFX_SIGNAL(1 / 4);
   //   mult *= x_;
-  //   accum += mult * SIGNAL(1 / 5);
+  //   accum += mult * NTFX_SIGNAL(1 / 5);
   //   mult *= x_;
-  //   accum -= mult * SIGNAL(1 / 6);
+  //   accum -= mult * NTFX_SIGNAL(1 / 6);
   //   mult *= x_;
-  //   accum += mult * SIGNAL(1 / 7);
+  //   accum += mult * NTFX_SIGNAL(1 / 7);
   //   mult *= x_;
-  //   accum -= mult * SIGNAL(1 / 8);
-  //   return accum * SIGNAL(0.434294481903252);
+  //   accum -= mult * NTFX_SIGNAL(1 / 8);
+  //   return accum * NTFX_SIGNAL(0.434294481903252);
   // }
 
   // NTFX_INLINE_STATIC T pow10Opt(T x) noexcept {
   //   if (x < -4) { return 0; }
-  //   if (x < -3) { return pow10Taylor(x + 3) * SIGNAL(0.001); }
-  //   if (x < -2) { return pow10Taylor(x + 2) * SIGNAL(0.01); }
-  //   if (x < -1) { return pow10Taylor(x + 1) * SIGNAL(0.1); }
+  //   if (x < -3) { return pow10Taylor(x + 3) * NTFX_SIGNAL(0.001); }
+  //   if (x < -2) { return pow10Taylor(x + 2) * NTFX_SIGNAL(0.01); }
+  //   if (x < -1) { return pow10Taylor(x + 1) * NTFX_SIGNAL(0.1); }
   //   return pow10Taylor(x);
   // }
 
   // NTFX_INLINE_STATIC T pow10Taylor(T x) noexcept {
-  //   T x_    = -x * SIGNAL(2.302585092994046);
+  //   T x_    = -x * NTFX_SIGNAL(2.302585092994046);
   //   T mult  = x_ * x_;
-  //   T accum = mult * SIGNAL(0.5);
+  //   T accum = mult * NTFX_SIGNAL(0.5);
   //   mult *= x_;
-  //   accum -= mult * SIGNAL(0.166666666666667);
+  //   accum -= mult * NTFX_SIGNAL(0.166666666666667);
   //   mult *= x_;
-  //   accum += mult * SIGNAL(0.041666666666667);
+  //   accum += mult * NTFX_SIGNAL(0.041666666666667);
   //   mult *= x_;
-  //   accum -= mult * SIGNAL(0.008333333333333);
+  //   accum -= mult * NTFX_SIGNAL(0.008333333333333);
   //   mult *= x_;
-  //   accum += mult * SIGNAL(0.001388888888889);
+  //   accum += mult * NTFX_SIGNAL(0.001388888888889);
   //   mult *= x_;
-  //   accum -= mult * SIGNAL(1.984126984126984e-04);
+  //   accum -= mult * NTFX_SIGNAL(1.984126984126984e-04);
   //   mult *= x_;
-  //   accum += mult * SIGNAL(2.480158730158730e-05);
+  //   accum += mult * NTFX_SIGNAL(2.480158730158730e-05);
   //   mult *= x_;
-  //   accum -= mult * SIGNAL(2.755731922398589e-06);
+  //   accum -= mult * NTFX_SIGNAL(2.755731922398589e-06);
   //   mult *= x_;
-  //   accum += mult * SIGNAL(2.755731922398589e-07);
+  //   accum += mult * NTFX_SIGNAL(2.755731922398589e-07);
   //   mult *= x_;
-  //   accum -= mult * SIGNAL(2.505210838544172e-08);
+  //   accum -= mult * NTFX_SIGNAL(2.505210838544172e-08);
   //   mult *= x_;
-  //   accum += mult * SIGNAL(2.087675698786810e-09);
+  //   accum += mult * NTFX_SIGNAL(2.087675698786810e-09);
   //   return 1 - x_ * accum;
   // }
 };
