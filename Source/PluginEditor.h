@@ -13,8 +13,8 @@
 #include "PluginProcessor.h"
 // #include "sound_meter/sound_meter.h"
 
-#include "NtKnob.h"
-#include "NtMeter.h"
+#include "lib/NtKnob.h"
+#include "lib/NtMeter.h"
 
 //==============================================================================
 /**

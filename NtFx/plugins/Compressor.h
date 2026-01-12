@@ -5,9 +5,9 @@
 #include <string>
 #include <vector>
 
-#include "NtFx.h"
-#include "SideChain.h"
-#include "Stereo.h"
+#include "lib/NtFx.h"
+#include "lib/SideChain.h"
+#include "lib/Stereo.h"
 namespace NtFx {
 
 // TODO: general parameter class.
@@ -57,7 +57,7 @@ enum ErrorVal {
 
 // TODO: NtPlug baseclass?
 template <typename signal_t>
-struct CompressorPlugin {
+struct Compressor {
 
   ErrorVal errorVal;
 
@@ -177,7 +177,7 @@ struct CompressorPlugin {
     },
   };
 
-  CompressorPlugin() { this->softClipCoeffs = calculateSoftClipCoeffs<2>(); }
+  Compressor() { this->softClipCoeffs = calculateSoftClipCoeffs<2>(); }
 
   NTFX_INLINE_MEMBER Stereo<signal_t> processSample(Stereo<signal_t> x) noexcept {
     this->updatePeakLevel(x, MeterIdx::in);
@@ -294,14 +294,14 @@ struct CompressorPlugin {
     return tmp;
   }
 
-  bool* getBoolValByName(std::string name) {
+  bool* getBoolParamByName(std::string name) {
     for (auto param : this->boolParameters) {
       if (param.name == name) { return param.p_val; }
     }
     return nullptr;
   }
 
-  signal_t* getFloatValByName(std::string name) {
+  signal_t* getFloatParamByName(std::string name) {
     for (auto param : this->floatParameters) {
       if (param.name == name) { return param.p_val; }
     }

@@ -10,7 +10,7 @@
 
 #include <JuceHeader.h>
 
-#include "NtCompressorPlugin.h"
+#include "plugins/Compressor.h"
 //==============================================================================
 /**
  */
@@ -46,7 +46,7 @@ public:
   void getStateInformation(juce::MemoryBlock& destData) override;
   void setStateInformation(const void* data, int sizeInBytes) override;
 
-  NtFx::CompressorPlugin<float> plug;
+  NtFx::Compressor<float> plug;
   juce::AudioProcessorValueTreeState parameters;
 
 private:

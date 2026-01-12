@@ -270,7 +270,7 @@ void NtCompressorAudioProcessorEditor::displayErrorValPopup(std::string message)
 
 void NtCompressorAudioProcessorEditor::sliderValueChanged(juce::Slider* p_slider) {
   auto name   = p_slider->getName().toStdString();
-  auto* p_val = this->audioProcessor.plug.getFloatValByName(name);
+  auto* p_val = this->audioProcessor.plug.getFloatParamByName(name);
   if (!p_val) {
     juce::NativeMessageBox::showMessageBoxAsync(
         juce::MessageBoxIconType::WarningIcon, "Bad Name", "Float " + name);
@@ -282,7 +282,7 @@ void NtCompressorAudioProcessorEditor::sliderValueChanged(juce::Slider* p_slider
 
 void NtCompressorAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
   auto name   = p_button->getName().toStdString();
-  auto* p_val = this->audioProcessor.plug.getBoolValByName(name);
+  auto* p_val = this->audioProcessor.plug.getBoolParamByName(name);
   if (!p_val) {
     juce::NativeMessageBox::showMessageBoxAsync(
         juce::MessageBoxIconType::WarningIcon, "Bad Name", "Bool " + name);

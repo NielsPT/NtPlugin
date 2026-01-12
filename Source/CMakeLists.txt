@@ -110,6 +110,8 @@ target_link_libraries(${NT_PROJECT_NAME}
         # juce::juce_recommended_warning_flags
         )
 
+target_include_directories(${NT_PROJECT_NAME} PRIVATE "../NtFx")
+
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
 # into your build tree. This should be included with `#include <JuceHeader.h>`. The include path for
 # this header will be automatically added to the target. The main function of the JuceHeader is to
