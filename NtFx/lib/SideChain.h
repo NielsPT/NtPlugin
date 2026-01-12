@@ -36,6 +36,11 @@ struct ScState {
   signal_t ySensLast   = NTFX_SIGNAL(0.0);
   signal_t yFilterLast = NTFX_SIGNAL(0.0);
   RmsSensorState<signal_t> rms;
+  NTFX_INLINE_MEMBER void reset() {
+    this->ySensLast   = NTFX_SIGNAL(0.0);
+    this->yFilterLast = NTFX_SIGNAL(0.0);
+    rms.reset();
+  }
 };
 
 NTFX_INLINE_TEMPLATE ScCoeffs<signal_t> calcSideChainCoeffs(

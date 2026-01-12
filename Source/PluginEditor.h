@@ -61,9 +61,8 @@ private:
   bool popupIsDisplayed = false;
   bool isInitialized    = false;
 
-  void displayErrorValPopup(std::string message);
+  void displayErrorValPopup(int varId);
   void sliderValueChanged(juce::Slider* slider) override;
-  // void toggleValueChanged(juce::ToggleButton* toggle) override;
   void buttonClicked(juce::Button* button) override;
   void timerCallback() override;
   void drawGui();

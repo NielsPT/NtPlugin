@@ -25,12 +25,17 @@ struct MonoMeter : public juce::Component {
   float holdVal_db       = 0;
   int iHoldDot           = 0;
   std::string label      = "";
+  bool isInitialized     = false;
 
-  MonoMeter()  = default;
+  MonoMeter() {
+    this->refresh();
+    this->isInitialized = true;
+  };
   ~MonoMeter() = default;
 
   void paint(juce::Graphics& g) override {
-    // TODO: isInitialized.
+    if (!this->isInitialized) { return; }
+    if (this->getWidth() <= 0) { return; }
     // TODO: stop if nothings changed.
     int y = this->pad;
     g.setColour(juce::Colours::white);
@@ -47,8 +52,9 @@ struct MonoMeter : public juce::Component {
       g.drawEllipse(this->pad, y, this->dotWidth, this->dotWidth, 1);
       float fillPad  = this->getWidth() * 4.0 / 35.0;
       float fillSize = this->dotWidth - fillPad;
-      float fillX    = this->pad + fillPad / 2;
-      float fillY    = y + fillPad / 2;
+      if (fillSize < 0) { return; }
+      float fillX = this->pad + fillPad / 2;
+      float fillY = y + fillPad / 2;
       if ((!this->invert && i > this->nDots - this->nActiveDots)
           || (this->invert && i < this->nDots - this->nActiveDots)) {
         g.setColour(juce::Colours::lightgrey);

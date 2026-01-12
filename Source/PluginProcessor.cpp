@@ -77,7 +77,7 @@ void NtCompressorAudioProcessor::changeProgramName(
 
 //==============================================================================
 void NtCompressorAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
-  plug.update();
+  plug.updateCoeffs();
   plug.reset(sampleRate);
 }
 

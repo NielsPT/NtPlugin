@@ -79,6 +79,7 @@ void NtCompressorAudioProcessorEditor::initSlider(
     NtFx::FloatParameterSpec<float>* p_spec,
     juce::Slider* p_slider,
     juce::Label* p_label) {
+  // TODO: add version hint
   p_slider->setLookAndFeel(&this->knobLookAndFeel);
   p_slider->setTextBoxStyle(juce::Slider::TextBoxBelow,
       false,
@@ -137,17 +138,10 @@ void NtCompressorAudioProcessorEditor::drawGui() {
   area.removeFromLeft(pad);
   area.removeFromBottom(pad);
   area.removeFromRight(pad);
-  // auto meterWidth = this->meters[0].getWidth();
   auto meterWidth = area.getWidth() / 15;
   auto meterArea  = area.removeFromLeft(meterWidth * (this->meters.size() + 0.5));
   this->meters.setBounds(meterArea);
   this->borderedAreas.push_back(meterArea);
-  // for (size_t i = 0; i < this->meters.size(); i++) {
-  //   this->meters[i].setBounds(meterArea.removeFromLeft(meterWidth));
-  // }
-
-  // this->meterScale.setBounds(meterArea);
-
   auto nSliders = this->audioProcessor.plug.floatParameters.size();
   int nColumns;
   int nRows;
@@ -208,61 +202,64 @@ void NtCompressorAudioProcessorEditor::timerCallback() {
   for (size_t i = 0; i < this->meters.size(); i++) {
     this->meters.refresh(i, this->audioProcessor.plug.getAndResetPeakLevel(i));
   }
-
+  int badVarId = this->audioProcessor.plug.getAndResetErrorVal();
   if (this->popupIsDisplayed) {
-    if (this->audioProcessor.plug.getAndResetErrorVal() == NtFx::ErrorVal::e_none) {
-      this->popupIsDisplayed = false;
-    }
+    if (badVarId == 0) { this->popupIsDisplayed = false; }
     return;
   }
-  switch (this->audioProcessor.plug.getAndResetErrorVal()) {
-  case NtFx::ErrorVal::e_rmsSensor:
-    this->displayErrorValPopup("rmsSensor");
-    break;
-  case NtFx::ErrorVal::e_x:
-    this->displayErrorValPopup("x");
-    break;
-  case NtFx::ErrorVal::e_fbState:
-    this->displayErrorValPopup("fbState");
-    break;
-  case NtFx::ErrorVal::e_x_sc:
-    this->displayErrorValPopup("x_sc");
-    break;
-  case NtFx::ErrorVal::e_yFilterLast:
-    this->displayErrorValPopup("yFilterLast");
-    break;
-  case NtFx::ErrorVal::e_ySensLast:
-    this->displayErrorValPopup("ySensLast");
-    break;
-  case NtFx::ErrorVal::e_nRms:
-    this->displayErrorValPopup("nRms");
-    break;
-  case NtFx::ErrorVal::e_iRms:
-    this->displayErrorValPopup("iRms");
-    break;
-  case NtFx::ErrorVal::e_rmsAccum:
-    this->displayErrorValPopup("rmsAccum");
-    break;
-  case NtFx::ErrorVal::e_gr:
-    this->displayErrorValPopup("gr");
-    break;
-  case NtFx::ErrorVal::e_meter:
-    this->displayErrorValPopup("meter");
-    break;
-  case NtFx::ErrorVal::e_none:
-    this->popupIsDisplayed = false;
-    break;
-  default:
-    juce::NativeMessageBox::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon,
-        "Nonefinite Value",
-        "Unknown: " + std::to_string(this->audioProcessor.plug.getAndResetErrorVal()));
-    break;
-  }
+  this->displayErrorValPopup(badVarId);
+  // // switch (this->audioProcessor.plug.getAndResetErrorVal()) {
+  // // case NtFx::ErrorVal::e_rmsSensor:
+  // //   this->displayErrorValPopup("rmsSensor");
+  // //   break;
+  // // case NtFx::ErrorVal::e_x:
+  // //   this->displayErrorValPopup("x");
+  // //   break;
+  // // case NtFx::ErrorVal::e_fbState:
+  // //   this->displayErrorValPopup("fbState");
+  // //   break;
+  // // case NtFx::ErrorVal::e_x_sc:
+  // //   this->displayErrorValPopup("x_sc");
+  // //   break;
+  // // case NtFx::ErrorVal::e_yFilterLast:
+  // //   this->displayErrorValPopup("yFilterLast");
+  // //   break;
+  // // case NtFx::ErrorVal::e_ySensLast:
+  // //   this->displayErrorValPopup("ySensLast");
+  // //   break;
+  // // case NtFx::ErrorVal::e_nRms:
+  // //   this->displayErrorValPopup("nRms");
+  // //   break;
+  // // case NtFx::ErrorVal::e_iRms:
+  // //   this->displayErrorValPopup("iRms");
+  // //   break;
+  // // case NtFx::ErrorVal::e_rmsAccum:
+  // //   this->displayErrorValPopup("rmsAccum");
+  // //   break;
+  // // case NtFx::ErrorVal::e_gr:
+  // //   this->displayErrorValPopup("gr");
+  // //   break;
+  // // case NtFx::ErrorVal::e_meter:
+  // //   this->displayErrorValPopup("meter");
+  // //   break;
+  // // case NtFx::ErrorVal::e_none:
+  // //   this->popupIsDisplayed = false;
+  // //   break;
+  // // default:
+  // //
+  // juce::NativeMessageBox::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon,
+  // //       "Nonefinite Value",
+  // //       "Unknown: " +
+  // //       std::to_string(this->audioProcessor.plug.getAndResetErrorVal()));
+  // //   break;
+  // // }
 }
 
-void NtCompressorAudioProcessorEditor::displayErrorValPopup(std::string message) {
+void NtCompressorAudioProcessorEditor::displayErrorValPopup(int varId) {
+  if (varId == 0) { return; }
   this->popupIsDisplayed = true;
-  DBG("NaN in " + message);
+  std::string message    = "NaN in " + std::to_string(varId);
+  DBG(message);
   if (!NtFx::reportNotFiniteState) { return; }
   juce::NativeMessageBox::showMessageBoxAsync(
       juce::MessageBoxIconType::WarningIcon, "Nonefinite Value", message);
@@ -277,7 +274,7 @@ void NtCompressorAudioProcessorEditor::sliderValueChanged(juce::Slider* p_slider
     return;
   }
   *p_val = p_slider->getValue();
-  this->audioProcessor.plug.update();
+  this->audioProcessor.plug.updateCoeffs();
 }
 
 void NtCompressorAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
@@ -289,7 +286,7 @@ void NtCompressorAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
     return;
   }
   *p_val = p_button->getToggleState();
-  this->audioProcessor.plug.update();
+  this->audioProcessor.plug.updateCoeffs();
 }
 
 void NtCompressorAudioProcessorEditor::calcSliderRowsCols(

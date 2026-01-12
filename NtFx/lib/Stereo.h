@@ -18,26 +18,25 @@ struct Stereo {
     return (this->l == x.l) && (this->r == x.r);
   }
   NTFX_INLINE_MEMBER bool operator<(const Stereo<signal_t>& x) const noexcept {
-    return this->absMax() < x.absMax();
+    return this->absMin() < x.absMin();
   }
   NTFX_INLINE_MEMBER bool operator>(const Stereo<signal_t>& x) const noexcept {
     return this->absMax() > x.absMax();
   }
   NTFX_INLINE_MEMBER bool operator<=(const Stereo<signal_t>& x) const noexcept {
-    return (this->l <= x.l) && (this->r <= x.r);
-    return this->absMax() <= x.absMax();
+    return this->absMin() <= x.absMin();
   }
   NTFX_INLINE_MEMBER bool operator>=(const Stereo<signal_t>& x) const noexcept {
     return this->absMax() >= x.absMax();
   }
   NTFX_INLINE_MEMBER bool operator<(const signal_t& x) const noexcept {
-    return this->absMax() < x;
+    return this->absMin() < x;
   }
   NTFX_INLINE_MEMBER bool operator>(const signal_t& x) const noexcept {
     return this->absMax() > x;
   }
   NTFX_INLINE_MEMBER bool operator<=(const signal_t& x) const noexcept {
-    return this->absMax() <= x;
+    return this->absMin() <= x;
   }
   NTFX_INLINE_MEMBER bool operator>=(const signal_t& x) const noexcept {
     return this->absMax() >= x;
@@ -76,6 +75,9 @@ struct Stereo {
   }
   NTFX_INLINE_MEMBER signal_t absMax() const noexcept {
     return std::abs(this->l) > std::abs(this->r) ? this->l : this->r;
+  }
+  NTFX_INLINE_MEMBER signal_t absMin() const noexcept {
+    return std::abs(this->l) < std::abs(this->r) ? this->l : this->r;
   }
 };
 NTFX_INLINE_TEMPLATE Stereo<signal_t> operator+(
