@@ -62,9 +62,13 @@ NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
   int nRows, nCols;
   this->calcSliderRowsCols(this->allSliders.size(), nRows, nCols);
   auto height = 0;
-  height += nRows * 200;
-  if (this->audioProcessor.plug.floatParametersSmall.size() != 0) { height += 150; }
-  if (this->audioProcessor.plug.boolParameters.size() != 0) { height += 75; }
+  height += nRows * this->knobHeight;
+  if (this->audioProcessor.plug.floatParametersSmall.size() != 0) {
+    height += this->smallKnobHeight;
+  }
+  if (this->audioProcessor.plug.boolParameters.size() != 0) {
+    height += this->toggleHeight;
+  }
   this->setSize(1000, height);
   this->addAndMakeVisible(this->meters);
   int meterRefreshRate_hz = 20;
@@ -79,7 +83,6 @@ void NtCompressorAudioProcessorEditor::initSlider(
     NtFx::FloatParameterSpec<float>* p_spec,
     juce::Slider* p_slider,
     juce::Label* p_label) {
-  // TODO: add version hint
   p_slider->setLookAndFeel(&this->knobLookAndFeel);
   p_slider->setTextBoxStyle(juce::Slider::TextBoxBelow,
       false,
@@ -146,9 +149,8 @@ void NtCompressorAudioProcessorEditor::drawGui() {
   int nColumns;
   int nRows;
   this->calcSliderRowsCols(nSliders, nRows, nColumns);
-  auto totalHeight = area.getHeight();
-  // TODO: ToggleHeight
-  auto togglesArea   = area.removeFromBottom(75);
+  auto totalHeight   = area.getHeight();
+  auto togglesArea   = area.removeFromBottom(this->toggleHeight);
   auto nSmallSliders = this->audioProcessor.plug.floatParametersSmall.size();
   if (nSmallSliders) {
     auto smallSlidersArea = area.removeFromBottom(150);
@@ -159,7 +161,7 @@ void NtCompressorAudioProcessorEditor::drawGui() {
     smallSlidersArea.removeFromBottom(pad);
 
     for (size_t i = 0; i < nSmallSliders; i++) {
-      auto smallSliderArea = smallSlidersArea.removeFromLeft(100);
+      auto smallSliderArea = smallSlidersArea.removeFromLeft(this->smallKnobWidth);
       auto labelArea       = smallSliderArea.removeFromTop(this->entryHeight);
       this->allSmallSliders[i]->setBounds(smallSliderArea);
     }
@@ -208,51 +210,6 @@ void NtCompressorAudioProcessorEditor::timerCallback() {
     return;
   }
   this->displayErrorValPopup(badVarId);
-  // // switch (this->audioProcessor.plug.getAndResetErrorVal()) {
-  // // case NtFx::ErrorVal::e_rmsSensor:
-  // //   this->displayErrorValPopup("rmsSensor");
-  // //   break;
-  // // case NtFx::ErrorVal::e_x:
-  // //   this->displayErrorValPopup("x");
-  // //   break;
-  // // case NtFx::ErrorVal::e_fbState:
-  // //   this->displayErrorValPopup("fbState");
-  // //   break;
-  // // case NtFx::ErrorVal::e_x_sc:
-  // //   this->displayErrorValPopup("x_sc");
-  // //   break;
-  // // case NtFx::ErrorVal::e_yFilterLast:
-  // //   this->displayErrorValPopup("yFilterLast");
-  // //   break;
-  // // case NtFx::ErrorVal::e_ySensLast:
-  // //   this->displayErrorValPopup("ySensLast");
-  // //   break;
-  // // case NtFx::ErrorVal::e_nRms:
-  // //   this->displayErrorValPopup("nRms");
-  // //   break;
-  // // case NtFx::ErrorVal::e_iRms:
-  // //   this->displayErrorValPopup("iRms");
-  // //   break;
-  // // case NtFx::ErrorVal::e_rmsAccum:
-  // //   this->displayErrorValPopup("rmsAccum");
-  // //   break;
-  // // case NtFx::ErrorVal::e_gr:
-  // //   this->displayErrorValPopup("gr");
-  // //   break;
-  // // case NtFx::ErrorVal::e_meter:
-  // //   this->displayErrorValPopup("meter");
-  // //   break;
-  // // case NtFx::ErrorVal::e_none:
-  // //   this->popupIsDisplayed = false;
-  // //   break;
-  // // default:
-  // //
-  // juce::NativeMessageBox::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon,
-  // //       "Nonefinite Value",
-  // //       "Unknown: " +
-  // //       std::to_string(this->audioProcessor.plug.getAndResetErrorVal()));
-  // //   break;
-  // // }
 }
 
 void NtCompressorAudioProcessorEditor::displayErrorValPopup(int varId) {

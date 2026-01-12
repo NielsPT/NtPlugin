@@ -23,7 +23,8 @@ struct BoolParameterSpec {
 
 template <typename signal_t>
 struct Plugin {
-  int fs = 44100;
+  int tempo = 120;
+  int fs    = 44100;
   std::vector<FloatParameterSpec<signal_t>> floatParameters;
   std::vector<FloatParameterSpec<signal_t>> floatParametersSmall;
   std::vector<BoolParameterSpec> boolParameters;

@@ -30,21 +30,16 @@ public:
   //==============================================================================
   void paint(juce::Graphics&) override;
   void resized() override;
-  // juce::Component* getParameterByName(juce::String name);
 
 private:
-  // This reference is provided as a quick way for your editor to
-  // access the processor object that created it.
   NtCompressorAudioProcessor& audioProcessor;
   NtFx::MeterAreaInOutGr meters;
   NtFx::KnobLookAndFeel knobLookAndFeel;
-  // std::vector<std::string> meterLabelStrings = { "IN", "OUT", "GR" };
 
   std::vector<juce::Slider*> allSliders;
   std::vector<juce::Label*> allSliderLabels;
   std::vector<juce::Slider*> allSmallSliders;
   std::vector<juce::Label*> allSmallSliderLabels;
-  // std::vector<juce::Label*> allMeterLabels;
   // TODO: allToggleLabels and on/off text for toggles.
   std::vector<juce::TextButton*> allToggles;
   std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>>
@@ -58,6 +53,11 @@ private:
   float entryPad        = 10;
   float buttonHeight    = 30;
   float buttonWidth     = 100;
+  float toggleHeight    = 75;
+  float knobHeight      = 200;
+  float smallKnobWidth  = 100;
+  float smallKnobHeight = 150;
+
   bool popupIsDisplayed = false;
   bool isInitialized    = false;
 

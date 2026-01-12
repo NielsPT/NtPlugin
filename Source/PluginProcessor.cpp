@@ -77,7 +77,6 @@ void NtCompressorAudioProcessor::changeProgramName(
 
 //==============================================================================
 void NtCompressorAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
-  plug.updateCoeffs();
   plug.reset(sampleRate);
 }
 
@@ -112,7 +111,12 @@ void NtCompressorAudioProcessor::processBlock(
   for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i) {
     buffer.clear(i, 0, buffer.getNumSamples());
   }
-
+  auto p_playHead = this->getPlayHead();
+  juce::AudioPlayHead::CurrentPositionInfo curPos;
+  if (p_playHead->getCurrentPosition(curPos)) {
+    auto tempo = curPos.bpm;
+    if (tempo) { this->plug.tempo = tempo; }
+  }
   auto leftBuffer  = buffer.getWritePointer(0);
   auto rightBuffer = buffer.getWritePointer(1);
   for (size_t i = 0; i < buffer.getNumSamples(); i++) {
@@ -155,24 +159,28 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
 
 juce::AudioProcessorValueTreeState::ParameterLayout
 NtCompressorAudioProcessor::createParameterLayout() {
+  int i = 1;
   juce::AudioProcessorValueTreeState::ParameterLayout parameters;
   for (auto p : this->plug.floatParameters) {
+    juce::ParameterID id(p.name, i++);
     std::string name(p.name);
     std::replace(name.begin(), name.end(), '_', ' ');
     parameters.add(std::make_unique<juce::AudioParameterFloat>(
-        p.name, name, p.minVal, p.maxVal, p.defaultVal));
+        id, name, p.minVal, p.maxVal, p.defaultVal));
   }
   for (auto p : this->plug.floatParametersSmall) {
+    juce::ParameterID id(p.name, i++);
     std::string name(p.name);
     std::replace(name.begin(), name.end(), '_', ' ');
     parameters.add(std::make_unique<juce::AudioParameterFloat>(
-        p.name, name, p.minVal, p.maxVal, p.defaultVal));
+        id, name, p.minVal, p.maxVal, p.defaultVal));
   }
   for (auto p : this->plug.boolParameters) {
+    juce::ParameterID id(p.name, i++);
     std::string name(p.name);
     std::replace(name.begin(), name.end(), '_', ' ');
-    parameters.add(
-        std::make_unique<juce::AudioParameterBool>(p.name, name, p.defaultVal));
+    parameters.add(std::make_unique<juce::AudioParameterBool>(id, name, p.defaultVal));
   }
+  DBG("Created " + std::to_string(i) + " paramters.");
   return parameters;
 }
