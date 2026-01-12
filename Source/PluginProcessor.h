@@ -46,7 +46,7 @@ public:
   void getStateInformation(juce::MemoryBlock& destData) override;
   void setStateInformation(const void* data, int sizeInBytes) override;
 
-  NtFx::Compressor<float> plug;
+  PLUGIN<float> plug;
   juce::AudioProcessorValueTreeState parameters;
 
 private:

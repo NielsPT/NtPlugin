@@ -2,6 +2,8 @@
 #include <string>
 #include <vector>
 
+#include "Stereo.h"
+
 namespace NtFx {
 // TODO: general parameter class.
 template <typename signal_t>
@@ -28,6 +30,11 @@ struct Plugin {
   std::vector<FloatParameterSpec<signal_t>> floatParameters;
   std::vector<FloatParameterSpec<signal_t>> floatParametersSmall;
   std::vector<BoolParameterSpec> boolParameters;
+
+  virtual NTFX_INLINE_MEMBER Stereo<signal_t> processSample(
+      Stereo<signal_t> x) noexcept                        = 0;
+  virtual NTFX_INLINE_MEMBER void updateCoeffs() noexcept = 0;
+  virtual NTFX_INLINE_MEMBER void reset(int fs) noexcept  = 0;
 
   bool* getBoolParamByName(std::string name) {
     for (auto param : this->boolParameters) {

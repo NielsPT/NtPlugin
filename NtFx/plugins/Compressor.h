@@ -11,6 +11,8 @@
 #include "lib/SoftClip.h"
 #include "lib/Stereo.h"
 
+#define PLUGIN NtFx::Compressor
+
 namespace NtFx {
 
 constexpr int rmsDelayLineLength     = 16384;
@@ -146,7 +148,8 @@ struct Compressor : public Plugin<signal_t> {
     this->softClipCoeffs = calculateSoftClipCoeffs<signal_t, 2>();
   }
 
-  NTFX_INLINE_MEMBER Stereo<signal_t> processSample(Stereo<signal_t> x) noexcept {
+  NTFX_INLINE_MEMBER Stereo<signal_t> processSample(
+      Stereo<signal_t> x) noexcept override {
     this->updatePeakLevel(x, MeterIdx::in);
     if (this->bypassEnable) {
       this->updatePeakLevel(x, MeterIdx::out);
@@ -188,13 +191,13 @@ struct Compressor : public Plugin<signal_t> {
     }
   }
 
-  void updateCoeffs() noexcept {
+  void updateCoeffs() noexcept override {
     this->scCoeffs   = calcSideChainCoeffs(this->fs, &this->scSettings);
     this->makeup_lin = std::pow(10.0, (this->makeup_db / NTFX_SIGNAL(20.0)));
     this->mix_lin    = this->mix_percent / 100.0;
   }
 
-  NTFX_INLINE_MEMBER void reset(int fs) noexcept {
+  NTFX_INLINE_MEMBER void reset(int fs) noexcept override {
     this->fs = fs;
     std::fill(this->peakLevels.begin(), this->peakLevels.end(), NTFX_SIGNAL(0));
     this->peakLevels[MeterIdx::gr] = NTFX_SIGNAL(1);
