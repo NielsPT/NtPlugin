@@ -26,6 +26,7 @@ struct MonoMeter : public juce::Component {
   int iHoldDot           = 0;
   std::string label      = "";
   bool isInitialized     = false;
+  int fontSize           = 20;
 
   MonoMeter() {
     this->refresh();
@@ -39,6 +40,7 @@ struct MonoMeter : public juce::Component {
     // TODO: stop if nothings changed.
     int y = this->pad;
     g.setColour(juce::Colours::white);
+    g.setFont(this->fontSize);
     g.drawText(this->label,
         0,
         y,
@@ -146,6 +148,7 @@ struct MonoMeterDbScale : public juce::Component {
       auto y        = i * this->_m.dotDist + offset;
       std::string t = "- " + std::to_string(static_cast<int>(this->_m.dbPrDot * i));
       g.setColour(juce::Colours::white);
+      g.setFont(_m.fontSize);
       g.drawText(t, 0, y, 40, 10, juce::Justification::centred);
     }
   }
@@ -156,6 +159,7 @@ struct StereoMeter : public juce::Component {
   MonoMeter l;
   MonoMeter r;
   juce::Label label;
+  int fontSize = 20;
 
   StereoMeter(std::string label) : label(label, label) {
     this->addAndMakeVisible(this->label);
@@ -169,8 +173,11 @@ struct StereoMeter : public juce::Component {
     this->repaint();
   }
   void drawGui() {
+    l.fontSize     = this->fontSize;
+    r.fontSize     = this->fontSize;
     auto area      = getLocalBounds();
     auto labelArea = area.removeFromTop(this->getHeight() * 1.0 / (l.nDots + 1));
+    this->label.setFont(this->fontSize);
     this->label.setBounds(labelArea);
     this->label.setJustificationType(juce::Justification::centredBottom);
     auto lArea = area.removeFromLeft(area.getWidth() / 2.0);
@@ -262,6 +269,11 @@ struct MeterAreaInOutGr : public juce::Component {
     this->gr.setBounds(area.removeFromLeft(meterWidth));
     area.removeFromTop(this->in.label.getHeight());
     this->scale.setBounds(area);
+  }
+  void setFontSize(int size) {
+    this->in.fontSize  = size;
+    this->out.fontSize = size;
+    this->gr.fontSize  = size;
   }
 };
 } // namespace ntFX

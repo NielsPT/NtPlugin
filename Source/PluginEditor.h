@@ -22,7 +22,8 @@
 class NtCompressorAudioProcessorEditor : public juce::AudioProcessorEditor,
                                          private juce::Timer,
                                          private juce::Slider::Listener,
-                                         private juce::ToggleButton::Listener {
+                                         private juce::ToggleButton::Listener,
+                                         private juce::ComboBox::Listener {
 public:
   NtCompressorAudioProcessorEditor(NtCompressorAudioProcessor&);
   ~NtCompressorAudioProcessorEditor() override;
@@ -47,16 +48,22 @@ private:
   std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>>
       allToggleAttachments;
   std::vector<juce::Rectangle<int>> borderedAreas;
+  std::vector<juce::Rectangle<int>> grayAreas;
+  // juce::Rectangle<int> titleBarArea;
+  // Add ComboboxAttachment
+  std::vector<juce::ComboBox*> allDropDownBoxes;
 
-  float sliderWidth     = 50;
-  float entryHeight     = 20;
-  float entryPad        = 10;
-  float buttonHeight    = 30;
-  float buttonWidth     = 100;
-  float toggleHeight    = 75;
-  float knobHeight      = 200;
-  float smallKnobWidth  = 100;
-  float smallKnobHeight = 150;
+  float unscaledWindowHeight = 0;
+  float defaultWindowWidth   = 1000;
+  float labelHeight          = 20;
+  float toggleHeight         = 75;
+  float knobHeight           = 200;
+  float smallKnobWidth       = 100;
+  float smallKnobHeight      = 150;
+  float titleBarAreaHeight   = 25;
+  float uiScale              = 1;
+
+  int defaultFontSize = 18;
 
   bool popupIsDisplayed = false;
   bool isInitialized    = false;
@@ -64,12 +71,14 @@ private:
   void displayErrorValPopup(int varId);
   void sliderValueChanged(juce::Slider* slider) override;
   void buttonClicked(juce::Button* button) override;
+  void comboBoxChanged(juce::ComboBox* p_box) override;
   void timerCallback() override;
   void drawGui();
   void initSlider(NtFx::FloatParameterSpec<float>* p_spec,
       juce::Slider* p_slider,
       juce::Label* p_label);
   void initToggle(NtFx::BoolParameterSpec* p_spec, juce::TextButton* p_button);
+  void initDropDownBox(std::vector<std::string>& vars, std::string title);
 
   void calcSliderRowsCols(int nSliders, int& nRows, int& nColumns);
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtCompressorAudioProcessorEditor)
