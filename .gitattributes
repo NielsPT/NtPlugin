@@ -1,0 +1,7 @@
+*.py diff merge text
+*.sh diff merge text eol=lf
+*.bat diff merge text
+*.ps1 diff merge text
+*.md diff merge text
+*.yml diff merge text
+*.h diff merge text
