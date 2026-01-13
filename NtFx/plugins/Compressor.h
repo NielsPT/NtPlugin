@@ -48,7 +48,7 @@ struct Compressor : public Plugin<signal_t> {
   std::array<signal_t, 3> softClipCoeffs;
 
   Compressor() {
-    this->floatParameters = {
+    this->primaryKnobs = {
       {
           .p_val      = &this->scSettings.thresh_db,
           .name       = "Threshold",
@@ -94,7 +94,7 @@ struct Compressor : public Plugin<signal_t> {
       },
     };
 
-    this->floatParametersSecondary = {
+    this->secondaryKnobs = {
       {
           .p_val      = &this->scSettings.knee_db,
           .name       = "Knee",
@@ -121,7 +121,7 @@ struct Compressor : public Plugin<signal_t> {
       },
     };
 
-    this->boolParameters = {
+    this->toggles = {
       {
           .p_val = &this->scSettings.rmsEnable,
           .name  = "RMS",

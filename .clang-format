@@ -6,29 +6,30 @@ AccessModifierOffset: -2
 BreakBeforeBraces: Custom
 BreakBeforeBinaryOperators: NonAssignment
 BraceWrapping:
-   AfterFunction: false
+  AfterFunction: false
 BreakConstructorInitializers: BeforeColon
 BreakBinaryOperations: RespectPrecedence
 BreakAfterOpenBracketFunction: true
 AlwaysBreakTemplateDeclarations: Yes
 IndentPPDirectives: BeforeHash
-AlignConsecutiveAssignments: 
+AlignConsecutiveAssignments:
   Enabled: true
   AcrossEmptyLines: false
   AcrossComments: false
-AlignConsecutiveMacros: 
+AlignConsecutiveMacros:
   Enabled: false
 AlignOperants: AlignAfterOperator
 AlignAfterOpenBracket: DontAlign
 AllowAllArgumentsOnNextLine: true
 BinPackArguments: false
 BinPackParameters: "OnePerLine"
-AlignTrailingComments: 
+AlignTrailingComments:
   Kind: Always
 AllowShortBlocksOnASingleLine: Always
 AllowShortEnumsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: All
 AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortLoopsOnASingleLine: true
 # ExperimentalAutoDetectBinPacking: false
 AllowAllParametersOfDeclarationOnNextLine: true
 # PenaltyReturnTypeOnItsOwnLine: 1000000

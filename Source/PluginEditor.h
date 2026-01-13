@@ -41,15 +41,15 @@ public:
   void resized() override;
 
 private:
-  NtCompressorAudioProcessor& audioProcessor;
+  NtCompressorAudioProcessor& proc;
   NtFx::MeterAreaInOutGr meters;
   NtFx::KnobLookAndFeel knobLookAndFeel;
 
   // TODO: allToggleLabels and on/off text for toggles.
   std::vector<std::unique_ptr<juce::Slider>> allPrimaryKnobs;
   std::vector<std::unique_ptr<juce::Label>> allPrimaryKnobLabels;
-  std::vector<std::unique_ptr<juce::Slider>> allSmallKnobs;
-  std::vector<std::unique_ptr<juce::Label>> allSmallKnobLabels;
+  std::vector<std::unique_ptr<juce::Slider>> allSecondaryKnobs;
+  std::vector<std::unique_ptr<juce::Label>> allSecondaryKnobLabels;
   std::vector<std::unique_ptr<juce::TextButton>> allToggles;
   std::vector<std::unique_ptr<juce::ComboBox>> allDropDowns;
   std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>>
@@ -85,12 +85,13 @@ private:
   void comboBoxChanged(juce::ComboBox* p_box) override;
   void timerCallback() override;
   void drawGui();
-  void initKnob(NtFx::FloatParameterSpec<float>* p_spec,
+  void initPrimaryKnob(NtFx::FloatParameterSpec<float>& p_spec);
+  void initSecondaryKnob(NtFx::FloatParameterSpec<float>& p_spec);
+  void _initKnob(NtFx::FloatParameterSpec<float>& p_spec,
       std::unique_ptr<juce::Slider>& p_slider,
       std::unique_ptr<juce::Label>& p_label);
-  void initToggle(
-      NtFx::BoolParameterSpec* p_spec, std::unique_ptr<juce::TextButton>& p_button);
-  void initDropDown(NtFx::DropDownSpec* p_spec);
+  void initToggle(NtFx::BoolParameterSpec& spec);
+  void initDropDown(NtFx::DropDownSpec& p_spec);
   void updateUiScale();
 
   void calcSliderRowsCols(int nSliders, int& nRows, int& nColumns);

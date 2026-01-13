@@ -27,9 +27,9 @@ template <typename signal_t>
 struct Plugin {
   int tempo = 120;
   int fs    = 44100;
-  std::vector<FloatParameterSpec<signal_t>> floatParameters;
-  std::vector<FloatParameterSpec<signal_t>> floatParametersSecondary;
-  std::vector<BoolParameterSpec> boolParameters;
+  std::vector<FloatParameterSpec<signal_t>> primaryKnobs;
+  std::vector<FloatParameterSpec<signal_t>> secondaryKnobs;
+  std::vector<BoolParameterSpec> toggles;
 
   virtual NTFX_INLINE_MEMBER Stereo<signal_t> processSample(
       Stereo<signal_t> x) noexcept                        = 0;
@@ -37,17 +37,17 @@ struct Plugin {
   virtual NTFX_INLINE_MEMBER void reset(int fs) noexcept  = 0;
 
   bool* getBoolParamByName(std::string name) {
-    for (auto param : this->boolParameters) {
+    for (auto param : this->toggles) {
       if (param.name == name) { return param.p_val; }
     }
     return nullptr;
   }
 
   signal_t* getFloatParamByName(std::string name) {
-    for (auto param : this->floatParameters) {
+    for (auto param : this->primaryKnobs) {
       if (param.name == name) { return param.p_val; }
     }
-    for (auto param : this->floatParametersSecondary) {
+    for (auto param : this->secondaryKnobs) {
       if (param.name == name) { return param.p_val; }
     }
     return nullptr;

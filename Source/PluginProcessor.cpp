@@ -162,21 +162,21 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 NtCompressorAudioProcessor::createParameterLayout() {
   int i = 1;
   juce::AudioProcessorValueTreeState::ParameterLayout parameters;
-  for (auto p : this->plug.floatParameters) {
+  for (auto p : this->plug.primaryKnobs) {
     juce::ParameterID id(p.name, i++);
     std::string name(p.name);
     std::replace(name.begin(), name.end(), '_', ' ');
     parameters.add(std::make_unique<juce::AudioParameterFloat>(
         id, name, p.minVal, p.maxVal, p.defaultVal));
   }
-  for (auto p : this->plug.floatParametersSecondary) {
+  for (auto p : this->plug.secondaryKnobs) {
     juce::ParameterID id(p.name, i++);
     std::string name(p.name);
     std::replace(name.begin(), name.end(), '_', ' ');
     parameters.add(std::make_unique<juce::AudioParameterFloat>(
         id, name, p.minVal, p.maxVal, p.defaultVal));
   }
-  for (auto p : this->plug.boolParameters) {
+  for (auto p : this->plug.toggles) {
     juce::ParameterID id(p.name, i++);
     std::string name(p.name);
     std::replace(name.begin(), name.end(), '_', ' ');
