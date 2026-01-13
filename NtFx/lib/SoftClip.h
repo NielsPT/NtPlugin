@@ -1,7 +1,7 @@
 #pragma once
 
-#include "NtFx.h"
 #include "Stereo.h"
+#include "utils.h"
 
 namespace NtFx {
 NTFX_INLINE_TEMPLATE signal_t softClip5thMono(

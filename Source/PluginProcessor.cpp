@@ -154,6 +154,7 @@ void NtCompressorAudioProcessor::setStateInformation(
 //==============================================================================
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
+  DBG("Creating new NtFx plugin editor.");
   return new NtCompressorAudioProcessor();
 }
 
@@ -168,7 +169,7 @@ NtCompressorAudioProcessor::createParameterLayout() {
     parameters.add(std::make_unique<juce::AudioParameterFloat>(
         id, name, p.minVal, p.maxVal, p.defaultVal));
   }
-  for (auto p : this->plug.floatParametersSmall) {
+  for (auto p : this->plug.floatParametersSecondary) {
     juce::ParameterID id(p.name, i++);
     std::string name(p.name);
     std::replace(name.begin(), name.end(), '_', ' ');
@@ -180,6 +181,17 @@ NtCompressorAudioProcessor::createParameterLayout() {
     std::string name(p.name);
     std::replace(name.begin(), name.end(), '_', ' ');
     parameters.add(std::make_unique<juce::AudioParameterBool>(id, name, p.defaultVal));
+  }
+  for (auto d : this->titleBarSpec.dropDowns) {
+    juce::ParameterID id(d.name, i++);
+    std::string name(d.name);
+    std::replace(name.begin(), name.end(), '_', ' ');
+    juce::StringArray options;
+    for (const auto& str : d.options) {
+      options.add(juce::String(str));
+    }
+    parameters.add(
+        std::make_unique<juce::AudioParameterChoice>(id, name, options, d.defaultIdx));
   }
   DBG("Created " + std::to_string(i) + " paramters.");
   return parameters;

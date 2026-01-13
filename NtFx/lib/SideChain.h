@@ -1,7 +1,7 @@
 #pragma once
 #include <cmath>
 
-#include "NtFx.h"
+#include "utils.h"
 namespace NtFx {
 
 template <typename signal_t>

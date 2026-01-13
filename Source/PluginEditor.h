@@ -12,8 +12,8 @@
 
 #include "PluginProcessor.h"
 
-#include "lib/NtKnob.h"
-#include "lib/NtMeter.h"
+#include "lib/Knob.h"
+#include "lib/Meter.h"
 
 struct ButtonLookAndFeel : public LookAndFeel_V4 {
   int fontSize;
@@ -45,21 +45,22 @@ private:
   NtFx::MeterAreaInOutGr meters;
   NtFx::KnobLookAndFeel knobLookAndFeel;
 
-  std::vector<juce::Slider*> allSliders;
-  std::vector<juce::Label*> allSliderLabels;
-  std::vector<juce::Slider*> allSmallSliders;
-  std::vector<juce::Label*> allSmallSliderLabels;
   // TODO: allToggleLabels and on/off text for toggles.
-  std::vector<juce::TextButton*> allToggles;
+  std::vector<std::unique_ptr<juce::Slider>> allPrimaryKnobs;
+  std::vector<std::unique_ptr<juce::Label>> allPrimaryKnobLabels;
+  std::vector<std::unique_ptr<juce::Slider>> allSmallKnobs;
+  std::vector<std::unique_ptr<juce::Label>> allSmallKnobLabels;
+  std::vector<std::unique_ptr<juce::TextButton>> allToggles;
+  std::vector<std::unique_ptr<juce::ComboBox>> allDropDowns;
   std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>>
-      allSliderAttachments;
+      allKnobAttachments;
   std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>>
       allToggleAttachments;
+  std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>>
+      allDropDownAttachments;
+
   std::vector<juce::Rectangle<int>> borderedAreas;
   std::vector<juce::Rectangle<int>> grayAreas;
-  // juce::Rectangle<int> titleBarArea;
-  // Add ComboboxAttachment
-  std::vector<juce::ComboBox*> allDropDownBoxes;
 
   float unscaledWindowHeight = 0;
   float defaultWindowWidth   = 1000;
@@ -84,11 +85,13 @@ private:
   void comboBoxChanged(juce::ComboBox* p_box) override;
   void timerCallback() override;
   void drawGui();
-  void initSlider(NtFx::FloatParameterSpec<float>* p_spec,
-      juce::Slider* p_slider,
-      juce::Label* p_label);
-  void initToggle(NtFx::BoolParameterSpec* p_spec, juce::TextButton* p_button);
-  void initDropDownBox(std::vector<std::string>& vars, std::string title);
+  void initKnob(NtFx::FloatParameterSpec<float>* p_spec,
+      std::unique_ptr<juce::Slider>& p_slider,
+      std::unique_ptr<juce::Label>& p_label);
+  void initToggle(
+      NtFx::BoolParameterSpec* p_spec, std::unique_ptr<juce::TextButton>& p_button);
+  void initDropDown(NtFx::DropDownSpec* p_spec);
+  void updateUiScale();
 
   void calcSliderRowsCols(int nSliders, int& nRows, int& nColumns);
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtCompressorAudioProcessorEditor)

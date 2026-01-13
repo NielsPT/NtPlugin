@@ -1,6 +1,6 @@
 #pragma once
 
-#include "NtFx.h"
+#include "utils.h"
 
 template <typename signal_t>
 struct Stereo {

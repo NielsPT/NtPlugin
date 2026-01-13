@@ -28,7 +28,7 @@ struct Plugin {
   int tempo = 120;
   int fs    = 44100;
   std::vector<FloatParameterSpec<signal_t>> floatParameters;
-  std::vector<FloatParameterSpec<signal_t>> floatParametersSmall;
+  std::vector<FloatParameterSpec<signal_t>> floatParametersSecondary;
   std::vector<BoolParameterSpec> boolParameters;
 
   virtual NTFX_INLINE_MEMBER Stereo<signal_t> processSample(
@@ -47,7 +47,7 @@ struct Plugin {
     for (auto param : this->floatParameters) {
       if (param.name == name) { return param.p_val; }
     }
-    for (auto param : this->floatParametersSmall) {
+    for (auto param : this->floatParametersSecondary) {
       if (param.name == name) { return param.p_val; }
     }
     return nullptr;

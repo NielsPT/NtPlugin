@@ -5,13 +5,13 @@
 #include <string>
 #include <vector>
 
-#include "lib/NtFx.h"
 #include "lib/Plugin.h"
 #include "lib/SideChain.h"
 #include "lib/SoftClip.h"
 #include "lib/Stereo.h"
+#include "lib/utils.h"
 
-#define PLUGIN NtFx::Compressor
+#define NTFX_PLUGIN NtFx::Compressor
 
 namespace NtFx {
 
@@ -94,7 +94,7 @@ struct Compressor : public Plugin<signal_t> {
       },
     };
 
-    this->floatParametersSmall = {
+    this->floatParametersSecondary = {
       {
           .p_val      = &this->scSettings.knee_db,
           .name       = "Knee",
@@ -158,7 +158,7 @@ struct Compressor : public Plugin<signal_t> {
     // TODO: isfinite in Stereo
     checkNotFinite(x.l, 1);
     checkNotFinite(x.r, 2);
-    // TODO: Make fbstate atomic
+    // TODO: Make fbState atomic
     checkNotFinite(this->fbState, 3);
     Stereo<signal_t> x_sc = x;
     if (this->feedbackEnable) { x_sc = this->fbState; }
