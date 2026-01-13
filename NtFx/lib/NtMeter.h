@@ -152,7 +152,10 @@ struct MonoMeterDbScale : public juce::Component {
       g.drawText(t, 0, y, 40, 10, juce::Justification::centred);
     }
   }
-  void resized() override { repaint(); }
+  void resized() override {
+    this->_m.refresh();
+    repaint();
+  }
 };
 
 struct StereoMeter : public juce::Component {

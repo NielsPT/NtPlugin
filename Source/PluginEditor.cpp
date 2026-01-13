@@ -14,7 +14,7 @@
 //==============================================================================
 NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
     NtCompressorAudioProcessor& p)
-    : AudioProcessorEditor(&p), audioProcessor(p) {
+    : AudioProcessorEditor(&p), audioProcessor(p), buttonLookAndFeel(defaultFontSize) {
   this->getLookAndFeel().setColour(
       juce::TextButton::ColourIds::buttonColourId, juce::Colours::black);
   this->getLookAndFeel().setColour(
@@ -91,7 +91,7 @@ void NtCompressorAudioProcessorEditor::initDropDownBox(
   this->allDropDownBoxes.push_back(p_box);
   p_box->setTitle(title);
   for (size_t i = 0; i < vars.size(); i++) {
-    p_box->addItem(vars[i], i + 2);
+    p_box->addItem(vars[i], i + 1);
   }
   p_box->setSelectedItemIndex(2, juce::NotificationType::dontSendNotification);
   p_box->setColour(
@@ -134,6 +134,8 @@ void NtCompressorAudioProcessorEditor::initToggle(
   p_button->setClickingTogglesState(true);
   p_button->setToggleable(true);
   p_button->addListener(this);
+  p_button->setColour(
+      juce::TextButton::ColourIds::textColourOffId, juce::Colours::grey);
   std::string name(p_spec->name);
   std::replace(name.begin(), name.end(), '_', ' ');
   p_button->setButtonText(name);
@@ -142,7 +144,17 @@ void NtCompressorAudioProcessorEditor::initToggle(
           this->audioProcessor.parameters, p_spec->name, *p_button));
 }
 
-NtCompressorAudioProcessorEditor::~NtCompressorAudioProcessorEditor() { }
+NtCompressorAudioProcessorEditor::~NtCompressorAudioProcessorEditor() {
+  for (auto toggle : this->allToggles) {
+    toggle->setLookAndFeel(nullptr);
+  }
+  for (auto slider : this->allSliders) {
+    slider->setLookAndFeel(nullptr);
+  }
+  for (auto slider : this->allSmallSliders) {
+    slider->setLookAndFeel(nullptr);
+  }
+}
 
 void NtCompressorAudioProcessorEditor::paint(juce::Graphics& g) {
   g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
@@ -159,7 +171,7 @@ void NtCompressorAudioProcessorEditor::paint(juce::Graphics& g) {
   //     this->grayAreas[0].getBottomRight().getX(),
   //     this->grayAreas[0].getBottomRight().getY());
   for (auto area : this->borderedAreas) {
-    g.drawRoundedRectangle(area.toFloat(), pad, 1.0);
+    g.drawRoundedRectangle(area.toFloat(), pad * this->uiScale, this->uiScale);
   }
 }
 
@@ -186,7 +198,7 @@ void NtCompressorAudioProcessorEditor::drawGui() {
 
   auto meterWidth = area.getWidth() / 15;
   auto meterArea  = area.removeFromLeft(meterWidth * (this->meters.size() + 0.5));
-  this->meters.setFontSize(this->defaultFontSize * this->uiScale);
+  this->meters.setFontSize((this->defaultFontSize - 2) * this->uiScale);
   this->meters.setBounds(meterArea);
   this->borderedAreas.clear();
   this->borderedAreas.push_back(meterArea);
@@ -198,7 +210,8 @@ void NtCompressorAudioProcessorEditor::drawGui() {
   auto togglesArea   = area.removeFromBottom(this->toggleHeight * this->uiScale);
   auto nSmallSliders = this->audioProcessor.plug.floatParametersSmall.size();
   if (nSmallSliders) {
-    auto smallSlidersArea = area.removeFromBottom(150);
+    auto smallSlidersArea =
+        area.removeFromBottom(this->smallKnobHeight * this->uiScale);
     this->borderedAreas.push_back(smallSlidersArea);
     smallSlidersArea.removeFromLeft(pad);
     smallSlidersArea.removeFromRight(pad);
@@ -228,7 +241,7 @@ void NtCompressorAudioProcessorEditor::drawGui() {
       auto sliderArea = rowArea.removeFromLeft(columnWidth);
       auto labelArea  = sliderArea.removeFromTop(this->labelHeight * this->uiScale);
       this->allSliders[iSlider]->setBounds(sliderArea);
-      this->allSliderLabels[i]->setFont(this->defaultFontSize * this->uiScale);
+      this->allSliderLabels[iSlider]->setFont(this->defaultFontSize * this->uiScale);
       iSlider++;
     }
   }
@@ -240,12 +253,13 @@ void NtCompressorAudioProcessorEditor::drawGui() {
   auto nToggles = this->audioProcessor.plug.boolParameters.size();
   columnWidth   = togglesArea.getWidth() / nToggles;
   // ButtonLookAndFeel buttonLookAndFeel(this->defaultFontSize * this->uiScale);
+  this->buttonLookAndFeel.fontSize = this->defaultFontSize * this->uiScale;
   for (size_t i = 0; i < nToggles; i++) {
     auto toggleArea = togglesArea.removeFromLeft(columnWidth);
     toggleArea.removeFromLeft(togglePad);
     toggleArea.removeFromRight(togglePad);
     this->allToggles[i]->setBounds(toggleArea);
-    // this->allToggles[i]->setLookAndFeel(&buttonLookAndFeel);
+    this->allToggles[i]->setLookAndFeel(&this->buttonLookAndFeel);
   }
   this->repaint();
 }

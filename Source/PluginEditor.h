@@ -11,10 +11,18 @@
 #include <JuceHeader.h>
 
 #include "PluginProcessor.h"
-// #include "sound_meter/sound_meter.h"
 
 #include "lib/NtKnob.h"
 #include "lib/NtMeter.h"
+
+struct ButtonLookAndFeel : public LookAndFeel_V4 {
+  int fontSize;
+  // This is the worst design choice of an API, I can think of. Man, where is
+  // TextButton.setFont?
+  ButtonLookAndFeel(int fontSize) : fontSize(fontSize) { }
+  Font getTextButtonFont(TextButton&, int) override { return Font(fontSize); }
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ButtonLookAndFeel)
+};
 
 //==============================================================================
 /**
@@ -67,6 +75,8 @@ private:
 
   bool popupIsDisplayed = false;
   bool isInitialized    = false;
+
+  ButtonLookAndFeel buttonLookAndFeel;
 
   void displayErrorValPopup(int varId);
   void sliderValueChanged(juce::Slider* slider) override;
