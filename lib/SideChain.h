@@ -6,39 +6,39 @@ namespace NtFx {
 
 template <typename signal_t>
 struct ScSettings {
-  signal_t thresh_db = NTFX_SIGNAL(0);
-  signal_t ratio_db  = NTFX_SIGNAL(2);
-  signal_t knee_db   = NTFX_SIGNAL(12);
-  signal_t tAtt_ms   = NTFX_SIGNAL(1);
-  signal_t tRel_ms   = NTFX_SIGNAL(100);
-  signal_t tRms_ms   = NTFX_SIGNAL(80);
+  signal_t thresh_db = NTFX_SIG_T(0);
+  signal_t ratio_db  = NTFX_SIG_T(2);
+  signal_t knee_db   = NTFX_SIG_T(12);
+  signal_t tAtt_ms   = NTFX_SIG_T(1);
+  signal_t tRel_ms   = NTFX_SIG_T(100);
+  signal_t tRms_ms   = NTFX_SIG_T(80);
   bool rmsEnable     = false;
-  signal_t tPeak_ms  = NTFX_SIGNAL(20.0);
+  signal_t tPeak_ms  = NTFX_SIG_T(20.0);
 };
 
 template <typename signal_t>
 struct ScCoeffs {
-  signal_t thresh_db  = NTFX_SIGNAL(0);
-  signal_t ratio_db   = NTFX_SIGNAL(1);
-  signal_t knee_db    = NTFX_SIGNAL(0);
-  signal_t thresh_lin = NTFX_SIGNAL(1);
-  signal_t ratio_lin  = NTFX_SIGNAL(1);
-  signal_t knee_lin   = NTFX_SIGNAL(1);
-  signal_t alphaAtt   = NTFX_SIGNAL(0);
-  signal_t alphaRel   = NTFX_SIGNAL(0);
-  signal_t alphaPeak  = NTFX_SIGNAL(0);
+  signal_t thresh_db  = NTFX_SIG_T(0);
+  signal_t ratio_db   = NTFX_SIG_T(1);
+  signal_t knee_db    = NTFX_SIG_T(0);
+  signal_t thresh_lin = NTFX_SIG_T(1);
+  signal_t ratio_lin  = NTFX_SIG_T(1);
+  signal_t knee_lin   = NTFX_SIG_T(1);
+  signal_t alphaAtt   = NTFX_SIG_T(0);
+  signal_t alphaRel   = NTFX_SIG_T(0);
+  signal_t alphaPeak  = NTFX_SIG_T(0);
   size_t nRms         = 1;
   bool rmsEnable      = false;
 };
 
 template <typename signal_t>
 struct ScState {
-  signal_t ySensLast   = NTFX_SIGNAL(0.0);
-  signal_t yFilterLast = NTFX_SIGNAL(0.0);
+  signal_t ySensLast   = NTFX_SIG_T(0.0);
+  signal_t yFilterLast = NTFX_SIG_T(0.0);
   RmsSensorState<signal_t> rms;
   NTFX_INLINE_MEMBER void reset() {
-    this->ySensLast   = NTFX_SIGNAL(0.0);
-    this->yFilterLast = NTFX_SIGNAL(0.0);
+    this->ySensLast   = NTFX_SIG_T(0.0);
+    this->yFilterLast = NTFX_SIG_T(0.0);
     rms.reset();
   }
 };
@@ -80,7 +80,7 @@ NTFX_INLINE_TEMPLATE signal_t sideChain_lin(
 
   signal_t target;
   if (ySens < p_coeffs->thresh_lin / p_coeffs->knee_lin) {
-    target = NTFX_SIGNAL(0);
+    target = NTFX_SIG_T(0);
   } else if (ySens < p_coeffs->thresh_lin) {
     target = (ySens / p_coeffs->thresh_lin)
         * p_coeffs->ratio_lin
@@ -95,7 +95,7 @@ NTFX_INLINE_TEMPLATE signal_t sideChain_lin(
 
   signal_t yFilter     = p_state->yFilterLast * alpha + target * (1 - alpha);
   p_state->yFilterLast = yFilter;
-  return NTFX_SIGNAL(1.0) / (yFilter + 1);
+  return NTFX_SIG_T(1.0) / (yFilter + 1);
 }
 
 NTFX_INLINE_TEMPLATE signal_t sideChain_db(
@@ -110,7 +110,7 @@ NTFX_INLINE_TEMPLATE signal_t sideChain_db(
   signal_t sensRelease =
       p_coeffs->alphaPeak * p_state->ySensLast + (1 - p_coeffs->alphaPeak) * xAbs;
   signal_t ySens = std::max(xAbs, sensRelease);
-  if (ySens != ySens) { ySens = NTFX_SIGNAL(0); }
+  if (ySens != ySens) { ySens = NTFX_SIG_T(0); }
   p_state->ySensLast = ySens;
 
   signal_t x_db = db(ySens);
@@ -130,7 +130,7 @@ NTFX_INLINE_TEMPLATE signal_t sideChain_db(
   if (target > p_state->yFilterLast) { alpha = p_coeffs->alphaAtt; }
 
   signal_t yFilter = p_state->yFilterLast * alpha + target * (1 - alpha);
-  if (yFilter != yFilter) { yFilter = NTFX_SIGNAL(0); }
+  if (yFilter != yFilter) { yFilter = NTFX_SIG_T(0); }
   p_state->yFilterLast = yFilter;
   return invDb(-yFilter);
 }

@@ -16,7 +16,7 @@ struct MonoMeter : public juce::Component {
   int nDots              = 15;
   bool invert            = false;
   int nActiveDots        = 0;
-  int peakLast_db        = 0;
+  float peakLast_db      = 0;
   int decayRate_db       = 0;
   float peakVal_lin      = 0;
   float dbPrDot          = 0;
@@ -72,7 +72,9 @@ struct MonoMeter : public juce::Component {
   void resized() override { repaint(); }
 
   void refresh() {
-    if (this->peakLast_db != this->peakLast_db) { this->peakLast_db = this->maxVal_db; }
+    if (!(this->peakLast_db == this->peakLast_db)) {
+      this->peakLast_db = this->maxVal_db;
+    }
     this->dbPrDot = (this->maxVal_db - this->minVal_db) / this->nDots;
     float peak_db = 20 * std::log10(this->peakVal_lin);
     if (this->peakVal_lin <= 0) { peak_db = -100; }

@@ -7,8 +7,8 @@ namespace NtFx {
 NTFX_INLINE_TEMPLATE signal_t softClip5thMono(
     std::array<signal_t, 3>& p_coeffs, signal_t x) noexcept {
   signal_t x_ = x / p_coeffs[0];
-  if (x_ > 1.0) { return NTFX_SIGNAL(1.0); }
-  if (x_ < -1.0) { return NTFX_SIGNAL(-1.0); }
+  if (x_ > 1.0) { return NTFX_SIG_T(1.0); }
+  if (x_ < -1.0) { return NTFX_SIG_T(-1.0); }
   return p_coeffs[0] * x_
       + p_coeffs[1] * x_ * x_ * x_
       + p_coeffs[2] * x_ * x_ * x_ * x_ * x_;

@@ -107,10 +107,11 @@ void NtCompressorAudioProcessor::processBlock(
     buffer.clear(i, 0, buffer.getNumSamples());
   }
   auto p_playHead = this->getPlayHead();
-  juce::AudioPlayHead::CurrentPositionInfo curPos;
-  if (p_playHead->getCurrentPosition(curPos)) {
-    auto tempo = curPos.bpm;
-    if (tempo) { this->plug.tempo = tempo; }
+  auto p_posInfo  = p_playHead->getPosition();
+
+  if (p_posInfo) {
+    auto tempo = p_posInfo->getBpm();
+    if (tempo) { this->plug.tempo = *tempo; }
   }
   auto leftBuffer  = buffer.getWritePointer(0);
   auto rightBuffer = buffer.getWritePointer(1);

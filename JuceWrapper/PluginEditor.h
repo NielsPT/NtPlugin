@@ -21,7 +21,7 @@ struct ButtonLookAndFeel : public juce::LookAndFeel_V4 {
   // TextButton.setFont?
   ButtonLookAndFeel() { }
   juce::Font getTextButtonFont(juce::TextButton&, int) override {
-    return juce::Font(fontSize);
+    return juce::Font(juce::FontOptions(fontSize));
   }
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ButtonLookAndFeel)
 };
@@ -80,7 +80,6 @@ private:
   bool popupIsDisplayed = false;
   bool isInitialized    = false;
 
-  void displayErrorValPopup(int varId);
   void sliderValueChanged(juce::Slider* slider) override;
   void buttonClicked(juce::Button* button) override;
   void comboBoxChanged(juce::ComboBox* p_box) override;
