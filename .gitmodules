@@ -1,3 +1,3 @@
-[submodule "Source/JUCE"]
-	path = Source/JUCE
+[submodule "JuceWrapper/JUCE"]
+	path = JuceWrapper/JUCE
 	url = https://github.com/juce-framework/JUCE.git

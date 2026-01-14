@@ -63,15 +63,10 @@ bool NtCompressorAudioProcessor::isMidiEffect() const {
 }
 
 double NtCompressorAudioProcessor::getTailLengthSeconds() const { return 0.0; }
-
 int NtCompressorAudioProcessor::getNumPrograms() { return 1; }
-
 int NtCompressorAudioProcessor::getCurrentProgram() { return 0; }
-
 void NtCompressorAudioProcessor::setCurrentProgram(int index) { }
-
 const juce::String NtCompressorAudioProcessor::getProgramName(int index) { return {}; }
-
 void NtCompressorAudioProcessor::changeProgramName(
     int index, const juce::String& newName) { }
 
@@ -120,10 +115,11 @@ void NtCompressorAudioProcessor::processBlock(
   auto leftBuffer  = buffer.getWritePointer(0);
   auto rightBuffer = buffer.getWritePointer(1);
   for (size_t i = 0; i < buffer.getNumSamples(); i++) {
-    Stereo<float> x = { leftBuffer[i], rightBuffer[i] };
-    auto y          = plug.processSample(x);
-    leftBuffer[i]   = y.l;
-    rightBuffer[i]  = y.r;
+    NtFx::Stereo<float> x = { leftBuffer[i], rightBuffer[i] };
+    // TODO: Oversampling.
+    auto y         = plug.processSample(x);
+    leftBuffer[i]  = y.l;
+    rightBuffer[i] = y.r;
   }
 }
 
@@ -187,9 +183,7 @@ NtCompressorAudioProcessor::createParameterLayout() {
     std::string name(d.name);
     std::replace(name.begin(), name.end(), '_', ' ');
     juce::StringArray options;
-    for (const auto& str : d.options) {
-      options.add(juce::String(str));
-    }
+    for (const auto& str : d.options) { options.add(juce::String(str)); }
     parameters.add(
         std::make_unique<juce::AudioParameterChoice>(id, name, options, d.defaultIdx));
   }

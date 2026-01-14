@@ -180,7 +180,7 @@ struct StereoMeter : public juce::Component {
     r.fontSize     = this->fontSize;
     auto area      = getLocalBounds();
     auto labelArea = area.removeFromTop(this->getHeight() * 1.0 / (l.nDots + 1));
-    this->label.setFont(this->fontSize);
+    this->label.setFont(juce::FontOptions(this->fontSize));
     this->label.setBounds(labelArea);
     this->label.setJustificationType(juce::Justification::centredBottom);
     auto lArea = area.removeFromLeft(area.getWidth() / 2.0);
@@ -211,13 +211,17 @@ struct MeterAreaInOutGr : public juce::Component {
   StereoMeter in;
   StereoMeter out;
   StereoMeter gr;
-  MeterScale scale;
-  MeterAreaInOutGr() : in("IN"), out("OUT"), gr("GR"), scale(in.l) {
+  MeterScale inOutScale;
+  MeterScale grScale;
+  MeterAreaInOutGr() : in("IN"), out("OUT"), gr("GR"), inOutScale(in.l), grScale(gr.l) {
+    this->gr.l.minVal_db = -24;
+    this->gr.r.minVal_db = -24;
     this->gr.setInvert(true);
     this->addAndMakeVisible(in);
     this->addAndMakeVisible(out);
     this->addAndMakeVisible(gr);
-    this->addAndMakeVisible(scale);
+    this->addAndMakeVisible(inOutScale);
+    this->addAndMakeVisible(grScale);
   }
   void setDecay(float a, float b) {
     this->in.setDecay(a, b);
@@ -269,9 +273,12 @@ struct MeterAreaInOutGr : public juce::Component {
     auto meterWidth = scaleWidth * 2;
     this->in.setBounds(area.removeFromLeft(meterWidth));
     this->out.setBounds(area.removeFromLeft(meterWidth));
+    auto inOutScaleArea = area.removeFromLeft(scaleWidth);
+    this->inOutScale.setBounds(inOutScaleArea.removeFromBottom(
+        inOutScaleArea.getHeight() - this->in.label.getHeight()));
     this->gr.setBounds(area.removeFromLeft(meterWidth));
     area.removeFromTop(this->in.label.getHeight());
-    this->scale.setBounds(area);
+    this->grScale.setBounds(area);
   }
   void setFontSize(int size) {
     this->in.fontSize  = size;

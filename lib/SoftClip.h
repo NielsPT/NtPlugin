@@ -20,7 +20,8 @@ NTFX_INLINE_TEMPLATE Stereo<signal_t> softClip5thStereo(
 }
 
 template <typename signal_t, size_t N>
-NTFX_INLINE_STATIC std::array<signal_t, N + 1> calculateSoftClipCoeffs() noexcept {
+constexpr NTFX_INLINE_STATIC std::array<signal_t, N + 1>
+calculateSoftClipCoeffs() noexcept {
   // order = 2 * N + 1
   std::array<signal_t, N + 1> a_n;
   for (int n = 0; n < N + 1; n++) {

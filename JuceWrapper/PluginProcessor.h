@@ -10,8 +10,11 @@
 
 #include <JuceHeader.h>
 
+#include "lib/Plugin.h"
 #include "lib/TitleBarSpec.h"
-#include "plugins/Compressor.h"
+
+#include NTFX_PLUGIN_FILE
+
 //==============================================================================
 /**
  */

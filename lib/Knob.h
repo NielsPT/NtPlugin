@@ -11,7 +11,9 @@ struct KnobLookAndFeel : public juce::LookAndFeel_V4 {
     setColour(juce::Slider::ColourIds::thumbColourId, juce::Colours::white);
   }
 
-  juce::Font getLabelFont(juce::Label& l) override { return Font(this->fontSize); }
+  juce::Font getLabelFont(juce::Label& l) override {
+    return juce::Font(juce::FontOptions(this->fontSize));
+  }
   void drawRotarySlider(juce::Graphics& g,
       int x,
       int y,
@@ -21,11 +23,11 @@ struct KnobLookAndFeel : public juce::LookAndFeel_V4 {
       const float rotaryStartAngle,
       const float rotaryEndAngle,
       juce::Slider&) override {
-    int radius  = std::min(width / 3.0, height / 3.0) - 4.0;
+    int radius  = std::min(width / 2.5, height / 2.5) - 4.0;
     int centreX = x + width / 2;
     int centreY = y + height / 2;
     auto angle  = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
-    Path p;
+    juce::Path p;
     g.setColour(juce::Colours::lightgrey);
     p.addPolygon({ 0.0, 0.0 }, 8, radius);
     p.applyTransform(

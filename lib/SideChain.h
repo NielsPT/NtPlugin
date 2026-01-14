@@ -8,8 +8,8 @@ template <typename signal_t>
 struct ScSettings {
   signal_t thresh_db = NTFX_SIGNAL(0);
   signal_t ratio_db  = NTFX_SIGNAL(2);
-  signal_t knee_db   = NTFX_SIGNAL(0);
-  signal_t tAtt_ms   = NTFX_SIGNAL(10);
+  signal_t knee_db   = NTFX_SIGNAL(12);
+  signal_t tAtt_ms   = NTFX_SIGNAL(1);
   signal_t tRel_ms   = NTFX_SIGNAL(100);
   signal_t tRms_ms   = NTFX_SIGNAL(80);
   bool rmsEnable     = false;
@@ -18,15 +18,15 @@ struct ScSettings {
 
 template <typename signal_t>
 struct ScCoeffs {
-  signal_t thresh_db  = NTFX_SIGNAL(-60.0);
-  signal_t ratio_db   = NTFX_SIGNAL(2.0);
-  signal_t knee_db    = NTFX_SIGNAL(0.0);
-  signal_t thresh_lin = NTFX_SIGNAL(1.0);
-  signal_t ratio_lin  = NTFX_SIGNAL(1.0);
-  signal_t knee_lin   = NTFX_SIGNAL(1.0);
-  signal_t alphaAtt   = NTFX_SIGNAL(0.0);
-  signal_t alphaRel   = NTFX_SIGNAL(0.0);
-  signal_t alphaPeak  = NTFX_SIGNAL(0.0);
+  signal_t thresh_db  = NTFX_SIGNAL(0);
+  signal_t ratio_db   = NTFX_SIGNAL(1);
+  signal_t knee_db    = NTFX_SIGNAL(0);
+  signal_t thresh_lin = NTFX_SIGNAL(1);
+  signal_t ratio_lin  = NTFX_SIGNAL(1);
+  signal_t knee_lin   = NTFX_SIGNAL(1);
+  signal_t alphaAtt   = NTFX_SIGNAL(0);
+  signal_t alphaRel   = NTFX_SIGNAL(0);
+  signal_t alphaPeak  = NTFX_SIGNAL(0);
   size_t nRms         = 1;
   bool rmsEnable      = false;
 };

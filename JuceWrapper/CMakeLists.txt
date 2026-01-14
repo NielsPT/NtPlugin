@@ -1,4 +1,5 @@
-set(NTFX_PROJECT_NAME ntCompressor)
+# set(NTFX_PLUGIN ntCompressor)
+set(NTFX_PLUGIN_FILE "\"plugins/${NTFX_PLUGIN}.h\"")
 
 # Example Audio Plugin CMakeLists.txt
 
@@ -16,7 +17,7 @@ cmake_minimum_required(VERSION 3.22)
 # `project()` command. `project()` sets up some helpful variables that describe source/binary
 # directories, and the current project version. This is a standard CMake command.
 
-project(NTFX_COMPRESSOR_1 VERSION 0.1.0)
+project(${NTFX_PLUGIN} VERSION 0.1.0)
 
 # If you've installed JUCE somehow (via a package manager, or directly using the CMake install
 # target), you'll need to tell this project that it depends on the installed copy of JUCE. If you've
@@ -34,13 +35,13 @@ add_subdirectory(JUCE)                    # If you've put JUCE in a subdirectory
 juce_set_aax_sdk_path(/Users/niels/aax-sdk-2-9-0)
 
 # `juce_add_plugin` adds a static library target with the name passed as the first argument
-# (NTFX_PROJECT_NAME here). This target is a normal CMake target, but has a lot of extra properties set
+# (NTFX_PLUGIN here). This target is a normal CMake target, but has a lot of extra properties set
 # up by default. As well as this shared code static library, this function adds targets for each of
 # the formats specified by the FORMATS arguments. This function accepts many optional arguments.
 # Check the readme at `docs/CMake API.md` in the JUCE repo for the full list.
 
 # TODO: Icon
-juce_add_plugin(${NTFX_PROJECT_NAME}
+juce_add_plugin(${NTFX_PLUGIN}
     # VERSION ...                               # Set this if the plugin version is different to the project version
     # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
     # ICON_SMALL ...
@@ -55,7 +56,7 @@ juce_add_plugin(${NTFX_PROJECT_NAME}
     PLUGIN_CODE Ntcm                            # A unique four-character plugin id with exactly one upper-case character
                                                 # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
     FORMATS AU VST3 Standalone AAX              # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
-    PRODUCT_NAME ${NTFX_PROJECT_NAME})                # The name of the final executable, which can differ from the target name
+    PRODUCT_NAME ${NTFX_PLUGIN})                # The name of the final executable, which can differ from the target name
 
 
 # `target_sources` adds source files to a target. We pass the target that needs the sources as the
@@ -63,7 +64,7 @@ juce_add_plugin(${NTFX_PROJECT_NAME}
 # Finally, we supply a list of source files that will be built into the target. This is a standard
 # CMake command.
 
-target_sources(${NTFX_PROJECT_NAME}
+target_sources(${NTFX_PLUGIN}
     PRIVATE
         PluginEditor.cpp
         PluginProcessor.cpp)
@@ -75,12 +76,15 @@ target_sources(${NTFX_PROJECT_NAME}
 # definitions will be visible both to your code, and also the JUCE module code, so for new
 # definitions, pick unique names that are unlikely to collide! This is a standard CMake command.
 
-target_compile_definitions(${NTFX_PROJECT_NAME}
+target_compile_definitions(${NTFX_PLUGIN}
     PUBLIC
         # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call
         JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_plugin` call
-        JUCE_VST3_CAN_REPLACE_VST2=0)
+        JUCE_VST3_CAN_REPLACE_VST2=0
+        DONT_SET_USING_JUCE_NAMESPACE=1
+        NTFX_PLUGIN=${NTFX_PLUGIN}
+        NTFX_PLUGIN_FILE=${NTFX_PLUGIN_FILE})
 
 # If your target needs extra binary assets, you can add them here. The first argument is the name of
 # a new static library target that will include all the binary resources. There is an optional
@@ -97,7 +101,7 @@ target_compile_definitions(${NTFX_PROJECT_NAME}
 # linked automatically. If we'd generated a binary data target above, we would need to link to it
 # here too. This is a standard CMake command.
 
-target_link_libraries(${NTFX_PROJECT_NAME}
+target_link_libraries(${NTFX_PLUGIN}
     PRIVATE
         # AudioPluginData           # If we'd created a binary data target, we'd link to it here
         juce::juce_audio_utils
@@ -107,7 +111,7 @@ target_link_libraries(${NTFX_PROJECT_NAME}
         # juce::juce_recommended_warning_flags
         )
 
-target_include_directories(${NTFX_PROJECT_NAME} PRIVATE "../NtFx")
+target_include_directories(${NTFX_PLUGIN} PRIVATE "..")
 
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
 # into your build tree. This should be included with `#include <JuceHeader.h>`. The include path for
@@ -115,4 +119,4 @@ target_include_directories(${NTFX_PROJECT_NAME} PRIVATE "../NtFx")
 # include all your JUCE module headers; if you're happy to include module headers directly, you
 # probably don't need to call this.
 
-juce_generate_juce_header(${NTFX_PROJECT_NAME})
+juce_generate_juce_header(${NTFX_PLUGIN})

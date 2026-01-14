@@ -2,6 +2,8 @@
 
 #include "utils.h"
 
+namespace NtFx {
+
 template <typename signal_t>
 struct Stereo {
   signal_t l { 0 };
@@ -128,3 +130,5 @@ NTFX_INLINE_TEMPLATE Stereo<signal_t> operator/(
     const signal_t& x, const Stereo<signal_t>& y) noexcept {
   return { (x / y.l), (x / y.r) };
 }
+
+} // namespace NtFx

@@ -9,13 +9,14 @@ namespace NtFx {
 struct DropDownSpec {
   std::string name;
   std::vector<std::string> options;
-  int defaultIdx = 1;
+  int defaultIdx;
 };
 
 struct TitleBarSpec {
   std::string name;
   std::vector<DropDownSpec> dropDowns {
-    { "UI Scale",
+    {
+        "UI Scale",
         {
             "50%",
             "75%",
@@ -23,8 +24,11 @@ struct TitleBarSpec {
             "125%",
             "150%",
             "200%",
-        } },
-    { "Oversampling",
+        },
+        2,
+    },
+    {
+        "Oversampling",
         {
             "disable",
             "iir_2x",
@@ -36,7 +40,9 @@ struct TitleBarSpec {
             "fir_2x_hq",
             "fir_4x_hq",
             "fir_8x_hq",
-        } },
+        },
+        0,
+    },
   };
 };
 }
