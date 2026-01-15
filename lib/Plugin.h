@@ -43,8 +43,8 @@ enum MeterIdx {
 
 template <typename signal_t>
 struct Plugin {
-  int tempo = 120;
-  int fs    = 44100;
+  float tempo = 120;
+  int fs      = 44100;
   // TODO: Should be const. Can it be done?
   std::vector<KnobSpec<signal_t>> primaryKnobs;
   std::vector<KnobSpec<signal_t>> secondaryKnobs;

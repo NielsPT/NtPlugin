@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "lib/BiQuad.h"
 #include "lib/Plugin.h"
 #include "lib/SideChain.h"
 #include "lib/SoftClip.h"
@@ -15,21 +16,28 @@ template <typename signal_t>
 struct ntCompressor : public NtFx::Plugin<signal_t> {
   int errorVarId = 0;
 
-  NtFx::ScSettings<signal_t> scSettings;
-  NtFx::ScCoeffs<signal_t> scCoeffs;
-  std::array<NtFx::ScState<signal_t>, 2> scState;
-  signal_t makeup_db   = 0;
+  NtFx::SideChain::Settings<signal_t> scSettings;
+  NtFx::SideChain::Coeffs<signal_t> scCoeffs;
+  std::array<NtFx::SideChain::State<signal_t>, 2> scState;
+  signal_t makeup_db   = NTFX_SIG_T(0.0);
   signal_t mix_percent = NTFX_SIG_T(100.0);
 
   bool bypassEnable   = false;
   bool linEnable      = false;
   bool feedbackEnable = false;
+  bool scListenEnable = false;
   bool linkEnable     = false;
 
   signal_t mix_lin               = NTFX_SIG_T(1.0);
   signal_t makeup_lin            = NTFX_SIG_T(1.0);
   NtFx::Stereo<signal_t> fbState = NTFX_SIG_T(0.0);
   std::array<signal_t, 3> softClipCoeffs;
+
+  NtFx::Biquad::Settings<signal_t> scHpfSettings;
+  NtFx::Biquad::Settings<signal_t> scBoostSettings;
+  NtFx::Biquad::Coeffs5<signal_t> scHpfCoeffs;
+  NtFx::Biquad::Coeffs5<signal_t> scBoostCoeffs;
+  std::array<NtFx::Biquad::State<signal_t>, 4> bqState;
 
   constexpr ntCompressor() {
     this->primaryKnobs = {
@@ -94,6 +102,21 @@ struct ntCompressor : public NtFx::Plugin<signal_t> {
           .minVal = 0.0,
           .maxVal = 100.0,
       },
+      {
+          .p_val  = &this->scHpfSettings.fc,
+          .name   = "SC_HPF",
+          .suffix = " hz",
+          .minVal = 20.0,
+          .maxVal = 2000.0,
+          .skew   = 200.0,
+      },
+      {
+          .p_val  = &this->scBoostSettings.gain_db,
+          .name   = "SC_Boost",
+          .suffix = " dB",
+          .minVal = 0.0,
+          .maxVal = 24.0,
+      },
     };
 
     this->toggles = {
@@ -101,10 +124,14 @@ struct ntCompressor : public NtFx::Plugin<signal_t> {
       { .p_val = &this->feedbackEnable, .name = "Feedback" },
       { .p_val = &this->linEnable, .name = "Linear" },
       { .p_val = &this->linkEnable, .name = "Link" },
+      { .p_val = &this->scListenEnable, .name = "SC_Listen" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
     this->updateDefaults();
-    this->softClipCoeffs = NtFx::calculateSoftClipCoeffs<signal_t, 2>();
+    this->softClipCoeffs        = NtFx::calculateSoftClipCoeffs<signal_t, 2>();
+    this->scBoostSettings.fc    = 4000.0;
+    this->scBoostSettings.shape = NtFx::Biquad::Shape::bell;
+    this->scHpfSettings.shape   = NtFx::Biquad::Shape::hpf;
   }
 
   NTFX_INLINE_MEMBER NtFx::Stereo<signal_t> processSample(
@@ -116,16 +143,21 @@ struct ntCompressor : public NtFx::Plugin<signal_t> {
     }
     NtFx::ensureFinite(x);
     NtFx::ensureFinite(this->fbState);
-    NtFx::Stereo<signal_t> x_sc = x;
-    if (this->feedbackEnable) { x_sc = this->fbState; }
+    NtFx::Stereo<signal_t> x_hpf = x;
+    if (this->feedbackEnable) { x_hpf = this->fbState; }
+
+    NtFx::Stereo<signal_t> x_boost = NtFx::Biquad::biQuad5s(
+        &this->scHpfCoeffs, &this->bqState[0], &this->bqState[1], x_hpf);
+    NtFx::Stereo<signal_t> x_sc = NtFx::Biquad::biQuad5s(
+        &this->scBoostCoeffs, &this->bqState[2], &this->bqState[3], x_boost);
 
     NtFx::Stereo<signal_t> gr;
     if (this->linEnable) {
-      gr.l = sideChain_lin(&this->scCoeffs, &this->scState[0], x_sc.l);
-      gr.r = sideChain_lin(&this->scCoeffs, &this->scState[1], x_sc.r);
+      gr.l = NtFx::SideChain::sideChain_lin(&this->scCoeffs, &this->scState[0], x_sc.l);
+      gr.r = NtFx::SideChain::sideChain_lin(&this->scCoeffs, &this->scState[1], x_sc.r);
     } else {
-      gr.l = sideChain_db(&this->scCoeffs, &this->scState[0], x_sc.l);
-      gr.r = sideChain_db(&this->scCoeffs, &this->scState[1], x_sc.r);
+      gr.l = NtFx::SideChain::sideChain_db(&this->scCoeffs, &this->scState[0], x_sc.l);
+      gr.r = NtFx::SideChain::sideChain_db(&this->scCoeffs, &this->scState[1], x_sc.r);
     }
     if (this->linkEnable) { gr = gr.absMin(); }
     this->updatePeakLevel(gr, NtFx::MeterIdx::gr, true);
@@ -136,11 +168,16 @@ struct ntCompressor : public NtFx::Plugin<signal_t> {
         this->softClipCoeffs, yComp * this->makeup_lin);
     auto y = this->mix_lin * ySoftClip + (1 - this->mix_lin) * x;
     this->updatePeakLevel(y, NtFx::MeterIdx::out);
+    if (this->scListenEnable) { return x_sc; }
     return y;
   }
 
   void updateCoeffs() noexcept override {
-    this->scCoeffs   = NtFx::calcSideChainCoeffs(this->fs, &this->scSettings);
+    this->scHpfCoeffs =
+        NtFx::Biquad::calcCoeffs5<signal_t>(this->scHpfSettings, this->fs);
+    this->scBoostCoeffs =
+        NtFx::Biquad::calcCoeffs5<signal_t>(this->scBoostSettings, this->fs);
+    this->scCoeffs   = NtFx::SideChain::calcCoeffs(this->fs, &this->scSettings);
     this->makeup_lin = std::pow(10.0, (this->makeup_db / NTFX_SIG_T(20.0)));
     this->mix_lin    = this->mix_percent / 100.0;
   }
