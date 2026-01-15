@@ -27,6 +27,9 @@ project(${NTFX_PLUGIN} VERSION 0.1.0)
 # find_package(JUCE CONFIG REQUIRED)        # If you've installed JUCE to your system
 # or
 add_subdirectory(JUCE)                    # If you've put JUCE in a subdirectory called JUCE
+# add_subdirectory(JuceWrapper)
+# add_subdirectory(lib)
+# add_subdirectory(plugins)
 
 # If you are building a VST2 or AAX plugin, CMake needs to be told where to find these SDKs on your
 # system. This setup should be done before calling `juce_add_plugin`.
@@ -111,7 +114,7 @@ target_link_libraries(${NTFX_PLUGIN}
         # juce::juce_recommended_warning_flags
         )
 
-target_include_directories(${NTFX_PLUGIN} PRIVATE "..")
+target_include_directories(${NTFX_PLUGIN} PRIVATE ..)
 
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
 # into your build tree. This should be included with `#include <JuceHeader.h>`. The include path for

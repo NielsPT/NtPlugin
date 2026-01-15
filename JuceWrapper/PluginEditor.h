@@ -8,12 +8,11 @@
 
 #pragma once
 
-#include <JuceHeader.h>
-
-#include "PluginProcessor.h"
-
 #include "lib/Knob.h"
 #include "lib/Meter.h"
+
+#include "PluginProcessor.h"
+#include <JuceHeader.h>
 
 struct ButtonLookAndFeel : public juce::LookAndFeel_V4 {
   int fontSize;
@@ -67,24 +66,19 @@ private:
   std::vector<juce::Rectangle<int>> grayAreas;
 
   float unscaledWindowHeight = 0;
-  float labelHeight          = 20;
-  float toggleHeight         = 75;
-  float knobHeight           = 200;
-  float secondaryKnobWidth   = 100;
-  float secondaryKnobHeight  = 150;
-  float titleBarAreaHeight   = 22;
   float uiScale              = 1;
-
-  int defaultFontSize = 16;
-
-  bool popupIsDisplayed = false;
-  bool isInitialized    = false;
+  bool isInitialized         = false;
 
   void sliderValueChanged(juce::Slider* slider) override;
   void buttonClicked(juce::Button* button) override;
   void comboBoxChanged(juce::ComboBox* p_box) override;
   void timerCallback() override;
   void drawGui();
+  void drawTitleBar(juce::Rectangle<int>& area);
+  void drawMeters(juce::Rectangle<int>& area);
+  void drawToggles(juce::Rectangle<int>& area);
+  void drawSecondaryKnobs(juce::Rectangle<int>& area);
+  void drawPrimaryKnobs(juce::Rectangle<int>& area);
   void initPrimaryKnob(NtFx::KnobSpec<float>& p_spec);
   void initSecondaryKnob(NtFx::KnobSpec<float>& p_spec);
   void _initKnob(NtFx::KnobSpec<float>& p_spec,

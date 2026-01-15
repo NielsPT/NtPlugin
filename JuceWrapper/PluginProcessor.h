@@ -8,12 +8,10 @@
 
 #pragma once
 
-#include <JuceHeader.h>
-
-#include "lib/Plugin.h"
+#include NTFX_PLUGIN_FILE
 #include "lib/TitleBarSpec.h"
 
-#include NTFX_PLUGIN_FILE
+#include <JuceHeader.h>
 
 //==============================================================================
 /**

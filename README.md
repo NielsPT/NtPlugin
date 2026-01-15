@@ -34,6 +34,8 @@ cross-platform audio plugins.
   automatically, `secondaryKnobs` can be used to add a single row of smaller knobs below
   main grid for fine tuning or utility controls.
   `toggles` contain the boolean parameters.
+- Similarly, the base class contain a spec for the UI named `guiSpec`, which can be  
+  modified for customization of the UI.
 
 - Use the following commands to configure and build your project:
 

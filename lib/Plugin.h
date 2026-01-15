@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 
-#include "Stereo.h"
+#include "lib/Stereo.h"
 
 #ifndef NTFX_PLUGIN
   #error NTFX_PLUGIN is not defined.
@@ -10,6 +10,10 @@
 
 namespace NtFx {
 // TODO: general parameter class.
+// TODO: IDEA: Knob groups.
+// - Each group takes up an area in the primary knob grid.
+// - Each group can contain a number of primary and secondary knobs. Primary are placed
+// on a row in the top of the group, secondary in a grid below.
 template <typename signal_t>
 struct KnobSpec {
   signal_t* p_val;
@@ -28,10 +32,22 @@ struct ToggleSpec {
 };
 
 struct GuiSpec {
-  int maxRows            = 3;
-  int maxColumns         = 6;
-  int defaultFontSize    = 16;
-  int defaultWindowWidth = 1000;
+  bool includeMeters         = true;
+  bool includeTitleBar       = true;
+  bool includeSecondaryKnobs = true;
+  uint32_t backgroundColour  = 0xFF001100;
+  int defaultWindowWidth     = 1000;
+  int maxRows                = 3;
+  int maxColumns             = 6;
+  int defaultFontSize        = 16;
+  float labelHeight          = 20;
+  float toggleHeight         = 75;
+  float knobHeight           = 200;
+  float secondaryKnobWidth   = 75;
+  float secondaryKnobHeight  = 115;
+  float titleBarAreaHeight   = 22;
+  int meterHeight_dots       = 14;
+  float meterRefreshRate_hz  = 30;
 };
 
 enum MeterIdx {
@@ -83,7 +99,7 @@ struct Plugin {
   NTFX_INLINE_MEMBER void updatePeakLevel(
       NtFx::Stereo<signal_t> val, size_t idx, bool invert = false) noexcept {
     auto tmp = val < this->peakLevels[idx];
-    if ((!invert && !tmp) || (invert && tmp)) { this->peakLevels[idx] = val; }
+    if (!(invert || tmp) || (invert && tmp)) { this->peakLevels[idx] = val; }
   }
 
   NTFX_INLINE_MEMBER NtFx::Stereo<signal_t> getAndResetPeakLevel(size_t idx) noexcept {

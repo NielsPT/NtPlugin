@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "lib/BiQuad.h"
+#include "lib/Biquad.h"
 #include "lib/Plugin.h"
 #include "lib/SideChain.h"
 #include "lib/SoftClip.h"
@@ -103,7 +103,7 @@ struct ntCompressor : public NtFx::Plugin<signal_t> {
           .maxVal = 100.0,
       },
       {
-          .p_val  = &this->scHpfSettings.fc,
+          .p_val  = &this->scHpfSettings.fc_hz,
           .name   = "SC_HPF",
           .suffix = " hz",
           .minVal = 20.0,
@@ -129,7 +129,7 @@ struct ntCompressor : public NtFx::Plugin<signal_t> {
     };
     this->updateDefaults();
     this->softClipCoeffs        = NtFx::calculateSoftClipCoeffs<signal_t, 2>();
-    this->scBoostSettings.fc    = 4000.0;
+    this->scBoostSettings.fc_hz = 3000.0;
     this->scBoostSettings.shape = NtFx::Biquad::Shape::bell;
     this->scHpfSettings.shape   = NtFx::Biquad::Shape::hpf;
   }

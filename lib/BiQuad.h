@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Stereo.h"
-#include "utils.h"
+#include "lib/Stereo.h"
+#include "lib/utils.h"
 
 #include <cmath>
 
@@ -12,9 +12,9 @@ namespace Biquad {
   template <typename signal_t>
   struct Settings {
     Shape shape { Shape::bell };
-    signal_t fc { 1000.0f };
-    signal_t gain_db { 0.0f };
-    signal_t q { 0.707f };
+    signal_t fc_hz { 1000.0 };
+    signal_t gain_db { 0.0 };
+    signal_t q { 0.707 };
     bool enable { true };
   };
 
@@ -92,14 +92,14 @@ namespace Biquad {
       Settings<signal_t> settings, float fs) {
     return calcCoeffs5<signal_t>((settings.enable ? settings.shape : Shape::none),
         fs,
-        settings.fc,
+        settings.fc_hz,
         settings.q,
         std::pow(10, (settings.gain_db / 40)));
   }
 
   NTFX_INLINE_TEMPLATE Coeffs5<signal_t> calcCoeffs5(
-      Shape s, signal_t fs, signal_t fc, signal_t q, signal_t a) {
-    auto coeffs6 = calcCoeffs6(s, fs, fc, q, a);
+      Shape s, signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
+    auto coeffs6 = calcCoeffs6(s, fs, fc_hz, q, a);
     return normalizeCoeffs(coeffs6);
   }
 
@@ -107,14 +107,14 @@ namespace Biquad {
       Settings<signal_t> settings, float fs) {
     return calcCoeffs6<signal_t>((settings.enable ? settings.shape : Shape::none),
         fs,
-        settings.fc,
+        settings.fc_hz,
         settings.q,
         std::pow(10, (settings.gain_db / 40)));
   }
 
   NTFX_INLINE_TEMPLATE Coeffs6<signal_t> calcCoeffsBell(
-      signal_t fs, signal_t fc, signal_t q, signal_t a) {
-    auto w0    = 2.0 * M_PI * fc / fs;
+      signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
+    auto w0    = 2.0 * M_PI * fc_hz / fs;
     auto cosW0 = std::cos(w0);
     auto alpha = std::sin(w0) / (2.0 * q);
     Coeffs6<signal_t> c;
@@ -128,8 +128,8 @@ namespace Biquad {
   }
 
   NTFX_INLINE_TEMPLATE Coeffs6<signal_t> calcCoeffsLoShelf(
-      signal_t fs, signal_t fc, signal_t q, signal_t a) {
-    auto w0    = 2.0 * M_PI * fc / fs;
+      signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
+    auto w0    = 2.0 * M_PI * fc_hz / fs;
     auto cosW0 = std::cos(w0);
     auto alpha = std::sin(w0) / (2.0 * q);
     Coeffs6<signal_t> c;
@@ -143,8 +143,8 @@ namespace Biquad {
   }
 
   NTFX_INLINE_TEMPLATE Coeffs6<signal_t> calcCoeffsHiShelf(
-      signal_t fs, signal_t fc, signal_t q, signal_t a) {
-    auto w0    = 2.0 * M_PI * fc / fs;
+      signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
+    auto w0    = 2.0 * M_PI * fc_hz / fs;
     auto cosW0 = std::cos(w0);
     auto alpha = std::sin(w0) / (2.0 * q);
     Coeffs6<signal_t> c;
@@ -158,8 +158,8 @@ namespace Biquad {
   }
 
   NTFX_INLINE_TEMPLATE Coeffs6<signal_t> calcCoeffsHpf(
-      signal_t fs, signal_t fc, signal_t q) {
-    auto w0    = 2.0 * M_PI * fc / fs;
+      signal_t fs, signal_t fc_hz, signal_t q) {
+    auto w0    = 2.0 * M_PI * fc_hz / fs;
     auto cosW0 = std::cos(w0);
     auto alpha = std::sin(w0) / (2.0 * q);
     Coeffs6<signal_t> c;
@@ -173,8 +173,8 @@ namespace Biquad {
   }
 
   NTFX_INLINE_TEMPLATE Coeffs6<signal_t> calcCoeffsLpf(
-      signal_t fs, signal_t fc, signal_t q) {
-    auto w0    = 2.0 * M_PI * fc / fs;
+      signal_t fs, signal_t fc_hz, signal_t q) {
+    auto w0    = 2.0 * M_PI * fc_hz / fs;
     auto cosW0 = std::cos(w0);
     auto alpha = std::sin(w0) / (2.0 * q);
     Coeffs6<signal_t> c;
@@ -188,8 +188,8 @@ namespace Biquad {
   }
 
   NTFX_INLINE_TEMPLATE Coeffs6<signal_t> calcCoeffsApf(
-      signal_t fs, signal_t fc, signal_t q) {
-    auto w0    = 2.0 * M_PI * fc / fs;
+      signal_t fs, signal_t fc_hz, signal_t q) {
+    auto w0    = 2.0 * M_PI * fc_hz / fs;
     auto cosW0 = std::cos(w0);
     auto alpha = std::sin(w0) / (2.0 * q);
     Coeffs6<signal_t> c;
@@ -203,8 +203,8 @@ namespace Biquad {
   }
 
   NTFX_INLINE_TEMPLATE Coeffs6<signal_t> calcCoeffsNotch(
-      signal_t fs, signal_t fc, signal_t q) {
-    auto w0    = 2.0 * M_PI * fc / fs;
+      signal_t fs, signal_t fc_hz, signal_t q) {
+    auto w0    = 2.0 * M_PI * fc_hz / fs;
     auto cosW0 = std::cos(w0);
     auto alpha = std::sin(w0) / (2.0 * q);
     Coeffs6<signal_t> c;
@@ -218,29 +218,29 @@ namespace Biquad {
   }
 
   NTFX_INLINE_TEMPLATE Coeffs6<signal_t> calcCoeffs6(
-      Shape s, signal_t fs, signal_t fc, signal_t q, signal_t a) {
+      Shape s, signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
     Coeffs6<signal_t> c;
     switch (s) {
     case Shape::loShelf:
-      c = calcCoeffsLoShelf<signal_t>(fs, fc, q, a);
+      c = calcCoeffsLoShelf<signal_t>(fs, fc_hz, q, a);
       break;
     case Shape::hiShelf:
-      c = calcCoeffsHiShelf<signal_t>(fs, fc, q, a);
+      c = calcCoeffsHiShelf<signal_t>(fs, fc_hz, q, a);
       break;
     case Shape::bell:
-      c = calcCoeffsBell<signal_t>(fs, fc, q, a);
+      c = calcCoeffsBell<signal_t>(fs, fc_hz, q, a);
       break;
     case Shape::lpf:
-      c = calcCoeffsLpf<signal_t>(fs, fc, q);
+      c = calcCoeffsLpf<signal_t>(fs, fc_hz, q);
       break;
     case Shape::hpf:
-      c = calcCoeffsHpf<signal_t>(fs, fc, q);
+      c = calcCoeffsHpf<signal_t>(fs, fc_hz, q);
       break;
     case Shape::apf:
-      c = calcCoeffsApf<signal_t>(fs, fc, q);
+      c = calcCoeffsApf<signal_t>(fs, fc_hz, q);
       break;
     case Shape::notch:
-      c = calcCoeffsNotch<signal_t>(fs, fc, q);
+      c = calcCoeffsNotch<signal_t>(fs, fc_hz, q);
       break;
     default:
       c = { 1.0, 0.0, 0.0, 1.0, 0.0, 0.0 };

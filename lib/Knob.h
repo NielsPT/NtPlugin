@@ -1,8 +1,7 @@
 #pragma once
 
-// #include <math.h>
-
 #include <JuceHeader.h>
+
 namespace NtFx {
 
 struct KnobLookAndFeel : public juce::LookAndFeel_V4 {
@@ -23,23 +22,25 @@ struct KnobLookAndFeel : public juce::LookAndFeel_V4 {
       const float rotaryStartAngle,
       const float rotaryEndAngle,
       juce::Slider&) override {
-    int radius  = std::min(width / 2.5, height / 2.5) - 4.0;
-    int centreX = x + width / 2;
-    int centreY = y + height / 2;
-    auto angle  = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
-    juce::Path p;
+    auto radius  = std::min(width / 2.5f, height / 2.5f) - 4.0f;
+    auto centreX = x + width / 2.0f;
+    auto centreY = y + height / 2.0f;
+    auto angle   = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
+    juce::Path knobPath;
     g.setColour(juce::Colours::lightgrey);
-    p.addPolygon({ 0.0, 0.0 }, 8, radius);
-    p.applyTransform(
+    knobPath.addPolygon({ 0, 0 }, 8, radius);
+    knobPath.applyTransform(
         juce::AffineTransform::rotation(angle).translated(centreX, centreY));
-    g.fillPath(p);
+    g.fillPath(knobPath);
     auto pointerLength    = radius * 0.5;
     auto pointerThickness = 4.0;
+    juce::Path pointerPath;
     g.setColour(juce::Colours::black);
-    p.addRectangle(-pointerThickness * 0.5f, -radius, pointerThickness, pointerLength);
-    p.applyTransform(
+    pointerPath.addRectangle(
+        -pointerThickness * 0.5f, -radius, pointerThickness, pointerLength);
+    pointerPath.applyTransform(
         juce::AffineTransform::rotation(angle).translated(centreX, centreY));
-    g.fillPath(p);
+    g.fillPath(pointerPath);
   }
 };
 } // namespace NtFx

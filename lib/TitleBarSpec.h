@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "utils.h"
+#include "lib/utils.h"
 
 namespace NtFx {
 struct DropDownSpec {
@@ -23,6 +23,7 @@ struct TitleBarSpec {
             "100%",
             "125%",
             "150%",
+            "175%",
             "200%",
         },
         2,

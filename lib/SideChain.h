@@ -1,7 +1,8 @@
 #pragma once
-#include <cmath>
 
-#include "utils.h"
+#include "lib/utils.h"
+
+#include <cmath>
 namespace NtFx {
 namespace SideChain {
   template <typename signal_t>

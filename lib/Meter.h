@@ -4,7 +4,7 @@
 #include <array>
 #include <string>
 
-#include "Stereo.h"
+#include "lib/Stereo.h"
 
 namespace NtFx {
 struct MonoMeter : public juce::Component {
@@ -13,7 +13,7 @@ struct MonoMeter : public juce::Component {
   int pad                = 10;
   int dotWidth           = 0;
   int dotDist            = 0;
-  int nDots              = 15;
+  int nDots              = 14;
   bool invert            = false;
   int nActiveDots        = 0;
   float peakLast_db      = 0;
@@ -286,6 +286,14 @@ struct MeterAreaInOutGr : public juce::Component {
     this->in.fontSize  = size;
     this->out.fontSize = size;
     this->gr.fontSize  = size;
+  }
+  void setHeight_dots(int nDots) {
+    this->in.l.nDots  = nDots;
+    this->in.r.nDots  = nDots;
+    this->out.l.nDots = nDots;
+    this->out.r.nDots = nDots;
+    this->gr.l.nDots  = nDots;
+    this->gr.r.nDots  = nDots;
   }
 };
 } // namespace ntFX
