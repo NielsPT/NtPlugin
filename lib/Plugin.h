@@ -1,4 +1,5 @@
 #pragma once
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -31,23 +32,31 @@ struct ToggleSpec {
   bool defaultVal { false };
 };
 
+struct MeterSpec {
+  std::string name { "" };
+  float minVal_db { -45.0 };
+  bool invert { false };
+  bool hasScale { false };
+};
+
 struct GuiSpec {
-  bool includeMeters         = true;
-  bool includeTitleBar       = true;
-  bool includeSecondaryKnobs = true;
-  uint32_t backgroundColour  = 0xFF001100;
-  int defaultWindowWidth     = 1000;
-  int maxRows                = 3;
-  int maxColumns             = 6;
-  int defaultFontSize        = 16;
-  float labelHeight          = 20;
-  float toggleHeight         = 75;
-  float knobHeight           = 200;
-  float secondaryKnobWidth   = 75;
-  float secondaryKnobHeight  = 115;
-  float titleBarAreaHeight   = 22;
-  int meterHeight_dots       = 14;
-  float meterRefreshRate_hz  = 30;
+  bool includeMeters { true };
+  bool includeTitleBar { true };
+  bool includeSecondaryKnobs { true };
+  uint32_t backgroundColour { 0xFF001100 };
+  int defaultWindowWidth { 1000 };
+  int maxRows { 3 };
+  int maxColumns { 6 };
+  int defaultFontSize { 16 };
+  float labelHeight { 20 };
+  float toggleHeight { 75 };
+  float knobHeight { 200 };
+  float secondaryKnobWidth { 75 };
+  float secondaryKnobHeight { 115 };
+  float titleBarAreaHeight { 22 };
+  int meterHeight_dots { 14 };
+  float meterRefreshRate_hz { 30 };
+  std::vector<MeterSpec> meters;
 };
 
 enum MeterIdx {
@@ -65,7 +74,8 @@ struct Plugin {
   std::vector<KnobSpec<signal_t>> primaryKnobs;
   std::vector<KnobSpec<signal_t>> secondaryKnobs;
   std::vector<ToggleSpec> toggles;
-  std::array<NtFx::Stereo<signal_t>, MeterIdx::end + 1> peakLevels;
+  std::vector<MeterSpec> meters;
+  std::vector<NtFx::Stereo<signal_t>> peakLevels;
   GuiSpec guiSpec;
 
   virtual NTFX_INLINE_MEMBER Stereo<signal_t> processSample(

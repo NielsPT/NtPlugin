@@ -1,9 +1,12 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include <array>
+#include <cstddef>
+#include <memory>
 #include <string>
+#include <vector>
 
+#include "lib/Plugin.h"
 #include "lib/Stereo.h"
 
 namespace NtFx {
@@ -113,7 +116,6 @@ struct MonoMeter : public juce::Component {
     this->pad      = this->getWidth() * 10 / 35;
     this->dotWidth = this->getWidth() * 15 / 35;
     this->dotDist  = this->pad + this->dotWidth;
-
     repaint();
   }
 
@@ -143,6 +145,7 @@ struct MonoMeter : public juce::Component {
 
 struct MeterScale : public juce::Component {
   MonoMeter& _m;
+  int fontSize { 0 };
   MeterScale(MonoMeter& m) : _m(m) { }
   void paint(juce::Graphics& g) override {
     auto offset = this->_m.pad + this->_m.dotDist;
@@ -150,7 +153,7 @@ struct MeterScale : public juce::Component {
       auto y        = i * this->_m.dotDist + offset;
       std::string t = "- " + std::to_string(static_cast<int>(this->_m.dbPrDot * i));
       g.setColour(juce::Colours::white);
-      g.setFont(_m.fontSize);
+      g.setFont(this->fontSize);
       g.drawText(t, 0, y, 1000, 10, juce::Justification::left, false);
     }
   }
@@ -164,14 +167,15 @@ struct StereoMeter : public juce::Component {
   MonoMeter l;
   MonoMeter r;
   juce::Label label;
-  int fontSize = 0;
+  int fontSize { 0 };
+  bool hasScale { false };
 
   StereoMeter(std::string label) : label(label, label) {
     this->addAndMakeVisible(this->label);
     this->addAndMakeVisible(this->l);
     this->addAndMakeVisible(this->r);
-    l.label = "L";
-    r.label = "R";
+    this->l.label = "L";
+    this->r.label = "R";
   }
   void resized() override {
     this->drawGui();
@@ -209,91 +213,65 @@ struct StereoMeter : public juce::Component {
   }
 };
 
-struct MeterAreaInOutGr : public juce::Component {
-  StereoMeter in;
-  StereoMeter out;
-  StereoMeter gr;
-  MeterScale inOutScale;
-  MeterScale grScale;
-  MeterAreaInOutGr() : in("IN"), out("OUT"), gr("GR"), inOutScale(in.l), grScale(gr.l) {
-    this->gr.l.minVal_db = -24;
-    this->gr.r.minVal_db = -24;
-    this->gr.setInvert(true);
-    this->addAndMakeVisible(in);
-    this->addAndMakeVisible(out);
-    this->addAndMakeVisible(gr);
-    this->addAndMakeVisible(inOutScale);
-    this->addAndMakeVisible(grScale);
+struct MeterGroup : public juce::Component {
+  std::vector<std::unique_ptr<StereoMeter>> meters;
+  std::vector<std::unique_ptr<MeterScale>> scales;
+  MeterGroup(std::vector<MeterSpec> specs) {
+    size_t i = 0;
+    for (auto spec : specs) {
+      auto meter = std::make_unique<StereoMeter>(spec.name);
+      meter->setInvert(spec.invert);
+      meter->l.minVal_db = spec.minVal_db;
+      meter->r.minVal_db = spec.minVal_db;
+      this->addAndMakeVisible(meter.get());
+      if (spec.hasScale) {
+        meter->hasScale = true;
+        auto scale      = std::make_unique<MeterScale>(meter->l);
+        this->addAndMakeVisible(scale.get());
+        scales.push_back(std::move(scale));
+      }
+      meters.push_back(std::move(meter));
+    }
   }
   void setDecay(float a, float b) {
-    this->in.setDecay(a, b);
-    this->out.setDecay(a, b);
-    this->gr.setDecay(a, b);
+    for (auto& m : meters) { m->setDecay(a, b); }
   }
   void setPeakHold(float a, float b) {
-    this->in.setPeakHold(a, b);
-    this->out.setPeakHold(a, b);
-    this->gr.setPeakHold(a, b);
-  }
-  template <typename signal_t>
-  void refreshIn(Stereo<signal_t> val) {
-    this->in.refresh(val);
-  }
-  template <typename signal_t>
-  void refreshOut(Stereo<signal_t> val) {
-    this->out.refresh(val);
-  }
-  template <typename signal_t>
-  void refreshGr(Stereo<signal_t> val) {
-    this->gr.refresh(val);
+    for (auto& m : meters) { m->setPeakHold(a, b); }
   }
   template <typename signal_t>
   void refresh(size_t idx, Stereo<signal_t> val) {
-    switch (idx) {
-    case 0:
-      this->in.refresh(val);
-      break;
-    case 1:
-      this->out.refresh(val);
-      break;
-    case 2:
-      this->gr.refresh(val);
-      break;
-    default:
-      break;
-    }
+    this->meters[idx]->refresh(val);
   }
   void resized() override {
     this->drawGui();
     this->repaint();
   }
-  int size() noexcept { return 3; }
+  int size() const noexcept { return this->meters.size(); }
   void drawGui() noexcept {
     auto area       = this->getLocalBounds();
     auto totalWidth = area.getWidth();
     auto scaleWidth = totalWidth / 8;
     auto meterWidth = scaleWidth * 2;
-    this->in.setBounds(area.removeFromLeft(meterWidth));
-    this->out.setBounds(area.removeFromLeft(meterWidth));
-    auto inOutScaleArea = area.removeFromLeft(scaleWidth);
-    this->inOutScale.setBounds(inOutScaleArea.removeFromBottom(
-        inOutScaleArea.getHeight() - this->in.label.getHeight()));
-    this->gr.setBounds(area.removeFromLeft(meterWidth));
-    area.removeFromTop(this->in.label.getHeight());
-    this->grScale.setBounds(area);
+    size_t iScale   = 0;
+    for (auto& m : this->meters) {
+      m->setBounds(area.removeFromLeft(meterWidth));
+      if (m->hasScale) {
+        auto scaleArea = area.removeFromLeft(scaleWidth);
+        scaleArea.removeFromTop(m->label.getHeight());
+        this->scales[iScale++]->setBounds(scaleArea);
+      }
+    }
   }
   void setFontSize(int size) {
-    this->in.fontSize  = size;
-    this->out.fontSize = size;
-    this->gr.fontSize  = size;
+    for (auto& m : meters) { m->fontSize = size; }
+    for (auto& s : scales) { s->fontSize = size; }
   }
   void setHeight_dots(int nDots) {
-    this->in.l.nDots  = nDots;
-    this->in.r.nDots  = nDots;
-    this->out.l.nDots = nDots;
-    this->out.r.nDots = nDots;
-    this->gr.l.nDots  = nDots;
-    this->gr.r.nDots  = nDots;
+    for (auto& m : meters) {
+      m->l.nDots = nDots;
+      m->r.nDots = nDots;
+    }
   }
 };
-} // namespace ntFX
+} // namespace NtFx

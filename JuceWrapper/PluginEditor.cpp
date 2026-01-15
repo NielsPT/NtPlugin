@@ -11,11 +11,12 @@
 
 #include "PluginEditor.h"
 #include "PluginProcessor.h"
+#include "lib/Meter.h"
 
 //==============================================================================
 NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
     NtCompressorAudioProcessor& p)
-    : AudioProcessorEditor(&p), proc(p) {
+    : AudioProcessorEditor(&p), proc(p), meters(proc.plug.meters) {
   this->getLookAndFeel().setColour(
       juce::ResizableWindow::ColourIds::backgroundColourId, juce::Colours::black);
 
@@ -23,8 +24,6 @@ NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
   for (auto& k : this->proc.plug.secondaryKnobs) { this->initSecondaryKnob(k); }
   for (auto& t : this->proc.plug.toggles) { this->initToggle(t); }
   for (auto& d : this->proc.titleBarSpec.dropDowns) { this->initDropDown(d); }
-
-  // TODO: GuiSpec in plug. Contains size, maxrows, colours, etc.
 
   int nRows, nCols;
   this->calcSliderRowsCols(this->allPrimaryKnobs.size(),
@@ -95,8 +94,7 @@ void NtCompressorAudioProcessorEditor::initSecondaryKnob(NtFx::KnobSpec<float>& 
 }
 
 void NtCompressorAudioProcessorEditor::_initKnob(NtFx::KnobSpec<float>& spec,
-    std::unique_ptr<juce::Slider>& p_slider,
-    std::unique_ptr<juce::Label>& p_label) {
+    std::unique_ptr<juce::Slider>& p_slider, std::unique_ptr<juce::Label>& p_label) {
   p_slider->setLookAndFeel(&this->knobLookAndFeel);
   // constexpr bool placeAbove = false;
   // p_label->attachToComponent(p_slider.get(), placeAbove);

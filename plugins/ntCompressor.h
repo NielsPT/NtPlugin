@@ -1,9 +1,6 @@
 #pragma once
-#include <algorithm>
 #include <array>
 #include <cmath>
-#include <string>
-#include <vector>
 
 #include "lib/Biquad.h"
 #include "lib/Plugin.h"
@@ -127,6 +124,12 @@ struct ntCompressor : public NtFx::Plugin<signal_t> {
       { .p_val = &this->scListenEnable, .name = "SC_Listen" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
+
+    this->meters = {
+      { .name = "IN" },
+      { .name = "OUT", .hasScale = true },
+      { .name = "GR", .invert = true, .hasScale = true },
+    };
     this->updateDefaults();
     this->softClipCoeffs        = NtFx::calculateSoftClipCoeffs<signal_t, 2>();
     this->scBoostSettings.fc_hz = 3000.0;
@@ -184,7 +187,9 @@ struct ntCompressor : public NtFx::Plugin<signal_t> {
 
   void reset(int fs) noexcept override {
     this->fs = fs;
-    std::fill(this->peakLevels.begin(), this->peakLevels.end(), NTFX_SIG_T(0));
+    this->peakLevels.clear();
+    this->peakLevels.resize(this->meters.size());
+    // std::fill(this->peakLevels.begin(), this->peakLevels.end(), NTFX_SIG_T(0));
     this->peakLevels[NtFx::MeterIdx::gr] = NTFX_SIG_T(1);
     this->fbState                        = NTFX_SIG_T(0);
     this->scState[0].reset();

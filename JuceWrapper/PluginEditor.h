@@ -43,7 +43,7 @@ public:
 
 private:
   NtCompressorAudioProcessor& proc;
-  NtFx::MeterAreaInOutGr meters;
+  NtFx::MeterGroup meters;
   NtFx::KnobLookAndFeel knobLookAndFeel;
   ButtonLookAndFeel toggleLookAndFeel;
 

@@ -8,8 +8,8 @@ BreakBeforeBinaryOperators: NonAssignment
 BraceWrapping:
   AfterFunction: false
 BreakConstructorInitializers: BeforeColon
-BreakBinaryOperations: RespectPrecedence
-BreakAfterOpenBracketFunction: true
+# BreakBinaryOperations: RespectPrecedence
+# BreakAfterOpenBracketFunction: true
 AlwaysBreakTemplateDeclarations: Yes
 IndentPPDirectives: BeforeHash
 AlignConsecutiveAssignments:
@@ -18,11 +18,11 @@ AlignConsecutiveAssignments:
   AcrossComments: false
 AlignConsecutiveMacros:
   Enabled: false
-AlignOperants: AlignAfterOperator
+# AlignOperants: AlignAfterOperator
 AlignAfterOpenBracket: DontAlign
 AllowAllArgumentsOnNextLine: true
 BinPackArguments: false
-BinPackParameters: "OnePerLine"
+# BinPackParameters: "OnePerLine"
 AlignTrailingComments:
   Kind: Always
 AllowShortBlocksOnASingleLine: Always
