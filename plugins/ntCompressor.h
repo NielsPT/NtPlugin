@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <array>
 #include <cmath>
 
@@ -125,7 +126,7 @@ struct ntCompressor : public NtFx::Plugin<signal_t> {
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
 
-    this->meters = {
+    this->meterSpec = {
       { .name = "IN" },
       { .name = "OUT", .hasScale = true },
       { .name = "GR", .invert = true, .hasScale = true },
@@ -139,9 +140,9 @@ struct ntCompressor : public NtFx::Plugin<signal_t> {
 
   NTFX_INLINE_MEMBER NtFx::Stereo<signal_t> processSample(
       NtFx::Stereo<signal_t> x) noexcept override {
-    this->updatePeakLevel(x, NtFx::MeterIdx::in);
+    this->template updatePeakLevel<0>(x);
     if (this->bypassEnable) {
-      this->updatePeakLevel(x, NtFx::MeterIdx::out);
+      this->template updatePeakLevel<1>(x);
       return x;
     }
     NtFx::ensureFinite(x);
@@ -163,14 +164,14 @@ struct ntCompressor : public NtFx::Plugin<signal_t> {
       gr.r = NtFx::SideChain::sideChain_db(&this->scCoeffs, &this->scState[1], x_sc.r);
     }
     if (this->linkEnable) { gr = gr.absMin(); }
-    this->updatePeakLevel(gr, NtFx::MeterIdx::gr, true);
+    this->template updatePeakLevel<2, true>(gr);
     ensureFinite(gr, NTFX_SIG_T(1.0));
     NtFx::Stereo<signal_t> yComp = x * gr;
     this->fbState                = yComp;
     auto ySoftClip               = NtFx::softClip5thStereo<signal_t>(
         this->softClipCoeffs, yComp * this->makeup_lin);
     auto y = this->mix_lin * ySoftClip + (1 - this->mix_lin) * x;
-    this->updatePeakLevel(y, NtFx::MeterIdx::out);
+    this->template updatePeakLevel<1>(y);
     if (this->scListenEnable) { return x_sc; }
     return y;
   }
@@ -187,11 +188,9 @@ struct ntCompressor : public NtFx::Plugin<signal_t> {
 
   void reset(int fs) noexcept override {
     this->fs = fs;
-    this->peakLevels.clear();
-    this->peakLevels.resize(this->meters.size());
-    // std::fill(this->peakLevels.begin(), this->peakLevels.end(), NTFX_SIG_T(0));
-    this->peakLevels[NtFx::MeterIdx::gr] = NTFX_SIG_T(1);
-    this->fbState                        = NTFX_SIG_T(0);
+    std::fill(this->peakLevels.begin(), this->peakLevels.end(), NTFX_SIG_T(0));
+    this->peakLevels[2] = NTFX_SIG_T(1);
+    this->fbState       = NTFX_SIG_T(0);
     this->scState[0].reset();
     this->scState[1].reset();
     this->updateCoeffs();

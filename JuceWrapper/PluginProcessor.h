@@ -9,7 +9,7 @@
 #pragma once
 
 #include NTFX_PLUGIN_FILE
-#include "lib/TitleBarSpec.h"
+#include "lib/UiSpec.h"
 
 #include <JuceHeader.h>
 

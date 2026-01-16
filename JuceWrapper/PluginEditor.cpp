@@ -9,14 +9,14 @@
 #include <algorithm>
 #include <string>
 
+#include "Meter.h"
 #include "PluginEditor.h"
 #include "PluginProcessor.h"
-#include "lib/Meter.h"
 
 //==============================================================================
 NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
     NtCompressorAudioProcessor& p)
-    : AudioProcessorEditor(&p), proc(p), meters(proc.plug.meters) {
+    : AudioProcessorEditor(&p), proc(p), meters(proc.plug.meterSpec) {
   this->getLookAndFeel().setColour(
       juce::ResizableWindow::ColourIds::backgroundColourId, juce::Colours::black);
 
@@ -177,19 +177,13 @@ void NtCompressorAudioProcessorEditor::drawTitleBar(juce::Rectangle<int>& area) 
       area.removeFromTop(this->proc.plug.guiSpec.titleBarAreaHeight * this->uiScale);
   this->grayAreas.push_back(titleBarArea);
   titleBarArea.reduce(pad, pad);
-  for (auto& label : this->allDropDownLables) {
-    label->setFont(juce::FontOptions(
+  for (int i; i < this->proc.titleBarSpec.dropDowns.size(); i++) {
+    this->allDropDownLables[i]->setFont(juce::FontOptions(
         this->proc.plug.guiSpec.defaultFontSize * this->uiScale * 0.6));
+    this->allDropDownLables[i]->setBounds(
+        titleBarArea.removeFromLeft(100 * this->uiScale));
+    this->allDropDowns[i]->setBounds(titleBarArea.removeFromLeft(100 * this->uiScale));
   }
-  auto uiScaleDropDownLableArea = titleBarArea.removeFromLeft(60 * this->uiScale);
-  // TODO: loop over all dropdowns based on titleBarSpec.
-  this->allDropDownLables[0]->setBounds(uiScaleDropDownLableArea);
-  auto uiScaleDropDownArea = titleBarArea.removeFromLeft(100 * this->uiScale);
-  this->allDropDowns[0]->setBounds(uiScaleDropDownArea);
-  auto oversamplingDropDownLableArea = titleBarArea.removeFromLeft(100 * this->uiScale);
-  this->allDropDownLables[1]->setBounds(oversamplingDropDownLableArea);
-  auto oversamplingDropDownArea = titleBarArea.removeFromLeft(100 * this->uiScale);
-  this->allDropDowns[1]->setBounds(oversamplingDropDownArea);
 }
 void NtCompressorAudioProcessorEditor::drawMeters(juce::Rectangle<int>& area) {
   auto pad = 10 * this->uiScale;

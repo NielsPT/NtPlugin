@@ -1,70 +1,18 @@
 #pragma once
+#include <array>
 #include <cstddef>
 #include <string>
 #include <vector>
 
 #include "lib/Stereo.h"
+#include "lib/UiSpec.h"
+#include "lib/utils.h"
 
 #ifndef NTFX_PLUGIN
   #error NTFX_PLUGIN is not defined.
 #endif
 
 namespace NtFx {
-// TODO: general parameter class.
-// TODO: IDEA: Knob groups.
-// - Each group takes up an area in the primary knob grid.
-// - Each group can contain a number of primary and secondary knobs. Primary are placed
-// on a row in the top of the group, secondary in a grid below.
-template <typename signal_t>
-struct KnobSpec {
-  signal_t* p_val;
-  std::string name;
-  std::string suffix { "" };
-  signal_t minVal { 0.0 };
-  signal_t maxVal { 1.0 };
-  signal_t defaultVal { 0.5 };
-  signal_t skew { 0.0 };
-};
-
-struct ToggleSpec {
-  bool* p_val;
-  std::string name;
-  bool defaultVal { false };
-};
-
-struct MeterSpec {
-  std::string name { "" };
-  float minVal_db { -45.0 };
-  bool invert { false };
-  bool hasScale { false };
-};
-
-struct GuiSpec {
-  bool includeMeters { true };
-  bool includeTitleBar { true };
-  bool includeSecondaryKnobs { true };
-  uint32_t backgroundColour { 0xFF001100 };
-  int defaultWindowWidth { 1000 };
-  int maxRows { 3 };
-  int maxColumns { 6 };
-  int defaultFontSize { 16 };
-  float labelHeight { 20 };
-  float toggleHeight { 75 };
-  float knobHeight { 200 };
-  float secondaryKnobWidth { 75 };
-  float secondaryKnobHeight { 115 };
-  float titleBarAreaHeight { 22 };
-  int meterHeight_dots { 14 };
-  float meterRefreshRate_hz { 30 };
-  std::vector<MeterSpec> meters;
-};
-
-enum MeterIdx {
-  in  = 0,
-  out = 1,
-  gr  = 2,
-  end = gr,
-};
 
 template <typename signal_t>
 struct Plugin {
@@ -74,8 +22,8 @@ struct Plugin {
   std::vector<KnobSpec<signal_t>> primaryKnobs;
   std::vector<KnobSpec<signal_t>> secondaryKnobs;
   std::vector<ToggleSpec> toggles;
-  std::vector<MeterSpec> meters;
-  std::vector<NtFx::Stereo<signal_t>> peakLevels;
+  std::vector<MeterSpec> meterSpec;
+  std::array<NtFx::Stereo<signal_t>, nMetersMax> peakLevels;
   GuiSpec guiSpec;
 
   virtual NTFX_INLINE_MEMBER Stereo<signal_t> processSample(
@@ -106,17 +54,40 @@ struct Plugin {
     for (auto& t : this->toggles) { t.defaultVal = *t.p_val; }
   }
 
-  NTFX_INLINE_MEMBER void updatePeakLevel(
-      NtFx::Stereo<signal_t> val, size_t idx, bool invert = false) noexcept {
-    auto tmp = val < this->peakLevels[idx];
-    if (!(invert || tmp) || (invert && tmp)) { this->peakLevels[idx] = val; }
+  /**
+   * @brief Updates the peak level of a meter. This is a template so that we can do
+   range checking at compile time.
+   *
+   * @tparam idx Index of meter to update.
+   * @tparam invert If true, the smallest value will be selected.
+   * @param val New value. If val has a larger magnitude than the current peak value,
+   the current peak value will be overridden.
+   * @return NTFX_INLINE_MEMBER
+   */
+  template <size_t idx, bool invert = false>
+  NTFX_INLINE_MEMBER void updatePeakLevel(NtFx::Stereo<signal_t> val) noexcept {
+    if constexpr (idx >= nMetersMax) {
+      static_assert(false, "Meter index is out of bounds.");
+    }
+    if (invert) {
+      if (val < this->peakLevels[idx]) { this->peakLevels[idx] = val; }
+    } else {
+      if (val > this->peakLevels[idx]) { this->peakLevels[idx] = val; }
+    }
   }
 
+  /**
+   * @brief Get and reset peak level for specified meter.
+   *
+   * @param idx
+   * @return NtFx::Stereo<signal_t> Highest signal level since last call.
+   */
   NTFX_INLINE_MEMBER NtFx::Stereo<signal_t> getAndResetPeakLevel(size_t idx) noexcept {
+    signal_t def = NTFX_SIG_T(0);
+    if (idx >= this->meterSpec.size()) { return def; }
+    if (this->meterSpec[idx].invert) { def = NTFX_SIG_T(1); }
     NtFx::Stereo<signal_t> tmp = this->peakLevels[idx];
-    signal_t def               = NTFX_SIG_T(0);
-    if (idx >= MeterIdx::end && idx == MeterIdx::gr) { def = NTFX_SIG_T(1); }
-    this->peakLevels[idx] = NTFX_SIG_T(def);
+    this->peakLevels[idx]      = NTFX_SIG_T(def);
     ensureFinite(tmp, def);
     return tmp;
   }

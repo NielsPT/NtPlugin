@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include "lib/Knob.h"
-#include "lib/Meter.h"
+#include "Knob.h"
+#include "Meter.h"
 
 #include "PluginProcessor.h"
 #include <JuceHeader.h>
@@ -81,8 +81,7 @@ private:
   void drawPrimaryKnobs(juce::Rectangle<int>& area);
   void initPrimaryKnob(NtFx::KnobSpec<float>& p_spec);
   void initSecondaryKnob(NtFx::KnobSpec<float>& p_spec);
-  void _initKnob(NtFx::KnobSpec<float>& p_spec,
-      std::unique_ptr<juce::Slider>& p_slider,
+  void _initKnob(NtFx::KnobSpec<float>& p_spec, std::unique_ptr<juce::Slider>& p_slider,
       std::unique_ptr<juce::Label>& p_label);
   void initToggle(NtFx::ToggleSpec& spec);
   void initDropDown(NtFx::DropDownSpec& p_spec);
