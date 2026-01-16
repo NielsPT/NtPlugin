@@ -47,12 +47,12 @@ struct ntCompressor : public NtFx::Plugin<signal_t> {
           .maxVal = 0.0,
       },
       {
-          .p_val  = &this->scSettings.ratio_db,
-          .name   = "Ratio",
-          .suffix = "",
-          .minVal = 1.0,
-          .maxVal = 20.0,
-          .skew   = 2.0,
+          .p_val    = &this->scSettings.ratio_db,
+          .name     = "Ratio",
+          .suffix   = "",
+          .minVal   = 1.0,
+          .maxVal   = 20.0,
+          .midPoint = 2.0,
       },
 
       {
@@ -101,12 +101,12 @@ struct ntCompressor : public NtFx::Plugin<signal_t> {
           .maxVal = 100.0,
       },
       {
-          .p_val  = &this->scHpfSettings.fc_hz,
-          .name   = "SC_HPF",
-          .suffix = " hz",
-          .minVal = 20.0,
-          .maxVal = 2000.0,
-          .skew   = 200.0,
+          .p_val    = &this->scHpfSettings.fc_hz,
+          .name     = "SC_HPF",
+          .suffix   = " hz",
+          .minVal   = 20.0,
+          .maxVal   = 2000.0,
+          .midPoint = 200.0,
       },
       {
           .p_val  = &this->scBoostSettings.gain_db,
@@ -133,6 +133,7 @@ struct ntCompressor : public NtFx::Plugin<signal_t> {
     };
     this->updateDefaults();
     this->softClipCoeffs        = NtFx::calculateSoftClipCoeffs<signal_t, 2>();
+    this->scHpfSettings.fc_hz   = 20;
     this->scBoostSettings.fc_hz = 3000.0;
     this->scBoostSettings.shape = NtFx::Biquad::Shape::bell;
     this->scHpfSettings.shape   = NtFx::Biquad::Shape::hpf;

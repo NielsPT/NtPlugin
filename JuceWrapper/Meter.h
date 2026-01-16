@@ -6,15 +6,15 @@
 #include <string>
 #include <vector>
 
-#include "lib/Plugin.h"
 #include "lib/Stereo.h"
+#include "lib/UiSpec.h"
 
 namespace NtFx {
 struct MonoMeter : public juce::Component {
   float minVal_db        = -45;
   float maxVal_db        = 0;
   int pad                = 10;
-  int dotWidth           = 0;
+  int dotDiameter        = 0;
   int dotDist            = 0;
   int nDots              = 14;
   bool invert            = false;
@@ -40,7 +40,6 @@ struct MonoMeter : public juce::Component {
   void paint(juce::Graphics& g) override {
     if (!this->isInitialized) { return; }
     if (this->getWidth() <= 0) { return; }
-    // TODO: stop if nothings changed.
     int y = this->pad;
     g.setColour(juce::Colours::white);
     g.setFont(this->fontSize);
@@ -48,26 +47,26 @@ struct MonoMeter : public juce::Component {
         0,
         y,
         this->getWidth(),
-        this->dotWidth,
+        this->dotDiameter,
         juce::Justification::centred);
     for (size_t i = 1; i < this->nDots + 1; i++) {
       int y;
       y = this->pad + i * this->dotDist;
       g.setColour(juce::Colours::white);
-      g.drawEllipse(this->pad, y, this->dotWidth, this->dotWidth, 1);
-      float fillPad  = this->getWidth() * 4.0 / 35.0;
-      float fillSize = this->dotWidth - fillPad;
-      if (fillSize < 0) { return; }
+      g.drawEllipse(this->pad, y, this->dotDiameter, this->dotDiameter, 1);
+      float fillPad      = this->getWidth() * 4.0 / 35.0;
+      float fillDiameter = this->dotDiameter - fillPad;
+      if (fillDiameter < 0) { return; }
       float fillX = this->pad + fillPad / 2;
       float fillY = y + fillPad / 2;
       if ((!this->invert && i > this->nDots - this->nActiveDots)
           || (this->invert && i < this->nDots - this->nActiveDots)) {
         g.setColour(juce::Colours::lightgrey);
-        g.fillEllipse(fillX, fillY, fillSize, fillSize);
+        g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
       if (i == this->iHoldDot) {
         g.setColour(juce::Colours::white);
-        g.fillEllipse(fillX, fillY, fillSize, fillSize);
+        g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
     }
   }
@@ -75,6 +74,7 @@ struct MonoMeter : public juce::Component {
   void resized() override { repaint(); }
 
   void refresh() {
+    // this->nDots = (this->getHeight() - this->dotDiameter) / this->dotDist;
     if (!(this->peakLast_db == this->peakLast_db)) {
       this->peakLast_db = this->maxVal_db;
     }
@@ -93,9 +93,19 @@ struct MonoMeter : public juce::Component {
     if (peak_db < this->minVal_db) { peak_db = this->minVal_db; }
     if (peak_db > this->maxVal_db) { peak_db = this->maxVal_db; }
     this->peakLast_db = peak_db;
-    this->nActiveDots =
-        (peak_db + this->maxVal_db - this->minVal_db) / this->dbPrDot - 1;
-    if (this->nActiveDots < 0) { this->nActiveDots = 0; }
+    if (peak_db >= 0.0) {
+      this->nActiveDots = this->nDots;
+    } else if (peak_db >= -1.0) {
+      this->nActiveDots = this->nDots - 1;
+    } else if (peak_db >= -3.0) {
+      this->nActiveDots = this->nDots - 2;
+    } else {
+      this->nActiveDots =
+          (peak_db + this->maxVal_db - this->minVal_db) / this->dbPrDot - 2;
+      if (this->nActiveDots < 0) { this->nActiveDots = 0; }
+    }
+
+    // Refresh hold.
     if ((!this->invert && peak_db > this->holdVal_db)
         || (this->invert && peak_db < this->holdVal_db)) {
       this->holdVal_db         = peak_db;
@@ -113,9 +123,9 @@ struct MonoMeter : public juce::Component {
         this->iHoldDot = 0;
       }
     }
-    this->pad      = this->getWidth() * 10 / 35;
-    this->dotWidth = this->getWidth() * 15 / 35;
-    this->dotDist  = this->pad + this->dotWidth;
+    this->pad         = this->getWidth() * 10 / 35;
+    this->dotDiameter = this->getWidth() * 15 / 35;
+    this->dotDist     = this->pad + this->dotDiameter;
     repaint();
   }
 
@@ -149,11 +159,14 @@ struct MeterScale : public juce::Component {
   MeterScale(MonoMeter& m) : _m(m) { }
   void paint(juce::Graphics& g) override {
     auto offset = this->_m.pad + this->_m.dotDist;
-    for (size_t i = 0; i < this->_m.nDots; i++) {
-      auto y        = i * this->_m.dotDist + offset;
-      std::string t = "- " + std::to_string(static_cast<int>(this->_m.dbPrDot * i));
-      g.setColour(juce::Colours::white);
-      g.setFont(this->fontSize);
+    g.setColour(juce::Colours::white);
+    g.setFont(this->fontSize);
+    g.drawText("  0", 0, offset, 1000, 10, juce::Justification::left, false);
+    auto y = this->_m.dotDist + offset;
+    g.drawText("- 1", 0, y, 1000, 10, juce::Justification::left, false);
+    for (size_t i = 2; i < this->_m.nDots; i++) {
+      auto y = i * this->_m.dotDist + offset;
+      auto t = "- " + std::to_string(static_cast<int>(this->_m.dbPrDot * (i - 1)));
       g.drawText(t, 0, y, 1000, 10, juce::Justification::left, false);
     }
   }

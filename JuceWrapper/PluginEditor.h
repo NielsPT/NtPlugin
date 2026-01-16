@@ -10,20 +10,10 @@
 
 #include "Knob.h"
 #include "Meter.h"
+#include "Toggle.h"
 
 #include "PluginProcessor.h"
 #include <JuceHeader.h>
-
-struct ButtonLookAndFeel : public juce::LookAndFeel_V4 {
-  int fontSize;
-  // This is the worst design choice of an API, I can think of. Man, where is
-  // TextButton.setFont?
-  ButtonLookAndFeel() { }
-  juce::Font getTextButtonFont(juce::TextButton&, int) override {
-    return juce::Font(juce::FontOptions(fontSize));
-  }
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ButtonLookAndFeel)
-};
 
 //==============================================================================
 /**
@@ -45,14 +35,14 @@ private:
   NtCompressorAudioProcessor& proc;
   NtFx::MeterGroup meters;
   NtFx::KnobLookAndFeel knobLookAndFeel;
-  ButtonLookAndFeel toggleLookAndFeel;
+  // ToggleLookAndFeel toggleLookAndFeel;
 
   // TODO: allToggleLabels and on/off text for toggles.
   std::vector<std::unique_ptr<juce::Slider>> allPrimaryKnobs;
   std::vector<std::unique_ptr<juce::Label>> allPrimaryKnobLabels;
   std::vector<std::unique_ptr<juce::Slider>> allSecondaryKnobs;
   std::vector<std::unique_ptr<juce::Label>> allSecondaryKnobLabels;
-  std::vector<std::unique_ptr<juce::TextButton>> allToggles;
+  std::vector<std::unique_ptr<CustomTextButton>> allToggles;
   std::vector<std::unique_ptr<juce::ComboBox>> allDropDowns;
   std::vector<std::unique_ptr<juce::Label>> allDropDownLables;
   std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>>

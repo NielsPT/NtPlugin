@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <string>
 
+#include "JuceWrapper/Toggle.h"
 #include "Meter.h"
 #include "PluginEditor.h"
 #include "PluginProcessor.h"
@@ -96,8 +97,6 @@ void NtCompressorAudioProcessorEditor::initSecondaryKnob(NtFx::KnobSpec<float>& 
 void NtCompressorAudioProcessorEditor::_initKnob(NtFx::KnobSpec<float>& spec,
     std::unique_ptr<juce::Slider>& p_slider, std::unique_ptr<juce::Label>& p_label) {
   p_slider->setLookAndFeel(&this->knobLookAndFeel);
-  // constexpr bool placeAbove = false;
-  // p_label->attachToComponent(p_slider.get(), placeAbove);
   p_label->setJustificationType(juce::Justification::centred);
   std::string name(spec.name);
   std::replace(name.begin(), name.end(), '_', ' ');
@@ -111,11 +110,11 @@ void NtCompressorAudioProcessorEditor::_initKnob(NtFx::KnobSpec<float>& spec,
       new juce::AudioProcessorValueTreeState::SliderAttachment(
           this->proc.parameters, spec.name, *p_slider));
   p_slider->setRange(spec.minVal, spec.maxVal);
-  if (spec.skew) { p_slider->setSkewFactorFromMidPoint(spec.skew); }
+  if (spec.midPoint) { p_slider->setSkewFactorFromMidPoint(spec.midPoint); }
 }
 
 void NtCompressorAudioProcessorEditor::initToggle(NtFx::ToggleSpec& spec) {
-  auto p_button = std::make_unique<juce::TextButton>(spec.name);
+  auto p_button = std::make_unique<CustomTextButton>(spec.name);
   addAndMakeVisible(p_button.get());
   p_button->setClickingTogglesState(true);
   p_button->setToggleable(true);
@@ -177,7 +176,7 @@ void NtCompressorAudioProcessorEditor::drawTitleBar(juce::Rectangle<int>& area) 
       area.removeFromTop(this->proc.plug.guiSpec.titleBarAreaHeight * this->uiScale);
   this->grayAreas.push_back(titleBarArea);
   titleBarArea.reduce(pad, pad);
-  for (int i; i < this->proc.titleBarSpec.dropDowns.size(); i++) {
+  for (int i = 0; i < this->proc.titleBarSpec.dropDowns.size(); i++) {
     this->allDropDownLables[i]->setFont(juce::FontOptions(
         this->proc.plug.guiSpec.defaultFontSize * this->uiScale * 0.6));
     this->allDropDownLables[i]->setBounds(
@@ -198,20 +197,19 @@ void NtCompressorAudioProcessorEditor::drawMeters(juce::Rectangle<int>& area) {
 void NtCompressorAudioProcessorEditor::drawToggles(juce::Rectangle<int>& area) {
   auto togglesArea =
       area.removeFromBottom(this->proc.plug.guiSpec.toggleHeight * this->uiScale);
-  this->toggleLookAndFeel.fontSize =
-      this->proc.plug.guiSpec.defaultFontSize * this->uiScale;
   auto togglePad = 10 * this->uiScale;
   this->borderedAreas.push_back(togglesArea);
-  togglesArea.removeFromTop(togglePad);
-  togglesArea.removeFromBottom(togglePad);
+  // togglesArea.removeFromTop(togglePad);
+  // togglesArea.removeFromBottom(togglePad);
   auto nToggles    = this->proc.plug.toggles.size();
   auto columnWidth = togglesArea.getWidth() / nToggles;
   for (size_t i = 0; i < nToggles; i++) {
     auto toggleArea = togglesArea.removeFromLeft(columnWidth);
-    toggleArea.removeFromLeft(togglePad);
-    toggleArea.removeFromRight(togglePad);
+    // toggleArea.removeFromLeft(togglePad);
+    // toggleArea.removeFromRight(togglePad);
     this->allToggles[i]->setBounds(toggleArea);
-    this->allToggles[i]->setLookAndFeel(&this->toggleLookAndFeel);
+    this->allToggles[i]->fontSize =
+        this->proc.plug.guiSpec.defaultFontSize * this->uiScale;
   }
 }
 void NtCompressorAudioProcessorEditor::drawSecondaryKnobs(juce::Rectangle<int>& area) {

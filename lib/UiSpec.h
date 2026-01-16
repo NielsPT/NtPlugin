@@ -17,7 +17,7 @@ struct KnobSpec {
   signal_t minVal { 0.0 };
   signal_t maxVal { 1.0 };
   signal_t defaultVal { 0.5 };
-  signal_t skew { 0.0 };
+  signal_t midPoint { 0.0 };
 };
 
 struct ToggleSpec {
@@ -29,7 +29,7 @@ struct ToggleSpec {
 constexpr int nMetersMax = 8;
 struct MeterSpec {
   std::string name { "" };
-  float minVal_db { -45.0 };
+  float minVal_db { -36.0 };
   bool invert { false };
   bool hasScale { false };
 };
@@ -44,12 +44,12 @@ struct GuiSpec {
   int maxColumns { 6 };
   int defaultFontSize { 16 };
   float labelHeight { 20 };
-  float toggleHeight { 75 };
+  float toggleHeight { 50 };
   float knobHeight { 200 };
   float secondaryKnobWidth { 75 };
   float secondaryKnobHeight { 115 };
   float titleBarAreaHeight { 22 };
-  int meterHeight_dots { 14 };
+  int meterHeight_dots { 12 };
   float meterRefreshRate_hz { 30 };
   std::vector<MeterSpec> meters;
 };
@@ -76,6 +76,7 @@ struct TitleBarSpec {
         },
         2,
     },
+    // TODO: Oversampling
     // {
     //     "Oversampling",
     //     {
