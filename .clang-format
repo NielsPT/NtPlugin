@@ -1,5 +1,5 @@
 BasedOnStyle: webkit
-ColumnLimit: 88
+ColumnLimit: 80
 IndentWidth: 2
 TabWidth: 2
 AccessModifierOffset: -2

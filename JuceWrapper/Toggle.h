@@ -1,8 +1,8 @@
 #pragma once
+#include "JuceHeader.h"
 #include "juce_core/juce_core.h"
 #include "juce_graphics/juce_graphics.h"
 #include "juce_gui_basics/juce_gui_basics.h"
-#include <JuceHeader.h>
 
 namespace NtFx {
 class Toggle : public juce::TextButton {
@@ -15,8 +15,8 @@ public:
 
   //==============================================================================
   /** Override to paint the button exactly as you want. */
-  void paintButton(
-      juce::Graphics& g, const bool isMouseOver, const bool isMouseDown) override {
+  void paintButton(juce::Graphics& g, const bool isMouseOver,
+      const bool isMouseDown) override {
     auto h            = this->getHeight();
     auto w            = this->getWidth();
     float outPadScale = 0.5;

@@ -1,42 +1,59 @@
 # NtPlugin
 
-A framework for fast and easy audio plugin development. Uses JUCE under the hood.
-Since plugins are written in platform-agnostic code, targeting more platforms in the
-future is possible, and the user doesn't need to learn the JUCE framework to write
-cross-platform audio plugins.
+A framework for fast and easy audio plugin development.
+
+## Target audience
+
+The target audience are hobbyists, students and professionals who needs to try
+out an idea quickly, without having to build a custom GUI for it. A student or
+hobbyist will be able to focus on the algorithms and not all the details of
+using JUCE or another framework.
 
 ## Features
 
-- Write audio plugins in plain C++ without the need for any JUCE-specific code.
-- Automatic layout of UI including metering.
-- Oversampling and UI scaling available by default.
+- Write audio plugins in plain C++ without the need for knowledge of the JUCE
+  framework.
+- Automatic layout of UI including metering and UI scaling. Just list your
+parametes, and the framework takes care of the rest.
+<!-- TODO: - Oversampling available by default. -->
 - Possibility for wrapping plugins for other targets.
 
-## Installation
+## Getting started
 
-- Clone with `--recurse-submodules´.
-- Install Cmake. The brew-version does not work, so if you're on Mac, download it from
-  the website.
-- Install Visual Studio (Windows) or XCode (Mac). <!-- TODO: Linux. -->
+### Install needed software
+
+- Install [Cmake](https://cmake.org/download/). The brew-version does not work,
+  so if you're on Mac, download it from the website.
+- Install [Visual Studio](https://visualstudio.microsoft.com/downloads/)
+  (Windows) or [XCode](https://developer.apple.com/xcode/) (Mac).
+  <!-- TODO: Linux. -->
+- Clone with `--recurse-submodules´ flag. This will include the JUCE framework.
+
+### Try it out
+
+- To test the install, type
+  `cmake -B build -S JuceWrapper -DNTFX_PLUGIN=gainExample && --build build` in
+  the terminal. This should build the simple gain knob example plugin.
 
 ## Usage
 
-- Create your plugin as `plugins/[name of your plugin].h`.
-- Write a class that inherits from NtFx::Plugin. The name of your class must be
-  the same as the file name.
-- The base class requires you to implement
-  the methods `processSample`, `updateCoeffs` and `reset`. `processSample` runs for every
-  sample, `updateCoeffs` is called every time a parameter changes and `reset`
-  (re)initializes the plugin.
-- The base class contains 3 empty vectors, that the user can add parameters to in the
-  constructor of the plugin.
-  `primaryKnobs` contains specifications for the main knobs, which are laid out in a grid
-  automatically, `secondaryKnobs` can be used to add a single row of smaller knobs below
-  main grid for fine tuning or utility controls.
-  `toggles` contain the boolean parameters.
-- Similarly, the base class contain a spec for the UI named `guiSpec`, which can be  
-  modified for customization of the UI.
-
+- Create your plugin as `plugins/[name of your plugin].h` in the project
+  directory.
+- Write a class that inherits from `NtFx::Plugin`. The name of your class must
+  be the same as the file name.
+- The base class requires you to implement the methods `processSample`,
+  `updateCoeffs` and `reset`. `processSample` runs for every sample,
+  `updateCoeffs` is called every time a parameter changes and `reset`
+  (re)initializes the plugin and sets the samplerate. `reset` should always call
+  `updateCoeffs`.
+- The base class contains 3 empty vectors, that the user can add parameters to
+  in the constructor of the plugin. `primaryKnobs` contains specifications for
+  the main knobs, which are laid out in a grid automatically, `secondaryKnobs`
+  can be used to add a single row of smaller knobs below main grid for fine
+  tuning or utility controls. `toggles` contain the boolean parameters. The
+  constructor should call `updateDefaults` before returning.
+- Similarly, the base class contain a spec for the UI named `guiSpec`, which can
+  be modified for customization of the UI.
 - Use the following commands to configure and build your project:
 
 ```sh
@@ -44,4 +61,27 @@ cmake -B build -S JuceWrapper -DNTFX_PLUGIN=[name of your plugin]
 cmake --build build
 ```
 
+- Once the project is configured, only the build-command is needed for
+  incremental builds.
+- If you want to switch plugin to build, you must delete the `build` folder
+  before running the config command again.
+
 Have fun coding.
+
+## Making it work with VsCode
+
+<!--TODO: VsCode instructions. -->
+
+## The UI
+
+<!--TODO: UI -->
+
+## Collaborations
+
+Collaborators are most welcome. Feel free to make bug reports, feature requests
+and pull requests. If you manage to make a nice plugin, add wish to share with
+the world, it can become part of the repo through a pull request. A wrapper for
+the JUCE framework is available, but since plugins are written in
+platform-agnostic code, targeting more platforms in the future is possible. If
+anyone wishes to colaborate, adding a wrapper for eg. ESP32 or an ADI device
+would be an option for a project.

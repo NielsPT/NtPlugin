@@ -6,12 +6,23 @@
   ==============================================================================
 */
 
+#define Q(x) #x
+#define QUOTE(x) Q(x)
+
 #pragma once
+#if !JUCE_DONT_DECLARE_PROJECTINFO
+namespace ProjectInfo {
+const char* const projectName   = QUOTE(NTFX_PLUGIN);
+const char* const companyName   = "NtFx";
+const char* const versionString = "0.1.0";
+const int versionNumber         = 0x100;
+}
+#endif
 
 #include NTFX_PLUGIN_FILE
 #include "lib/UiSpec.h"
 
-#include <JuceHeader.h>
+#include "JuceHeader.h"
 
 //==============================================================================
 /**

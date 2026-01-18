@@ -22,7 +22,6 @@ struct Plugin {
   std::vector<KnobSpec<signal_t>> primaryKnobs;
   std::vector<KnobSpec<signal_t>> secondaryKnobs;
   std::vector<ToggleSpec> toggles;
-  // std::vector<StereoMeterSpec> meterSpec;
   std::array<NtFx::Stereo<signal_t>, nMetersMax> peakLevels;
   GuiSpec guiSpec;
 

@@ -1,4 +1,19 @@
 # set(NTFX_PLUGIN ntCompressor)
+
+# function(generate_plugin_code PLUGIN_NAME OUT_VAR)
+#   message(STATUS "generate_plugin_code called with PLUGIN_NAME='${PLUGIN_NAME}'")
+# string(MD5 "${PLUGIN_NAME}" _hash)
+# message(STATUS "_hash:${_hash}")
+# string(SUBSTRING "${_hash}" 0 4 _hex)
+# string(SUBSTRING "${_hex}" 1 3 _rest)
+# string(SUBSTRING "${_hex}" 0 1 _first)
+# string(TOUPPER  "${_first}" _first)
+# string(TOLOWER  "${_rest}"  _rest)
+# set(${OUT_VAR} "${_first}${_rest}" PARENT_SCOPE)
+# endfunction()
+
+# generate_plugin_code(${NTFX_PLUGIN} NTFX_PLUGIN_CODE)
+
 set(NTFX_PLUGIN_FILE "\"plugins/${NTFX_PLUGIN}.h\"")
 
 # Example Audio Plugin CMakeLists.txt
@@ -43,6 +58,23 @@ juce_set_aax_sdk_path(/Users/niels/aax-sdk-2-9-0)
 # the formats specified by the FORMATS arguments. This function accepts many optional arguments.
 # Check the readme at `docs/CMake API.md` in the JUCE repo for the full list.
 
+if (NOT DEFINED NTFX_PLUGIN_CODE OR "${NTFX_PLUGIN_CODE}" STREQUAL "")
+  string(RANDOM LENGTH 4 _rnd_str)
+  message(STATUS "_rns_str:${_rnd_str}")
+  string(SUBSTRING "${_rnd_str}" 1 3 _rest)
+  message(STATUS "_rest:${_rest}")
+  string(SUBSTRING "${_rnd_str}" 0 1 _first)
+  message(STATUS "_first:${_first}")
+  string(TOUPPER  "${_first}" _first)
+  message(STATUS "_first:${_first}")
+  string(TOLOWER  "${_rest}"  _rest)
+  message(STATUS "_rest:${_rest}")
+  set(NTFX_PLUGIN_CODE "${_first}${_rest}" CACHE STRING
+  "Random hash that is regenerated every time CMake is invoked.")
+  message(STATUS "Generated new random plugin id: ${NTFX_PLUGIN_CODE}")
+endif()
+
+
 # TODO: Icon
 juce_add_plugin(${NTFX_PLUGIN}
     # VERSION ...                               # Set this if the plugin version is different to the project version
@@ -56,7 +88,7 @@ juce_add_plugin(${NTFX_PLUGIN}
     EDITOR_WANTS_KEYBOARD_FOCUS FALSE           # Does the editor need keyboard focus?
     COPY_PLUGIN_AFTER_BUILD TRUE                # Should the plugin be installed to a default location after building?
     PLUGIN_MANUFACTURER_CODE NtFx               # A four-character manufacturer id with at least one upper-case character
-    PLUGIN_CODE Ntcm                            # A unique four-character plugin id with exactly one upper-case character
+    PLUGIN_CODE ${NTFX_PLUGIN_CODE}                            # A unique four-character plugin id with exactly one upper-case character
                                                 # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
     FORMATS AU VST3 Standalone AAX              # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
     PRODUCT_NAME ${NTFX_PLUGIN})                # The name of the final executable, which can differ from the target name
@@ -117,7 +149,7 @@ target_link_libraries(${NTFX_PLUGIN}
 target_include_directories(${NTFX_PLUGIN} PRIVATE ..)
 
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
-# into your build tree. This should be included with `#include <JuceHeader.h>`. The include path for
+# into your build tree. This should be included with `#include "JuceHeader.h"`. The include path for
 # this header will be automatically added to the target. The main function of the JuceHeader is to
 # include all your JUCE module headers; if you're happy to include module headers directly, you
 # probably don't need to call this.

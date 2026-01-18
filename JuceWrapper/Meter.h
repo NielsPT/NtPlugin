@@ -1,6 +1,7 @@
 #pragma once
 
-#include <JuceHeader.h>
+// TODO: get rid of JuceHeader.h.
+#include "JuceHeader.h"
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -32,7 +33,8 @@ struct MonoMeter : public juce::Component {
   int fontSize           = 20;
 
   MonoMeter(StereoMeterSpec& meterSpec, GuiSpec& guiSpec)
-      : meterSpec(meterSpec), guiSpec(guiSpec) {
+      : meterSpec(meterSpec), guiSpec(guiSpec),
+        nDots(guiSpec.meterHeight_dots) {
     this->refresh();
     this->isInitialized = true;
   };
@@ -62,8 +64,8 @@ struct MonoMeter : public juce::Component {
       float fillY = y + fillPad / 2;
       if ((!this->invert && i > this->nDots - this->nActiveDots)
           || (this->invert && i < this->nDots - this->nActiveDots)) {
-        g.setColour(
-            juce::Colour(this->guiSpec.foregroundColour & 0x00FFFFFF | 0xDD000000));
+        g.setColour(juce::Colour(
+            this->guiSpec.foregroundColour & 0x00FFFFFF | 0xDD000000));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
       if (i == this->iHoldDot) {
@@ -75,14 +77,14 @@ struct MonoMeter : public juce::Component {
 
   void resized() override { repaint(); }
 
-  void refresh() {
+  void refresh(bool repaint = true) {
     // this->nDots = (this->getHeight() - this->dotDiameter) / this->dotDist;
     if (!(this->peakLast_db == this->peakLast_db)) {
       this->peakLast_db = this->meterSpec.maxVal_db;
     }
     this->dbPrDot =
         (this->meterSpec.maxVal_db - this->meterSpec.minVal_db) / this->nDots;
-    float peak_db = 20 * std::log10(this->peakVal_lin);
+    float peak_db = NtFx::db(this->peakVal_lin);
     if (this->peakVal_lin <= 0) { peak_db = -100; }
     if (this->invert) {
       if (peak_db > this->peakLast_db) {
@@ -93,8 +95,12 @@ struct MonoMeter : public juce::Component {
         peak_db = this->peakLast_db - this->decayRate_db;
       }
     }
-    if (peak_db < this->meterSpec.minVal_db) { peak_db = this->meterSpec.minVal_db; }
-    if (peak_db > this->meterSpec.maxVal_db) { peak_db = this->meterSpec.maxVal_db; }
+    if (peak_db < this->meterSpec.minVal_db) {
+      peak_db = this->meterSpec.minVal_db;
+    }
+    if (peak_db > this->meterSpec.maxVal_db) {
+      peak_db = this->meterSpec.maxVal_db;
+    }
     this->peakLast_db = peak_db;
     if (peak_db >= 0.0) {
       this->nActiveDots = this->nDots;
@@ -128,10 +134,12 @@ struct MonoMeter : public juce::Component {
         this->iHoldDot = 0;
       }
     }
-    this->pad         = this->getWidth() * 10 / 35;
-    this->dotDiameter = this->getWidth() * 15 / 35;
+    auto w = this->getWidth();
+    if (!repaint) { w = 1000.0 / 15.0; }
+    this->pad         = w * 10.0 / 35.0;
+    this->dotDiameter = w * 15.0 / 35.0;
     this->dotDist     = this->pad + this->dotDiameter;
-    repaint();
+    if (repaint) { this->repaint(); }
   }
 
   void refresh(float level) {
@@ -172,13 +180,14 @@ struct MeterScale : public juce::Component {
     g.drawText("- 1", 0, y, 1000, 10, juce::Justification::left, false);
     for (size_t i = 2; i < this->meter.nDots; i++) {
       auto y = i * this->meter.dotDist + offset;
-      auto t = "- " + std::to_string(static_cast<int>(this->meter.dbPrDot * (i - 1)));
+      auto t = "- "
+          + std::to_string(static_cast<int>(this->meter.dbPrDot * (i - 1)));
       g.drawText(t, 0, y, 1000, 10, juce::Justification::left, false);
     }
   }
   void resized() override {
     this->meter.refresh();
-    repaint();
+    this->repaint();
   }
 };
 
@@ -207,10 +216,11 @@ struct StereoMeter : public juce::Component {
     this->l.fontSize = this->fontSize;
     this->r.fontSize = this->fontSize;
     auto area        = getLocalBounds();
-    auto labelArea   = area.removeFromTop(this->getHeight() * 1.0 / (l.nDots + 1));
+    auto labelArea =
+        area.removeFromTop(this->getHeight() * 1.0 / (l.nDots + 1));
     this->label.setFont(juce::FontOptions(this->fontSize));
-    this->label.setColour(
-        juce::Label::ColourIds::textColourId, juce::Colour(spec.foregroundColour));
+    this->label.setColour(juce::Label::ColourIds::textColourId,
+        juce::Colour(spec.foregroundColour));
     this->label.setBounds(labelArea);
     this->label.setJustificationType(juce::Justification::centredBottom);
     auto lArea = area.removeFromLeft(area.getWidth() / 2.0);
@@ -256,6 +266,7 @@ struct MeterGroup : public juce::Component {
       meters.push_back(std::move(meter));
     }
   }
+  // Get Decay and peak hold from guiSpec.
   void setDecay(float a, float b) {
     for (auto& m : meters) { m->setDecay(a, b); }
   }
@@ -290,11 +301,17 @@ struct MeterGroup : public juce::Component {
     for (auto& m : meters) { m->fontSize = size; }
     for (auto& s : scales) { s->fontSize = size; }
   }
-  void setHeight_dots(int nDots) {
-    for (auto& m : meters) {
-      m->l.nDots = nDots;
-      m->r.nDots = nDots;
-    }
+  // void setHeight_dots(int nDots) {
+  //   for (auto& m : meters) {
+  //     m->l.nDots = nDots;
+  //     m->r.nDots = nDots;
+  //   }
+  // }
+  float getMinimalHeight() const {
+    if (!this->meters.size()) { return 0; }
+    auto& m = this->meters[0]->l;
+    m.refresh(false);
+    return m.guiSpec.labelHeight + m.dotDiameter + m.nDots * m.dotDist;
   }
 };
 } // namespace NtFx

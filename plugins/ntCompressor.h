@@ -186,7 +186,7 @@ struct ntCompressor : public NtFx::Plugin<signal_t> {
     this->scBoostCoeffs =
         NtFx::Biquad::calcCoeffs5<signal_t>(this->scBoostSettings, this->fs);
     this->scCoeffs   = NtFx::SideChain::calcCoeffs(this->fs, &this->scSettings);
-    this->makeup_lin = std::pow(10.0, (this->makeup_db / NTFX_SIG_T(20.0)));
+    this->makeup_lin = NtFx::invDb(this->makeup_db);
     this->mix_lin    = this->mix_percent / 100.0;
   }
 

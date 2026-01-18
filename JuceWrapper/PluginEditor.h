@@ -12,8 +12,8 @@
 #include "Meter.h"
 #include "Toggle.h"
 
+#include "JuceHeader.h"
 #include "PluginProcessor.h"
-#include <JuceHeader.h>
 
 //==============================================================================
 /**
@@ -45,11 +45,14 @@ private:
   std::vector<std::unique_ptr<NtFx::Toggle>> allToggles;
   std::vector<std::unique_ptr<juce::ComboBox>> allDropDowns;
   std::vector<std::unique_ptr<juce::Label>> allDropDownLables;
-  std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>>
+  std::vector<
+      std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>>
       allKnobAttachments;
-  std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>>
+  std::vector<
+      std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>>
       allToggleAttachments;
-  std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>>
+  std::vector<
+      std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>>
       allDropDownAttachments;
 
   std::vector<juce::Rectangle<int>> borderedAreas;
@@ -71,7 +74,8 @@ private:
   void drawPrimaryKnobs(juce::Rectangle<int>& area);
   void initPrimaryKnob(NtFx::KnobSpec<float>& p_spec);
   void initSecondaryKnob(NtFx::KnobSpec<float>& p_spec);
-  void _initKnob(NtFx::KnobSpec<float>& p_spec, std::unique_ptr<juce::Slider>& p_slider,
+  void _initKnob(NtFx::KnobSpec<float>& p_spec,
+      std::unique_ptr<juce::Slider>& p_slider,
       std::unique_ptr<juce::Label>& p_label);
   void initToggle(NtFx::ToggleSpec& spec);
   void initDropDown(NtFx::DropDownSpec& p_spec);

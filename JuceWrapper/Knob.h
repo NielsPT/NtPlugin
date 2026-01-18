@@ -1,6 +1,6 @@
 #pragma once
 
-#include <JuceHeader.h>
+#include "JuceHeader.h"
 
 namespace NtFx {
 // TODO: Make it a component instead like Toggle. Maybe...
@@ -18,7 +18,8 @@ struct KnobLookAndFeel : public juce::LookAndFeel_V4 {
     auto radius  = std::min(width / 2.5f, height / 2.5f) - 4.0f;
     auto centreX = x + width / 2.0f;
     auto centreY = y + height / 2.0f;
-    auto angle   = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
+    auto angle =
+        rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
     juce::Path knobPath;
     g.setColour(juce::Colour(this->backgroundColour));
     knobPath.addPolygon({ 0, 0 }, 8, radius);
