@@ -4,25 +4,14 @@
 #include "juce_gui_basics/juce_gui_basics.h"
 #include <JuceHeader.h>
 
-// struct ToggleLookAndFeel : public juce::LookAndFeel_V4 {
-//   int fontSize;
-//   // This is the worst design choice of an API, I can think of. Man, where is
-//   // TextButton.setFont?
-//   ToggleLookAndFeel() { }
-//   juce::Font getTextButtonFont(juce::TextButton&, int) override {
-//     return juce::Font(juce::FontOptions(fontSize));
-//   }
-
-//   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ToggleLookAndFeel)
-// };
-
-class CustomTextButton : public juce::TextButton {
+namespace NtFx {
+class Toggle : public juce::TextButton {
 public:
   //==============================================================================
-  CustomTextButton(const juce::String& buttonName = {})
-      : juce::TextButton(buttonName) { }
+  Toggle(const juce::String& buttonName = {}) : juce::TextButton(buttonName) { }
 
   float fontSize { 0 };
+  uint32_t colour { 0xFFFFFFFF };
 
   //==============================================================================
   /** Override to paint the button exactly as you want. */
@@ -34,16 +23,18 @@ public:
     float dRing       = h * outPadScale;
     auto x            = (h - dRing) / 2;
     auto y            = (h - dRing) / 2;
-    g.setColour(juce::Colours::white);
+    g.setColour(juce::Colour(colour));
     juce::Rectangle<float> r1(x, y, dRing, dRing);
-    g.drawEllipse(r1, 1);
+    g.drawEllipse(r1, h / 50.0);
+    float inPadScale = outPadScale * 0.6;
+    float dDot       = h * inPadScale;
+    float xDot       = x + (dRing - dDot) / 2;
+    float yDot       = y + (dRing - dDot) / 2;
+    juce::Rectangle<float> r2(xDot, yDot, dDot, dDot);
     if (this->getToggleState()) {
-      float inPadScale = outPadScale * 0.6;
-      float dDot       = h * inPadScale;
-      float xDot       = x + (dRing - dDot) / 2;
-      float yDot       = y + (dRing - dDot) / 2;
-      juce::Rectangle<float> r2(xDot, yDot, dDot, dDot);
       g.fillEllipse(r2);
+    } else {
+      g.drawEllipse(r2, h / 100.0);
     }
     x = (h + dRing) / 2 + h * 0.1;
     juce::Rectangle<float> r3(x, 0, 1000, h);
@@ -53,5 +44,6 @@ public:
   }
 
   //==============================================================================
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CustomTextButton)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Toggle)
 };
+}

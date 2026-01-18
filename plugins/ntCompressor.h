@@ -126,17 +126,20 @@ struct ntCompressor : public NtFx::Plugin<signal_t> {
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
 
-    this->meterSpec = {
+    this->guiSpec.meters = {
       { .name = "IN" },
       { .name = "OUT", .hasScale = true },
       { .name = "GR", .invert = true, .hasScale = true },
     };
+    this->scHpfSettings.fc_hz      = 20;
+    this->scBoostSettings.fc_hz    = 3000.0;
+    this->softClipCoeffs           = NtFx::calculateSoftClipCoeffs<signal_t, 2>();
+    this->scBoostSettings.shape    = NtFx::Biquad::Shape::bell;
+    this->scHpfSettings.shape      = NtFx::Biquad::Shape::hpf;
+    this->guiSpec.foregroundColour = 0xFF000000;
+    this->guiSpec.backgroundColour = 0xFFFFFFFF;
+
     this->updateDefaults();
-    this->softClipCoeffs        = NtFx::calculateSoftClipCoeffs<signal_t, 2>();
-    this->scHpfSettings.fc_hz   = 20;
-    this->scBoostSettings.fc_hz = 3000.0;
-    this->scBoostSettings.shape = NtFx::Biquad::Shape::bell;
-    this->scHpfSettings.shape   = NtFx::Biquad::Shape::hpf;
   }
 
   NTFX_INLINE_MEMBER NtFx::Stereo<signal_t> processSample(

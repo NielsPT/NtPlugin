@@ -11,8 +11,8 @@
 
 namespace NtFx {
 struct MonoMeter : public juce::Component {
-  float minVal_db        = -45;
-  float maxVal_db        = 0;
+  StereoMeterSpec& meterSpec;
+  GuiSpec& guiSpec;
   int pad                = 10;
   int dotDiameter        = 0;
   int dotDist            = 0;
@@ -31,7 +31,8 @@ struct MonoMeter : public juce::Component {
   bool isInitialized     = false;
   int fontSize           = 20;
 
-  MonoMeter() {
+  MonoMeter(StereoMeterSpec& meterSpec, GuiSpec& guiSpec)
+      : meterSpec(meterSpec), guiSpec(guiSpec) {
     this->refresh();
     this->isInitialized = true;
   };
@@ -41,7 +42,7 @@ struct MonoMeter : public juce::Component {
     if (!this->isInitialized) { return; }
     if (this->getWidth() <= 0) { return; }
     int y = this->pad;
-    g.setColour(juce::Colours::white);
+    g.setColour(juce::Colour(this->guiSpec.foregroundColour));
     g.setFont(this->fontSize);
     g.drawText(this->label,
         0,
@@ -52,7 +53,7 @@ struct MonoMeter : public juce::Component {
     for (size_t i = 1; i < this->nDots + 1; i++) {
       int y;
       y = this->pad + i * this->dotDist;
-      g.setColour(juce::Colours::white);
+      g.setColour(juce::Colour(this->guiSpec.foregroundColour));
       g.drawEllipse(this->pad, y, this->dotDiameter, this->dotDiameter, 1);
       float fillPad      = this->getWidth() * 4.0 / 35.0;
       float fillDiameter = this->dotDiameter - fillPad;
@@ -61,11 +62,12 @@ struct MonoMeter : public juce::Component {
       float fillY = y + fillPad / 2;
       if ((!this->invert && i > this->nDots - this->nActiveDots)
           || (this->invert && i < this->nDots - this->nActiveDots)) {
-        g.setColour(juce::Colours::lightgrey);
+        g.setColour(
+            juce::Colour(this->guiSpec.foregroundColour & 0x00FFFFFF | 0xDD000000));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
       if (i == this->iHoldDot) {
-        g.setColour(juce::Colours::white);
+        g.setColour(juce::Colour(this->guiSpec.foregroundColour));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
     }
@@ -76,9 +78,10 @@ struct MonoMeter : public juce::Component {
   void refresh() {
     // this->nDots = (this->getHeight() - this->dotDiameter) / this->dotDist;
     if (!(this->peakLast_db == this->peakLast_db)) {
-      this->peakLast_db = this->maxVal_db;
+      this->peakLast_db = this->meterSpec.maxVal_db;
     }
-    this->dbPrDot = (this->maxVal_db - this->minVal_db) / this->nDots;
+    this->dbPrDot =
+        (this->meterSpec.maxVal_db - this->meterSpec.minVal_db) / this->nDots;
     float peak_db = 20 * std::log10(this->peakVal_lin);
     if (this->peakVal_lin <= 0) { peak_db = -100; }
     if (this->invert) {
@@ -90,8 +93,8 @@ struct MonoMeter : public juce::Component {
         peak_db = this->peakLast_db - this->decayRate_db;
       }
     }
-    if (peak_db < this->minVal_db) { peak_db = this->minVal_db; }
-    if (peak_db > this->maxVal_db) { peak_db = this->maxVal_db; }
+    if (peak_db < this->meterSpec.minVal_db) { peak_db = this->meterSpec.minVal_db; }
+    if (peak_db > this->meterSpec.maxVal_db) { peak_db = this->meterSpec.maxVal_db; }
     this->peakLast_db = peak_db;
     if (peak_db >= 0.0) {
       this->nActiveDots = this->nDots;
@@ -101,7 +104,9 @@ struct MonoMeter : public juce::Component {
       this->nActiveDots = this->nDots - 2;
     } else {
       this->nActiveDots =
-          (peak_db + this->maxVal_db - this->minVal_db) / this->dbPrDot - 2;
+          (peak_db + this->meterSpec.maxVal_db - this->meterSpec.minVal_db)
+              / this->dbPrDot
+          - 2;
       if (this->nActiveDots < 0) { this->nActiveDots = 0; }
     }
 
@@ -116,9 +121,9 @@ struct MonoMeter : public juce::Component {
       if (this->holdCounter_frames > this->nHold_frames) {
         this->holdCounter_frames = 0;
         if (this->invert) {
-          this->holdVal_db = this->maxVal_db;
+          this->holdVal_db = this->meterSpec.maxVal_db;
         } else {
-          this->holdVal_db = this->minVal_db;
+          this->holdVal_db = this->meterSpec.minVal_db;
         }
         this->iHoldDot = 0;
       }
@@ -135,7 +140,8 @@ struct MonoMeter : public juce::Component {
   }
 
   void setDecay(float tDecay_s, float refreshRate_hz) {
-    float dbPerSecond  = (this->maxVal_db - this->minVal_db) / tDecay_s;
+    float dbPerSecond =
+        (this->meterSpec.maxVal_db - this->meterSpec.minVal_db) / tDecay_s;
     this->decayRate_db = dbPerSecond / refreshRate_hz;
   }
 
@@ -146,32 +152,32 @@ struct MonoMeter : public juce::Component {
   void setInvert(bool invert) {
     this->invert = invert;
     if (invert) {
-      this->peakLast_db = this->minVal_db;
+      this->peakLast_db = this->meterSpec.minVal_db;
     } else {
-      this->peakLast_db = this->maxVal_db;
+      this->peakLast_db = this->meterSpec.maxVal_db;
     }
   };
 };
 
 struct MeterScale : public juce::Component {
-  MonoMeter& _m;
+  MonoMeter& meter;
   int fontSize { 0 };
-  MeterScale(MonoMeter& m) : _m(m) { }
+  MeterScale(MonoMeter& m) : meter(m) { }
   void paint(juce::Graphics& g) override {
-    auto offset = this->_m.pad + this->_m.dotDist;
-    g.setColour(juce::Colours::white);
+    auto offset = this->meter.pad + this->meter.dotDist;
+    g.setColour(juce::Colour(meter.guiSpec.foregroundColour));
     g.setFont(this->fontSize);
     g.drawText("  0", 0, offset, 1000, 10, juce::Justification::left, false);
-    auto y = this->_m.dotDist + offset;
+    auto y = this->meter.dotDist + offset;
     g.drawText("- 1", 0, y, 1000, 10, juce::Justification::left, false);
-    for (size_t i = 2; i < this->_m.nDots; i++) {
-      auto y = i * this->_m.dotDist + offset;
-      auto t = "- " + std::to_string(static_cast<int>(this->_m.dbPrDot * (i - 1)));
+    for (size_t i = 2; i < this->meter.nDots; i++) {
+      auto y = i * this->meter.dotDist + offset;
+      auto t = "- " + std::to_string(static_cast<int>(this->meter.dbPrDot * (i - 1)));
       g.drawText(t, 0, y, 1000, 10, juce::Justification::left, false);
     }
   }
   void resized() override {
-    this->_m.refresh();
+    this->meter.refresh();
     repaint();
   }
 };
@@ -179,11 +185,14 @@ struct MeterScale : public juce::Component {
 struct StereoMeter : public juce::Component {
   MonoMeter l;
   MonoMeter r;
+  GuiSpec& spec;
   juce::Label label;
   int fontSize { 0 };
   bool hasScale { false };
 
-  StereoMeter(std::string label) : label(label, label) {
+  StereoMeter(StereoMeterSpec& meterSpec, GuiSpec& guiSpec)
+      : l(meterSpec, guiSpec), r(meterSpec, guiSpec), spec(guiSpec),
+        label(meterSpec.name, meterSpec.name) {
     this->addAndMakeVisible(this->label);
     this->addAndMakeVisible(this->l);
     this->addAndMakeVisible(this->r);
@@ -195,23 +204,26 @@ struct StereoMeter : public juce::Component {
     this->repaint();
   }
   void drawGui() {
-    l.fontSize     = this->fontSize;
-    r.fontSize     = this->fontSize;
-    auto area      = getLocalBounds();
-    auto labelArea = area.removeFromTop(this->getHeight() * 1.0 / (l.nDots + 1));
+    this->l.fontSize = this->fontSize;
+    this->r.fontSize = this->fontSize;
+    auto area        = getLocalBounds();
+    auto labelArea   = area.removeFromTop(this->getHeight() * 1.0 / (l.nDots + 1));
     this->label.setFont(juce::FontOptions(this->fontSize));
+    this->label.setColour(
+        juce::Label::ColourIds::textColourId, juce::Colour(spec.foregroundColour));
     this->label.setBounds(labelArea);
     this->label.setJustificationType(juce::Justification::centredBottom);
     auto lArea = area.removeFromLeft(area.getWidth() / 2.0);
-    l.setBounds(lArea);
+    this->l.setBounds(lArea);
     area.setWidth(lArea.getWidth());
-    r.setBounds(area);
+    this->r.setBounds(area);
   }
   template <typename signal_t>
   void refresh(Stereo<signal_t> val) {
     this->l.refresh(val.l);
     this->r.refresh(val.r);
   }
+  // TODO: Take a ref to spec and read them your self.
   void setInvert(bool val) {
     l.setInvert(val);
     r.setInvert(val);
@@ -229,13 +241,11 @@ struct StereoMeter : public juce::Component {
 struct MeterGroup : public juce::Component {
   std::vector<std::unique_ptr<StereoMeter>> meters;
   std::vector<std::unique_ptr<MeterScale>> scales;
-  MeterGroup(std::vector<MeterSpec> specs) {
+  MeterGroup(GuiSpec& guiSpec) {
     size_t i = 0;
-    for (auto spec : specs) {
-      auto meter = std::make_unique<StereoMeter>(spec.name);
+    for (auto& spec : guiSpec.meters) {
+      auto meter = std::make_unique<StereoMeter>(spec, guiSpec);
       meter->setInvert(spec.invert);
-      meter->l.minVal_db = spec.minVal_db;
-      meter->r.minVal_db = spec.minVal_db;
       this->addAndMakeVisible(meter.get());
       if (spec.hasScale) {
         meter->hasScale = true;

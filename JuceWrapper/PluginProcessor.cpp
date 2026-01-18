@@ -25,9 +25,7 @@ NtCompressorAudioProcessor::NtCompressorAudioProcessor()
               )
 #endif
       ,
-      parameters(*this,
-          nullptr,
-          juce::Identifier("NtCompressor_01"),
+      parameters(*this, nullptr, juce::Identifier("NtCompressor_01"),
           createParameterLayout()) {
 }
 

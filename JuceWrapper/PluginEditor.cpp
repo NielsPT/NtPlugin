@@ -13,11 +13,12 @@
 #include "Meter.h"
 #include "PluginEditor.h"
 #include "PluginProcessor.h"
+#include "juce_gui_basics/juce_gui_basics.h"
 
 //==============================================================================
 NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
     NtCompressorAudioProcessor& p)
-    : AudioProcessorEditor(&p), proc(p), meters(proc.plug.meterSpec) {
+    : AudioProcessorEditor(&p), proc(p), meters(proc.plug.guiSpec) {
   this->getLookAndFeel().setColour(
       juce::ResizableWindow::ColourIds::backgroundColourId, juce::Colours::black);
 
@@ -32,7 +33,7 @@ NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
       nCols,
       this->proc.plug.guiSpec.maxRows,
       this->proc.plug.guiSpec.maxColumns);
-  auto height = this->proc.plug.guiSpec.titleBarAreaHeight;
+  auto height = this->proc.plug.guiSpec.titleBarHeight;
   height += nRows * this->proc.plug.guiSpec.knobHeight;
   if (this->proc.plug.secondaryKnobs.size() != 0) {
     height += this->proc.plug.guiSpec.secondaryKnobHeight;
@@ -42,8 +43,13 @@ NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
   }
   this->unscaledWindowHeight = height;
   this->updateUiScale();
+
+  this->knobLookAndFeel.foregroundColour = this->proc.plug.guiSpec.backgroundColour;
+  this->knobLookAndFeel.backgroundColour =
+      this->proc.plug.guiSpec.foregroundColour & 0x00FFFFFF | 0xDD000000;
   this->addAndMakeVisible(this->meters);
   this->meters.setHeight_dots(this->proc.plug.guiSpec.meterHeight_dots);
+  // TODO: decay and peak hold in spec. Also set decay per meter.
   this->meters.setDecay(1, this->proc.plug.guiSpec.meterRefreshRate_hz);
   this->meters.setPeakHold(2, this->proc.plug.guiSpec.meterRefreshRate_hz);
   this->startTimerHz(this->proc.plug.guiSpec.meterRefreshRate_hz);
@@ -101,9 +107,15 @@ void NtCompressorAudioProcessorEditor::_initKnob(NtFx::KnobSpec<float>& spec,
   std::string name(spec.name);
   std::replace(name.begin(), name.end(), '_', ' ');
   p_label->setText(name, juce::NotificationType::dontSendNotification);
+  p_label->setColour(juce::Label::ColourIds::textColourId,
+      juce::Colour(this->proc.plug.guiSpec.foregroundColour));
   p_slider->setTextValueSuffix(spec.suffix);
   p_slider->setSliderStyle(juce::Slider::SliderStyle::Rotary);
   p_slider->addListener(this);
+  p_slider->setColour(juce::Slider::ColourIds::textBoxTextColourId,
+      juce::Colour(this->proc.plug.guiSpec.foregroundColour));
+  p_slider->setColour(juce::Slider::ColourIds::textBoxBackgroundColourId,
+      juce::Colour(this->proc.plug.guiSpec.backgroundColour));
   addAndMakeVisible(p_slider.get());
   addAndMakeVisible(p_label.get());
   this->allKnobAttachments.emplace_back(
@@ -114,13 +126,11 @@ void NtCompressorAudioProcessorEditor::_initKnob(NtFx::KnobSpec<float>& spec,
 }
 
 void NtCompressorAudioProcessorEditor::initToggle(NtFx::ToggleSpec& spec) {
-  auto p_button = std::make_unique<CustomTextButton>(spec.name);
+  auto p_button = std::make_unique<NtFx::Toggle>(spec.name);
   addAndMakeVisible(p_button.get());
   p_button->setClickingTogglesState(true);
   p_button->setToggleable(true);
   p_button->addListener(this);
-  p_button->setColour(
-      juce::TextButton::ColourIds::textColourOffId, juce::Colours::grey);
   std::string name(spec.name);
   std::replace(name.begin(), name.end(), '_', ' ');
   p_button->setButtonText(name);
@@ -141,7 +151,7 @@ void NtCompressorAudioProcessorEditor::paint(juce::Graphics& g) {
   g.setColour(juce::Colours::darkgrey);
   for (size_t i = 0; i < grayAreas.size(); i++) { g.fillRect(this->grayAreas[i]); }
   float pad = 15;
-  g.setColour(juce::Colours::white);
+  g.setColour(juce::Colour(this->proc.plug.guiSpec.foregroundColour));
   for (auto area : this->borderedAreas) {
     g.drawRoundedRectangle(area.toFloat(), pad * this->uiScale, this->uiScale);
   }
@@ -173,7 +183,7 @@ void NtCompressorAudioProcessorEditor::drawGui() {
 void NtCompressorAudioProcessorEditor::drawTitleBar(juce::Rectangle<int>& area) {
   auto pad = 3.0f * this->uiScale;
   auto titleBarArea =
-      area.removeFromTop(this->proc.plug.guiSpec.titleBarAreaHeight * this->uiScale);
+      area.removeFromTop(this->proc.plug.guiSpec.titleBarHeight * this->uiScale);
   this->grayAreas.push_back(titleBarArea);
   titleBarArea.reduce(pad, pad);
   for (int i = 0; i < this->proc.titleBarSpec.dropDowns.size(); i++) {
@@ -195,6 +205,7 @@ void NtCompressorAudioProcessorEditor::drawMeters(juce::Rectangle<int>& area) {
   this->borderedAreas.push_back(meterArea);
 }
 void NtCompressorAudioProcessorEditor::drawToggles(juce::Rectangle<int>& area) {
+  // TODO: wrap to next row if too many.
   auto togglesArea =
       area.removeFromBottom(this->proc.plug.guiSpec.toggleHeight * this->uiScale);
   auto togglePad = 10 * this->uiScale;
@@ -210,9 +221,11 @@ void NtCompressorAudioProcessorEditor::drawToggles(juce::Rectangle<int>& area) {
     this->allToggles[i]->setBounds(toggleArea);
     this->allToggles[i]->fontSize =
         this->proc.plug.guiSpec.defaultFontSize * this->uiScale;
+    this->allToggles[i]->colour = this->proc.plug.guiSpec.foregroundColour;
   }
 }
 void NtCompressorAudioProcessorEditor::drawSecondaryKnobs(juce::Rectangle<int>& area) {
+  // TODO: wrap to next row if too many.
   auto pad                = 10 * this->uiScale;
   auto secondaryKnobsArea = area.removeFromBottom(
       this->proc.plug.guiSpec.secondaryKnobHeight * this->uiScale);

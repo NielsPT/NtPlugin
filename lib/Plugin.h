@@ -22,7 +22,7 @@ struct Plugin {
   std::vector<KnobSpec<signal_t>> primaryKnobs;
   std::vector<KnobSpec<signal_t>> secondaryKnobs;
   std::vector<ToggleSpec> toggles;
-  std::vector<MeterSpec> meterSpec;
+  // std::vector<StereoMeterSpec> meterSpec;
   std::array<NtFx::Stereo<signal_t>, nMetersMax> peakLevels;
   GuiSpec guiSpec;
 
@@ -84,8 +84,8 @@ struct Plugin {
    */
   NTFX_INLINE_MEMBER NtFx::Stereo<signal_t> getAndResetPeakLevel(size_t idx) noexcept {
     signal_t def = NTFX_SIG_T(0);
-    if (idx >= this->meterSpec.size()) { return def; }
-    if (this->meterSpec[idx].invert) { def = NTFX_SIG_T(1); }
+    if (idx >= this->guiSpec.meters.size()) { return def; }
+    if (this->guiSpec.meters[idx].invert) { def = NTFX_SIG_T(1); }
     NtFx::Stereo<signal_t> tmp = this->peakLevels[idx];
     this->peakLevels[idx]      = NTFX_SIG_T(def);
     ensureFinite(tmp, def);

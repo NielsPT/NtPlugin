@@ -42,7 +42,7 @@ private:
   std::vector<std::unique_ptr<juce::Label>> allPrimaryKnobLabels;
   std::vector<std::unique_ptr<juce::Slider>> allSecondaryKnobs;
   std::vector<std::unique_ptr<juce::Label>> allSecondaryKnobLabels;
-  std::vector<std::unique_ptr<CustomTextButton>> allToggles;
+  std::vector<std::unique_ptr<NtFx::Toggle>> allToggles;
   std::vector<std::unique_ptr<juce::ComboBox>> allDropDowns;
   std::vector<std::unique_ptr<juce::Label>> allDropDownLables;
   std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>>
