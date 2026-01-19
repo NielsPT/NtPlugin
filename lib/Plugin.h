@@ -65,16 +65,18 @@ struct NtPlugin {
    * corresponding knob's name.
    *
    * @param name Name of knob to get value for.
-   * @return signal_t* Pointer to value.
    */
-  template <typename T>
-  T* getValuePtr(std::string name) const noexcept {
+  signal_t* getFloatValuePtr(std::string name) const noexcept {
     for (auto param : this->primaryKnobs) {
       if (param.name == name) { return param.p_val; }
     }
     for (auto param : this->secondaryKnobs) {
       if (param.name == name) { return param.p_val; }
     }
+    return nullptr;
+  }
+
+  signal_t* getBoolValuePtr(std::string name) const noexcept {
     for (auto param : this->toggles) {
       if (param.name == name) { return param.p_val; }
     }

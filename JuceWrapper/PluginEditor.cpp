@@ -315,7 +315,7 @@ void NtCompressorAudioProcessorEditor::timerCallback() {
 void NtCompressorAudioProcessorEditor::sliderValueChanged(
     juce::Slider* p_slider) {
   auto name   = p_slider->getName().toStdString();
-  auto* p_val = this->proc.plug.getValuePtr<float>(name);
+  auto* p_val = this->proc.plug.getFloatValuePtr(name);
   if (!p_val) {
     jassert("Knob name in UI not found in plugin knobs.");
     return;
@@ -326,7 +326,7 @@ void NtCompressorAudioProcessorEditor::sliderValueChanged(
 
 void NtCompressorAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
   auto name   = p_button->getName().toStdString();
-  auto* p_val = this->proc.plug.getValuePtr<bool>(name);
+  auto* p_val = this->proc.plug.getBoolValuePtr(name);
   if (!p_val) {
     jassert("Toggle name in UI not found in plugin toggles.");
     return;
