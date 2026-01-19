@@ -76,7 +76,7 @@ struct NtPlugin {
     return nullptr;
   }
 
-  signal_t* getBoolValuePtr(std::string name) const noexcept {
+  bool* getBoolValuePtr(std::string name) const noexcept {
     for (auto param : this->toggles) {
       if (param.name == name) { return param.p_val; }
     }
