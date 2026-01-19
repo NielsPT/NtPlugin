@@ -15,11 +15,7 @@ struct gainExample : NtFx::NtPlugin<signal_t> {
   // Write the constructor.
   gainExample() {
 
-// Add a knob.
-#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-    this->primaryKnobs.push_back(
-        { &this->gain_db, "Gain", " dB", -24, 24, 0.0, 0.0 });
-#else
+    // Add a knob.
     this->primaryKnobs.push_back({
         .p_val  = &this->gain_db,
         .name   = "Gain",
@@ -27,7 +23,6 @@ struct gainExample : NtFx::NtPlugin<signal_t> {
         .minVal = -24,
         .maxVal = 24,
     });
-#endif
 
     // Change the default background colours.
     this->guiSpec.backgroundColour = 0xFFFFFFFF;

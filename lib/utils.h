@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <array>
+#include <cmath>
 
 // #define ALWAYS_INLINE __attribute__((always_inline))
 #define ALWAYS_INLINE
