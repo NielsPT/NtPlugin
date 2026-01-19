@@ -1,6 +1,7 @@
 # set(NTFX_PLUGIN ntCompressor)
 set(NTFX_PLUGIN_FILE "\"plugins/${NTFX_PLUGIN}.h\"")
-
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # message(STATUS "NTFX_PLUGIN:${NTFX_PLUGIN}")
 # message(STATUS "NTFX_PLUGIN_LAST:${NTFX_PLUGIN_LAST}")
 
@@ -151,9 +152,6 @@ target_link_libraries(${NTFX_PLUGIN}
 )
 
 target_include_directories(${NTFX_PLUGIN} PRIVATE ..)
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
 # into your build tree. This should be included with `#include "JuceHeader.h"`. The include path for
