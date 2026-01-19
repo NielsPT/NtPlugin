@@ -42,15 +42,14 @@ struct NtPlugin {
    * @param x Stereo<signal_t> Input
    * @return Stereo<signal_t> output.
    */
-  virtual NTFX_INLINE_MEMBER Stereo<signal_t> processSample(
-      Stereo<signal_t> x) noexcept = 0;
+  virtual Stereo<signal_t> processSample(Stereo<signal_t> x) noexcept = 0;
 
   /**
    * @brief Called when ever a parameter (knob or toggle) changes. Update your
    * coefficients here.
    *
    */
-  virtual NTFX_INLINE_MEMBER void updateCoeffs() noexcept = 0;
+  virtual void updateCoeffs() noexcept = 0;
 
   /**
    * @brief Called when the plugin loads and when ever the samplerate or buffer
@@ -58,7 +57,7 @@ struct NtPlugin {
    *
    * @param fs Sample rate. If you need it for calculateCoeffs, store it.
    */
-  virtual NTFX_INLINE_MEMBER void reset(int fs) noexcept = 0;
+  virtual void reset(int fs) noexcept = 0;
 
   /**
    * @brief Used by the wrapper to get a pointer to a value based on the
@@ -103,10 +102,10 @@ struct NtPlugin {
    * @tparam invert If true, the smallest value will be selected.
    * @param val New value. If val has a larger magnitude than the current peak
    value, the current peak value will be overridden.
-   * @return NTFX_INLINE_MEMBER
+   * @return
    */
   template <size_t idx, bool invert = false>
-  NTFX_INLINE_MEMBER void updatePeakLevel(NtFx::Stereo<signal_t> val) noexcept {
+  void updatePeakLevel(NtFx::Stereo<signal_t> val) noexcept {
     if constexpr (idx >= nMetersMax) {
       static_assert(false, "Meter index is out of bounds.");
     }
@@ -123,13 +122,12 @@ struct NtPlugin {
    * @param idx
    * @return NtFx::Stereo<signal_t> Highest signal level since last call.
    */
-  NTFX_INLINE_MEMBER NtFx::Stereo<signal_t> getAndResetPeakLevel(
-      size_t idx) noexcept {
-    signal_t def = NTFX_SIG_T(0);
+  NtFx::Stereo<signal_t> getAndResetPeakLevel(size_t idx) noexcept {
+    signal_t def = static_cast<signal_t>(0);
     if (idx >= this->guiSpec.meters.size()) { return def; }
-    if (this->guiSpec.meters[idx].invert) { def = NTFX_SIG_T(1); }
+    if (this->guiSpec.meters[idx].invert) { def = static_cast<signal_t>(1); }
     NtFx::Stereo<signal_t> tmp = this->peakLevels[idx];
-    this->peakLevels[idx]      = NTFX_SIG_T(def);
+    this->peakLevels[idx]      = static_cast<signal_t>(def);
     ensureFinite(tmp, def);
     return tmp;
   }

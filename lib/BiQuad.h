@@ -7,7 +7,17 @@
 
 namespace NtFx {
 namespace Biquad {
-  enum class Shape { unknown, bell, hiShelf, loShelf, notch, hpf, lpf, apf, none };
+  enum class Shape {
+    unknown,
+    bell,
+    hiShelf,
+    loShelf,
+    notch,
+    hpf,
+    lpf,
+    apf,
+    none
+  };
 
   template <typename signal_t>
   struct Settings {
@@ -36,12 +46,11 @@ namespace Biquad {
     signal_t y[2] { 0, 0 };
   };
 
-  NTFX_INLINE_TEMPLATE signal_t biQuad6(
+  template <typename signal_t>
+  static inline signal_t biQuad6(
       const Coeffs6<signal_t>* p_coeffs, State<signal_t>* p_state, signal_t x) {
-    signal_t y = p_coeffs->b[0] * x
-        + p_coeffs->b[1] * p_state->x[0]
-        + p_coeffs->b[2] * p_state->x[1]
-        - p_coeffs->a[1] * p_state->y[0]
+    signal_t y = p_coeffs->b[0] * x + p_coeffs->b[1] * p_state->x[0]
+        + p_coeffs->b[2] * p_state->x[1] - p_coeffs->a[1] * p_state->y[0]
         - p_coeffs->a[2] * p_state->y[1];
     p_state->y[1] = p_state->y[0];
     p_state->y[0] = y / p_coeffs->a[0];
@@ -50,19 +59,18 @@ namespace Biquad {
     return y;
   }
 
-  NTFX_INLINE_TEMPLATE Stereo<signal_t> biQuad6s(const Coeffs6<signal_t>* p_coeffs,
-      State<signal_t>* p_stateL,
-      State<signal_t>* p_stateR,
+  template <typename signal_t>
+  static inline Stereo<signal_t> biQuad6s(const Coeffs6<signal_t>* p_coeffs,
+      State<signal_t>* p_stateL, State<signal_t>* p_stateR,
       Stereo<signal_t> x) {
     return { biQuad(p_coeffs, p_stateL, x.l), biQuad(p_coeffs, p_stateR, x.r) };
   }
 
-  NTFX_INLINE_TEMPLATE signal_t biQuad5(
+  template <typename signal_t>
+  static inline signal_t biQuad5(
       const Coeffs5<signal_t>* p_coeffs, State<signal_t>* p_state, signal_t x) {
-    signal_t y = p_coeffs->b[0] * x
-        + p_coeffs->b[1] * p_state->x[0]
-        + p_coeffs->b[2] * p_state->x[1]
-        - p_coeffs->a[0] * p_state->y[0]
+    signal_t y = p_coeffs->b[0] * x + p_coeffs->b[1] * p_state->x[0]
+        + p_coeffs->b[2] * p_state->x[1] - p_coeffs->a[0] * p_state->y[0]
         - p_coeffs->a[1] * p_state->y[1];
     p_state->y[1] = p_state->y[0];
     p_state->y[0] = y;
@@ -71,14 +79,16 @@ namespace Biquad {
     return y;
   }
 
-  NTFX_INLINE_TEMPLATE Stereo<signal_t> biQuad5s(const Coeffs5<signal_t>* p_coeffs,
-      State<signal_t>* p_stateL,
-      State<signal_t>* p_stateR,
+  template <typename signal_t>
+  static inline Stereo<signal_t> biQuad5s(const Coeffs5<signal_t>* p_coeffs,
+      State<signal_t>* p_stateL, State<signal_t>* p_stateR,
       Stereo<signal_t> x) {
-    return { biQuad5(p_coeffs, p_stateL, x.l), biQuad5(p_coeffs, p_stateR, x.r) };
+    return { biQuad5(p_coeffs, p_stateL, x.l),
+      biQuad5(p_coeffs, p_stateR, x.r) };
   }
 
-  NTFX_INLINE_TEMPLATE Coeffs5<signal_t> normalizeCoeffs(Coeffs6<signal_t> coeffs6) {
+  template <typename signal_t>
+  static inline Coeffs5<signal_t> normalizeCoeffs(Coeffs6<signal_t> coeffs6) {
     Coeffs5<signal_t> coeffs5;
     coeffs5.b[0] = coeffs6.b[0] / coeffs6.a[0];
     coeffs5.b[1] = coeffs6.b[1] / coeffs6.a[0];
@@ -88,31 +98,37 @@ namespace Biquad {
     return coeffs5;
   }
 
-  NTFX_INLINE_TEMPLATE Coeffs5<signal_t> calcCoeffs5(
+  template <typename signal_t>
+  static inline Coeffs5<signal_t> calcCoeffs5(
       Settings<signal_t> settings, float fs) {
-    return calcCoeffs5<signal_t>((settings.enable ? settings.shape : Shape::none),
+    return calcCoeffs5<signal_t>(
+        (settings.enable ? settings.shape : Shape::none),
         fs,
         settings.fc_hz,
         settings.q,
         std::pow(10, (settings.gain_db / 40)));
   }
 
-  NTFX_INLINE_TEMPLATE Coeffs5<signal_t> calcCoeffs5(
+  template <typename signal_t>
+  static inline Coeffs5<signal_t> calcCoeffs5(
       Shape s, signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
     auto coeffs6 = calcCoeffs6(s, fs, fc_hz, q, a);
     return normalizeCoeffs(coeffs6);
   }
 
-  NTFX_INLINE_TEMPLATE Coeffs6<signal_t> calcCoeffs6(
+  template <typename signal_t>
+  static inline Coeffs6<signal_t> calcCoeffs6(
       Settings<signal_t> settings, float fs) {
-    return calcCoeffs6<signal_t>((settings.enable ? settings.shape : Shape::none),
+    return calcCoeffs6<signal_t>(
+        (settings.enable ? settings.shape : Shape::none),
         fs,
         settings.fc_hz,
         settings.q,
         std::pow(10, (settings.gain_db / 40)));
   }
 
-  NTFX_INLINE_TEMPLATE Coeffs6<signal_t> calcCoeffsBell(
+  template <typename signal_t>
+  static inline Coeffs6<signal_t> calcCoeffsBell(
       signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
     auto w0    = 2.0 * M_PI * fc_hz / fs;
     auto cosW0 = std::cos(w0);
@@ -127,7 +143,8 @@ namespace Biquad {
     return c;
   }
 
-  NTFX_INLINE_TEMPLATE Coeffs6<signal_t> calcCoeffsLoShelf(
+  template <typename signal_t>
+  static inline Coeffs6<signal_t> calcCoeffsLoShelf(
       signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
     auto w0    = 2.0 * M_PI * fc_hz / fs;
     auto cosW0 = std::cos(w0);
@@ -142,7 +159,8 @@ namespace Biquad {
     return c;
   }
 
-  NTFX_INLINE_TEMPLATE Coeffs6<signal_t> calcCoeffsHiShelf(
+  template <typename signal_t>
+  static inline Coeffs6<signal_t> calcCoeffsHiShelf(
       signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
     auto w0    = 2.0 * M_PI * fc_hz / fs;
     auto cosW0 = std::cos(w0);
@@ -157,7 +175,8 @@ namespace Biquad {
     return c;
   }
 
-  NTFX_INLINE_TEMPLATE Coeffs6<signal_t> calcCoeffsHpf(
+  template <typename signal_t>
+  static inline Coeffs6<signal_t> calcCoeffsHpf(
       signal_t fs, signal_t fc_hz, signal_t q) {
     auto w0    = 2.0 * M_PI * fc_hz / fs;
     auto cosW0 = std::cos(w0);
@@ -172,7 +191,8 @@ namespace Biquad {
     return c;
   }
 
-  NTFX_INLINE_TEMPLATE Coeffs6<signal_t> calcCoeffsLpf(
+  template <typename signal_t>
+  static inline Coeffs6<signal_t> calcCoeffsLpf(
       signal_t fs, signal_t fc_hz, signal_t q) {
     auto w0    = 2.0 * M_PI * fc_hz / fs;
     auto cosW0 = std::cos(w0);
@@ -187,7 +207,8 @@ namespace Biquad {
     return c;
   }
 
-  NTFX_INLINE_TEMPLATE Coeffs6<signal_t> calcCoeffsApf(
+  template <typename signal_t>
+  static inline Coeffs6<signal_t> calcCoeffsApf(
       signal_t fs, signal_t fc_hz, signal_t q) {
     auto w0    = 2.0 * M_PI * fc_hz / fs;
     auto cosW0 = std::cos(w0);
@@ -202,7 +223,8 @@ namespace Biquad {
     return c;
   }
 
-  NTFX_INLINE_TEMPLATE Coeffs6<signal_t> calcCoeffsNotch(
+  template <typename signal_t>
+  static inline Coeffs6<signal_t> calcCoeffsNotch(
       signal_t fs, signal_t fc_hz, signal_t q) {
     auto w0    = 2.0 * M_PI * fc_hz / fs;
     auto cosW0 = std::cos(w0);
@@ -217,7 +239,8 @@ namespace Biquad {
     return c;
   }
 
-  NTFX_INLINE_TEMPLATE Coeffs6<signal_t> calcCoeffs6(
+  template <typename signal_t>
+  static inline Coeffs6<signal_t> calcCoeffs6(
       Shape s, signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
     Coeffs6<signal_t> c;
     switch (s) {

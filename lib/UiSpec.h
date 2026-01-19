@@ -32,7 +32,7 @@ struct KnobSpec {
   /** Sets the value at the middel of the knob radius.*/
   signal_t midPoint { 0.0 };
   /** Sets midPoint for logarithmic scale. */
-  NTFX_INLINE_MEMBER void setLogScale() {
+  void setLogScale() {
     this->midPoint = std::sqrt(this->minVal * this->maxVal);
   }
   signal_t defaultVal { 0.0 };
