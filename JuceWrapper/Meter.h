@@ -50,7 +50,7 @@ struct MonoMeter : public juce::Component {
         0,
         y,
         this->getWidth(),
-        this->dotDiameter,
+        this->guiSpec.labelHeight,
         juce::Justification::centred);
     for (size_t i = 1; i < this->nDots + 1; i++) {
       int y;
@@ -135,9 +135,9 @@ struct MonoMeter : public juce::Component {
       }
     }
     auto w = this->getWidth();
-    if (!repaint) { w = 1000.0 / 15.0; }
-    this->pad         = w * 10.0 / 35.0;
-    this->dotDiameter = w * 15.0 / 35.0;
+    if (!repaint || !w) { w = this->guiSpec.meterWidth; }
+    this->pad         = w * 10.0 / this->guiSpec.meterWidth;
+    this->dotDiameter = w * 15.0 / this->guiSpec.meterWidth;
     this->dotDist     = this->pad + this->dotDiameter;
     if (repaint) { this->repaint(); }
   }
@@ -209,15 +209,14 @@ struct StereoMeter : public juce::Component {
     this->r.label = "R";
   }
   void resized() override {
-    this->drawGui();
+    this->updateUi();
     this->repaint();
   }
-  void drawGui() {
+  void updateUi() {
     this->l.fontSize = this->fontSize;
     this->r.fontSize = this->fontSize;
     auto area        = getLocalBounds();
-    auto labelArea =
-        area.removeFromTop(this->getHeight() * 1.0 / (l.nDots + 1));
+    auto labelArea   = area.removeFromTop(this->l.guiSpec.labelHeight);
     this->label.setFont(juce::FontOptions(this->fontSize));
     this->label.setColour(juce::Label::ColourIds::textColourId,
         juce::Colour(spec.foregroundColour));
@@ -278,14 +277,15 @@ struct MeterGroup : public juce::Component {
     this->meters[idx]->refresh(val);
   }
   void resized() override {
-    this->drawGui();
+    this->updateUi();
     this->repaint();
   }
   int size() const noexcept { return this->meters.size(); }
-  void drawGui() noexcept {
+  void updateUi() noexcept {
     auto area       = this->getLocalBounds();
     auto totalWidth = area.getWidth();
-    auto scaleWidth = totalWidth / 8;
+    auto scaleWidth =
+        totalWidth / (this->meters.size() * 2 + this->scales.size());
     auto meterWidth = scaleWidth * 2;
     size_t iScale   = 0;
     for (auto& m : this->meters) {
@@ -307,11 +307,16 @@ struct MeterGroup : public juce::Component {
   //     m->r.nDots = nDots;
   //   }
   // }
-  float getMinimalHeight() const {
+  float getMinimalWidth() const noexcept {
+    if (!this->meters.size()) { return 0; }
+    return this->meters[0]->l.guiSpec.meterWidth
+        * (this->meters.size() * 2 + this->scales.size());
+  }
+  float getMinimalHeight() const noexcept {
     if (!this->meters.size()) { return 0; }
     auto& m = this->meters[0]->l;
     m.refresh(false);
-    return m.guiSpec.labelHeight + m.dotDiameter + m.nDots * m.dotDist;
+    return (m.guiSpec.labelHeight) * 2 + (m.nDots + 2) * m.dotDist + m.pad;
   }
 };
 } // namespace NtFx

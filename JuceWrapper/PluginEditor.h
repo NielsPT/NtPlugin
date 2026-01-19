@@ -66,12 +66,12 @@ private:
   void buttonClicked(juce::Button* button) override;
   void comboBoxChanged(juce::ComboBox* p_box) override;
   void timerCallback() override;
-  void drawGui();
-  void drawTitleBar(juce::Rectangle<int>& area);
-  void drawMeters(juce::Rectangle<int>& area);
-  void drawToggles(juce::Rectangle<int>& area);
-  void drawSecondaryKnobs(juce::Rectangle<int>& area);
-  void drawPrimaryKnobs(juce::Rectangle<int>& area);
+  void updateUi();
+  void updateTitleBar(juce::Rectangle<int>& area);
+  void updateMeters(juce::Rectangle<int>& area);
+  void updateToggles(juce::Rectangle<int>& area);
+  void updateSecondaryKnobs(juce::Rectangle<int>& area);
+  void updatePrimaryKnobs(juce::Rectangle<int>& area);
   void initPrimaryKnob(NtFx::KnobSpec<float>& p_spec);
   void initSecondaryKnob(NtFx::KnobSpec<float>& p_spec);
   void _initKnob(NtFx::KnobSpec<float>& p_spec,

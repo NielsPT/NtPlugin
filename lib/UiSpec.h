@@ -9,8 +9,8 @@ namespace NtFx {
 // TODO: general parameter class.
 // TODO: IDEA: Knob groups.
 // - Each group takes up an area in the primary knob grid.
-// - Each group can contain a number of primary and secondary knobs. Primary are placed
-// on a row in the top of the group, secondary in a grid below.
+// - Each group can contain a number of primary and secondary knobs. Primary are
+// placed on a row in the top of the group, secondary in a grid below.
 /**
  * @brief Specification for a knob.
  *
@@ -20,8 +20,8 @@ template <typename signal_t>
 struct KnobSpec {
   /** Pointer to value the knob represents. Used to bind to UI.*/
   signal_t* p_val;
-  /** Name of knob, used for IDs and label in UI. Can't contain ' '. '_' is replaced
-   * with ' ' in UI lables. */
+  /** Name of knob, used for IDs and label in UI. Can't contain ' '. '_' is
+   * replaced with ' ' in UI lables. */
   std::string name;
   /** Added to the end of value label for knob. Eg. " dB" or " ms". */
   std::string suffix { "" };
@@ -45,8 +45,8 @@ struct KnobSpec {
 struct ToggleSpec {
   /** Pointer to value the knob represents. Used to bind to UI.*/
   bool* p_val;
-  /** Name of knob, used for IDs and label in UI. Can't contain ' '. '_' is replaced
-   * with ' ' in UI lables. */
+  /** Name of knob, used for IDs and label in UI. Can't contain ' '. '_' is
+   * replaced with ' ' in UI lables. */
   std::string name;
   bool defaultVal { false };
 };
@@ -75,7 +75,8 @@ struct StereoMeterSpec {
 struct GuiSpec {
   /** Add meters to the UI. */
   bool includeMeters { true };
-  /** Add titlebar to the top of the UI. This includes oversampling and display scaling.
+  /** Add titlebar to the top of the UI. This includes oversampling and display
+   * scaling.
    */
   bool includeTitleBar { true };
   /** Enable row of smaller knobs below the main grid. */
@@ -106,6 +107,8 @@ struct GuiSpec {
   float titleBarHeight { 22 };
   /** Number of dots in the meteres. */
   int meterHeight_dots { 12 };
+  /** Width of each meter in pixels. */
+  int meterWidth { 35 };
   /** Refresh rate of the timer that updates the meters in the UI. */
   float meterRefreshRate_hz { 30 };
   /** List of all meters to be displayed in the UI. */

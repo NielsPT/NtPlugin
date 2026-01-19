@@ -1,19 +1,4 @@
 # set(NTFX_PLUGIN ntCompressor)
-
-# function(generate_plugin_code PLUGIN_NAME OUT_VAR)
-#   message(STATUS "generate_plugin_code called with PLUGIN_NAME='${PLUGIN_NAME}'")
-# string(MD5 "${PLUGIN_NAME}" _hash)
-# message(STATUS "_hash:${_hash}")
-# string(SUBSTRING "${_hash}" 0 4 _hex)
-# string(SUBSTRING "${_hex}" 1 3 _rest)
-# string(SUBSTRING "${_hex}" 0 1 _first)
-# string(TOUPPER  "${_first}" _first)
-# string(TOLOWER  "${_rest}"  _rest)
-# set(${OUT_VAR} "${_first}${_rest}" PARENT_SCOPE)
-# endfunction()
-
-# generate_plugin_code(${NTFX_PLUGIN} NTFX_PLUGIN_CODE)
-
 set(NTFX_PLUGIN_FILE "\"plugins/${NTFX_PLUGIN}.h\"")
 
 # Example Audio Plugin CMakeLists.txt
@@ -41,7 +26,7 @@ project(${NTFX_PLUGIN} VERSION 0.1.0)
 
 # find_package(JUCE CONFIG REQUIRED)        # If you've installed JUCE to your system
 # or
-add_subdirectory(JUCE)                    # If you've put JUCE in a subdirectory called JUCE
+add_subdirectory(JUCE) # If you've put JUCE in a subdirectory called JUCE
 # add_subdirectory(JuceWrapper)
 # add_subdirectory(lib)
 # add_subdirectory(plugins)
@@ -50,7 +35,8 @@ add_subdirectory(JUCE)                    # If you've put JUCE in a subdirectory
 # system. This setup should be done before calling `juce_add_plugin`.
 
 # juce_set_vst2_sdk_path(...)
-juce_set_aax_sdk_path(/Users/niels/aax-sdk-2-9-0)
+# If you want to build AAX plugins, you need to provide this directory.
+juce_set_aax_sdk_path(aax-sdk-2-9-0)
 
 # `juce_add_plugin` adds a static library target with the name passed as the first argument
 # (NTFX_PLUGIN here). This target is a normal CMake target, but has a lot of extra properties set
@@ -58,40 +44,49 @@ juce_set_aax_sdk_path(/Users/niels/aax-sdk-2-9-0)
 # the formats specified by the FORMATS arguments. This function accepts many optional arguments.
 # Check the readme at `docs/CMake API.md` in the JUCE repo for the full list.
 
-if (NOT DEFINED NTFX_PLUGIN_CODE OR "${NTFX_PLUGIN_CODE}" STREQUAL "")
-  string(RANDOM LENGTH 4 _rnd_str)
-  message(STATUS "_rns_str:${_rnd_str}")
-  string(SUBSTRING "${_rnd_str}" 1 3 _rest)
-  message(STATUS "_rest:${_rest}")
-  string(SUBSTRING "${_rnd_str}" 0 1 _first)
-  message(STATUS "_first:${_first}")
-  string(TOUPPER  "${_first}" _first)
-  message(STATUS "_first:${_first}")
-  string(TOLOWER  "${_rest}"  _rest)
-  message(STATUS "_rest:${_rest}")
-  set(NTFX_PLUGIN_CODE "${_first}${_rest}" CACHE STRING
-  "Random hash that is regenerated every time CMake is invoked.")
-  message(STATUS "Generated new random plugin id: ${NTFX_PLUGIN_CODE}")
+# Generates a plugin ID. On some platforms, SHA256 is not available, so we use a random ID.
+function(generate_plugin_id OUT)
+  string(SHA256 "${PLUGIN_NAME}" _hash)
+  # message(STATUS "_hash:'${_hash}'")
+  if("${_hash}" STREQUAL "")
+    message(STATUS "Can't hash plugin name for id. Generating random string.")
+    # random_alpha_string(4 _hash)
+    string(RANDOM LENGTH 32 _hash)
+    string(REGEX REPLACE "[^A-Za-z]" "" _hash "${_hash}")
+  endif()
+  string(SUBSTRING "${_hash}" 1 3 _rest)
+  string(SUBSTRING "${_hash}" 0 1 _first)
+  string(TOUPPER "${_first}" _first)
+  string(TOLOWER "${_rest}" _rest)
+  set(_combined "${_first}${_rest}")
+  set(${OUT} "${_combined}" CACHE STRING "Unique plugin ID.")
+  message(STATUS "Generated new plugin id: ${${OUT}}")
+endfunction()
+
+
+if(NOT DEFINED NTFX_PLUGIN_CODE OR "${NTFX_PLUGIN_CODE}" STREQUAL "")
+  generate_plugin_id(NTFX_PLUGIN_CODE)
 endif()
+message(STATUS "Building with plugin id: ${NTFX_PLUGIN_CODE}")
 
 
 # TODO: Icon
 juce_add_plugin(${NTFX_PLUGIN}
-    # VERSION ...                               # Set this if the plugin version is different to the project version
-    # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
-    # ICON_SMALL ...
-    COMPANY_NAME NtFx                           # Specify the name of the plugin's author
-    IS_SYNTH FALSE                              # Is this a synth or an effect?
-    NEEDS_MIDI_INPUT FALSE                      # Does the plugin need midi input?
-    NEEDS_MIDI_OUTPUT FALSE                     # Does the plugin need midi output?
-    IS_MIDI_EFFECT FALSE                        # Is this plugin a MIDI effect?
-    EDITOR_WANTS_KEYBOARD_FOCUS FALSE           # Does the editor need keyboard focus?
-    COPY_PLUGIN_AFTER_BUILD TRUE                # Should the plugin be installed to a default location after building?
-    PLUGIN_MANUFACTURER_CODE NtFx               # A four-character manufacturer id with at least one upper-case character
-    PLUGIN_CODE ${NTFX_PLUGIN_CODE}                            # A unique four-character plugin id with exactly one upper-case character
-                                                # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
-    FORMATS AU VST3 Standalone AAX              # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
-    PRODUCT_NAME ${NTFX_PLUGIN})                # The name of the final executable, which can differ from the target name
+  # VERSION ...                               # Set this if the plugin version is different to the project version
+  # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
+  # ICON_SMALL ...
+  COMPANY_NAME NtFx # Specify the name of the plugin's author
+  IS_SYNTH FALSE # Is this a synth or an effect?
+  NEEDS_MIDI_INPUT FALSE # Does the plugin need midi input?
+  NEEDS_MIDI_OUTPUT FALSE # Does the plugin need midi output?
+  IS_MIDI_EFFECT FALSE # Is this plugin a MIDI effect?
+  EDITOR_WANTS_KEYBOARD_FOCUS FALSE # Does the editor need keyboard focus?
+  COPY_PLUGIN_AFTER_BUILD TRUE # Should the plugin be installed to a default location after building?
+  PLUGIN_MANUFACTURER_CODE NtFx # A four-character manufacturer id with at least one upper-case character
+  PLUGIN_CODE ${NTFX_PLUGIN_CODE} # A unique four-character plugin id with exactly one upper-case character
+  # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
+  FORMATS AU VST3 Standalone AAX # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
+  PRODUCT_NAME ${NTFX_PLUGIN}) # The name of the final executable, which can differ from the target name
 
 
 # `target_sources` adds source files to a target. We pass the target that needs the sources as the
@@ -100,9 +95,9 @@ juce_add_plugin(${NTFX_PLUGIN}
 # CMake command.
 
 target_sources(${NTFX_PLUGIN}
-    PRIVATE
-        PluginEditor.cpp
-        PluginProcessor.cpp)
+  PRIVATE
+  PluginEditor.cpp
+  PluginProcessor.cpp)
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
 # project, these might be passed in the 'Preprocessor Definitions' field. JUCE modules also make use
@@ -112,14 +107,14 @@ target_sources(${NTFX_PLUGIN}
 # definitions, pick unique names that are unlikely to collide! This is a standard CMake command.
 
 target_compile_definitions(${NTFX_PLUGIN}
-    PUBLIC
-        # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
-        JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call
-        JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_plugin` call
-        JUCE_VST3_CAN_REPLACE_VST2=0
-        DONT_SET_USING_JUCE_NAMESPACE=1
-        NTFX_PLUGIN=${NTFX_PLUGIN}
-        NTFX_PLUGIN_FILE=${NTFX_PLUGIN_FILE})
+  PUBLIC
+  # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
+  JUCE_WEB_BROWSER=0 # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call
+  JUCE_USE_CURL=0 # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_plugin` call
+  JUCE_VST3_CAN_REPLACE_VST2=0
+  DONT_SET_USING_JUCE_NAMESPACE=1
+  NTFX_PLUGIN=${NTFX_PLUGIN}
+  NTFX_PLUGIN_FILE=${NTFX_PLUGIN_FILE})
 
 # If your target needs extra binary assets, you can add them here. The first argument is the name of
 # a new static library target that will include all the binary resources. There is an optional
@@ -137,14 +132,14 @@ target_compile_definitions(${NTFX_PLUGIN}
 # here too. This is a standard CMake command.
 
 target_link_libraries(${NTFX_PLUGIN}
-    PRIVATE
-        # AudioPluginData           # If we'd created a binary data target, we'd link to it here
-        juce::juce_audio_utils
-    PUBLIC
-        juce::juce_recommended_config_flags
-        juce::juce_recommended_lto_flags
-        # juce::juce_recommended_warning_flags
-        )
+  PRIVATE
+  # AudioPluginData           # If we'd created a binary data target, we'd link to it here
+  juce::juce_audio_utils
+  PUBLIC
+  juce::juce_recommended_config_flags
+  juce::juce_recommended_lto_flags
+  # juce::juce_recommended_warning_flags
+)
 
 target_include_directories(${NTFX_PLUGIN} PRIVATE ..)
 
@@ -154,4 +149,5 @@ target_include_directories(${NTFX_PLUGIN} PRIVATE ..)
 # include all your JUCE module headers; if you're happy to include module headers directly, you
 # probably don't need to call this.
 
+# TODO: Get rid of JuceHeader
 juce_generate_juce_header(${NTFX_PLUGIN})

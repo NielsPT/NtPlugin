@@ -24,6 +24,16 @@ struct gainExample : NtFx::Plugin<signal_t> {
         .maxVal = 24,
     });
 
+    // Change the default background colours.
+    this->guiSpec.backgroundColour = 0xFFFFFFFF;
+    this->guiSpec.foregroundColour = 0xFF000000;
+
+    // We don't need that big a window.
+    this->guiSpec.defaultWindowWidth = 500;
+
+    // Give half the UI to the meters.
+    // this->guiSpec.meterWidth = 100;
+
     // Add two meters.
     this->guiSpec.meters.push_back({ .name = "IN" });
     this->guiSpec.meters.push_back({ .name = "OUT", .hasScale = true });
