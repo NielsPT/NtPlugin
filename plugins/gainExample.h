@@ -17,7 +17,6 @@ struct gainExample : NtFx::NtPlugin<signal_t> {
 
 // Add a knob.
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-  #warning BE WARE! WINDOWS!!
     this->primaryKnobs.push_back(
         { &this->gain_db, "Gain", " dB", -24, 24, 0.0, 0.0 });
 #else
