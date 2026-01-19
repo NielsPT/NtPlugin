@@ -7,7 +7,7 @@
 // the whole thing in headers and swap the signal data type. I perfer using
 // structs so I don't need to consider private/public.
 template <typename signal_t>
-struct gainExample : NtFx::Plugin<signal_t> {
+struct gainExample : NtFx::NtPlugin<signal_t> {
   // Make some variables.
   signal_t gain_db { 0 };
   signal_t gain_lin { 1 };
@@ -28,11 +28,11 @@ struct gainExample : NtFx::Plugin<signal_t> {
     this->guiSpec.backgroundColour = 0xFFFFFFFF;
     this->guiSpec.foregroundColour = 0xFF000000;
 
-    // We don't need that big a window.
+    // We don't need that big a window for just one knob.
     this->guiSpec.defaultWindowWidth = 500;
 
-    // Give half the UI to the meters.
-    // this->guiSpec.meterWidth = 100;
+    // Let's make the meter smaller.
+    this->guiSpec.meterHeight_dots = 8;
 
     // Add two meters.
     this->guiSpec.meters.push_back({ .name = "IN" });

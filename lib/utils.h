@@ -2,10 +2,10 @@
 #include <algorithm>
 #include <array>
 
-#define ALWAYS_INLINE __attribute__((always_inline))
-// #define ALWAYS_INLINE
-#define NTFX_INLINE_TEMPLATE                                                           \
-  template <typename signal_t>                                                         \
+// #define ALWAYS_INLINE __attribute__((always_inline))
+#define ALWAYS_INLINE
+#define NTFX_INLINE_TEMPLATE                                                   \
+  template <typename signal_t>                                                 \
   ALWAYS_INLINE static inline
 #define NTFX_INLINE_MEMBER ALWAYS_INLINE inline
 #define NTFX_INLINE_STATIC ALWAYS_INLINE inline static

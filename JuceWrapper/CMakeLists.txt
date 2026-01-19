@@ -1,6 +1,14 @@
 # set(NTFX_PLUGIN ntCompressor)
 set(NTFX_PLUGIN_FILE "\"plugins/${NTFX_PLUGIN}.h\"")
 
+# message(STATUS "NTFX_PLUGIN:${NTFX_PLUGIN}")
+# message(STATUS "NTFX_PLUGIN_LAST:${NTFX_PLUGIN_LAST}")
+
+if(NOT "${NTFX_PLUGIN}" STREQUAL "${NTFX_PLUGIN_LAST}")
+  set(NTFX_PLUGIN_LAST "${NTFX_PLUGIN}" CACHE STRING "Last plugin built." FORCE)
+  set(NTFX_PLUGIN_CODE "" CACHE STRING "" FORCE)
+endif()
+
 # Example Audio Plugin CMakeLists.txt
 
 # To get started on a new plugin, copy this entire folder (containing this file and C++ sources) to
@@ -47,7 +55,6 @@ juce_set_aax_sdk_path(aax-sdk-2-9-0)
 # Generates a plugin ID. On some platforms, SHA256 is not available, so we use a random ID.
 function(generate_plugin_id OUT)
   string(SHA256 "${PLUGIN_NAME}" _hash)
-  # message(STATUS "_hash:'${_hash}'")
   if("${_hash}" STREQUAL "")
     message(STATUS "Can't hash plugin name for id. Generating random string.")
     # random_alpha_string(4 _hash)
@@ -59,14 +66,16 @@ function(generate_plugin_id OUT)
   string(TOUPPER "${_first}" _first)
   string(TOLOWER "${_rest}" _rest)
   set(_combined "${_first}${_rest}")
-  set(${OUT} "${_combined}" CACHE STRING "Unique plugin ID.")
+  set(${OUT} "${_combined}" CACHE STRING "Unique plugin ID." FORCE)
   message(STATUS "Generated new plugin id: ${${OUT}}")
 endfunction()
+
 
 
 if(NOT DEFINED NTFX_PLUGIN_CODE OR "${NTFX_PLUGIN_CODE}" STREQUAL "")
   generate_plugin_id(NTFX_PLUGIN_CODE)
 endif()
+
 message(STATUS "Building with plugin id: ${NTFX_PLUGIN_CODE}")
 
 
@@ -149,5 +158,4 @@ target_include_directories(${NTFX_PLUGIN} PRIVATE ..)
 # include all your JUCE module headers; if you're happy to include module headers directly, you
 # probably don't need to call this.
 
-# TODO: Get rid of JuceHeader
-juce_generate_juce_header(${NTFX_PLUGIN})
+# juce_generate_juce_header(${NTFX_PLUGIN})

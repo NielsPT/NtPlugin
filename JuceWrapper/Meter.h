@@ -1,14 +1,26 @@
 #pragma once
 
-// TODO: get rid of JuceHeader.h.
-#include "JuceHeader.h"
+#include "lib/Stereo.h"
+#include "lib/UiSpec.h"
+
+#include <juce_audio_basics/juce_audio_basics.h>
+#include <juce_audio_devices/juce_audio_devices.h>
+#include <juce_audio_formats/juce_audio_formats.h>
+#include <juce_audio_plugin_client/juce_audio_plugin_client.h>
+#include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_audio_processors_headless/juce_audio_processors_headless.h>
+#include <juce_audio_utils/juce_audio_utils.h>
+#include <juce_core/juce_core.h>
+#include <juce_data_structures/juce_data_structures.h>
+#include <juce_events/juce_events.h>
+#include <juce_graphics/juce_graphics.h>
+#include <juce_gui_basics/juce_gui_basics.h>
+#include <juce_gui_extra/juce_gui_extra.h>
+
 #include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "lib/Stereo.h"
-#include "lib/UiSpec.h"
 
 namespace NtFx {
 struct MonoMeter : public juce::Component {
@@ -18,7 +30,6 @@ struct MonoMeter : public juce::Component {
   int dotDiameter        = 0;
   int dotDist            = 0;
   int nDots              = 14;
-  bool invert            = false;
   int nActiveDots        = 0;
   float peakLast_db      = 0;
   int decayRate_db       = 0;
@@ -37,6 +48,16 @@ struct MonoMeter : public juce::Component {
         nDots(guiSpec.meterHeight_dots) {
     this->refresh();
     this->isInitialized = true;
+    float dbPerSecond = (this->meterSpec.maxVal_db - this->meterSpec.minVal_db)
+        / this->meterSpec.decay_s;
+    this->decayRate_db = dbPerSecond / this->guiSpec.meterRefreshRate_hz;
+    this->nHold_frames =
+        this->meterSpec.hold_s * this->guiSpec.meterRefreshRate_hz;
+    if (this->meterSpec.invert) {
+      this->peakLast_db = this->meterSpec.minVal_db;
+    } else {
+      this->peakLast_db = this->meterSpec.maxVal_db;
+    }
   };
   ~MonoMeter() = default;
 
@@ -62,8 +83,8 @@ struct MonoMeter : public juce::Component {
       if (fillDiameter < 0) { return; }
       float fillX = this->pad + fillPad / 2;
       float fillY = y + fillPad / 2;
-      if ((!this->invert && i > this->nDots - this->nActiveDots)
-          || (this->invert && i < this->nDots - this->nActiveDots)) {
+      if ((!this->meterSpec.invert && i > this->nDots - this->nActiveDots)
+          || (this->meterSpec.invert && i < this->nDots - this->nActiveDots)) {
         g.setColour(juce::Colour(
             this->guiSpec.foregroundColour & 0x00FFFFFF | 0xDD000000));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
@@ -86,7 +107,7 @@ struct MonoMeter : public juce::Component {
         (this->meterSpec.maxVal_db - this->meterSpec.minVal_db) / this->nDots;
     float peak_db = NtFx::db(this->peakVal_lin);
     if (this->peakVal_lin <= 0) { peak_db = -100; }
-    if (this->invert) {
+    if (this->meterSpec.invert) {
       if (peak_db > this->peakLast_db) {
         peak_db = this->peakLast_db + this->decayRate_db;
       }
@@ -117,8 +138,8 @@ struct MonoMeter : public juce::Component {
     }
 
     // Refresh hold.
-    if ((!this->invert && peak_db > this->holdVal_db)
-        || (this->invert && peak_db < this->holdVal_db)) {
+    if ((!this->meterSpec.invert && peak_db > this->holdVal_db)
+        || (this->meterSpec.invert && peak_db < this->holdVal_db)) {
       this->holdVal_db         = peak_db;
       this->iHoldDot           = this->nDots - this->nActiveDots;
       this->holdCounter_frames = 0;
@@ -126,7 +147,7 @@ struct MonoMeter : public juce::Component {
       this->holdCounter_frames++;
       if (this->holdCounter_frames > this->nHold_frames) {
         this->holdCounter_frames = 0;
-        if (this->invert) {
+        if (this->meterSpec.invert) {
           this->holdVal_db = this->meterSpec.maxVal_db;
         } else {
           this->holdVal_db = this->meterSpec.minVal_db;
@@ -146,25 +167,6 @@ struct MonoMeter : public juce::Component {
     this->peakVal_lin = level;
     this->refresh();
   }
-
-  void setDecay(float tDecay_s, float refreshRate_hz) {
-    float dbPerSecond =
-        (this->meterSpec.maxVal_db - this->meterSpec.minVal_db) / tDecay_s;
-    this->decayRate_db = dbPerSecond / refreshRate_hz;
-  }
-
-  void setPeakHold(float tHold_s, float refreshRate_hz) {
-    this->nHold_frames = tHold_s * refreshRate_hz;
-  }
-
-  void setInvert(bool invert) {
-    this->invert = invert;
-    if (invert) {
-      this->peakLast_db = this->meterSpec.minVal_db;
-    } else {
-      this->peakLast_db = this->meterSpec.maxVal_db;
-    }
-  };
 };
 
 struct MeterScale : public juce::Component {
@@ -232,19 +234,6 @@ struct StereoMeter : public juce::Component {
     this->l.refresh(val.l);
     this->r.refresh(val.r);
   }
-  // TODO: Take a ref to spec and read them your self.
-  void setInvert(bool val) {
-    l.setInvert(val);
-    r.setInvert(val);
-  }
-  void setDecay(float a, float b) {
-    l.setDecay(a, b);
-    r.setDecay(a, b);
-  }
-  void setPeakHold(float a, float b) {
-    l.setPeakHold(a, b);
-    r.setPeakHold(a, b);
-  }
 };
 
 struct MeterGroup : public juce::Component {
@@ -254,7 +243,6 @@ struct MeterGroup : public juce::Component {
     size_t i = 0;
     for (auto& spec : guiSpec.meters) {
       auto meter = std::make_unique<StereoMeter>(spec, guiSpec);
-      meter->setInvert(spec.invert);
       this->addAndMakeVisible(meter.get());
       if (spec.hasScale) {
         meter->hasScale = true;
@@ -264,13 +252,6 @@ struct MeterGroup : public juce::Component {
       }
       meters.push_back(std::move(meter));
     }
-  }
-  // Get Decay and peak hold from guiSpec.
-  void setDecay(float a, float b) {
-    for (auto& m : meters) { m->setDecay(a, b); }
-  }
-  void setPeakHold(float a, float b) {
-    for (auto& m : meters) { m->setPeakHold(a, b); }
   }
   template <typename signal_t>
   void refresh(size_t idx, Stereo<signal_t> val) {

@@ -1,11 +1,11 @@
 #pragma once
 
 #include "lib/utils.h"
+
 #include <string>
 #include <vector>
 
 namespace NtFx {
-// TODO: Document all of this.
 // TODO: general parameter class.
 // TODO: IDEA: Knob groups.
 // - Each group takes up an area in the primary knob grid.
@@ -64,8 +64,10 @@ struct StereoMeterSpec {
   bool invert { false };
   /** Adds a text scale to the right of the meter. */
   bool hasScale { false };
-  // /** Colour of meter foreground. */
-  // uint32_t foregroundColour { 0xFF000000 };
+  /** Decay of meter fall off in seconds. */
+  float decay_s { 1 };
+  /** Meter Hold time in seconds. */
+  float hold_s { 2 };
 };
 
 /**

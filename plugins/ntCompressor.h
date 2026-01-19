@@ -1,7 +1,6 @@
 #pragma once
 #include <algorithm>
 #include <array>
-#include <cmath>
 
 #include "lib/Biquad.h"
 #include "lib/Plugin.h"
@@ -11,8 +10,9 @@
 #include "lib/utils.h"
 
 template <typename signal_t>
-struct ntCompressor : public NtFx::Plugin<signal_t> {
+struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   int errorVarId = 0;
+  float fs;
 
   NtFx::SideChain::Settings<signal_t> scSettings;
   NtFx::SideChain::Coeffs<signal_t> scCoeffs;
@@ -131,11 +131,11 @@ struct ntCompressor : public NtFx::Plugin<signal_t> {
       { .name = "OUT", .hasScale = true },
       { .name = "GR", .invert = true, .hasScale = true },
     };
-    this->scHpfSettings.fc_hz      = 20;
-    this->scBoostSettings.fc_hz    = 3000.0;
-    this->softClipCoeffs           = NtFx::calculateSoftClipCoeffs<signal_t, 2>();
-    this->scBoostSettings.shape    = NtFx::Biquad::Shape::bell;
-    this->scHpfSettings.shape      = NtFx::Biquad::Shape::hpf;
+    this->scHpfSettings.fc_hz   = 20;
+    this->scBoostSettings.fc_hz = 3000.0;
+    this->softClipCoeffs        = NtFx::calculateSoftClipCoeffs<signal_t, 2>();
+    this->scBoostSettings.shape = NtFx::Biquad::Shape::bell;
+    this->scHpfSettings.shape   = NtFx::Biquad::Shape::hpf;
     this->guiSpec.foregroundColour = 0xFF000000;
     this->guiSpec.backgroundColour = 0xFFFFFFFF;
 
@@ -161,11 +161,15 @@ struct ntCompressor : public NtFx::Plugin<signal_t> {
 
     NtFx::Stereo<signal_t> gr;
     if (this->linEnable) {
-      gr.l = NtFx::SideChain::sideChain_lin(&this->scCoeffs, &this->scState[0], x_sc.l);
-      gr.r = NtFx::SideChain::sideChain_lin(&this->scCoeffs, &this->scState[1], x_sc.r);
+      gr.l = NtFx::SideChain::sideChain_lin(
+          &this->scCoeffs, &this->scState[0], x_sc.l);
+      gr.r = NtFx::SideChain::sideChain_lin(
+          &this->scCoeffs, &this->scState[1], x_sc.r);
     } else {
-      gr.l = NtFx::SideChain::sideChain_db(&this->scCoeffs, &this->scState[0], x_sc.l);
-      gr.r = NtFx::SideChain::sideChain_db(&this->scCoeffs, &this->scState[1], x_sc.r);
+      gr.l = NtFx::SideChain::sideChain_db(
+          &this->scCoeffs, &this->scState[0], x_sc.l);
+      gr.r = NtFx::SideChain::sideChain_db(
+          &this->scCoeffs, &this->scState[1], x_sc.r);
     }
     if (this->linkEnable) { gr = gr.absMin(); }
     this->template updatePeakLevel<2, true>(gr);

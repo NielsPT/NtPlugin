@@ -58,8 +58,6 @@ NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
   this->knobLookAndFeel.backgroundColour =
       this->proc.plug.guiSpec.foregroundColour & 0x00FFFFFF | 0xDD000000;
   this->addAndMakeVisible(this->meters);
-  this->meters.setDecay(1, this->proc.plug.guiSpec.meterRefreshRate_hz);
-  this->meters.setPeakHold(2, this->proc.plug.guiSpec.meterRefreshRate_hz);
   this->startTimerHz(this->proc.plug.guiSpec.meterRefreshRate_hz);
   this->isInitialized = true;
   this->updateUi();
@@ -317,7 +315,7 @@ void NtCompressorAudioProcessorEditor::timerCallback() {
 void NtCompressorAudioProcessorEditor::sliderValueChanged(
     juce::Slider* p_slider) {
   auto name   = p_slider->getName().toStdString();
-  auto* p_val = this->proc.plug.getKnobValuePtr(name);
+  auto* p_val = this->proc.plug.getValuePtr<float>(name);
   if (!p_val) {
     jassert("Knob name in UI not found in plugin knobs.");
     return;
@@ -328,7 +326,7 @@ void NtCompressorAudioProcessorEditor::sliderValueChanged(
 
 void NtCompressorAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
   auto name   = p_button->getName().toStdString();
-  auto* p_val = this->proc.plug.getToggleValuePtr(name);
+  auto* p_val = this->proc.plug.getValuePtr<bool>(name);
   if (!p_val) {
     jassert("Toggle name in UI not found in plugin toggles.");
     return;

@@ -32,14 +32,19 @@ parametes, and the framework takes care of the rest.
 ### Try it out
 
 - To test the install, type
-  `cmake -B build -S JuceWrapper -DNTFX_PLUGIN=gainExample && --build build` in
-  the terminal. This should build the simple gain knob example plugin.
+
+```sh
+cmake -B build -S JuceWrapper -DNTFX_PLUGIN=gainExample
+cmake --build build
+```
+
+in the terminal. This should build the simple gain knob example plugin.
 
 ## Usage
 
 - Create your plugin as `plugins/[name of your plugin].h` in the project
   directory.
-- Write a class that inherits from `NtFx::Plugin`. The name of your class must
+- Write a class that inherits from `NtFx::NtPlugin`. The name of your class must
   be the same as the file name.
 - The base class requires you to implement the methods `processSample`,
   `updateCoeffs` and `reset`. `processSample` runs for every sample,
@@ -49,7 +54,7 @@ parametes, and the framework takes care of the rest.
 - The base class contains 3 empty vectors, that the user can add parameters to
   in the constructor of the plugin. `primaryKnobs` contains specifications for
   the main knobs, which are laid out in a grid automatically, `secondaryKnobs`
-  can be used to add a single row of smaller knobs below main grid for fine
+  can be used to add a single row of smaller knobs below main gird for fine
   tuning or utility controls. `toggles` contain the boolean parameters. The
   constructor should call `updateDefaults` before returning.
 - Similarly, the base class contain a spec for the UI named `guiSpec`, which can
@@ -63,12 +68,20 @@ cmake --build build
 
 - Once the project is configured, only the build-command is needed for
   incremental builds.
-- If you want to switch plugin to build, you must delete the `build` folder
-  before running the config command again.
 
 Have fun coding.
 
-## Making it work with VsCode
+### Caveats
+
+As with all code projects, there are secrets to know.
+
+- If you want to make AXX plugins for Pro Tools, you need to get the AAX SDK
+  from avid and put it in the JuceWrapper directory.
+- Since Cmake for Mac doesn't have hashing support, plugin IDs are selected at
+  random. This means that when ever Cmake is reconfigured, it's a new plugin and
+  you'll need to reinsert it in the DAW.
+
+### Making it work with VsCode
 
 <!--TODO: VsCode instructions. -->
 
