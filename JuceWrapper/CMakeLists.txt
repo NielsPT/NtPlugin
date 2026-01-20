@@ -45,7 +45,12 @@ add_subdirectory(JUCE) # If you've put JUCE in a subdirectory called JUCE
 
 # juce_set_vst2_sdk_path(...)
 # If you want to build AAX plugins, you need to provide this directory.
-juce_set_aax_sdk_path(aax-sdk-2-9-0)
+# TODO: Ignore AAX if not found instead of failing.
+set(NTFX_FORMATS "AU VST3 Standalone")
+if(EXISTS aax-sdk-2-9-0)
+  juce_set_aax_sdk_path(aax-sdk-2-9-0)
+  string(APPEND NTFX_FORMATS " AAX")
+endif()
 
 # `juce_add_plugin` adds a static library target with the name passed as the first argument
 # (NTFX_PLUGIN here). This target is a normal CMake target, but has a lot of extra properties set
@@ -95,8 +100,27 @@ juce_add_plugin(${NTFX_PLUGIN}
   PLUGIN_MANUFACTURER_CODE NtFx # A four-character manufacturer id with at least one upper-case character
   PLUGIN_CODE ${NTFX_PLUGIN_CODE} # A unique four-character plugin id with exactly one upper-case character
   # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
-  FORMATS AU VST3 Standalone AAX # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
+  FORMATS ${NTFX_FORMATS} # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
   PRODUCT_NAME ${NTFX_PLUGIN}) # The name of the final executable, which can differ from the target name
+
+# ---- patch for Windows ARM ------------------------------------------------
+if(WIN32 AND CMAKE_GENERATOR_PLATFORM STREQUAL "ARM64")
+  # The component that the VST3 helper builds is named
+  #   <pluginname>_VST3   (e.g. gainExample_VST3)
+  set(VST3_COMPONENT_TARGET "${JUCE_PLUGIN_NAME}_VST3")
+
+  # Tell CMake that the component must output a DLL
+  set_target_properties(${VST3_COMPONENT_TARGET}
+    PROPERTIES
+    PREFIX "" # no “lib/” prefix
+    SUFFIX ".dll" # Windows uses .dll
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_BINARY_DIR}
+    LIBRARY_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_BINARY_DIR}
+  )
+
+  # Let the VST3 helper know that the correct DLL now exists
+  add_dependencies(${JUCE_PLUGIN_NAME}_VST3 ${VST3_COMPONENT_TARGET})
+endif()
 
 
 # `target_sources` adds source files to a target. We pass the target that needs the sources as the

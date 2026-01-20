@@ -28,7 +28,6 @@ NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
   for (auto& t : this->proc.plug.toggles) { this->initToggle(t); }
   for (auto& d : this->proc.titleBarSpec.dropDowns) { this->initDropDown(d); }
 
-  // TODO: decay and peak hold in spec. Also set decay per meter.
   int nRows, nCols;
   this->calcSliderRowsCols(this->allPrimaryKnobs.size(),
       nRows,
@@ -293,16 +292,20 @@ void NtCompressorAudioProcessorEditor::updatePrimaryKnobs(
       auto labelArea = knobArea.removeFromTop(
           this->proc.plug.guiSpec.labelHeight * this->uiScale);
       this->allPrimaryKnobLabels[iSlider]->setBounds(labelArea);
-      this->allPrimaryKnobLabels[iSlider]->setFont(juce::FontOptions(
-          this->proc.plug.guiSpec.defaultFontSize * this->uiScale));
       this->allPrimaryKnobs[iSlider]->setBounds(knobArea);
-      this->allPrimaryKnobs[iSlider]->setTextBoxStyle(
-          juce::Slider::TextBoxBelow,
-          false,
-          80 * this->uiScale,
-          this->proc.plug.guiSpec.labelHeight * this->uiScale);
       iSlider++;
     }
+  }
+  // TODO: add bool scalingChanged and check it.
+  for (auto& k : this->allPrimaryKnobs) {
+    k->setTextBoxStyle(juce::Slider::TextBoxBelow,
+        false,
+        80 * this->uiScale,
+        this->proc.plug.guiSpec.labelHeight * this->uiScale);
+  }
+  for (auto& l : this->allPrimaryKnobLabels) {
+    l->setFont(juce::FontOptions(
+        this->proc.plug.guiSpec.defaultFontSize * this->uiScale));
   }
 }
 

@@ -22,7 +22,7 @@ AlignConsecutiveMacros:
 AlignAfterOpenBracket: DontAlign
 AllowAllArgumentsOnNextLine: true
 BinPackArguments: false
-# BinPackParameters: "OnePerLine"
+BinPackParameters: OnePerLine
 AlignTrailingComments:
   Kind: Always
 AllowShortBlocksOnASingleLine: Always
@@ -32,4 +32,5 @@ AllowShortIfStatementsOnASingleLine: AllIfsAndElse
 AllowShortLoopsOnASingleLine: true
 # ExperimentalAutoDetectBinPacking: false
 AllowAllParametersOfDeclarationOnNextLine: true
+# AllowAllArgumentsOnNextLine: true
 # PenaltyReturnTypeOnItsOwnLine: 1000000

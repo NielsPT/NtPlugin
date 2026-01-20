@@ -94,5 +94,11 @@ private:
   void updateUiScale();
   void calcSliderRowsCols(
       int nSliders, int& nRows, int& nColumns, int maxRows, int maxColumns);
+  void makeGrid(juce::Rectangle<int>& area,
+      float nRows,
+      float nCols,
+      float colWidth,
+      float rowHeight,
+      float pad);
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtCompressorAudioProcessorEditor)
 };
