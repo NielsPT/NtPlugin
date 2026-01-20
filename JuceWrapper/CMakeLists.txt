@@ -46,10 +46,14 @@ add_subdirectory(JUCE) # If you've put JUCE in a subdirectory called JUCE
 # juce_set_vst2_sdk_path(...)
 # If you want to build AAX plugins, you need to provide this directory.
 # TODO: Ignore AAX if not found instead of failing.
-set(NTFX_FORMATS "AU VST3 Standalone")
+# set(NTFX_FORMATS "AU VST3 Standalone")
+set(NTFX_FORMATS AU VST3 Standalone)
+# set(NTFX_FORMATS "VST3")
 if(EXISTS aax-sdk-2-9-0)
   juce_set_aax_sdk_path(aax-sdk-2-9-0)
-  string(APPEND NTFX_FORMATS " AAX")
+  list(APPEND NTFX_FORMATS AAX)
+else()
+  message(STATUS "No AAX SDK found. Skipping AAX build.")
 endif()
 
 # `juce_add_plugin` adds a static library target with the name passed as the first argument
