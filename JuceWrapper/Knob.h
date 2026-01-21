@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_audio_formats/juce_audio_formats.h>
@@ -24,8 +26,14 @@ struct KnobLookAndFeel : public juce::LookAndFeel_V4 {
   juce::Font getLabelFont(juce::Label& l) override {
     return juce::Font(juce::FontOptions(this->fontSize));
   }
-  void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
-      float sliderPos, const float rotaryStartAngle, const float rotaryEndAngle,
+  void drawRotarySlider(juce::Graphics& g,
+      int x,
+      int y,
+      int width,
+      int height,
+      float sliderPos,
+      const float rotaryStartAngle,
+      const float rotaryEndAngle,
       juce::Slider&) override {
     auto radius  = std::min(width / 2.5f, height / 2.5f) - 4.0f;
     auto centreX = x + width / 2.0f;
