@@ -80,7 +80,10 @@ As with all code projects, there are secrets to know.
 - Since Cmake for Mac doesn't have hashing support, plugin IDs are selected at
   random. This means that when ever Cmake is reconfigured, it's a new plugin and
   you'll need to reinsert it in the DAW.
-- On windows, the system won't be able to install outputs, so .
+- On windows, the system won't be able to install outputs, so the easiest way to
+  test your plugin is to add
+  `/path/to/repo/build/[your plugin]\_artefacts/Debug/VST3` to the list of VST
+  search paths in your DAW.
 
 ### Making it work with VsCode
 
