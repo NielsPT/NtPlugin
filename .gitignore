@@ -269,4 +269,4 @@ __marimo__/
 .vscode/
 *.code-workspace
 
-JuceWrapper/aax-sdk-2-9-0/
+JuceWrapper/aax-sdk-*

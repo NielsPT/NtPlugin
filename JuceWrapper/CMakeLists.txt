@@ -1,4 +1,6 @@
 # set(NTFX_PLUGIN ntCompressor)
+
+
 set(NTFX_PLUGIN_FILE "\"plugins/${NTFX_PLUGIN}.h\"")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -42,19 +44,20 @@ add_subdirectory(JUCE) # If you've put JUCE in a subdirectory called JUCE
 
 # If you are building a VST2 or AAX plugin, CMake needs to be told where to find these SDKs on your
 # system. This setup should be done before calling `juce_add_plugin`.
-
 # juce_set_vst2_sdk_path(...)
 # If you want to build AAX plugins, you need to provide this directory.
-# TODO: Ignore AAX if not found instead of failing.
-# set(NTFX_FORMATS "AU VST3 Standalone")
+set(NTFX_AAX_SDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/aax-sdk-2-9-0")
+
+
 set(NTFX_FORMATS AU VST3 Standalone)
-# set(NTFX_FORMATS "VST3")
-if(EXISTS aax-sdk-2-9-0)
-  juce_set_aax_sdk_path(aax-sdk-2-9-0)
+
+if(EXISTS ${NTFX_AAX_SDK_DIR})
+  juce_set_aax_sdk_path(${NTFX_AAX_SDK_DIR})
   list(APPEND NTFX_FORMATS AAX)
 else()
-  message(STATUS "No AAX SDK found. Skipping AAX build.")
+  message(STATUS "No AAX SDK found at '${NTFX_AAX_SDK_DIR}'. Skipping AAX build.")
 endif()
+
 
 # `juce_add_plugin` adds a static library target with the name passed as the first argument
 # (NTFX_PLUGIN here). This target is a normal CMake target, but has a lot of extra properties set
@@ -88,6 +91,11 @@ endif()
 
 message(STATUS "Building with plugin id: ${NTFX_PLUGIN_CODE}")
 
+set(NTFX_DO_INSTALL TRUE)
+if(WIN32)
+  set(NTFX_DO_INSTALL FALSE)
+  message(STATUS "Windows platform. Skipping install.")
+endif()
 
 # TODO: Icon
 juce_add_plugin(${NTFX_PLUGIN}
@@ -100,7 +108,7 @@ juce_add_plugin(${NTFX_PLUGIN}
   NEEDS_MIDI_OUTPUT FALSE # Does the plugin need midi output?
   IS_MIDI_EFFECT FALSE # Is this plugin a MIDI effect?
   EDITOR_WANTS_KEYBOARD_FOCUS FALSE # Does the editor need keyboard focus?
-  COPY_PLUGIN_AFTER_BUILD TRUE # Should the plugin be installed to a default location after building?
+  COPY_PLUGIN_AFTER_BUILD ${NTFX_DO_INSTALL} # Should the plugin be installed to a default location after building?
   PLUGIN_MANUFACTURER_CODE NtFx # A four-character manufacturer id with at least one upper-case character
   PLUGIN_CODE ${NTFX_PLUGIN_CODE} # A unique four-character plugin id with exactly one upper-case character
   # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case

@@ -80,8 +80,7 @@ As with all code projects, there are secrets to know.
 - Since Cmake for Mac doesn't have hashing support, plugin IDs are selected at
   random. This means that when ever Cmake is reconfigured, it's a new plugin and
   you'll need to reinsert it in the DAW.
-- On windows, you should compile from an administrator terminal, or the system
-  won't be able to install outputs.
+- On windows, the system won't be able to install outputs, so .
 
 ### Making it work with VsCode
 
