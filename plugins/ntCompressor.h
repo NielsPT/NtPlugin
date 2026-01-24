@@ -131,13 +131,15 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
       { .name = "OUT", .hasScale = true },
       { .name = "GR", .invert = true, .hasScale = true },
     };
+    this->guiSpec.foregroundColour = 0xFF000000;
+    this->guiSpec.backgroundColour = 0xFFFFFFFF;
+    // this->guiSpec.maxColumns         = 2;
+    // this->guiSpec.defaultWindowWidth = 600;
     this->scHpfSettings.fc_hz   = 20;
     this->scBoostSettings.fc_hz = 3000.0;
     this->softClipCoeffs        = NtFx::calculateSoftClipCoeffs<signal_t, 2>();
     this->scBoostSettings.shape = NtFx::Biquad::Shape::bell;
     this->scHpfSettings.shape   = NtFx::Biquad::Shape::hpf;
-    this->guiSpec.foregroundColour = 0xFF000000;
-    this->guiSpec.backgroundColour = 0xFFFFFFFF;
 
     this->updateDefaults();
   }

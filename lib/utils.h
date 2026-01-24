@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <vector>
 
 namespace NtFx {
 
@@ -18,7 +19,9 @@ static inline signal_t invDb(signal_t x) noexcept {
 template <typename signal_t>
 static inline signal_t ensureFinite(
     signal_t x, signal_t def = static_cast<signal_t>(0)) noexcept {
-  return (x == x ? x : def);
+  signal_t y = def;
+  if (x == x) { y = x; }
+  return y;
 }
 
 constexpr int rmsDelayLineLength = 16384;
@@ -46,5 +49,10 @@ static inline signal_t rmsSensor(
   signal_t y = std::sqrt(2.0 * p_state->accum / nRms);
   if (y != y) { y = static_cast<signal_t>(0.0); }
   return y;
+}
+
+template <typename T>
+static inline std::vector<T> zeros(size_t n) {
+  return std::vector<T>(n, 0.0);
 }
 }

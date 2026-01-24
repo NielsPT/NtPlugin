@@ -149,22 +149,23 @@ struct TitleBarSpec {
         2,
     },
     // TODO: Oversampling
-    // {
-    //     "Oversampling",
-    //     {
-    //         "disable",
-    //         "iir_2x",
-    //         "iir_4x",
-    //         "iir_8x",
-    //         "fir_2x_lq",
-    //         "fir_4x_lq",
-    //         "fir_8x_lq",
-    //         "fir_2x_hq",
-    //         "fir_4x_hq",
-    //         "fir_8x_hq",
-    //     },
-    //     0,
-    // },
+    {
+        "Oversampling",
+        {
+            "disable",
+            // TODO: IIR oversampling
+            // "iir_2x",
+            // "iir_4x",
+            // "iir_8x",
+            "fir_2x_lq",
+            "fir_4x_lq",
+            "fir_8x_lq",
+            "fir_2x_hq",
+            "fir_4x_hq",
+            "fir_8x_hq",
+        },
+        0,
+    },
   };
 };
 } // namespace NtFx

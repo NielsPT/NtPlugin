@@ -1,6 +1,7 @@
 #pragma once
 
-#include "lib/utils.h"
+#include <cmath>
+#include <cstddef>
 
 namespace NtFx {
 
@@ -52,6 +53,16 @@ struct Stereo {
   Stereo<signal_t>& operator*=(const Stereo<signal_t> x) noexcept {
     this->l = this->l * x.l;
     this->r = this->r * x.r;
+    return *this;
+  }
+  Stereo<signal_t>& operator+=(const signal_t x) noexcept {
+    this->l = this->l + x;
+    this->r = this->r + x;
+    return *this;
+  }
+  Stereo<signal_t>& operator+=(const Stereo<signal_t> x) noexcept {
+    this->l = this->l + x.l;
+    this->r = this->r + x.r;
     return *this;
   }
   signal_t avgSquared() const noexcept {
@@ -125,9 +136,21 @@ static inline Stereo<signal_t> operator/(
   return { (x / y.l), (x / y.r) };
 }
 template <typename signal_t>
+static inline Stereo<signal_t> operator*(
+    const Stereo<signal_t>& y, const size_t& x) noexcept {
+  return { (y.l * static_cast<signal_t>(x)), (y.r * static_cast<signal_t>(x)) };
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator*(
+    const size_t x, const Stereo<signal_t>& y) noexcept {
+  return { (y.l * static_cast<signal_t>(x)), (y.r * static_cast<signal_t>(x)) };
+}
+template <typename signal_t>
 static inline Stereo<signal_t> ensureFinite(
     Stereo<signal_t> x, signal_t def = static_cast<signal_t>(0)) noexcept {
-  return Stereo<signal_t>((x.l == x.l ? x.l : def), (x.r == x.r ? x.r : def));
+  Stereo<signal_t> y(def, def);
+  if (x.l == x.l) { y.l = x.l; };
+  if (x.r == x.r) { y.r = x.r; }
+  return y;
 }
-
 } // namespace NtFx

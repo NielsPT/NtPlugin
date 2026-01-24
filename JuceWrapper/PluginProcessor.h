@@ -20,6 +20,7 @@ const int versionNumber         = 0x100;
 #endif
 
 #include NTFX_PLUGIN_FILE
+#include "lib/SampleRateConverter.h"
 #include "lib/UiSpec.h"
 
 #include <juce_audio_basics/juce_audio_basics.h>
@@ -70,10 +71,17 @@ struct NtCompressorAudioProcessor : public juce::AudioProcessor {
   void getStateInformation(juce::MemoryBlock& destData) override;
   void setStateInformation(const void* data, int sizeInBytes) override;
 
+  void updateOversampling(int mode);
+  juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+
   NtFx::TitleBarSpec titleBarSpec;
+  // TODO: this should not be here.
+  float fsBase = 48000;
+  NtFx::Src::Coeffs<float> srcCoeffs;
+  NtFx::Src::State<float> srcState;
   NTFX_PLUGIN<float> plug;
   juce::AudioProcessorValueTreeState parameters;
+  // bool isInitialized = false;
 
-  juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtCompressorAudioProcessor)
 };

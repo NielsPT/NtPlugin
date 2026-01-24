@@ -2,6 +2,7 @@
 
 #include "lib/Stereo.h"
 #include "lib/UiSpec.h"
+#include "lib/utils.h"
 
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_devices/juce_audio_devices.h>

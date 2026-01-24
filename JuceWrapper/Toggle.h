@@ -1,4 +1,7 @@
 #pragma once
+
+#include <cstdint>
+
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_audio_formats/juce_audio_formats.h>
@@ -24,7 +27,8 @@ public:
 
   //==============================================================================
   /** Override to paint the button exactly as you want. */
-  void paintButton(juce::Graphics& g, const bool isMouseOver,
+  void paintButton(juce::Graphics& g,
+      const bool isMouseOver,
       const bool isMouseDown) override {
     auto h            = this->getHeight();
     auto w            = this->getWidth();

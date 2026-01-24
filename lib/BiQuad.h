@@ -1,7 +1,6 @@
 #pragma once
 
 #include "lib/Stereo.h"
-#include "lib/utils.h"
 
 #include <cmath>
 
@@ -61,7 +60,8 @@ namespace Biquad {
 
   template <typename signal_t>
   static inline Stereo<signal_t> biQuad6s(const Coeffs6<signal_t>* p_coeffs,
-      State<signal_t>* p_stateL, State<signal_t>* p_stateR,
+      State<signal_t>* p_stateL,
+      State<signal_t>* p_stateR,
       Stereo<signal_t> x) {
     return { biQuad(p_coeffs, p_stateL, x.l), biQuad(p_coeffs, p_stateR, x.r) };
   }
@@ -81,7 +81,8 @@ namespace Biquad {
 
   template <typename signal_t>
   static inline Stereo<signal_t> biQuad5s(const Coeffs5<signal_t>* p_coeffs,
-      State<signal_t>* p_stateL, State<signal_t>* p_stateR,
+      State<signal_t>* p_stateL,
+      State<signal_t>* p_stateR,
       Stereo<signal_t> x) {
     return { biQuad5(p_coeffs, p_stateL, x.l),
       biQuad5(p_coeffs, p_stateR, x.r) };

@@ -11,6 +11,8 @@
 
 #include "PluginEditor.h"
 #include "PluginProcessor.h"
+#include "lib/SampleRateConverter.h"
+#include "lib/UiSpec.h"
 
 //==============================================================================
 NtCompressorAudioProcessor::NtCompressorAudioProcessor()
@@ -25,7 +27,9 @@ NtCompressorAudioProcessor::NtCompressorAudioProcessor()
               )
 #endif
       ,
-      parameters(*this, nullptr, juce::Identifier("NtCompressor_01"),
+      parameters(*this,
+          nullptr,
+          juce::Identifier("NtCompressor_01"),
           createParameterLayout()) {
 }
 
@@ -64,13 +68,18 @@ double NtCompressorAudioProcessor::getTailLengthSeconds() const { return 0.0; }
 int NtCompressorAudioProcessor::getNumPrograms() { return 1; }
 int NtCompressorAudioProcessor::getCurrentProgram() { return 0; }
 void NtCompressorAudioProcessor::setCurrentProgram(int index) { }
-const juce::String NtCompressorAudioProcessor::getProgramName(int index) { return {}; }
+const juce::String NtCompressorAudioProcessor::getProgramName(int index) {
+  return {};
+}
 void NtCompressorAudioProcessor::changeProgramName(
     int index, const juce::String& newName) { }
 
 //==============================================================================
-void NtCompressorAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
-  plug.reset(sampleRate);
+void NtCompressorAudioProcessor::prepareToPlay(
+    double sampleRate, int samplesPerBlock) {
+  // if (!this->isInitialized) { return; }
+  this->fsBase = sampleRate;
+  this->updateOversampling(1);
 }
 
 juce::AudioChannelSet m_outputFormat;
@@ -115,8 +124,9 @@ void NtCompressorAudioProcessor::processBlock(
   auto rightBuffer = buffer.getWritePointer(1);
   for (size_t i = 0; i < buffer.getNumSamples(); i++) {
     NtFx::Stereo<float> x = { leftBuffer[i], rightBuffer[i] };
-    // TODO: Oversampling.
-    auto y         = plug.processSample(x);
+    // auto y                = plug.processSample(x);
+    auto y = NtFx::Src::processSample<float>(
+        this->plug, this->srcState, this->srcCoeffs, x);
     leftBuffer[i]  = y.l;
     rightBuffer[i] = y.r;
   }
@@ -132,7 +142,8 @@ juce::AudioProcessorEditor* NtCompressorAudioProcessor::createEditor() {
 }
 
 //==============================================================================
-void NtCompressorAudioProcessor::getStateInformation(juce::MemoryBlock& destData) {
+void NtCompressorAudioProcessor::getStateInformation(
+    juce::MemoryBlock& destData) {
   auto state = this->parameters.copyState();
   std::unique_ptr<juce::XmlElement> xml(state.createXml());
   copyXmlToBinary(*xml, destData);
@@ -140,10 +151,19 @@ void NtCompressorAudioProcessor::getStateInformation(juce::MemoryBlock& destData
 
 void NtCompressorAudioProcessor::setStateInformation(
     const void* data, int sizeInBytes) {
-  std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
+  std::unique_ptr<juce::XmlElement> xmlState(
+      getXmlFromBinary(data, sizeInBytes));
   if (xmlState.get() != nullptr)
     if (xmlState->hasTagName(parameters.state.getType()))
       parameters.replaceState(juce::ValueTree::fromXml(*xmlState));
+}
+
+void NtCompressorAudioProcessor::updateOversampling(int mode) {
+  NtFx::Src::update(static_cast<NtFx::Src::oversamplingMode>(mode),
+      this->fsBase,
+      this->srcCoeffs);
+  NtFx::Src::reset(this->srcState);
+  this->plug.reset(this->srcCoeffs.fsHi);
 }
 
 //==============================================================================
@@ -175,7 +195,8 @@ NtCompressorAudioProcessor::createParameterLayout() {
     juce::ParameterID id(p.name, i++);
     std::string name(p.name);
     std::replace(name.begin(), name.end(), '_', ' ');
-    parameters.add(std::make_unique<juce::AudioParameterBool>(id, name, p.defaultVal));
+    parameters.add(
+        std::make_unique<juce::AudioParameterBool>(id, name, p.defaultVal));
   }
   for (auto d : this->titleBarSpec.dropDowns) {
     juce::ParameterID id(d.name, i++);
@@ -183,8 +204,8 @@ NtCompressorAudioProcessor::createParameterLayout() {
     std::replace(name.begin(), name.end(), '_', ' ');
     juce::StringArray options;
     for (const auto& str : d.options) { options.add(juce::String(str)); }
-    parameters.add(
-        std::make_unique<juce::AudioParameterChoice>(id, name, options, d.defaultIdx));
+    parameters.add(std::make_unique<juce::AudioParameterChoice>(
+        id, name, options, d.defaultIdx));
   }
   DBG("Created " + std::to_string(i) + " paramters.");
   return parameters;

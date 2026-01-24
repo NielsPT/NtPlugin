@@ -279,8 +279,10 @@ void NtCompressorAudioProcessorEditor::updatePrimaryKnobs(
   size_t iSlider   = 0;
   auto columnWidth = knobsArea.getWidth() / nColumns;
   auto rowHeight   = knobsArea.getHeight() / nRows;
-  if (rowHeight > this->proc.plug.guiSpec.knobHeight) {
-    rowHeight = this->proc.plug.guiSpec.knobHeight;
+  // TODO: We're multiplying by uiScale a milion places. Can it be more
+  // abstract?
+  if (rowHeight > this->proc.plug.guiSpec.knobHeight * this->uiScale) {
+    rowHeight = this->proc.plug.guiSpec.knobHeight * this->uiScale;
   }
   for (size_t i = 0; i < nRows; i++) {
     auto rowArea = knobsArea.removeFromTop(rowHeight);
@@ -341,6 +343,7 @@ void NtCompressorAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
 void NtCompressorAudioProcessorEditor::comboBoxChanged(juce::ComboBox* p_box) {
   if (!this->isInitialized) { return; }
   if (p_box == this->allDropDowns[0].get()) { this->updateUiScale(); }
+  if (p_box == this->allDropDowns[1].get()) { this->updateOversampling(); }
 }
 
 void NtCompressorAudioProcessorEditor::updateUiScale() {
@@ -372,6 +375,11 @@ void NtCompressorAudioProcessorEditor::updateUiScale() {
   }
   this->setSize(this->proc.plug.guiSpec.defaultWindowWidth * this->uiScale,
       this->unscaledWindowHeight * this->uiScale);
+}
+
+void NtCompressorAudioProcessorEditor::updateOversampling() {
+  auto p_box = this->allDropDowns[1].get();
+  this->proc.updateOversampling(p_box->getSelectedId());
 }
 
 void NtCompressorAudioProcessorEditor::calcSliderRowsCols(

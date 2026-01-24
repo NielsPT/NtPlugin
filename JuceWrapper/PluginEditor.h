@@ -30,12 +30,12 @@
 //==============================================================================
 /**
  */
-class NtCompressorAudioProcessorEditor : public juce::AudioProcessorEditor,
-                                         private juce::Timer,
-                                         private juce::Slider::Listener,
-                                         private juce::ToggleButton::Listener,
-                                         private juce::ComboBox::Listener {
-public:
+struct NtCompressorAudioProcessorEditor : public juce::AudioProcessorEditor,
+                                          private juce::Timer,
+                                          private juce::Slider::Listener,
+                                          private juce::ToggleButton::Listener,
+                                          private juce::ComboBox::Listener {
+
   NtCompressorAudioProcessorEditor(NtCompressorAudioProcessor&);
   ~NtCompressorAudioProcessorEditor() override;
 
@@ -43,11 +43,9 @@ public:
   void paint(juce::Graphics&) override;
   void resized() override;
 
-private:
   NtCompressorAudioProcessor& proc;
   NtFx::MeterGroup meters;
   NtFx::KnobLookAndFeel knobLookAndFeel;
-  // ToggleLookAndFeel toggleLookAndFeel;
 
   // TODO: allToggleLabels and on/off text for toggles.
   std::vector<std::unique_ptr<juce::Slider>> allPrimaryKnobs;
@@ -92,6 +90,7 @@ private:
   void initToggle(NtFx::ToggleSpec& spec);
   void initDropDown(NtFx::DropDownSpec& p_spec);
   void updateUiScale();
+  void updateOversampling();
   void calcSliderRowsCols(
       int nSliders, int& nRows, int& nColumns, int maxRows, int maxColumns);
   void makeGrid(juce::Rectangle<int>& area,
