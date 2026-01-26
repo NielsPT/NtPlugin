@@ -148,7 +148,6 @@ struct TitleBarSpec {
         },
         2,
     },
-    // TODO: Oversampling
     {
         "Oversampling",
         {

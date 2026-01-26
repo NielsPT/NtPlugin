@@ -17,8 +17,8 @@ another framework.
 - Write audio plugins in plain C++ without the need for knowledge of the JUCE
   framework.
 - Automatic layout of UI including metering and UI scaling. Just list your
-parametes, and the framework takes care of the rest.
-<!-- TODO: - Oversampling available by default. -->
+  parametes, and the framework takes care of the rest.
+- Oversampling available by default.
 - Possibility for wrapping plugins for other targets.
   <!-- - Or just download the releases and start mixing. -->
   <!-- TODO: relaeses. -->
