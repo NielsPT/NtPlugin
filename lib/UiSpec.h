@@ -6,7 +6,10 @@
 
 namespace NtFx {
 // TODO: general parameter class.
+// TODO: "Dummy"/empty parameters for skipping fields in grid.
+// TODO: Option to disable/gray out parameters.
 // TODO: IDEA: Knob groups.
+// TODO: Int parameters?
 // - Each group takes up an area in the primary knob grid.
 // - Each group can contain a number of primary and secondary knobs. Primary are
 // placed on a row in the top of the group, secondary in a grid below.
@@ -18,17 +21,17 @@ namespace NtFx {
 template <typename signal_t>
 struct KnobSpec {
   /** Pointer to value the knob represents. Used to bind to UI.*/
-  signal_t* p_val;
+  signal_t* p_val { nullptr };
   /** Name of knob, used for IDs and label in UI. Can't contain ' '. '_' is
    * replaced with ' ' in UI lables. */
-  std::string name;
+  std::string name { "" };
   /** Added to the end of value label for knob. Eg. " dB" or " ms". */
   std::string suffix { "" };
   /** Starting level of knob. */
   signal_t minVal { 0.0 };
   /** End level of knob, */
   signal_t maxVal { 1.0 };
-  /** Sets the value at the middel of the knob radius.*/
+  /** Sets the value at the middel of the knob radius. 0 for don't care. */
   signal_t midPoint { 0.0 };
   /** Sets midPoint for logarithmic scale. */
   void setLogScale() {

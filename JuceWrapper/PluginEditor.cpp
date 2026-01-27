@@ -184,7 +184,10 @@ void NtCompressorAudioProcessorEditor::updateUi() {
   if (this->proc.plug.guiSpec.includeTitleBar) { this->updateTitleBar(area); }
   auto pad = 10 * this->uiScale;
   area.reduce(pad, pad);
-  if (this->proc.plug.guiSpec.includeMeters) { this->updateMeters(area); }
+  if (this->proc.plug.guiSpec.includeMeters
+      && this->proc.plug.guiSpec.meters.size() != 0) {
+    this->updateMeters(area);
+  }
   if (this->proc.plug.toggles.size()) { this->updateToggles(area); }
   this->knobLookAndFeel.fontSize =
       this->proc.plug.guiSpec.defaultFontSize * this->uiScale;

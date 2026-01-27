@@ -11,7 +11,7 @@
 
 template <typename signal_t>
 struct ntCompressor : public NtFx::NtPlugin<signal_t> {
-  int errorVarId = 0;
+  // int errorVarId = 0;
   float fs;
 
   NtFx::SideChain::Settings<signal_t> scSettings;
@@ -37,7 +37,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   NtFx::Biquad::Coeffs5<signal_t> scBoostCoeffs;
   std::array<NtFx::Biquad::State<signal_t>, 4> bqState;
 
-  constexpr ntCompressor() {
+  ntCompressor() {
     this->primaryKnobs = {
       {
           .p_val  = &this->scSettings.thresh_db,
@@ -54,7 +54,6 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
           .maxVal   = 20.0,
           .midPoint = 2.0,
       },
-
       {
           .p_val  = &this->scSettings.tAtt_ms,
           .name   = "Attack",
@@ -156,9 +155,9 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     NtFx::Stereo<signal_t> x_hpf = x;
     if (this->feedbackEnable) { x_hpf = this->fbState; }
 
-    NtFx::Stereo<signal_t> x_boost = NtFx::Biquad::biQuad5s(
+    NtFx::Stereo<signal_t> x_boost = NtFx::Biquad::biQuad5Stereo(
         &this->scHpfCoeffs, &this->bqState[0], &this->bqState[1], x_hpf);
-    NtFx::Stereo<signal_t> x_sc = NtFx::Biquad::biQuad5s(
+    NtFx::Stereo<signal_t> x_sc = NtFx::Biquad::biQuad5Stereo(
         &this->scBoostCoeffs, &this->bqState[2], &this->bqState[3], x_boost);
 
     NtFx::Stereo<signal_t> gr;
@@ -175,7 +174,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     }
     if (this->linkEnable) { gr = gr.absMin(); }
     this->template updatePeakLevel<2, true>(gr);
-    ensureFinite(gr, static_cast<signal_t>(1.0));
+    NtFx::ensureFinite(gr, static_cast<signal_t>(1.0));
     NtFx::Stereo<signal_t> yComp = x * gr;
     this->fbState                = yComp;
     auto ySoftClip               = NtFx::softClip5thStereo<signal_t>(

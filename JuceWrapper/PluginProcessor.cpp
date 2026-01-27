@@ -118,21 +118,26 @@ void NtCompressorAudioProcessor::processBlock(
 
   if (p_posInfo) {
     auto tempo = p_posInfo->getBpm();
-    if (tempo) { this->plug.tempo = *tempo; }
+    if (tempo && tempo != this->plug.tempo) {
+      this->plug.tempo = *tempo;
+      this->plug.onTempoChanged();
+    }
   }
   auto leftBuffer  = buffer.getWritePointer(0);
   auto rightBuffer = buffer.getWritePointer(1);
   for (size_t i = 0; i < buffer.getNumSamples(); i++) {
-    NtFx::Stereo<float> x = { leftBuffer[i], rightBuffer[i] };
-    // auto y                = plug.processSample(x);
-    auto y = NtFx::Src::processSample<float>(
-        this->plug, this->srcState, this->srcCoeffs, x);
+    auto y         = NtFx::Src::processSample<float>(this->plug,
+        this->srcState,
+        this->srcCoeffs,
+                {
+            leftBuffer[i],
+            rightBuffer[i],
+        });
     leftBuffer[i]  = y.l;
     rightBuffer[i] = y.r;
   }
 }
 
-//==============================================================================
 bool NtCompressorAudioProcessor::hasEditor() const {
   return true; // (change this to false if you choose to not supply an editor)
 }
@@ -141,7 +146,6 @@ juce::AudioProcessorEditor* NtCompressorAudioProcessor::createEditor() {
   return new NtCompressorAudioProcessorEditor(*this);
 }
 
-//==============================================================================
 void NtCompressorAudioProcessor::getStateInformation(
     juce::MemoryBlock& destData) {
   auto state = this->parameters.copyState();

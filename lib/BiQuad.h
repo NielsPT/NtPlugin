@@ -80,7 +80,8 @@ namespace Biquad {
   }
 
   template <typename signal_t>
-  static inline Stereo<signal_t> biQuad5s(const Coeffs5<signal_t>* p_coeffs,
+  static inline Stereo<signal_t> biQuad5Stereo(
+      const Coeffs5<signal_t>* p_coeffs,
       State<signal_t>* p_stateL,
       State<signal_t>* p_stateR,
       Stereo<signal_t> x) {

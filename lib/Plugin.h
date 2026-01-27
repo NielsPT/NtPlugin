@@ -60,6 +60,12 @@ struct NtPlugin {
   virtual void reset(int fs) noexcept = 0;
 
   /**
+   * @brief Called by the wrapper whenever the tempo changes.
+   *
+   */
+  virtual void onTempoChanged() noexcept { }
+
+  /**
    * @brief Used by the wrapper to get a pointer to a value based on the
    * corresponding knob's name.
    *

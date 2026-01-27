@@ -55,4 +55,21 @@ template <typename T>
 static inline std::vector<T> zeros(size_t n) {
   return std::vector<T>(n, 0.0);
 }
+
+template <typename T>
+static inline T saw(T x) {
+  const T alpha = 2 / M_PI;
+
+  T x_ = std::fmod(x, static_cast<T>(2.0) * M_PI);
+  x_   = (x_ < 0 ? x_ + 2 * M_PI : x_);
+  T y;
+  if (x_ < 0.5 * M_PI) {
+    y = x_ * alpha;
+  } else if (x_ < 1.5 * M_PI) {
+    y = -x_ * alpha + 2;
+  } else {
+    y = x_ * alpha - 4;
+  }
+  return y;
+}
 }

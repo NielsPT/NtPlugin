@@ -1,7 +1,7 @@
 #pragma once
 
 #include "lib/Stereo.h"
-#include "lib/utils.h"
+#include <array>
 
 namespace NtFx {
 template <typename signal_t>
@@ -18,6 +18,18 @@ template <typename signal_t>
 static inline Stereo<signal_t> softClip5thStereo(
     std::array<signal_t, 3>& p_coeffs, Stereo<signal_t> x) noexcept {
   return { softClip5thMono(p_coeffs, x.l), softClip5thMono(p_coeffs, x.r) };
+}
+
+template <typename signal_t>
+static inline signal_t softClip3rd(signal_t x) {
+  if (x > 1.0) { return static_cast<signal_t>(1.0); }
+  if (x < -1.0) { return static_cast<signal_t>(-1.0); }
+  return 1.5 * x - 0.5 * x * x * x;
+}
+
+template <typename signal_t>
+static inline signal_t softClip3rdStereo(signal_t x) {
+  return { softClip3rd(x.l), softClip3rd(x.r) };
 }
 
 template <typename signal_t, size_t N>
