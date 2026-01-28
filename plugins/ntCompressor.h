@@ -35,7 +35,8 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   NtFx::Biquad::Settings<signal_t> scBoostSettings;
   NtFx::Biquad::Coeffs5<signal_t> scHpfCoeffs;
   NtFx::Biquad::Coeffs5<signal_t> scBoostCoeffs;
-  std::array<NtFx::Biquad::State<signal_t>, 4> bqState;
+  NtFx::Biquad::StereoState<signal_t> scHpfState;
+  NtFx::Biquad::StereoState<signal_t> scBoostState;
 
   ntCompressor() {
     this->primaryKnobs = {
@@ -152,25 +153,25 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     }
     NtFx::ensureFinite(x);
     NtFx::ensureFinite(this->fbState);
-    NtFx::Stereo<signal_t> x_hpf = x;
-    if (this->feedbackEnable) { x_hpf = this->fbState; }
+    NtFx::Stereo<signal_t> xHpf = x;
+    if (this->feedbackEnable) { xHpf = this->fbState; }
 
-    NtFx::Stereo<signal_t> x_boost = NtFx::Biquad::biQuad5Stereo(
-        &this->scHpfCoeffs, &this->bqState[0], &this->bqState[1], x_hpf);
-    NtFx::Stereo<signal_t> x_sc = NtFx::Biquad::biQuad5Stereo(
-        &this->scBoostCoeffs, &this->bqState[2], &this->bqState[3], x_boost);
+    NtFx::Stereo<signal_t> xBoost = NtFx::Biquad::biQuad5Stereo(
+        &this->scHpfCoeffs, &this->scHpfState, xHpf);
+    NtFx::Stereo<signal_t> xSc = NtFx::Biquad::biQuad5Stereo(
+        &this->scBoostCoeffs, &this->scBoostState, xBoost);
 
     NtFx::Stereo<signal_t> gr;
     if (this->linEnable) {
       gr.l = NtFx::SideChain::sideChain_lin(
-          &this->scCoeffs, &this->scState[0], x_sc.l);
+          &this->scCoeffs, &this->scState[0], xSc.l);
       gr.r = NtFx::SideChain::sideChain_lin(
-          &this->scCoeffs, &this->scState[1], x_sc.r);
+          &this->scCoeffs, &this->scState[1], xSc.r);
     } else {
       gr.l = NtFx::SideChain::sideChain_db(
-          &this->scCoeffs, &this->scState[0], x_sc.l);
+          &this->scCoeffs, &this->scState[0], xSc.l);
       gr.r = NtFx::SideChain::sideChain_db(
-          &this->scCoeffs, &this->scState[1], x_sc.r);
+          &this->scCoeffs, &this->scState[1], xSc.r);
     }
     if (this->linkEnable) { gr = gr.absMin(); }
     this->template updatePeakLevel<2, true>(gr);
@@ -181,7 +182,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
         this->softClipCoeffs, yComp * this->makeup_lin);
     auto y = this->mix_lin * ySoftClip + (1 - this->mix_lin) * x;
     this->template updatePeakLevel<1>(y);
-    if (this->scListenEnable) { return x_sc; }
+    if (this->scListenEnable) { return xSc; }
     return y;
   }
 

@@ -46,6 +46,12 @@ namespace Biquad {
   };
 
   template <typename signal_t>
+  struct StereoState {
+    State<signal_t> l;
+    State<signal_t> r;
+  };
+
+  template <typename signal_t>
   static inline signal_t biQuad6(
       const Coeffs6<signal_t>* p_coeffs, State<signal_t>* p_state, signal_t x) {
     signal_t y = p_coeffs->b[0] * x + p_coeffs->b[1] * p_state->x[0]
@@ -82,11 +88,10 @@ namespace Biquad {
   template <typename signal_t>
   static inline Stereo<signal_t> biQuad5Stereo(
       const Coeffs5<signal_t>* p_coeffs,
-      State<signal_t>* p_stateL,
-      State<signal_t>* p_stateR,
+      StereoState<signal_t>* p_state,
       Stereo<signal_t> x) {
-    return { biQuad5(p_coeffs, p_stateL, x.l),
-      biQuad5(p_coeffs, p_stateR, x.r) };
+    return { biQuad5(p_coeffs, &p_state->l, x.l),
+      biQuad5(p_coeffs, &p_state->r, x.r) };
   }
 
   template <typename signal_t>

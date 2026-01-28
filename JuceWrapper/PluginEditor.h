@@ -54,7 +54,9 @@ struct NtCompressorAudioProcessorEditor : public juce::AudioProcessorEditor,
   std::vector<std::unique_ptr<juce::Label>> allSecondaryKnobLabels;
   std::vector<std::unique_ptr<NtFx::Toggle>> allToggles;
   std::vector<std::unique_ptr<juce::ComboBox>> allDropDowns;
-  std::vector<std::unique_ptr<juce::Label>> allDropDownLables;
+  std::vector<std::unique_ptr<juce::Label>> allDropDownLabels;
+  std::vector<std::unique_ptr<juce::ComboBox>> titleBarDropDowns;
+  std::vector<std::unique_ptr<juce::Label>> titleBarDropDownLabels;
   std::vector<
       std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>>
       allKnobAttachments;
@@ -79,7 +81,7 @@ struct NtCompressorAudioProcessorEditor : public juce::AudioProcessorEditor,
   void updateUi();
   void updateTitleBar(juce::Rectangle<int>& area);
   void updateMeters(juce::Rectangle<int>& area);
-  void updateToggles(juce::Rectangle<int>& area);
+  void updateBottomRow(juce::Rectangle<int>& area);
   void updateSecondaryKnobs(juce::Rectangle<int>& area);
   void updatePrimaryKnobs(juce::Rectangle<int>& area);
   void initPrimaryKnob(NtFx::KnobSpec<float>& p_spec);
@@ -88,7 +90,7 @@ struct NtCompressorAudioProcessorEditor : public juce::AudioProcessorEditor,
       std::unique_ptr<juce::Slider>& p_slider,
       std::unique_ptr<juce::Label>& p_label);
   void initToggle(NtFx::ToggleSpec& spec);
-  void initDropDown(NtFx::DropDownSpec& p_spec);
+  void initDropDown(NtFx::DropDownSpec& p_spec, bool addToTitleBar = false);
   void updateUiScale();
   void updateOversampling();
   void calcSliderRowsCols(

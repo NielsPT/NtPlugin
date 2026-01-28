@@ -211,6 +211,15 @@ NtCompressorAudioProcessor::createParameterLayout() {
     parameters.add(std::make_unique<juce::AudioParameterChoice>(
         id, name, options, d.defaultIdx));
   }
+  for (auto d : this->plug.dropdowns) {
+    juce::ParameterID id(d.name, i++);
+    std::string name(d.name);
+    std::replace(name.begin(), name.end(), '_', ' ');
+    juce::StringArray options;
+    for (const auto& str : d.options) { options.add(juce::String(str)); }
+    parameters.add(std::make_unique<juce::AudioParameterChoice>(
+        id, name, options, d.defaultIdx));
+  }
   DBG("Created " + std::to_string(i) + " paramters.");
   return parameters;
 }

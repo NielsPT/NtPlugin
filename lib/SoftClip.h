@@ -24,7 +24,8 @@ template <typename signal_t>
 static inline signal_t softClip3rd(signal_t x) {
   if (x > 1.0) { return static_cast<signal_t>(1.0); }
   if (x < -1.0) { return static_cast<signal_t>(-1.0); }
-  return 1.5 * x - 0.5 * x * x * x;
+  auto x_ = x / 1.5;
+  return x - 0.5 * x_ * x_ * x_;
 }
 
 template <typename signal_t>

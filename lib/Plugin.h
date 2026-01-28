@@ -22,19 +22,23 @@ namespace NtFx {
  */
 template <typename signal_t>
 struct NtPlugin {
-  /** Session tempo. Automatically updated by wrapper. */
-  float tempo = 0;
+  /** Specification for UI. Modify this to change the look of your plugin. */
+  GuiSpec guiSpec;
   /** vector of primary knobs. Add your number paramters to this to display them
    * in the UI. */
   std::vector<KnobSpec<signal_t>> primaryKnobs;
   /** vector of secondary knobs. */
   std::vector<KnobSpec<signal_t>> secondaryKnobs;
+  /** vector of DropDowns to be displayed */
+  std::vector<DropDownSpec> dropdowns;
   /** vector of toggles to be displayed at the bottom of the UI. */
   std::vector<ToggleSpec> toggles;
   /** Peak level to be displayed in the meters. */
   std::array<NtFx::Stereo<signal_t>, nMetersMax> peakLevels;
-  /** Specification for UI. Modify this to change the look of your plugin. */
-  GuiSpec guiSpec;
+  /** Session tempo. Automatically updated by wrapper. */
+  signal_t tempo = 0;
+  /** Set this to true if you want to force an update of the UI */
+  bool uiNeedsUpdate = false;
 
   /**
    * @brief Called for every sample as audio is processed.
@@ -84,6 +88,13 @@ struct NtPlugin {
   bool* getBoolValuePtr(std::string name) const noexcept {
     for (auto param : this->toggles) {
       if (param.name == name) { return param.p_val; }
+    }
+    return nullptr;
+  }
+
+  int* getDropDownValuePtr(std::string name) const noexcept {
+    for (auto dropdown : this->dropdowns) {
+      if (dropdown.name == name) { return dropdown.p_val; }
     }
     return nullptr;
   }

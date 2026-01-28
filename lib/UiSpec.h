@@ -38,6 +38,7 @@ struct KnobSpec {
     this->midPoint = std::sqrt(this->minVal * this->maxVal);
   }
   signal_t defaultVal { 0.0 };
+  bool isActive { true };
 };
 
 /**
@@ -124,6 +125,7 @@ struct GuiSpec {
  *
  */
 struct DropDownSpec {
+  int* p_val { nullptr };
   /** Name of drop down, used for label and id. */
   std::string name;
   /** Vector of options in the drop down. */
@@ -139,6 +141,7 @@ struct DropDownSpec {
 struct TitleBarSpec {
   std::vector<DropDownSpec> dropDowns {
     {
+        nullptr,
         "UI Scale",
         {
             "50%",
@@ -152,6 +155,7 @@ struct TitleBarSpec {
         2,
     },
     {
+        nullptr,
         "Oversampling",
         {
             "disable",
