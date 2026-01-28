@@ -255,7 +255,7 @@ void NtCompressorAudioProcessorEditor::updateBottomRow(
     this->allDropDowns[i]->setBounds(dropdownArea);
     this->allDropDownLabels[i]->setBounds(labelArea);
     this->allDropDownLabels[i]->setFont(juce::FontOptions(
-        this->proc.plug.guiSpec.defaultFontSize * this->uiScale * 0.6));
+        this->proc.plug.guiSpec.defaultFontSize * this->uiScale));
   }
   for (size_t i = 0; i < nToggles; i++) {
     auto toggleArea = bottomRowArea.removeFromLeft(columnWidth);
