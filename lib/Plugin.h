@@ -48,6 +48,8 @@ struct NtPlugin {
    */
   virtual Stereo<signal_t> processSample(Stereo<signal_t> x) noexcept = 0;
 
+  // TODO: Update really should happen in the procession thread. OR we should
+  // have two sets of coeffs and swap between them.
   /**
    * @brief Called when ever a parameter (knob or toggle) changes. Update your
    * coefficients here.

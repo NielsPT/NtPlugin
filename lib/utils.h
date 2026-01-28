@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <array>
+#include <climits>
 #include <cmath>
 #include <vector>
 
@@ -71,5 +72,31 @@ static inline T saw(T x) {
     y = x_ * alpha - 4;
   }
   return y;
+}
+
+/**
+ * @brief Pseudorandom unsigned long.
+ *
+ * Marsaglia, George (2003) "Random Number Generators,"Journal of Modern Applied
+ * Statistical Methods: Vol. 2 : Iss. 1 , Article 2.
+ * DOI: 10.22237/jmasm/1051747320
+ *
+ * @return unsigned long
+ */
+static inline unsigned long KISS() noexcept {
+  static unsigned long x = 123456789, y = 362436000, z = 521288629, c = 7654321;
+  unsigned long long t;
+  x = 69069 * x + 12345;
+  y ^= y << 13;
+  y ^= y >> 17;
+  y ^= y << 5;
+  t = 698769069LL * z + c;
+  c = t >> 32;
+  return x + y + (z = t);
+}
+
+template <typename T>
+static inline T rand() noexcept {
+  return (KISS() - LONG_MAX) / static_cast<T>(LONG_MAX);
 }
 }

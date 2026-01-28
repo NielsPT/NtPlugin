@@ -28,13 +28,14 @@ template <typename signal_t>
 struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
   float fs;
   signal_t tGui             = 0.5;
-  signal_t fb               = 0.2;
+  signal_t fb_percent       = 20;
   signal_t modFreq          = 1.0;
   signal_t modPhase         = 0.0;
-  signal_t clipG_dB         = 0.0;
+  signal_t clipG_db         = 0.0;
   signal_t mix_percent      = 100.0;
   signal_t tOffset          = 0.0;
   signal_t modDepth_percent = 0.1;
+  signal_t noise_db         = -100;
   bool sync                 = false;
   SubDev subDev             = SubDev::fourth;
   signal_t tempoScale       = 1;
@@ -48,6 +49,8 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
   NtFx::Biquad::StereoState<signal_t> lpfState;
   NtFx::Stereo<signal_t> fbState;
   std::array<NtFx::Stereo<signal_t>, delayLineLength> delayLine;
+  signal_t fb_lin         = 0.2;
+  signal_t noise_lin      = 0;
   size_t nDelayGui        = 24000;
   size_t nDelayGlided     = 24000;
   size_t iStore           = 0;
@@ -64,10 +67,10 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
   ntTapeEcho() {
     this->primaryKnobs = {
       { &this->tGui, "Time", " s", 0.02, 2 },
-      { &this->fb, "Feedback", " x", 0, 2 },
+      { &this->fb_percent, "Feedback", " %", 0, 200 },
       { &this->hpfSettings.fc_hz, "HPF", " Hz", 20, 2000 },
       { &this->lpfSettings.fc_hz, "LPF", " Hz", 200, 20000 },
-      { &this->clipG_dB, "Drive", " dB", -20, 20 },
+      { &this->clipG_db, "Drive", " dB", -20, 20 },
     };
     this->primaryKnobs[2].setLogScale();
     this->primaryKnobs[3].setLogScale();
@@ -80,6 +83,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       { &this->tOffset, "Offset", " ms", 0, 50 },
       // TODO: proper glide parameter.
       // { &this->nGlide, "Glide_Speed", "", 0, 10 },
+      { &this->noise_db, "Noise", " dB", -100, 0 },
       { &this->mix_percent, "Dry_Mix", " %", 0, 100 },
     };
 
@@ -87,6 +91,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     this->secondaryKnobs[1].setLogScale();
     this->secondaryKnobs[2].setLogScale();
     this->secondaryKnobs[3].setLogScale();
+    this->secondaryKnobs[6].setLogScale();
     this->dropdowns = {
       {
           .p_val = (int*)&this->subDev,
@@ -115,18 +120,18 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       NtFx::Stereo<signal_t> x) noexcept override {
     this->iStore++;
     if (this->iStore > delayLineLength) { this->iStore = 0; }
-
-    size_t nModL = std::round(NtFx::saw(this->thetaMod * this->timeCounter)
-                       * this->nDelayGlided * this->modDepth)
+    auto modSawL = NtFx::saw(this->thetaMod * this->timeCounter);
+    auto modSawR =
+        NtFx::saw(this->thetaMod * this->timeCounter + this->thetaModOffset);
+    size_t nModL = std::round(modSawL * this->nDelayGlided * this->modDepth)
         + this->nDelayGlided;
-    size_t nModR = std::round(NtFx::saw(this->thetaMod * this->timeCounter
-                                  + this->thetaModOffset)
-                       * this->nDelayGlided * this->modDepth)
+    size_t nModR = std::round(modSawR * this->nDelayGlided * this->modDepth)
         + this->nDelayGlided + this->nOffset;
     this->timeCounter++;
-    NtFx::ensureFinite<NtFx::Stereo<signal_t>>(x);
+    auto xNoisy = x + NtFx::rand<signal_t>() * this->noise_lin;
+    NtFx::ensureFinite<NtFx::Stereo<signal_t>>(xNoisy);
     NtFx::ensureFinite<NtFx::Stereo<signal_t>>(this->fbState);
-    this->delayLine[this->iStore] = x + this->fb * this->fbState;
+    this->delayLine[this->iStore] = xNoisy + this->fb_lin * this->fbState;
 
     int iLoadL = this->iStore - nModL;
     if (iLoadL < 0) { iLoadL += delayLineLength; }
@@ -136,10 +141,11 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       this->delayLine[iLoadL].l,
       this->delayLine[iLoadR].r,
     };
-    auto yClip = NtFx::softClip3rdStereo(yDelay * this->aClip_lin) / aClip_lin;
-    NtFx::ensureFinite<NtFx::Stereo<signal_t>>(yClip);
+    auto yFbClip =
+        NtFx::softClip3rdStereo(yDelay * this->aClip_lin) / aClip_lin;
+    NtFx::ensureFinite<NtFx::Stereo<signal_t>>(yFbClip);
     auto yHp =
-        NtFx::Biquad::biQuad5Stereo(&this->hpfCoeffs, &this->hpfState, yClip);
+        NtFx::Biquad::biQuad5Stereo(&this->hpfCoeffs, &this->hpfState, yFbClip);
     auto yLp =
         NtFx::Biquad::biQuad5Stereo(&this->lpfCoeffs, &this->lpfState, yHp);
 
@@ -157,8 +163,8 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       }
     }
     this->fbState = yLp;
-    auto y        = NtFx::softClip5thStereo(
-        this->softClipCoeffs, (1 - this->mix_lin) * x + this->mix_lin * yLp);
+    auto yOutClip = NtFx::softClip5thStereo(this->softClipCoeffs, yLp);
+    auto y        = (1 - this->mix_lin) * x + this->mix_lin * yOutClip;
     this->template updatePeakLevel<0>(x);
     this->template updatePeakLevel<1>(y);
     return y;
@@ -167,8 +173,10 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     this->hpfCoeffs = NtFx::Biquad::calcCoeffs5(this->hpfSettings, this->fs);
     this->lpfCoeffs = NtFx::Biquad::calcCoeffs5(this->lpfSettings, this->fs);
     this->nOffset   = std::round(this->tOffset / 1000 * this->fs);
-    this->aClip_lin = NtFx::invDb(this->clipG_dB);
+    this->aClip_lin = NtFx::invDb(this->clipG_db);
     this->mix_lin   = this->mix_percent / 100;
+    this->fb_lin    = this->fb_percent / 100;
+    this->noise_lin = NtFx::invDb(this->noise_db);
     // this->alphaSoftClip = 0.5 - (this->hardness / 200);
     this->modDepth = this->modDepth_percent / 100;
     switch (this->subDev) {
