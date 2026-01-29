@@ -37,6 +37,9 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
   signal_t modDepth_percent = 0.1;
   signal_t noise_db         = -100;
   bool sync                 = false;
+  bool mod                  = true;
+  bool clip                 = true;
+  bool bypass               = false;
   SubDev subDev             = SubDev::fourth;
   signal_t tempoScale       = 1;
   size_t nGlide             = 4;
@@ -68,16 +71,16 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     this->primaryKnobs = {
       { &this->tGui, "Time", " s", 0.02, 2 },
       { &this->fb_percent, "Feedback", " %", 0, 200 },
+      { &this->clipG_db, "Drive", " dB", -20, 20 },
       { &this->hpfSettings.fc_hz, "HPF", " Hz", 20, 2000 },
       { &this->lpfSettings.fc_hz, "LPF", " Hz", 200, 20000 },
-      { &this->clipG_db, "Drive", " dB", -20, 20 },
     };
-    this->primaryKnobs[2].setLogScale();
     this->primaryKnobs[3].setLogScale();
+    this->primaryKnobs[4].setLogScale();
     this->secondaryKnobs = {
       { &this->hpfSettings.q, "Q_HP", "", 0.5, 2, 1 },
       { &this->lpfSettings.q, "Q_LP", "", 0.5, 2, 1 },
-      { &this->modFreq, "Mod_Frequency", " Hz", 0.1, 10 },
+      { &this->modFreq, "Mod_Freq", " Hz", 0.1, 10 },
       { &this->modDepth_percent, "Mod_Depth", " %", 0.1, 10 },
       { &this->modPhase, "Mod_Phase", "deg", 0, 180 },
       { &this->tOffset, "Offset", " ms", 0, 50 },
@@ -107,7 +110,12 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
           .defaultIdx = 0,
       },
     };
-    this->toggles           = { { &this->sync, "Sync" } };
+    this->toggles = {
+      { &this->sync, "Sync" },
+      { &this->mod, "Mod" },
+      { &this->clip, "Output drive" },
+      { &this->bypass, "Bypass" },
+    };
     this->guiSpec.meters    = { { "IN" }, { "OUT", .hasScale = true } };
     this->lpfSettings.shape = NtFx::Biquad::Shape::lpf;
     this->hpfSettings.shape = NtFx::Biquad::Shape::hpf;
@@ -118,20 +126,25 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
   }
   virtual NtFx::Stereo<signal_t> processSample(
       NtFx::Stereo<signal_t> x) noexcept override {
-    this->iStore++;
-    if (this->iStore > delayLineLength) { this->iStore = 0; }
-    auto modSawL = NtFx::saw(this->thetaMod * this->timeCounter);
-    auto modSawR =
-        NtFx::saw(this->thetaMod * this->timeCounter + this->thetaModOffset);
-    size_t nModL = std::round(modSawL * this->nDelayGlided * this->modDepth)
-        + this->nDelayGlided;
-    size_t nModR = std::round(modSawR * this->nDelayGlided * this->modDepth)
-        + this->nDelayGlided + this->nOffset;
-    this->timeCounter++;
     auto xNoisy = x + NtFx::rand<signal_t>() * this->noise_lin;
     NtFx::ensureFinite<NtFx::Stereo<signal_t>>(xNoisy);
     NtFx::ensureFinite<NtFx::Stereo<signal_t>>(this->fbState);
+    this->iStore++;
+    if (this->iStore >= delayLineLength) { this->iStore = 0; }
     this->delayLine[this->iStore] = xNoisy + this->fb_lin * this->fbState;
+
+    int nModL = this->nDelayGlided;
+    int nModR = this->nDelayGlided + this->nOffset;
+    if (this->mod) {
+      auto modSawL = NtFx::saw(this->thetaMod * this->timeCounter);
+      auto modSawR =
+          NtFx::saw(this->thetaMod * this->timeCounter + this->thetaModOffset);
+      nModL = std::round(modSawL * this->nDelayGlided * this->modDepth)
+          + this->nDelayGlided;
+      nModR = std::round(modSawR * this->nDelayGlided * this->modDepth)
+          + this->nDelayGlided + this->nOffset;
+      this->timeCounter++;
+    }
 
     int iLoadL = this->iStore - nModL;
     if (iLoadL < 0) { iLoadL += delayLineLength; }
@@ -149,6 +162,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     auto yLp =
         NtFx::Biquad::biQuad5Stereo(&this->lpfCoeffs, &this->lpfState, yHp);
 
+    // TODO: This sounds like shit. Make a proper glider.
     if (this->nGlide == 0) {
       this->nDelayGlided = this->nDelayGui;
     } else {
@@ -163,9 +177,16 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       }
     }
     this->fbState = yLp;
-    auto yOutClip = NtFx::softClip5thStereo(this->softClipCoeffs, yLp);
-    auto y        = (1 - this->mix_lin) * x + this->mix_lin * yOutClip;
+    auto yOutClip = yLp;
+    if (this->clip) {
+      yOutClip = NtFx::softClip5thStereo(this->softClipCoeffs, yLp);
+    }
+    auto y = (1 - this->mix_lin) * x + this->mix_lin * yOutClip;
     this->template updatePeakLevel<0>(x);
+    if (this->bypass) {
+      this->template updatePeakLevel<1>(x);
+      return x;
+    }
     this->template updatePeakLevel<1>(y);
     return y;
   }
@@ -177,8 +198,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     this->mix_lin   = this->mix_percent / 100;
     this->fb_lin    = this->fb_percent / 100;
     this->noise_lin = NtFx::invDb(this->noise_db);
-    // this->alphaSoftClip = 0.5 - (this->hardness / 200);
-    this->modDepth = this->modDepth_percent / 100;
+    this->modDepth  = this->modDepth_percent / 100;
     switch (this->subDev) {
     case SubDev::half:
       this->tempoScale = 2;

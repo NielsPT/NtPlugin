@@ -12,6 +12,7 @@
   #error NTFX_PLUGIN is not defined.
 #endif
 
+// TODO: Gliders!
 namespace NtFx {
 
 /**

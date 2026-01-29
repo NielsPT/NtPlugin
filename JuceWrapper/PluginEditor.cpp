@@ -245,11 +245,11 @@ void NtCompressorAudioProcessorEditor::updateBottomRow(
   this->borderedAreas.push_back(bottomRowArea);
   auto nToggles    = this->proc.plug.toggles.size();
   auto nDropdowns  = this->proc.plug.dropdowns.size();
-  auto nElements   = nToggles + nDropdowns;
+  auto nElements   = nToggles + nDropdowns * 2;
   auto columnWidth = bottomRowArea.getWidth() / nElements;
   for (size_t i = 0; i < nDropdowns; i++) {
-    auto dropdownArea = bottomRowArea.removeFromLeft(columnWidth);
-    auto labelArea    = dropdownArea.removeFromLeft(columnWidth / 2);
+    auto dropdownArea = bottomRowArea.removeFromLeft(columnWidth * 2);
+    auto labelArea    = dropdownArea.removeFromLeft(columnWidth);
     dropdownArea.reduce(togglePad, togglePad);
     labelArea.reduce(togglePad, togglePad);
     this->allDropDowns[i]->setBounds(dropdownArea);
