@@ -146,6 +146,7 @@ struct TitleBarSpec {
         { "50%", "75%", "100%", "125%", "150%", "175%", "200%" },
         2,
     },
+    { nullptr, "Theme", { "Light", "Dark" }, 0 },
     {
         nullptr,
         "Oversampling",
@@ -162,7 +163,6 @@ struct TitleBarSpec {
             "fir_8x_hq" },
         0,
     },
-    { nullptr, "Theme", { "Light", "Dark" }, 0 },
   };
 };
 } // namespace NtFx

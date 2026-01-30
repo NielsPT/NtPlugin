@@ -390,8 +390,8 @@ void NtCompressorAudioProcessorEditor::comboBoxChanged(juce::ComboBox* p_box) {
   // TODO: this stinks.
   if (this->titleBarDropDowns.size() < 3) { return; }
   if (p_box == this->titleBarDropDowns[0].get()) { this->updateUiScale(); }
-  if (p_box == this->titleBarDropDowns[1].get()) { this->updateOversampling(); }
-  if (p_box == this->titleBarDropDowns[2].get()) { this->updateTheme(); }
+  if (p_box == this->titleBarDropDowns[1].get()) { this->updateTheme(); }
+  if (p_box == this->titleBarDropDowns[2].get()) { this->updateOversampling(); }
   auto name  = p_box->getName().toStdString();
   auto p_val = this->proc.plug.getDropDownValuePtr(name);
   if (!p_val) { return; }
