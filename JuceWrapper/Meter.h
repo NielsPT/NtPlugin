@@ -200,6 +200,7 @@ struct StereoMeter : public juce::Component {
   GuiSpec& spec;
   juce::Label label;
   int fontSize { 0 };
+  float uiScale { 1 };
   bool hasScale { false };
 
   StereoMeter(StereoMeterSpec& meterSpec, GuiSpec& guiSpec)
@@ -219,10 +220,9 @@ struct StereoMeter : public juce::Component {
     this->l.fontSize = this->fontSize;
     this->r.fontSize = this->fontSize;
     auto area        = getLocalBounds();
-    auto labelArea   = area.removeFromTop(this->l.guiSpec.labelHeight);
+    auto labelArea =
+        area.removeFromTop(this->l.guiSpec.labelHeight * this->uiScale);
     this->label.setFont(juce::FontOptions(this->fontSize));
-    // this->label.setColour(juce::Label::ColourIds::textColourId,
-    //     juce::Colour(spec.foregroundColour));
     this->label.setBounds(labelArea);
     this->label.setJustificationType(juce::Justification::centredBottom);
     auto lArea = area.removeFromLeft(area.getWidth() / 2.0);
@@ -282,6 +282,10 @@ struct MeterGroup : public juce::Component {
   void setFontSize(int size) {
     for (auto& m : meters) { m->fontSize = size; }
     for (auto& s : scales) { s->fontSize = size; }
+  }
+  void setUiScale(float uiScale) {
+    for (auto& m : meters) { m->uiScale = uiScale; }
+    // for (auto& s : scales) { s->uiScale=uiScale; }
   }
   // void setHeight_dots(int nDots) {
   //   for (auto& m : meters) {

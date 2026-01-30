@@ -19,19 +19,7 @@
 NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
     NtCompressorAudioProcessor& p)
     : AudioProcessorEditor(&p), proc(p), meters(proc.plug.guiSpec) {
-  this->getLookAndFeel().setColour(
-      juce::ResizableWindow::ColourIds::backgroundColourId,
-      juce::Colours::black);
-  this->knobLookAndFeel.backgroundColour =
-      this->proc.plug.guiSpec.backgroundColour;
-  this->knobLookAndFeel.foregroundColour =
-      this->proc.plug.guiSpec.foregroundColour; // & 0x00FFFFFF | 0xDD000000;
-  this->allPrimaryKnobs[0]->setColour(juce::Label::ColourIds::textColourId,
-      juce::Colour(this->proc.plug.guiSpec.foregroundColour));
-  this->setColour(juce::Slider::ColourIds::textBoxTextColourId,
-      juce::Colour(this->proc.plug.guiSpec.foregroundColour));
-  this->setColour(juce::Slider::ColourIds::textBoxBackgroundColourId,
-      juce::Colour(this->proc.plug.guiSpec.backgroundColour));
+  this->updateColours();
   for (auto& k : this->proc.plug.primaryKnobs) { this->initPrimaryKnob(k); }
   for (auto& k : this->proc.plug.secondaryKnobs) { this->initSecondaryKnob(k); }
   for (auto& t : this->proc.plug.toggles) { this->initToggle(t); }
@@ -78,6 +66,27 @@ NtCompressorAudioProcessorEditor::~NtCompressorAudioProcessorEditor() {
   for (auto& slider : this->allSecondaryKnobs) {
     slider->setLookAndFeel(nullptr);
   }
+}
+
+void NtCompressorAudioProcessorEditor::updateColours() {
+  this->knobLookAndFeel.backgroundColour =
+      this->proc.plug.guiSpec.backgroundColour;
+  this->knobLookAndFeel.foregroundColour =
+      this->proc.plug.guiSpec.foregroundColour; // & 0x00FFFFFF | 0xDD000000;
+  this->knobLookAndFeel.setColour(
+      juce::Slider::ColourIds::textBoxBackgroundColourId,
+      juce::Colour(this->proc.plug.guiSpec.backgroundColour));
+  this->knobLookAndFeel.setColour(juce::Slider::ColourIds::textBoxTextColourId,
+      juce::Colour(this->proc.plug.guiSpec.foregroundColour));
+  this->getLookAndFeel().setColour(juce::Slider::ColourIds::textBoxTextColourId,
+      juce::Colour(this->proc.plug.guiSpec.foregroundColour));
+  this->getLookAndFeel().setColour(
+      juce::Slider::ColourIds::textBoxBackgroundColourId,
+      juce::Colour(this->proc.plug.guiSpec.backgroundColour));
+  this->getLookAndFeel().setColour(juce::Label::ColourIds::textColourId,
+      juce::Colour(this->proc.plug.guiSpec.foregroundColour));
+  for (auto& knob : this->allPrimaryKnobs) { knob->lookAndFeelChanged(); }
+  for (auto& knob : this->allSecondaryKnobs) { knob->lookAndFeelChanged(); }
 }
 
 void NtCompressorAudioProcessorEditor::initDropDown(
@@ -234,6 +243,7 @@ void NtCompressorAudioProcessorEditor::updateMeters(
       area.removeFromLeft(this->meters.getMinimalWidth() * this->uiScale);
   this->meters.setFontSize(
       this->proc.plug.guiSpec.defaultFontSize * this->uiScale * 0.9);
+  this->meters.setUiScale(this->uiScale);
   this->meters.setBounds(meterArea);
   this->borderedAreas.push_back(meterArea);
 }
@@ -377,10 +387,11 @@ void NtCompressorAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
 
 void NtCompressorAudioProcessorEditor::comboBoxChanged(juce::ComboBox* p_box) {
   if (!this->isInitialized) { return; }
-  if (this->titleBarDropDowns.size() < 2) { return; }
+  // TODO: this stinks.
+  if (this->titleBarDropDowns.size() < 3) { return; }
   if (p_box == this->titleBarDropDowns[0].get()) { this->updateUiScale(); }
   if (p_box == this->titleBarDropDowns[1].get()) { this->updateOversampling(); }
-  // if (p_box == this->titleBarDropDowns[2].get()) { this->updateTheme(); }
+  if (p_box == this->titleBarDropDowns[2].get()) { this->updateTheme(); }
   auto name  = p_box->getName().toStdString();
   auto p_val = this->proc.plug.getDropDownValuePtr(name);
   if (!p_val) { return; }
@@ -424,29 +435,30 @@ void NtCompressorAudioProcessorEditor::updateOversampling() {
   this->proc.updateOversampling(p_box->getSelectedId());
 }
 
-// void NtCompressorAudioProcessorEditor::updateTheme() {
-//   if (!(this->proc.plug.guiSpec.backgroundColour == 0xFF000000
-//           || this->proc.plug.guiSpec.backgroundColour == 0xFFFFFFFF)
-//       || !(this->proc.plug.guiSpec.foregroundColour == 0xFF000000
-//           || this->proc.plug.guiSpec.foregroundColour == 0xFFFFFFFF)) {
-//     return;
-//   }
-//   auto p_box = this->titleBarDropDowns[2].get();
-//   auto val   = p_box->getSelectedId();
-//   switch (val) {
-//   case 1:
-//     this->proc.plug.guiSpec.foregroundColour = 0xFF000000;
-//     this->proc.plug.guiSpec.backgroundColour = 0xFFFFFFFF;
-//     break;
-//   case 2:
-//     this->proc.plug.guiSpec.foregroundColour = 0xFFFFFFFF;
-//     this->proc.plug.guiSpec.backgroundColour = 0xFF000000;
-//     break;
-//   default:
-//     break;
-//   }
-//   this->updateUi();
-// }
+void NtCompressorAudioProcessorEditor::updateTheme() {
+  if (!(this->proc.plug.guiSpec.backgroundColour == 0xFF000000
+          || this->proc.plug.guiSpec.backgroundColour == 0xFFFFFFFF)
+      || !(this->proc.plug.guiSpec.foregroundColour == 0xFF000000
+          || this->proc.plug.guiSpec.foregroundColour == 0xFFFFFFFF)) {
+    return;
+  }
+  auto p_box = this->titleBarDropDowns[2].get();
+  auto val   = p_box->getSelectedId();
+  switch (val) {
+  case 1:
+    this->proc.plug.guiSpec.foregroundColour = 0xFF000000;
+    this->proc.plug.guiSpec.backgroundColour = 0xFFFFFFFF;
+    break;
+  case 2:
+    this->proc.plug.guiSpec.foregroundColour = 0xFFFFFFFF;
+    this->proc.plug.guiSpec.backgroundColour = 0xFF000000;
+    break;
+  default:
+    break;
+  }
+  this->updateColours();
+  this->updateUi();
+}
 
 void NtCompressorAudioProcessorEditor::calcSliderRowsCols(
     int nKnobs, int& nRows, int& nColumns, int maxRows, int maxColumns) {

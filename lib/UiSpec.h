@@ -162,7 +162,7 @@ struct TitleBarSpec {
             "fir_8x_hq" },
         0,
     },
-    // { nullptr, "Theme", { "Light", "Dark" }, 0 },
+    { nullptr, "Theme", { "Light", "Dark" }, 0 },
   };
 };
 } // namespace NtFx

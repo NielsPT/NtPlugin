@@ -17,6 +17,7 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 
 namespace NtFx {
+// TODO: A prettier knob.
 // TODO: Make it a component instead like Toggle. Maybe...
 struct KnobLookAndFeel : public juce::LookAndFeel_V4 {
   int fontSize  = 1;
