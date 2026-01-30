@@ -221,8 +221,8 @@ struct StereoMeter : public juce::Component {
     auto area        = getLocalBounds();
     auto labelArea   = area.removeFromTop(this->l.guiSpec.labelHeight);
     this->label.setFont(juce::FontOptions(this->fontSize));
-    this->label.setColour(juce::Label::ColourIds::textColourId,
-        juce::Colour(spec.foregroundColour));
+    // this->label.setColour(juce::Label::ColourIds::textColourId,
+    //     juce::Colour(spec.foregroundColour));
     this->label.setBounds(labelArea);
     this->label.setJustificationType(juce::Justification::centredBottom);
     auto lArea = area.removeFromLeft(area.getWidth() / 2.0);

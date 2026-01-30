@@ -143,22 +143,13 @@ struct TitleBarSpec {
     {
         nullptr,
         "UI Scale",
-        {
-            "50%",
-            "75%",
-            "100%",
-            "125%",
-            "150%",
-            "175%",
-            "200%",
-        },
+        { "50%", "75%", "100%", "125%", "150%", "175%", "200%" },
         2,
     },
     {
         nullptr,
         "Oversampling",
-        {
-            "disable",
+        { "disable",
             // TODO: IIR oversampling
             // "iir_2x",
             // "iir_4x",
@@ -168,10 +159,10 @@ struct TitleBarSpec {
             "fir_8x_lq",
             "fir_2x_hq",
             "fir_4x_hq",
-            "fir_8x_hq",
-        },
+            "fir_8x_hq" },
         0,
     },
+    // { nullptr, "Theme", { "Light", "Dark" }, 0 },
   };
 };
 } // namespace NtFx

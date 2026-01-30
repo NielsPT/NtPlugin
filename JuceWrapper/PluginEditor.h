@@ -93,6 +93,7 @@ struct NtCompressorAudioProcessorEditor : public juce::AudioProcessorEditor,
   void initDropDown(NtFx::DropDownSpec& p_spec, bool addToTitleBar = false);
   void updateUiScale();
   void updateOversampling();
+  // void updateTheme();
   void calcSliderRowsCols(
       int nSliders, int& nRows, int& nColumns, int maxRows, int maxColumns);
   void makeGrid(juce::Rectangle<int>& area,
