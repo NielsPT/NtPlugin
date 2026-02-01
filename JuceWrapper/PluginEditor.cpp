@@ -13,7 +13,10 @@
 #include "PluginEditor.h"
 #include "PluginProcessor.h"
 #include "Toggle.h"
+#include "juce_graphics/juce_graphics.h"
 #include "juce_gui_basics/juce_gui_basics.h"
+
+enum TitleBarDropDowns { e_uiScale, e_theme, e_oversampling };
 
 //==============================================================================
 NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
@@ -51,6 +54,8 @@ NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
   }
   this->unscaledWindowHeight = height;
   this->updateUiScale();
+  this->updateOversampling();
+  this->updateTheme();
 
   this->addAndMakeVisible(this->meters);
   this->startTimerHz(this->proc.plug.guiSpec.meterRefreshRate_hz);
@@ -85,6 +90,10 @@ void NtCompressorAudioProcessorEditor::updateColours() {
       juce::Colour(this->proc.plug.guiSpec.backgroundColour));
   this->getLookAndFeel().setColour(juce::Label::ColourIds::textColourId,
       juce::Colour(this->proc.plug.guiSpec.foregroundColour));
+  this->knobLookAndFeel.setColour(juce::ComboBox::ColourIds::backgroundColourId,
+      juce::Colour(this->proc.plug.guiSpec.backgroundColour));
+  this->knobLookAndFeel.setColour(juce::ComboBox::ColourIds::textColourId,
+      juce::Colour(this->proc.plug.guiSpec.foregroundColour));
   for (auto& knob : this->allPrimaryKnobs) { knob->lookAndFeelChanged(); }
   for (auto& knob : this->allSecondaryKnobs) { knob->lookAndFeelChanged(); }
 }
@@ -99,13 +108,13 @@ void NtCompressorAudioProcessorEditor::initDropDown(
     std::transform(option.begin(), option.end(), option.begin(), ::toupper);
     p_box->addItem(option, i + 1);
   }
+  p_box->setLookAndFeel(&this->knobLookAndFeel);
   p_box->setSelectedItemIndex(2, juce::NotificationType::dontSendNotification);
-  p_box->setColour(
-      juce::ComboBox::ColourIds::backgroundColourId, juce::Colours::darkgrey);
   p_box->setName(spec.name);
   p_box->addListener(this);
   this->addAndMakeVisible(*p_box);
   auto p_label = std::make_unique<juce::Label>(spec.name);
+  p_box->setColour(juce::Label::ColourIds::textColourId, juce::Colours::white);
   p_label->setJustificationType(juce::Justification::right);
   std::string name = spec.name;
   std::replace(name.begin(), name.end(), '_', ' ');
@@ -114,7 +123,13 @@ void NtCompressorAudioProcessorEditor::initDropDown(
   this->allDropDownAttachments.emplace_back(
       new juce::AudioProcessorValueTreeState::ComboBoxAttachment(
           this->proc.parameters, spec.name, *p_box));
+  // TODO: I think I understand something about JUCE now. The TitleBar should
+  // have it's own look and feel.
   if (addToTitleBar) {
+    p_box->setColour(
+        juce::ComboBox::ColourIds::backgroundColourId, juce::Colours::darkgrey);
+    p_box->setColour(
+        juce::ComboBox::ColourIds::textColourId, juce::Colours::white);
     this->titleBarDropDowns.push_back(std::move(p_box));
     this->titleBarDropDownLabels.push_back(std::move(p_label));
   } else {
@@ -151,7 +166,6 @@ void NtCompressorAudioProcessorEditor::_initKnob(NtFx::KnobSpec<float>& spec,
   std::string name(spec.name);
   std::replace(name.begin(), name.end(), '_', ' ');
   p_label->setText(name, juce::NotificationType::dontSendNotification);
-
   p_slider->setTextValueSuffix(spec.suffix);
   p_slider->setSliderStyle(juce::Slider::SliderStyle::Rotary);
   p_slider->addListener(this);
@@ -221,6 +235,7 @@ void NtCompressorAudioProcessorEditor::updateUi() {
     this->updateSecondaryKnobs(area);
   }
   this->updatePrimaryKnobs(area);
+  // for (auto& drop : this->titleBarDropDowns) { drop->lookAndFeelChanged(); }
   this->repaint();
 }
 
@@ -232,14 +247,18 @@ void NtCompressorAudioProcessorEditor::updateTitleBar(
   this->grayAreas.push_back(titleBarArea);
   titleBarArea.reduce(pad, pad);
   for (int i = 0; i < this->proc.titleBarSpec.dropDowns.size(); i++) {
+    // TODO: 0.6?? Store somewhere.
     this->titleBarDropDownLabels[i]->setFont(juce::FontOptions(
-        this->proc.plug.guiSpec.defaultFontSize * this->uiScale * 0.6));
+        this->proc.plug.guiSpec.defaultFontSize * this->uiScale)); // * 0.6));
+    this->titleBarDropDownLabels[i]->setColour(
+        juce::Label::ColourIds::textColourId, juce::Colours::white);
     this->titleBarDropDownLabels[i]->setBounds(
         titleBarArea.removeFromLeft(100 * this->uiScale));
     this->titleBarDropDowns[i]->setBounds(
         titleBarArea.removeFromLeft(100 * this->uiScale));
   }
 }
+
 void NtCompressorAudioProcessorEditor::updateMeters(
     juce::Rectangle<int>& area) {
   auto meterArea =
@@ -256,7 +275,7 @@ void NtCompressorAudioProcessorEditor::updateBottomRow(
   // TODO: wrap to next row if too many.
   auto bottomRowArea = area.removeFromBottom(
       this->proc.plug.guiSpec.toggleHeight * this->uiScale);
-  auto togglePad = 10 * this->uiScale;
+  auto pad = 10 * this->uiScale;
   this->borderedAreas.push_back(bottomRowArea);
   auto nToggles    = this->proc.plug.toggles.size();
   auto nDropdowns  = this->proc.plug.dropdowns.size();
@@ -265,9 +284,13 @@ void NtCompressorAudioProcessorEditor::updateBottomRow(
   for (size_t i = 0; i < nDropdowns; i++) {
     auto dropdownArea = bottomRowArea.removeFromLeft(columnWidth * 2);
     auto labelArea    = dropdownArea.removeFromLeft(columnWidth);
-    dropdownArea.reduce(togglePad, togglePad);
-    labelArea.reduce(togglePad, togglePad);
+    dropdownArea.reduce(pad, pad);
+    labelArea.reduce(pad, pad);
     this->allDropDowns[i]->setBounds(dropdownArea);
+    this->allDropDowns[i]->setColour(juce::ComboBox::ColourIds::textColourId,
+        juce::Colour(this->proc.plug.guiSpec.foregroundColour));
+    this->allDropDowns[i]->setColour(juce::ComboBox::ColourIds::arrowColourId,
+        juce::Colour(this->proc.plug.guiSpec.foregroundColour));
     this->allDropDownLabels[i]->setBounds(labelArea);
     this->allDropDownLabels[i]->setFont(juce::FontOptions(
         this->proc.plug.guiSpec.defaultFontSize * this->uiScale));
@@ -389,12 +412,16 @@ void NtCompressorAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
 }
 
 void NtCompressorAudioProcessorEditor::comboBoxChanged(juce::ComboBox* p_box) {
-  if (!this->isInitialized) { return; }
+  // if (!this->isInitialized) { return; }
   // TODO: this stinks.
   if (this->titleBarDropDowns.size() < 3) { return; }
-  if (p_box == this->titleBarDropDowns[0].get()) { this->updateUiScale(); }
-  if (p_box == this->titleBarDropDowns[1].get()) { this->updateTheme(); }
-  if (p_box == this->titleBarDropDowns[2].get()) { this->updateOversampling(); }
+  if (p_box == this->titleBarDropDowns[e_uiScale].get()) {
+    this->updateUiScale();
+  }
+  if (p_box == this->titleBarDropDowns[e_theme].get()) { this->updateTheme(); }
+  if (p_box == this->titleBarDropDowns[e_oversampling].get()) {
+    this->updateOversampling();
+  }
   auto name  = p_box->getName().toStdString();
   auto p_val = this->proc.plug.getDropDownValuePtr(name);
   if (!p_val) { return; }
@@ -403,7 +430,7 @@ void NtCompressorAudioProcessorEditor::comboBoxChanged(juce::ComboBox* p_box) {
 }
 
 void NtCompressorAudioProcessorEditor::updateUiScale() {
-  auto p_box = this->titleBarDropDowns[0].get();
+  auto p_box = this->titleBarDropDowns[e_uiScale].get();
   switch (p_box->getSelectedId()) {
   case 1:
     this->uiScale = 0.5;
@@ -434,7 +461,7 @@ void NtCompressorAudioProcessorEditor::updateUiScale() {
 }
 
 void NtCompressorAudioProcessorEditor::updateOversampling() {
-  auto p_box = this->titleBarDropDowns[1].get();
+  auto p_box = this->titleBarDropDowns[e_oversampling].get();
   this->proc.updateOversampling(p_box->getSelectedId());
 }
 
@@ -445,7 +472,7 @@ void NtCompressorAudioProcessorEditor::updateTheme() {
           || this->proc.plug.guiSpec.foregroundColour == 0xFFFFFFFF)) {
     return;
   }
-  auto p_box = this->titleBarDropDowns[2].get();
+  auto p_box = this->titleBarDropDowns[e_theme].get();
   auto val   = p_box->getSelectedId();
   switch (val) {
   case 1:

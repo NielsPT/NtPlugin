@@ -19,14 +19,44 @@
 namespace NtFx {
 // TODO: A prettier knob.
 // TODO: Make it a component instead like Toggle. Maybe...
+// TODO: OR build an NrPluginLookAndFeel that holds all of it.
 struct KnobLookAndFeel : public juce::LookAndFeel_V4 {
-  int fontSize  = 1;
-  float uiScale = 1;
+  float fontSize = 1;
+  float uiScale  = 1;
   uint32_t backgroundColour { 0xFFD3D3D3 };
   uint32_t foregroundColour { 0xFF000000 };
 
   juce::Font getLabelFont(juce::Label& l) override {
     return juce::Font(juce::FontOptions(this->fontSize));
+  }
+  void drawComboBox(juce::Graphics& g,
+      int width,
+      int height,
+      bool,
+      int,
+      int,
+      int,
+      int,
+      juce::ComboBox& box) override {
+    // TODO: This AL slop does not work. The text does scale, but it's not
+    // setFont that does it... ?
+    // g.setFont(juce::Font(juce::FontOptions(fontSize * 0.6)));
+    LookAndFeel_V4::drawComboBox(g, width, height, true, 0, 0, 0, 0, box);
+    // TODO: This AL slop does not work.
+    // const float arrowX    = width - 25.0f * uiScale;
+    // const float arrowY    = height * 0.5f;
+    // const float arrowSize = 10.0f * uiScale;
+
+    // juce::Path arrowPath;
+    // arrowPath.addTriangle(arrowX,
+    //     arrowY - arrowSize,
+    //     arrowX + arrowSize,
+    //     arrowY - arrowSize,
+    //     arrowX + 0.5f * arrowSize,
+    //     arrowY + arrowSize);
+
+    // g.setColour(box.findColour(juce::ComboBox::buttonColourId));
+    // g.fillPath(arrowPath);
   }
   void drawRotarySlider(juce::Graphics& g,
       int x,

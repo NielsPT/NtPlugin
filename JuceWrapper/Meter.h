@@ -72,7 +72,7 @@ struct MonoMeter : public juce::Component {
         0,
         y,
         this->getWidth(),
-        this->guiSpec.labelHeight,
+        this->fontSize,
         juce::Justification::centred);
     for (size_t i = 1; i < this->nDots + 1; i++) {
       int y;
