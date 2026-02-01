@@ -94,13 +94,6 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
           .maxVal = 80.0,
       },
       {
-          .p_val  = &this->mix_percent,
-          .name   = "Mix",
-          .suffix = " %",
-          .minVal = 0.0,
-          .maxVal = 100.0,
-      },
-      {
           .p_val    = &this->scHpfSettings.fc_hz,
           .name     = "SC_HPF",
           .suffix   = " hz",
@@ -114,6 +107,13 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
           .suffix = " dB",
           .minVal = 0.0,
           .maxVal = 24.0,
+      },
+      {
+          .p_val  = &this->mix_percent,
+          .name   = "Mix",
+          .suffix = " %",
+          .minVal = 0.0,
+          .maxVal = 100.0,
       },
     };
 

@@ -181,28 +181,32 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 NtCompressorAudioProcessor::createParameterLayout() {
   int i = 1;
   juce::AudioProcessorValueTreeState::ParameterLayout parameters;
-  for (auto p : this->plug.primaryKnobs) {
-    juce::ParameterID id(p.name, i++);
-    std::string name(p.name);
+  for (auto k : this->plug.primaryKnobs) {
+    if (!k.p_val) { continue; }
+    juce::ParameterID id(k.name, i++);
+    std::string name(k.name);
     std::replace(name.begin(), name.end(), '_', ' ');
     parameters.add(std::make_unique<juce::AudioParameterFloat>(
-        id, name, p.minVal, p.maxVal, p.defaultVal));
+        id, name, k.minVal, k.maxVal, k.defaultVal));
   }
-  for (auto p : this->plug.secondaryKnobs) {
-    juce::ParameterID id(p.name, i++);
-    std::string name(p.name);
+  for (auto k : this->plug.secondaryKnobs) {
+    if (!k.p_val) { continue; }
+    juce::ParameterID id(k.name, i++);
+    std::string name(k.name);
     std::replace(name.begin(), name.end(), '_', ' ');
     parameters.add(std::make_unique<juce::AudioParameterFloat>(
-        id, name, p.minVal, p.maxVal, p.defaultVal));
+        id, name, k.minVal, k.maxVal, k.defaultVal));
   }
-  for (auto p : this->plug.toggles) {
-    juce::ParameterID id(p.name, i++);
-    std::string name(p.name);
+  for (auto t : this->plug.toggles) {
+    if (!t.p_val) { continue; }
+    juce::ParameterID id(t.name, i++);
+    std::string name(t.name);
     std::replace(name.begin(), name.end(), '_', ' ');
     parameters.add(
-        std::make_unique<juce::AudioParameterBool>(id, name, p.defaultVal));
+        std::make_unique<juce::AudioParameterBool>(id, name, t.defaultVal));
   }
   for (auto d : this->titleBarSpec.dropDowns) {
+    // if (!d.p_val) { continue; }
     juce::ParameterID id(d.name, i++);
     std::string name(d.name);
     std::replace(name.begin(), name.end(), '_', ' ');
@@ -212,6 +216,7 @@ NtCompressorAudioProcessor::createParameterLayout() {
         id, name, options, d.defaultIdx));
   }
   for (auto d : this->plug.dropdowns) {
+    // if (!d.p_val) { continue; }
     juce::ParameterID id(d.name, i++);
     std::string name(d.name);
     std::replace(name.begin(), name.end(), '_', ' ');

@@ -109,9 +109,15 @@ struct NtPlugin {
    *
    */
   constexpr void updateDefaults() noexcept {
-    for (auto& k : this->primaryKnobs) { k.defaultVal = *k.p_val; }
-    for (auto& k : this->secondaryKnobs) { k.defaultVal = *k.p_val; }
-    for (auto& t : this->toggles) { t.defaultVal = *t.p_val; }
+    for (auto& k : this->primaryKnobs) {
+      if (k.p_val) { k.defaultVal = *k.p_val; }
+    }
+    for (auto& k : this->secondaryKnobs) {
+      if (k.p_val) { k.defaultVal = *k.p_val; }
+    }
+    for (auto& t : this->toggles) {
+      if (t.p_val) { t.defaultVal = *t.p_val; }
+    }
   }
 
   /**

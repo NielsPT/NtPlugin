@@ -145,6 +145,7 @@ void NtCompressorAudioProcessorEditor::initSecondaryKnob(
 void NtCompressorAudioProcessorEditor::_initKnob(NtFx::KnobSpec<float>& spec,
     std::unique_ptr<juce::Slider>& p_slider,
     std::unique_ptr<juce::Label>& p_label) {
+  if (!spec.p_val) { return; }
   p_slider->setLookAndFeel(&this->knobLookAndFeel);
   p_label->setJustificationType(juce::Justification::centred);
   std::string name(spec.name);
@@ -154,8 +155,8 @@ void NtCompressorAudioProcessorEditor::_initKnob(NtFx::KnobSpec<float>& spec,
   p_slider->setTextValueSuffix(spec.suffix);
   p_slider->setSliderStyle(juce::Slider::SliderStyle::Rotary);
   p_slider->addListener(this);
-  addAndMakeVisible(p_slider.get());
-  addAndMakeVisible(p_label.get());
+  this->addAndMakeVisible(p_slider.get());
+  this->addAndMakeVisible(p_label.get());
   this->allKnobAttachments.emplace_back(
       new juce::AudioProcessorValueTreeState::SliderAttachment(
           this->proc.parameters, spec.name, *p_slider));
@@ -165,16 +166,18 @@ void NtCompressorAudioProcessorEditor::_initKnob(NtFx::KnobSpec<float>& spec,
 
 void NtCompressorAudioProcessorEditor::initToggle(NtFx::ToggleSpec& spec) {
   auto p_button = std::make_unique<NtFx::Toggle>(spec.name);
-  addAndMakeVisible(p_button.get());
-  p_button->setClickingTogglesState(true);
-  p_button->setToggleable(true);
-  p_button->addListener(this);
-  std::string name(spec.name);
-  std::replace(name.begin(), name.end(), '_', ' ');
-  p_button->setButtonText(name);
-  this->allToggleAttachments.emplace_back(
-      new juce::AudioProcessorValueTreeState::ButtonAttachment(
-          this->proc.parameters, spec.name, *p_button));
+  if (spec.p_val) {
+    this->addAndMakeVisible(p_button.get());
+    p_button->setClickingTogglesState(true);
+    p_button->setToggleable(true);
+    p_button->addListener(this);
+    std::string name(spec.name);
+    std::replace(name.begin(), name.end(), '_', ' ');
+    p_button->setButtonText(name);
+    this->allToggleAttachments.emplace_back(
+        new juce::AudioProcessorValueTreeState::ButtonAttachment(
+            this->proc.parameters, spec.name, *p_button));
+  }
   this->allToggles.push_back(std::move(p_button));
 }
 

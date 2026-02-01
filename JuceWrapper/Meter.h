@@ -25,7 +25,7 @@
 
 namespace NtFx {
 struct MonoMeter : public juce::Component {
-  StereoMeterSpec& meterSpec;
+  MeterSpec& meterSpec;
   GuiSpec& guiSpec;
   int pad                = 10;
   int dotDiameter        = 0;
@@ -44,7 +44,7 @@ struct MonoMeter : public juce::Component {
   bool isInitialized     = false;
   int fontSize           = 20;
 
-  MonoMeter(StereoMeterSpec& meterSpec, GuiSpec& guiSpec)
+  MonoMeter(MeterSpec& meterSpec, GuiSpec& guiSpec)
       : meterSpec(meterSpec), guiSpec(guiSpec),
         nDots(guiSpec.meterHeight_dots) {
     this->refresh();
@@ -203,7 +203,7 @@ struct StereoMeter : public juce::Component {
   float uiScale { 1 };
   bool hasScale { false };
 
-  StereoMeter(StereoMeterSpec& meterSpec, GuiSpec& guiSpec)
+  StereoMeter(MeterSpec& meterSpec, GuiSpec& guiSpec)
       : l(meterSpec, guiSpec), r(meterSpec, guiSpec), spec(guiSpec),
         label(meterSpec.name, meterSpec.name) {
     this->addAndMakeVisible(this->label);

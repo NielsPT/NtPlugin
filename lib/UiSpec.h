@@ -5,14 +5,6 @@
 #include <vector>
 
 namespace NtFx {
-// TODO: general parameter class.
-// TODO: "Dummy"/empty parameters for skipping fields in grid.
-// TODO: Option to disable/gray out parameters.
-// TODO: IDEA: Knob groups.
-// TODO: Int parameters?
-// - Each group takes up an area in the primary knob grid.
-// - Each group can contain a number of primary and secondary knobs. Primary are
-// placed on a row in the top of the group, secondary in a grid below.
 /**
  * @brief Specification for a knob.
  *
@@ -56,7 +48,11 @@ struct ToggleSpec {
 
 /** Size of meter peak level array and thus max number of meters available. */
 constexpr int nMetersMax = 8;
-struct StereoMeterSpec {
+/**
+ * @brief Specification for meters.
+ *
+ */
+struct MeterSpec {
   /** Name of meter, used for label and id. */
   std::string name { "" };
   /** Top value of meter. */
@@ -117,7 +113,7 @@ struct GuiSpec {
   /** Refresh rate of the timer that updates the meters in the UI. */
   float meterRefreshRate_hz { 30 };
   /** List of all meters to be displayed in the UI. */
-  std::vector<StereoMeterSpec> meters;
+  std::vector<MeterSpec> meters;
 };
 
 /**

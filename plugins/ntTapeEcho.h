@@ -72,6 +72,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       { &this->tGui, "Time", " s", 0.02, 2 },
       { &this->fb_percent, "Feedback", " %", 0, 200 },
       { &this->clipG_db, "Drive", " dB", -20, 20 },
+      {},
       { &this->hpfSettings.fc_hz, "HPF", " Hz", 20, 2000 },
       { &this->lpfSettings.fc_hz, "LPF", " Hz", 200, 20000 },
     };
