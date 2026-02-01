@@ -1,6 +1,7 @@
 #pragma once
 
 #include "lib/Biquad.h"
+#include "lib/Glider.h"
 #include "lib/Plugin.h"
 #include "lib/SoftClip.h"
 #include "lib/Stereo.h"
@@ -9,6 +10,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <vector>
 
 enum SubDev : int {
   half,
@@ -42,27 +44,31 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
   bool bypass               = false;
   SubDev subDev             = SubDev::fourth;
   signal_t tempoScale       = 1;
-  size_t nGlide             = 4;
+  // size_t nGlide             = 4;
   NtFx::Biquad::EqBand<signal_t> hpf;
   NtFx::Biquad::EqBand<signal_t> lpf;
   NtFx::Stereo<signal_t> fbState;
   std::array<NtFx::Stereo<signal_t>, delayLineLength> delayLine;
-  signal_t fb_lin         = 0.2;
-  signal_t noise_lin      = 0;
-  size_t nDelayGui        = 24000;
-  size_t nDelayGlided     = 24000;
-  size_t iStore           = 0;
-  signal_t aClip_lin      = 1;
-  size_t timeCounter      = 0;
-  size_t nOffset          = 0;
-  signal_t mix_lin        = 1;
-  signal_t modDepth       = 0.1;
-  signal_t thetaMod       = 0;
-  signal_t thetaModOffset = 0;
-  int glideCount          = 0;
+  signal_t fb_lin    = 0.2;
+  signal_t noise_lin = 0;
+  // size_t nDelayGui        = 24000;
+  // size_t nDelayGlided     = 24000;
+  NtFx::Glider<signal_t> nDelay = 24000;
+  size_t iStore                 = 0;
+  signal_t aClip_lin            = 1;
+  size_t timeCounter            = 0;
+  size_t nOffset                = 0;
+  signal_t mix_lin              = 1;
+  // signal_t modDepth       = 0.1;
+  NtFx::Glider<signal_t> modDepth;
+  NtFx::Glider<signal_t> thetaMod;
+  NtFx::Glider<signal_t> thetaModOffset;
+  // int glideCount          = 0;
   std::array<signal_t, 3> softClipCoeffs;
+  // std::vector<Glider<signal_t>> allGliders;
 
-  ntTapeEcho() {
+  ntTapeEcho() : modDepth(0.1) {
+    // this->allGliders   = { modDepth, thetaMod, thetaModOffset, nDelay };
     this->primaryKnobs = {
       { &this->tGui, "Time", " s", 0.02, 2 },
       { &this->fb_percent, "Feedback", " %", 0, 200 },
@@ -121,6 +127,11 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
   }
   virtual NtFx::Stereo<signal_t> processSample(
       NtFx::Stereo<signal_t> x) noexcept override {
+    // for (auto g : this->allGliders) { g.process(); }
+    this->nDelay.process();
+    this->modDepth.process();
+    this->thetaMod.process();
+    this->thetaModOffset.process();
     auto xNoisy = x + NtFx::rand<signal_t>() * this->noise_lin;
     NtFx::ensureFinite<NtFx::Stereo<signal_t>>(xNoisy);
     NtFx::ensureFinite<NtFx::Stereo<signal_t>>(this->fbState);
@@ -128,16 +139,16 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     if (this->iStore >= delayLineLength) { this->iStore = 0; }
     this->delayLine[this->iStore] = xNoisy + this->fb_lin * this->fbState;
 
-    int nModL = this->nDelayGlided;
-    int nModR = this->nDelayGlided + this->nOffset;
+    int nModL = this->nDelay.pr;
+    int nModR = this->nDelay.pr + this->nOffset;
     if (this->mod) {
-      auto modSawL = NtFx::saw(this->thetaMod * this->timeCounter);
-      auto modSawR =
-          NtFx::saw(this->thetaMod * this->timeCounter + this->thetaModOffset);
-      nModL = std::round(modSawL * this->nDelayGlided * this->modDepth)
-          + this->nDelayGlided;
-      nModR = std::round(modSawR * this->nDelayGlided * this->modDepth)
-          + this->nDelayGlided + this->nOffset;
+      auto modSawL = NtFx::saw(this->thetaMod.pr * this->timeCounter);
+      auto modSawR = NtFx::saw(
+          this->thetaMod.pr * this->timeCounter + this->thetaModOffset.pr);
+      nModL = std::round(modSawL * this->nDelay.pr * this->modDepth.pr)
+          + this->nDelay.pr;
+      nModR = std::round(modSawR * this->nDelay.pr * this->modDepth.pr)
+          + this->nDelay.pr + this->nOffset;
       this->timeCounter++;
     }
 
@@ -155,20 +166,20 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     auto yHp = hpf.processSample(yFbClip);
     auto yLp = lpf.processSample(yHp);
 
-    // TODO: This sounds like shit. Make a proper glider.
-    if (this->nGlide == 0) {
-      this->nDelayGlided = this->nDelayGui;
-    } else {
-      this->glideCount--;
-      if (this->glideCount >= 0) {
-        if (this->nDelayGui > this->nDelayGlided) {
-          this->nDelayGlided++;
-        } else if (this->nDelayGui < this->nDelayGlided) {
-          this->nDelayGlided--;
-        }
-        this->glideCount = this->nGlide;
-      }
-    }
+    // // TODO: This sounds like shit. Make a proper glider.
+    // if (this->nGlide == 0) {
+    //   this->nDelayGlided = this->nDelayGui;
+    // } else {
+    //   this->glideCount--;
+    //   if (this->glideCount >= 0) {
+    //     if (this->nDelayGui > this->nDelayGlided) {
+    //       this->nDelayGlided++;
+    //     } else if (this->nDelayGui < this->nDelayGlided) {
+    //       this->nDelayGlided--;
+    //     }
+    //     this->glideCount = this->nGlide;
+    //   }
+    // }
     this->fbState = yLp;
     auto yOutClip = yLp;
     if (this->clip) {
@@ -186,12 +197,12 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
   virtual void updateCoeffs() noexcept override {
     this->hpf.updateCoeffs(this->fs);
     this->lpf.updateCoeffs(this->fs);
-    this->nOffset   = std::round(this->tOffset / 1000 * this->fs);
-    this->aClip_lin = NtFx::invDb(this->clipG_db);
-    this->mix_lin   = this->mix_percent / 100;
-    this->fb_lin    = this->fb_percent / 100;
-    this->noise_lin = NtFx::invDb(this->noise_db);
-    this->modDepth  = this->modDepth_percent / 100;
+    this->nOffset     = std::round(this->tOffset / 1000 * this->fs);
+    this->aClip_lin   = NtFx::invDb(this->clipG_db);
+    this->mix_lin     = this->mix_percent / 100;
+    this->fb_lin      = this->fb_percent / 100;
+    this->noise_lin   = NtFx::invDb(this->noise_db);
+    this->modDepth.ui = this->modDepth_percent / 100;
     switch (this->subDev) {
     case SubDev::half:
       this->tempoScale = 2;
@@ -212,10 +223,15 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       this->tempoScale = 0.25;
       break;
     }
-    this->thetaMod       = 2.0 * M_PI * this->modFreq / this->fs;
-    this->thetaModOffset = this->modPhase * M_PI / 180;
-    this->glideCount     = this->nGlide;
+    this->thetaMod.ui       = 2.0 * M_PI * this->modFreq / this->fs;
+    this->thetaModOffset.ui = this->modPhase * M_PI / 180;
+    // this->glideCount     = this->nGlide;
+    // for (auto g : this->allGliders) { g.update(this->fs); }
     this->onTempoChanged();
+    this->nDelay.update(this->fs);
+    this->modDepth.update(this->fs);
+    this->thetaMod.update(this->fs);
+    this->thetaModOffset.update(this->fs);
   }
   virtual void reset(int fs) noexcept override {
     this->fs = fs;
@@ -230,6 +246,6 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       this->primaryKnobs[0].isActive = true;
     }
     this->uiNeedsUpdate = true;
-    this->nDelayGui     = std::round(this->tGui * this->fs);
+    this->nDelay.ui     = std::round(this->tGui * this->fs);
   }
 };
