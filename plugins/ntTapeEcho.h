@@ -43,13 +43,8 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
   SubDev subDev             = SubDev::fourth;
   signal_t tempoScale       = 1;
   size_t nGlide             = 4;
-  NtFx::Biquad::Settings<signal_t> hpfSettings;
-  NtFx::Biquad::Settings<signal_t> lpfSettings;
-
-  NtFx::Biquad::Coeffs5<signal_t> hpfCoeffs;
-  NtFx::Biquad::Coeffs5<signal_t> lpfCoeffs;
-  NtFx::Biquad::StereoState<signal_t> hpfState;
-  NtFx::Biquad::StereoState<signal_t> lpfState;
+  NtFx::Biquad::EqBand<signal_t> hpf;
+  NtFx::Biquad::EqBand<signal_t> lpf;
   NtFx::Stereo<signal_t> fbState;
   std::array<NtFx::Stereo<signal_t>, delayLineLength> delayLine;
   signal_t fb_lin         = 0.2;
@@ -72,15 +67,14 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       { &this->tGui, "Time", " s", 0.02, 2 },
       { &this->fb_percent, "Feedback", " %", 0, 200 },
       { &this->clipG_db, "Drive", " dB", -20, 20 },
-      {},
-      { &this->hpfSettings.fc_hz, "HPF", " Hz", 20, 2000 },
-      { &this->lpfSettings.fc_hz, "LPF", " Hz", 200, 20000 },
+      { &this->hpf.settings.fc_hz, "HPF", " Hz", 20, 2000 },
+      { &this->lpf.settings.fc_hz, "LPF", " Hz", 200, 20000 },
     };
     this->primaryKnobs[3].setLogScale();
     this->primaryKnobs[4].setLogScale();
     this->secondaryKnobs = {
-      { &this->hpfSettings.q, "Q_HP", "", 0.5, 2, 1 },
-      { &this->lpfSettings.q, "Q_LP", "", 0.5, 2, 1 },
+      { &this->hpf.settings.q, "Q_HP", "", 0.5, 2, 1 },
+      { &this->lpf.settings.q, "Q_LP", "", 0.5, 2, 1 },
       { &this->modFreq, "Mod_Freq", " Hz", 0.1, 10 },
       { &this->modDepth_percent, "Mod_Depth", " %", 0.1, 10 },
       { &this->modPhase, "Mod_Phase", "deg", 0, 180 },
@@ -117,12 +111,12 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       { &this->clip, "Output drive" },
       { &this->bypass, "Bypass" },
     };
-    this->guiSpec.meters    = { { "IN" }, { "OUT", .hasScale = true } };
-    this->lpfSettings.shape = NtFx::Biquad::Shape::lpf;
-    this->hpfSettings.shape = NtFx::Biquad::Shape::hpf;
-    this->lpfSettings.fc_hz = 20e3;
-    this->hpfSettings.fc_hz = 20;
-    this->softClipCoeffs    = NtFx::calculateSoftClipCoeffs<signal_t, 2>();
+    this->guiSpec.meters     = { { "IN" }, { "OUT", .hasScale = true } };
+    this->lpf.settings.shape = NtFx::Biquad::Shape::lpf;
+    this->hpf.settings.shape = NtFx::Biquad::Shape::hpf;
+    this->lpf.settings.fc_hz = 20e3;
+    this->hpf.settings.fc_hz = 20;
+    this->softClipCoeffs     = NtFx::calculateSoftClipCoeffs<signal_t, 2>();
     this->updateDefaults();
   }
   virtual NtFx::Stereo<signal_t> processSample(
@@ -158,10 +152,8 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     auto yFbClip =
         NtFx::softClip3rdStereo(yDelay * this->aClip_lin) / aClip_lin;
     NtFx::ensureFinite<NtFx::Stereo<signal_t>>(yFbClip);
-    auto yHp =
-        NtFx::Biquad::biQuad5Stereo(&this->hpfCoeffs, &this->hpfState, yFbClip);
-    auto yLp =
-        NtFx::Biquad::biQuad5Stereo(&this->lpfCoeffs, &this->lpfState, yHp);
+    auto yHp = hpf.processSample(yFbClip);
+    auto yLp = lpf.processSample(yHp);
 
     // TODO: This sounds like shit. Make a proper glider.
     if (this->nGlide == 0) {
@@ -192,8 +184,8 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     return y;
   }
   virtual void updateCoeffs() noexcept override {
-    this->hpfCoeffs = NtFx::Biquad::calcCoeffs5(this->hpfSettings, this->fs);
-    this->lpfCoeffs = NtFx::Biquad::calcCoeffs5(this->lpfSettings, this->fs);
+    this->hpf.updateCoeffs(this->fs);
+    this->lpf.updateCoeffs(this->fs);
     this->nOffset   = std::round(this->tOffset / 1000 * this->fs);
     this->aClip_lin = NtFx::invDb(this->clipG_db);
     this->mix_lin   = this->mix_percent / 100;

@@ -51,48 +51,79 @@ namespace Biquad {
     State<signal_t> r;
   };
 
-  template <typename signal_t>
-  static inline signal_t biQuad6(
-      const Coeffs6<signal_t>* p_coeffs, State<signal_t>* p_state, signal_t x) {
-    signal_t y = p_coeffs->b[0] * x + p_coeffs->b[1] * p_state->x[0]
-        + p_coeffs->b[2] * p_state->x[1] - p_coeffs->a[1] * p_state->y[0]
-        - p_coeffs->a[2] * p_state->y[1];
-    p_state->y[1] = p_state->y[0];
-    p_state->y[0] = y / p_coeffs->a[0];
-    p_state->x[1] = p_state->x[0];
-    p_state->x[0] = x;
-    return y;
-  }
+  // template <typename signal_t>
+  // struct Biquad6 {
+  //   Coeffs6<signal_t> coeffs;
+  //   State<signal_t> state;
+  //   inline signal_t processSample(signal_t x) {
+  //     signal_t y = this->coeffs.b[0] * x + this->coeffs.b[1] *
+  //     this->state.x[0]
+  //         + this->coeffs.b[2] * this->state.x[1]
+  //         - this->coeffs.a[1] * this->state.y[0]
+  //         - this->coeffs.a[2] * this->state.y[1];
+  //     this->state.y[1] = this->state.y[0];
+  //     this->state.y[0] = y / this->coeffs.a[0];
+  //     this->state.x[1] = this->state.x[0];
+  //     this->state.x[0] = x;
+  //     return y;
+  //   }
+  //   inline void updateCoeffs(Settings<signal_t>& settings, float fs) {
+  //     this->coeffs = calcCoeffs6<signal_t>(settings, fs);
+  //   }
+  //   // inline void reset() { this->state.reset(); }
+  // };
+
+  // template <typename signal_t>
+  // struct BiQuad6Stereo {
+  //   Settings<signal_t> settings;
+  //   Biquad6<signal_t> l;
+  //   Biquad6<signal_t> r;
+  //   inline Stereo<signal_t> processSample(Stereo<signal_t> x) {
+  //     return { l.processSample(x.l), r.processSample(x.r) };
+  //   }
+  //   inline void updateCoeffs(float fs) {
+  //     this->l.updateCoeffs(this->settings, fs);
+  //     this->r.updateCoeffs(this->settings, fs);
+  //   }
+  //   // inline void reset() {
+  //   //   this->l.reset();
+  //   //   this->r.reset();
+  //   // }
+  // };
 
   template <typename signal_t>
-  static inline Stereo<signal_t> biQuad6s(const Coeffs6<signal_t>* p_coeffs,
-      State<signal_t>* p_stateL,
-      State<signal_t>* p_stateR,
-      Stereo<signal_t> x) {
-    return { biQuad(p_coeffs, p_stateL, x.l), biQuad(p_coeffs, p_stateR, x.r) };
-  }
+  struct Biquad5 {
+    Coeffs5<signal_t> coeffs;
+    State<signal_t> state;
+    inline signal_t processSample(signal_t x) {
+      signal_t y = this->coeffs.b[0] * x + this->coeffs.b[1] * this->state.x[0]
+          + this->coeffs.b[2] * this->state.x[1]
+          - this->coeffs.a[0] * this->state.y[0]
+          - this->coeffs.a[1] * this->state.y[1];
+      this->state.y[1] = this->state.y[0];
+      this->state.y[0] = y;
+      this->state.x[1] = this->state.x[0];
+      this->state.x[0] = x;
+      return y;
+    }
+    inline void updateCoeffs(Settings<signal_t>& settings, float fs) {
+      this->coeffs = calcCoeffs5<signal_t>(settings, fs);
+    }
+  };
 
   template <typename signal_t>
-  static inline signal_t biQuad5(
-      const Coeffs5<signal_t>* p_coeffs, State<signal_t>* p_state, signal_t x) {
-    signal_t y = p_coeffs->b[0] * x + p_coeffs->b[1] * p_state->x[0]
-        + p_coeffs->b[2] * p_state->x[1] - p_coeffs->a[0] * p_state->y[0]
-        - p_coeffs->a[1] * p_state->y[1];
-    p_state->y[1] = p_state->y[0];
-    p_state->y[0] = y;
-    p_state->x[1] = p_state->x[0];
-    p_state->x[0] = x;
-    return y;
-  }
-
-  template <typename signal_t>
-  static inline Stereo<signal_t> biQuad5Stereo(
-      const Coeffs5<signal_t>* p_coeffs,
-      StereoState<signal_t>* p_state,
-      Stereo<signal_t> x) {
-    return { biQuad5(p_coeffs, &p_state->l, x.l),
-      biQuad5(p_coeffs, &p_state->r, x.r) };
-  }
+  struct EqBand {
+    Settings<signal_t> settings;
+    Biquad5<signal_t> l;
+    Biquad5<signal_t> r;
+    inline Stereo<signal_t> processSample(Stereo<signal_t> x) {
+      return { l.processSample(x.l), r.processSample(x.r) };
+    }
+    inline void updateCoeffs(float fs) {
+      this->l.updateCoeffs(this->settings, fs);
+      this->r.updateCoeffs(this->settings, fs);
+    }
+  };
 
   template <typename signal_t>
   static inline Coeffs5<signal_t> normalizeCoeffs(Coeffs6<signal_t> coeffs6) {
@@ -107,7 +138,7 @@ namespace Biquad {
 
   template <typename signal_t>
   static inline Coeffs5<signal_t> calcCoeffs5(
-      Settings<signal_t> settings, float fs) {
+      Settings<signal_t>& settings, float fs) {
     return calcCoeffs5<signal_t>(
         (settings.enable ? settings.shape : Shape::none),
         fs,
@@ -125,7 +156,7 @@ namespace Biquad {
 
   template <typename signal_t>
   static inline Coeffs6<signal_t> calcCoeffs6(
-      Settings<signal_t> settings, float fs) {
+      Settings<signal_t>& settings, float fs) {
     return calcCoeffs6<signal_t>(
         (settings.enable ? settings.shape : Shape::none),
         fs,
@@ -279,5 +310,5 @@ namespace Biquad {
     return c;
   }
 
-} // namespace Biquad
+} // namespace Eq
 } // namespace NtFx

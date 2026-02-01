@@ -31,12 +31,8 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   NtFx::Stereo<signal_t> fbState = static_cast<signal_t>(0.0);
   std::array<signal_t, 3> softClipCoeffs;
 
-  NtFx::Biquad::Settings<signal_t> scHpfSettings;
-  NtFx::Biquad::Settings<signal_t> scBoostSettings;
-  NtFx::Biquad::Coeffs5<signal_t> scHpfCoeffs;
-  NtFx::Biquad::Coeffs5<signal_t> scBoostCoeffs;
-  NtFx::Biquad::StereoState<signal_t> scHpfState;
-  NtFx::Biquad::StereoState<signal_t> scBoostState;
+  NtFx::Biquad::EqBand<signal_t> hpf;
+  NtFx::Biquad::EqBand<signal_t> boost;
 
   ntCompressor() {
     this->primaryKnobs = {
@@ -94,7 +90,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
           .maxVal = 80.0,
       },
       {
-          .p_val    = &this->scHpfSettings.fc_hz,
+          .p_val    = &this->hpf.settings.fc_hz,
           .name     = "SC_HPF",
           .suffix   = " hz",
           .minVal   = 20.0,
@@ -102,7 +98,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
           .midPoint = 200.0,
       },
       {
-          .p_val  = &this->scBoostSettings.gain_db,
+          .p_val  = &this->boost.settings.gain_db,
           .name   = "SC_Boost",
           .suffix = " dB",
           .minVal = 0.0,
@@ -135,11 +131,11 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     this->guiSpec.backgroundColour = 0xFFFFFFFF;
     // this->guiSpec.maxColumns         = 2;
     // this->guiSpec.defaultWindowWidth = 600;
-    this->scHpfSettings.fc_hz   = 20;
-    this->scBoostSettings.fc_hz = 3000.0;
-    this->softClipCoeffs        = NtFx::calculateSoftClipCoeffs<signal_t, 2>();
-    this->scBoostSettings.shape = NtFx::Biquad::Shape::bell;
-    this->scHpfSettings.shape   = NtFx::Biquad::Shape::hpf;
+    this->softClipCoeffs       = NtFx::calculateSoftClipCoeffs<signal_t, 2>();
+    this->hpf.settings.fc_hz   = 20;
+    this->boost.settings.fc_hz = 3000.0;
+    this->hpf.settings.shape   = NtFx::Biquad::Shape::hpf;
+    this->boost.settings.shape = NtFx::Biquad::Shape::bell;
 
     this->updateDefaults();
   }
@@ -156,10 +152,8 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     NtFx::Stereo<signal_t> xHpf = x;
     if (this->feedbackEnable) { xHpf = this->fbState; }
 
-    NtFx::Stereo<signal_t> xBoost = NtFx::Biquad::biQuad5Stereo(
-        &this->scHpfCoeffs, &this->scHpfState, xHpf);
-    NtFx::Stereo<signal_t> xSc = NtFx::Biquad::biQuad5Stereo(
-        &this->scBoostCoeffs, &this->scBoostState, xBoost);
+    NtFx::Stereo<signal_t> xBoost = hpf.processSample(xHpf);
+    NtFx::Stereo<signal_t> xSc    = boost.processSample(xBoost);
 
     NtFx::Stereo<signal_t> gr;
     if (this->linEnable) {
@@ -187,10 +181,12 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   }
 
   void updateCoeffs() noexcept override {
-    this->scHpfCoeffs =
-        NtFx::Biquad::calcCoeffs5<signal_t>(this->scHpfSettings, this->fs);
-    this->scBoostCoeffs =
-        NtFx::Biquad::calcCoeffs5<signal_t>(this->scBoostSettings, this->fs);
+    // this->scHpfCoeffs =
+    //     NtFx::Biquad::calcCoeffs5<signal_t>(this->scHpfSettings, this->fs);
+    // this->scBoostCoeffs =
+    //     NtFx::Biquad::calcCoeffs5<signal_t>(this->scBoostSettings, this->fs);
+    this->hpf.updateCoeffs(this->fs);
+    this->boost.updateCoeffs(this->fs);
     this->scCoeffs   = NtFx::SideChain::calcCoeffs(this->fs, &this->scSettings);
     this->makeup_lin = NtFx::invDb(this->makeup_db);
     this->mix_lin    = this->mix_percent / 100.0;
