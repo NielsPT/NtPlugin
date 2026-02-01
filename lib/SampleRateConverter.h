@@ -43,103 +43,112 @@ namespace Src {
     std::array<signal_t, nDelayLine> b;
   };
   template <typename signal_t>
-  Stereo<signal_t> processSample(NtPlugin<signal_t>& plug,
-      State<signal_t>& state,
-      const Coeffs<signal_t>& coeffs,
-      Stereo<signal_t> x) {
-    if (coeffs.disable) { return plug.processSample(x); }
-    state.dlInterpolation[state.iStoreIn]              = x;
-    state.dlInterpolation[state.iStoreIn + nDelayLine] = x;
-    if (++state.iStoreIn >= nDelayLine) { state.iStoreIn = 0; }
-    auto iReadIn = state.iStoreIn + nDelayLine;
-    for (size_t i = 0; i < coeffs.osFactor; i++) {
-      Stereo<signal_t> accum;
-      for (size_t j = 0; j < coeffs.osFirLenMult; j++) {
-        accum += coeffs.b[j * coeffs.osFactor + i]
-            * state.dlInterpolation[iReadIn - j];
+  struct SampleRateConverter {
+    NtPlugin<signal_t>& plug;
+    State<signal_t> state;
+    Coeffs<signal_t> coeffs;
+    SampleRateConverter(NtPlugin<signal_t>& plug) : plug(plug) { }
+    Stereo<signal_t> processSample(Stereo<signal_t> x) {
+      if (this->coeffs.disable) { return this->plug.processSample(x); }
+      this->state.dlInterpolation[this->state.iStoreIn]              = x;
+      this->state.dlInterpolation[this->state.iStoreIn + nDelayLine] = x;
+      if (++this->state.iStoreIn >= nDelayLine) { this->state.iStoreIn = 0; }
+      auto iReadIn = this->state.iStoreIn + nDelayLine;
+      for (size_t i = 0; i < this->coeffs.osFactor; i++) {
+        Stereo<signal_t> accum;
+        for (size_t j = 0; j < this->coeffs.osFirLenMult; j++) {
+          accum += this->coeffs.b[j * this->coeffs.osFactor + i]
+              * this->state.dlInterpolation[iReadIn - j];
+        }
+        auto xProc = accum * this->coeffs.osFactor;
+        auto yProc = this->plug.processSample(xProc);
+        this->state.dlAntialiasing[this->state.iStoreOut]              = yProc;
+        this->state.dlAntialiasing[this->state.iStoreOut + nDelayLine] = yProc;
+        if (++this->state.iStoreOut >= nDelayLine) {
+          this->state.iStoreOut = 0;
+        }
       }
-      auto xProc                            = accum * coeffs.osFactor;
-      auto yProc                            = plug.processSample(xProc);
-      state.dlAntialiasing[state.iStoreOut] = yProc;
-      state.dlAntialiasing[state.iStoreOut + nDelayLine] = yProc;
-      if (++state.iStoreOut >= nDelayLine) { state.iStoreOut = 0; }
+      auto iReadOut = this->state.iStoreOut + nDelayLine
+          - this->coeffs.osFactor * this->coeffs.osFirLenMult;
+      Stereo<signal_t> accum;
+      for (size_t i = 0; i < this->coeffs.osFactor * this->coeffs.osFirLenMult;
+          i++) {
+        accum += this->coeffs.b[i] * this->state.dlAntialiasing[iReadOut + i];
+      }
+      return accum;
     }
-    auto iReadOut =
-        state.iStoreOut + nDelayLine - coeffs.osFactor * coeffs.osFirLenMult;
-    Stereo<signal_t> accum;
-    for (size_t i = 0; i < coeffs.osFactor * coeffs.osFirLenMult; i++) {
-      accum += coeffs.b[i] * state.dlAntialiasing[iReadOut + i];
-    }
-    return accum;
-  }
-  // TODO: All of this only toucheds coeffs. Should we have a class?
-  template <typename signal_t>
-  static inline void update(
-      oversamplingMode mode, signal_t fs, Coeffs<signal_t>& coeffs) {
-    switch (mode) {
+    // TODO: All of this only toucheds this->coeffs. Should we have a class?
+    inline void update(oversamplingMode mode, signal_t fs) {
+      switch (mode) {
 
-      // TODO: IIR oversampling
-      // case iir_2x:
-      //   coeffs.osFactor = 2;
-      //   break;
-      // case iir_4x:
-      //   coeffs.osFactor = 4;
-      //   break;
-      // case iir_8x:
-      //   coeffs.osFactor = 8;
-      //   break;
-    case fir_2x_lq:
-      coeffs.osFactor     = 2;
-      coeffs.osFirLenMult = oversamplingFirMultLq;
-      coeffs.disable      = false;
-      break;
-    case fir_4x_lq:
-      coeffs.osFactor     = 4;
-      coeffs.osFirLenMult = oversamplingFirMultLq;
-      coeffs.disable      = false;
-      break;
-    case fir_8x_lq:
-      coeffs.osFactor     = 8;
-      coeffs.osFirLenMult = oversamplingFirMultLq;
-      coeffs.disable      = false;
-      break;
-    case fir_2x_hq:
-      coeffs.osFactor     = 2;
-      coeffs.osFirLenMult = oversamplingFirMultHq;
-      coeffs.disable      = false;
-      break;
-    case fir_4x_hq:
-      coeffs.osFactor     = 4;
-      coeffs.osFirLenMult = oversamplingFirMultHq;
-      coeffs.disable      = false;
-      break;
-    case fir_8x_hq:
-      coeffs.osFactor     = 8;
-      coeffs.osFirLenMult = oversamplingFirMultHq;
-      coeffs.disable      = false;
-      break;
-    default:
-    case disable:
-      coeffs.osFactor     = 1;
-      coeffs.osFirLenMult = 1;
-      coeffs.disable      = true;
+        // TODO: IIR oversampling
+        // case iir_2x:
+        //   this->coeffs.osFactor = 2;
+        //   break;
+        // case iir_4x:
+        //   this->coeffs.osFactor = 4;
+        //   break;
+        // case iir_8x:
+        //   this->coeffs.osFactor = 8;
+        //   break;
+      case fir_2x_lq:
+        this->coeffs.osFactor     = 2;
+        this->coeffs.osFirLenMult = oversamplingFirMultLq;
+        this->coeffs.disable      = false;
+        break;
+      case fir_4x_lq:
+        this->coeffs.osFactor     = 4;
+        this->coeffs.osFirLenMult = oversamplingFirMultLq;
+        this->coeffs.disable      = false;
+        break;
+      case fir_8x_lq:
+        this->coeffs.osFactor     = 8;
+        this->coeffs.osFirLenMult = oversamplingFirMultLq;
+        this->coeffs.disable      = false;
+        break;
+      case fir_2x_hq:
+        this->coeffs.osFactor     = 2;
+        this->coeffs.osFirLenMult = oversamplingFirMultHq;
+        this->coeffs.disable      = false;
+        break;
+      case fir_4x_hq:
+        this->coeffs.osFactor     = 4;
+        this->coeffs.osFirLenMult = oversamplingFirMultHq;
+        this->coeffs.disable      = false;
+        break;
+      case fir_8x_hq:
+        this->coeffs.osFactor     = 8;
+        this->coeffs.osFirLenMult = oversamplingFirMultHq;
+        this->coeffs.disable      = false;
+        break;
+      default:
+      case disable:
+        this->coeffs.osFactor     = 1;
+        this->coeffs.osFirLenMult = 1;
+        this->coeffs.disable      = true;
+      }
+      this->coeffs.fsHi = fs * this->coeffs.osFactor;
+      this->coeffs.n    = this->coeffs.osFactor * this->coeffs.osFirLenMult;
+      // TODO: Does it make sense to replace the this->coeffs in place instead?
+      // These vectors do NOT improve stability anyway,
+      if (!this->coeffs.disable) {
+        auto b = windowMethod<signal_t>(fc, this->coeffs.n, this->coeffs.fsHi);
+        std::fill(this->coeffs.b.begin(), this->coeffs.b.end(), 0.0);
+        for (size_t i = 0; i < this->coeffs.n; i++) {
+          this->coeffs.b[i] = b[i];
+        }
+      }
     }
-    coeffs.fsHi = fs * coeffs.osFactor;
-    coeffs.n    = coeffs.osFactor * coeffs.osFirLenMult;
-    // TODO: Does it make sense to replace the coeffs in place instead?
-    // These vectors do NOT improve stability anyway,
-    if (!coeffs.disable) {
-      auto b = windowMethod<signal_t>(fc, coeffs.n, coeffs.fsHi);
-      std::fill(coeffs.b.begin(), coeffs.b.end(), 0.0);
-      for (size_t i = 0; i < coeffs.n; i++) { coeffs.b[i] = b[i]; }
+    inline void reset() {
+      this->state.iStoreIn  = 0;
+      this->state.iStoreOut = 0;
+      std::fill(this->state.dlAntialiasing.begin(),
+          this->state.dlAntialiasing.end(),
+          0.0);
+      std::fill(this->state.dlInterpolation.begin(),
+          this->state.dlInterpolation.end(),
+          0.0);
     }
-  }
-  template <typename signal_t>
-  static inline void reset(State<signal_t>& state) {
-    state.iStoreIn  = 0;
-    state.iStoreOut = 0;
-    std::fill(state.dlAntialiasing.begin(), state.dlAntialiasing.end(), 0.0);
-    std::fill(state.dlInterpolation.begin(), state.dlInterpolation.end(), 0.0);
-  }
+  };
 }
 }

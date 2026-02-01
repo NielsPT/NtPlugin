@@ -30,7 +30,8 @@ NtCompressorAudioProcessor::NtCompressorAudioProcessor()
       parameters(*this,
           nullptr,
           juce::Identifier("NtCompressor_01"),
-          createParameterLayout()) {
+          createParameterLayout()),
+      src(plug) {
 }
 
 NtCompressorAudioProcessor::~NtCompressorAudioProcessor() { }
@@ -126,13 +127,8 @@ void NtCompressorAudioProcessor::processBlock(
   auto leftBuffer  = buffer.getWritePointer(0);
   auto rightBuffer = buffer.getWritePointer(1);
   for (size_t i = 0; i < buffer.getNumSamples(); i++) {
-    auto y         = NtFx::Src::processSample<float>(this->plug,
-        this->srcState,
-        this->srcCoeffs,
-                {
-            leftBuffer[i],
-            rightBuffer[i],
-        });
+    auto y = src.processSample({ leftBuffer[i], rightBuffer[i] });
+
     leftBuffer[i]  = y.l;
     rightBuffer[i] = y.r;
   }
@@ -163,11 +159,10 @@ void NtCompressorAudioProcessor::setStateInformation(
 }
 
 void NtCompressorAudioProcessor::updateOversampling(int mode) {
-  NtFx::Src::update(static_cast<NtFx::Src::oversamplingMode>(mode),
-      this->fsBase,
-      this->srcCoeffs);
-  NtFx::Src::reset(this->srcState);
-  this->plug.reset(this->srcCoeffs.fsHi);
+  this->src.update(
+      static_cast<NtFx::Src::oversamplingMode>(mode), this->fsBase);
+  this->src.reset();
+  this->plug.reset(this->src.coeffs.fsHi);
 }
 
 //==============================================================================

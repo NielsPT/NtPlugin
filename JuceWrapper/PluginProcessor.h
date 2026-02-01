@@ -77,9 +77,8 @@ struct NtCompressorAudioProcessor : public juce::AudioProcessor {
   NtFx::TitleBarSpec titleBarSpec;
   // TODO: this should not be here.
   float fsBase = 48000;
-  NtFx::Src::Coeffs<float> srcCoeffs;
-  NtFx::Src::State<float> srcState;
   NTFX_PLUGIN<float> plug;
+  NtFx::Src::SampleRateConverter<float> src;
   juce::AudioProcessorValueTreeState parameters;
   // bool isInitialized = false;
 
