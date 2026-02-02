@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2026 Niels Thøgersen, NTlyd
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ **/
+
 #pragma once
 
 #include "lib/Stereo.h"
@@ -26,7 +43,7 @@
 namespace NtFx {
 struct MonoMeter : public juce::Component {
   MeterSpec& meterSpec;
-  GuiSpec& guiSpec;
+  UiSpec& uiSpec;
   int pad                = 10;
   int dotDiameter        = 0;
   int dotDist            = 0;
@@ -44,16 +61,15 @@ struct MonoMeter : public juce::Component {
   bool isInitialized     = false;
   int fontSize           = 20;
 
-  MonoMeter(MeterSpec& meterSpec, GuiSpec& guiSpec)
-      : meterSpec(meterSpec), guiSpec(guiSpec),
-        nDots(guiSpec.meterHeight_dots) {
+  MonoMeter(MeterSpec& meterSpec, UiSpec& uiSpec)
+      : meterSpec(meterSpec), uiSpec(uiSpec), nDots(uiSpec.meterHeight_dots) {
     this->refresh();
     this->isInitialized = true;
     float dbPerSecond = (this->meterSpec.maxVal_db - this->meterSpec.minVal_db)
         / this->meterSpec.decay_s;
-    this->decayRate_db = dbPerSecond / this->guiSpec.meterRefreshRate_hz;
+    this->decayRate_db = dbPerSecond / this->uiSpec.meterRefreshRate_hz;
     this->nHold_frames =
-        this->meterSpec.hold_s * this->guiSpec.meterRefreshRate_hz;
+        this->meterSpec.hold_s * this->uiSpec.meterRefreshRate_hz;
     if (this->meterSpec.invert) {
       this->peakLast_db = this->meterSpec.minVal_db;
     } else {
@@ -66,7 +82,7 @@ struct MonoMeter : public juce::Component {
     if (!this->isInitialized) { return; }
     if (this->getWidth() <= 0) { return; }
     int y = this->pad;
-    g.setColour(juce::Colour(this->guiSpec.foregroundColour));
+    g.setColour(juce::Colour(this->uiSpec.foregroundColour));
     g.setFont(this->fontSize);
     g.drawText(this->label,
         0,
@@ -77,7 +93,7 @@ struct MonoMeter : public juce::Component {
     for (size_t i = 1; i < this->nDots + 1; i++) {
       int y;
       y = this->pad + i * this->dotDist;
-      g.setColour(juce::Colour(this->guiSpec.foregroundColour));
+      g.setColour(juce::Colour(this->uiSpec.foregroundColour));
       g.drawEllipse(this->pad, y, this->dotDiameter, this->dotDiameter, 1);
       float fillPad      = this->getWidth() * 4.0 / 35.0;
       float fillDiameter = this->dotDiameter - fillPad;
@@ -87,11 +103,11 @@ struct MonoMeter : public juce::Component {
       if ((!this->meterSpec.invert && i > this->nDots - this->nActiveDots)
           || (this->meterSpec.invert && i < this->nDots - this->nActiveDots)) {
         g.setColour(juce::Colour(
-            this->guiSpec.foregroundColour & 0x00FFFFFF | 0xDD000000));
+            this->uiSpec.foregroundColour & 0x00FFFFFF | 0xDD000000));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
       if (i == this->iHoldDot) {
-        g.setColour(juce::Colour(this->guiSpec.foregroundColour));
+        g.setColour(juce::Colour(this->uiSpec.foregroundColour));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
     }
@@ -157,9 +173,9 @@ struct MonoMeter : public juce::Component {
       }
     }
     auto w = this->getWidth();
-    if (!repaint || !w) { w = this->guiSpec.meterWidth; }
-    this->pad         = w * 10.0 / this->guiSpec.meterWidth;
-    this->dotDiameter = w * 15.0 / this->guiSpec.meterWidth;
+    if (!repaint || !w) { w = this->uiSpec.meterWidth; }
+    this->pad         = w * 10.0 / this->uiSpec.meterWidth;
+    this->dotDiameter = w * 15.0 / this->uiSpec.meterWidth;
     this->dotDist     = this->pad + this->dotDiameter;
     if (repaint) { this->repaint(); }
   }
@@ -176,7 +192,7 @@ struct MeterScale : public juce::Component {
   MeterScale(MonoMeter& m) : meter(m) { }
   void paint(juce::Graphics& g) override {
     auto offset = this->meter.pad + this->meter.dotDist;
-    g.setColour(juce::Colour(meter.guiSpec.foregroundColour));
+    g.setColour(juce::Colour(meter.uiSpec.foregroundColour));
     g.setFont(this->fontSize);
     g.drawText("  0", 0, offset, 1000, 10, juce::Justification::left, false);
     auto y = this->meter.dotDist + offset;
@@ -197,14 +213,14 @@ struct MeterScale : public juce::Component {
 struct StereoMeter : public juce::Component {
   MonoMeter l;
   MonoMeter r;
-  GuiSpec& spec;
+  UiSpec& spec;
   juce::Label label;
   int fontSize { 0 };
   float uiScale { 1 };
   bool hasScale { false };
 
-  StereoMeter(MeterSpec& meterSpec, GuiSpec& guiSpec)
-      : l(meterSpec, guiSpec), r(meterSpec, guiSpec), spec(guiSpec),
+  StereoMeter(MeterSpec& meterSpec, UiSpec& uiSpec)
+      : l(meterSpec, uiSpec), r(meterSpec, uiSpec), spec(uiSpec),
         label(meterSpec.name, meterSpec.name) {
     this->addAndMakeVisible(this->label);
     this->addAndMakeVisible(this->l);
@@ -221,7 +237,7 @@ struct StereoMeter : public juce::Component {
     this->r.fontSize = this->fontSize;
     auto area        = getLocalBounds();
     auto labelArea =
-        area.removeFromTop(this->l.guiSpec.labelHeight * this->uiScale);
+        area.removeFromTop(this->l.uiSpec.labelHeight * this->uiScale);
     this->label.setFont(juce::FontOptions(this->fontSize));
     this->label.setBounds(labelArea);
     this->label.setJustificationType(juce::Justification::centredBottom);
@@ -240,10 +256,10 @@ struct StereoMeter : public juce::Component {
 struct MeterGroup : public juce::Component {
   std::vector<std::unique_ptr<StereoMeter>> meters;
   std::vector<std::unique_ptr<MeterScale>> scales;
-  MeterGroup(GuiSpec& guiSpec) {
+  MeterGroup(UiSpec& uiSpec) {
     size_t i = 0;
-    for (auto& spec : guiSpec.meters) {
-      auto meter = std::make_unique<StereoMeter>(spec, guiSpec);
+    for (auto& spec : uiSpec.meters) {
+      auto meter = std::make_unique<StereoMeter>(spec, uiSpec);
       this->addAndMakeVisible(meter.get());
       if (spec.hasScale) {
         meter->hasScale = true;
@@ -295,14 +311,14 @@ struct MeterGroup : public juce::Component {
   // }
   float getMinimalWidth() const noexcept {
     if (!this->meters.size()) { return 0; }
-    return this->meters[0]->l.guiSpec.meterWidth
+    return this->meters[0]->l.uiSpec.meterWidth
         * (this->meters.size() * 2 + this->scales.size());
   }
   float getMinimalHeight() const noexcept {
     if (!this->meters.size()) { return 0; }
     auto& m = this->meters[0]->l;
     m.refresh(false);
-    return (m.guiSpec.labelHeight) * 2 + (m.nDots + 2) * m.dotDist + m.pad;
+    return (m.uiSpec.labelHeight) * 2 + (m.nDots + 2) * m.dotDist + m.pad;
   }
 };
 } // namespace NtFx

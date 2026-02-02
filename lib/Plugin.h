@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2026 Niels Thøgersen, NTlyd
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ **/
+
 #pragma once
 #include <array>
 #include <cstddef>
@@ -9,10 +26,10 @@
 #include "lib/utils.h"
 
 #ifndef NTFX_PLUGIN
-  #error NTFX_PLUGIN is not defined.
+  #error NTFX_PLUGIN is not defined. Please add '-DNTFX_PLUGIN=[your plugin \
+  name]' to cmake configure.
 #endif
 
-// TODO: Gliders!
 namespace NtFx {
 
 /**
@@ -24,7 +41,7 @@ namespace NtFx {
 template <typename signal_t>
 struct NtPlugin {
   /** Specification for UI. Modify this to change the look of your plugin. */
-  GuiSpec guiSpec;
+  UiSpec uiSpec;
   /** vector of primary knobs. Add your number paramters to this to display them
    * in the UI. */
   std::vector<KnobSpec<signal_t>> primaryKnobs;
@@ -47,16 +64,14 @@ struct NtPlugin {
    * @param x Stereo<signal_t> Input
    * @return Stereo<signal_t> output.
    */
-  virtual Stereo<signal_t> processSample(Stereo<signal_t> x) noexcept = 0;
+  virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept = 0;
 
-  // TODO: Update really should happen in the procession thread. OR we should
-  // have two sets of coeffs and swap between them.
   /**
    * @brief Called when ever a parameter (knob or toggle) changes. Update your
    * coefficients here.
    *
    */
-  virtual void updateCoeffs() noexcept = 0;
+  virtual void update() noexcept = 0;
 
   /**
    * @brief Called when the plugin loads and when ever the samplerate or buffer
@@ -78,7 +93,7 @@ struct NtPlugin {
    *
    * @param name Name of knob to get value for.
    */
-  signal_t* getFloatValuePtr(std::string name) const noexcept {
+  signal_t* getKnobValuePtr(std::string name) const noexcept {
     for (auto param : this->primaryKnobs) {
       if (param.name == name) { return param.p_val; }
     }
@@ -88,13 +103,25 @@ struct NtPlugin {
     return nullptr;
   }
 
-  bool* getBoolValuePtr(std::string name) const noexcept {
+  /**
+   * @brief Used by the wrapper to get a pointer to a value based on the
+   * corresponding toggle's name.
+   *
+   * @param name Name of toggle to get value for.
+   */
+  bool* getToggleValuePtr(std::string name) const noexcept {
     for (auto param : this->toggles) {
       if (param.name == name) { return param.p_val; }
     }
     return nullptr;
   }
 
+  /**
+   * @brief Used by the wrapper to get a pointer to a value based on the
+   * corresponding drop down's name.
+   *
+   * @param name Name of drop down to get value for.
+   */
   int* getDropDownValuePtr(std::string name) const noexcept {
     for (auto dropdown : this->dropdowns) {
       if (dropdown.name == name) { return dropdown.p_val; }
@@ -150,8 +177,8 @@ struct NtPlugin {
    */
   NtFx::Stereo<signal_t> getAndResetPeakLevel(size_t idx) noexcept {
     signal_t def = static_cast<signal_t>(0);
-    if (idx >= this->guiSpec.meters.size()) { return def; }
-    if (this->guiSpec.meters[idx].invert) { def = static_cast<signal_t>(1); }
+    if (idx >= this->uiSpec.meters.size()) { return def; }
+    if (this->uiSpec.meters[idx].invert) { def = static_cast<signal_t>(1); }
     NtFx::Stereo<signal_t> tmp = this->peakLevels[idx];
     this->peakLevels[idx]      = static_cast<signal_t>(def);
     ensureFinite(tmp, def);

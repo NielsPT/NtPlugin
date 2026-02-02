@@ -1,3 +1,23 @@
+/*
+ * Copyright (C) 2026 Niels Thøgersen, NTlyd
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * You are free to download, build and use this code for commercial
+ * purposes. Just don't resell it or a build of it, modified or otherwise.
+ **/
+
 #pragma once
 
 #include "lib/Plugin.h"
@@ -25,27 +45,26 @@ struct gainExample : NtFx::NtPlugin<signal_t> {
     });
 
     // Change the default background colours.
-    this->guiSpec.backgroundColour = 0xFFFFFFFF;
-    this->guiSpec.foregroundColour = 0xFF000000;
+    this->uiSpec.backgroundColour = 0xFFFFFFFF;
+    this->uiSpec.foregroundColour = 0xFF000000;
 
     // We don't need that big a window for just one knob.
-    this->guiSpec.defaultWindowWidth = 500;
+    this->uiSpec.defaultWindowWidth = 500;
 
     // Let's make the meter smaller.
-    this->guiSpec.meterHeight_dots = 8;
+    this->uiSpec.meterHeight_dots = 8;
 
     // Add two meters.
-    this->guiSpec.meters.push_back({ .name = "IN" });
-    this->guiSpec.meters.push_back({ .name = "OUT", .hasScale = true });
+    this->uiSpec.meters.push_back({ .name = "IN" });
+    this->uiSpec.meters.push_back({ .name = "OUT", .hasScale = true });
 
     // Always remember to update defaults. This will load the member values into
     // the UI and session storage.
     this->updateDefaults();
   }
 
-  // Override the processSample method.
-  NtFx::Stereo<signal_t> processSample(
-      NtFx::Stereo<signal_t> x) noexcept override {
+  // Override the process method.
+  NtFx::Stereo<signal_t> process(NtFx::Stereo<signal_t> x) noexcept override {
 
     // Update the input meter.
     this->template updatePeakLevel<0>(x);
@@ -58,13 +77,13 @@ struct gainExample : NtFx::NtPlugin<signal_t> {
     return y;
   }
 
-  // Override the processSample method.
-  void updateCoeffs() noexcept override {
+  // Override the process method.
+  void update() noexcept override {
 
     // Calculate the gain in the linear domain.
     this->gain_lin = NtFx::invDb(this->gain_db);
   }
 
   // Override the reset method.
-  void reset(int fs) noexcept override { this->updateCoeffs(); }
+  void reset(int fs) noexcept override { this->update(); }
 };

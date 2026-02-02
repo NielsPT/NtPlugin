@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2026 Niels Thøgersen, NTlyd
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ **/
+
 #pragma once
 
 #include "lib/Stereo.h"
@@ -55,7 +72,7 @@ namespace Biquad {
   // struct Biquad6 {
   //   Coeffs6<signal_t> coeffs;
   //   State<signal_t> state;
-  //   inline signal_t processSample(signal_t x) {
+  //   inline signal_t process(signal_t x) {
   //     signal_t y = this->coeffs.b[0] * x + this->coeffs.b[1] *
   //     this->state.x[0]
   //         + this->coeffs.b[2] * this->state.x[1]
@@ -67,7 +84,7 @@ namespace Biquad {
   //     this->state.x[0] = x;
   //     return y;
   //   }
-  //   inline void updateCoeffs(Settings<signal_t>& settings, float fs) {
+  //   inline void update(Settings<signal_t>& settings, float fs) {
   //     this->coeffs = calcCoeffs6<signal_t>(settings, fs);
   //   }
   //   // inline void reset() { this->state.reset(); }
@@ -78,12 +95,12 @@ namespace Biquad {
   //   Settings<signal_t> settings;
   //   Biquad6<signal_t> l;
   //   Biquad6<signal_t> r;
-  //   inline Stereo<signal_t> processSample(Stereo<signal_t> x) {
-  //     return { l.processSample(x.l), r.processSample(x.r) };
+  //   inline Stereo<signal_t> process(Stereo<signal_t> x) {
+  //     return { l.process(x.l), r.process(x.r) };
   //   }
-  //   inline void updateCoeffs(float fs) {
-  //     this->l.updateCoeffs(this->settings, fs);
-  //     this->r.updateCoeffs(this->settings, fs);
+  //   inline void update(float fs) {
+  //     this->l.update(this->settings, fs);
+  //     this->r.update(this->settings, fs);
   //   }
   //   // inline void reset() {
   //   //   this->l.reset();
@@ -95,7 +112,7 @@ namespace Biquad {
   struct Biquad5 {
     Coeffs5<signal_t> coeffs;
     State<signal_t> state;
-    inline signal_t processSample(signal_t x) {
+    inline signal_t process(signal_t x) {
       signal_t y = this->coeffs.b[0] * x + this->coeffs.b[1] * this->state.x[0]
           + this->coeffs.b[2] * this->state.x[1]
           - this->coeffs.a[0] * this->state.y[0]
@@ -106,7 +123,7 @@ namespace Biquad {
       this->state.x[0] = x;
       return y;
     }
-    inline void updateCoeffs(Settings<signal_t>& settings, float fs) {
+    inline void update(Settings<signal_t>& settings, float fs) {
       this->coeffs = calcCoeffs5<signal_t>(settings, fs);
     }
   };
@@ -116,12 +133,13 @@ namespace Biquad {
     Settings<signal_t> settings;
     Biquad5<signal_t> l;
     Biquad5<signal_t> r;
-    inline Stereo<signal_t> processSample(Stereo<signal_t> x) {
-      return { l.processSample(x.l), r.processSample(x.r) };
+    // TODO: Gliders here?
+    inline Stereo<signal_t> process(Stereo<signal_t> x) {
+      return { l.process(x.l), r.process(x.r) };
     }
-    inline void updateCoeffs(float fs) {
-      this->l.updateCoeffs(this->settings, fs);
-      this->r.updateCoeffs(this->settings, fs);
+    inline void update(float fs) {
+      this->l.update(this->settings, fs);
+      this->r.update(this->settings, fs);
     }
   };
 

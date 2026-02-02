@@ -71,18 +71,17 @@ in the terminal. This should build the simple gain knob example plugin.
   directory.
 - Write a class that inherits from `NtFx::NtPlugin`. The name of your class must
   be the same as the file name.
-- The base class requires you to implement the methods `processSample`,
-  `updateCoeffs` and `reset`. `processSample` runs for every sample,
-  `updateCoeffs` is called every time a parameter changes and `reset`
-  (re)initializes the plugin and sets the samplerate. `reset` should always call
-  `updateCoeffs`.
+- The base class requires you to implement the methods `process`, `update` and
+  `reset`. `process` runs for every sample, `update` is called every time a
+  parameter changes and `reset` (re)initializes the plugin and sets the
+  samplerate. `reset` should always call `update`.
 - The base class contains 3 empty vectors, that the user can add parameters to
   in the constructor of the plugin. `primaryKnobs` contains specifications for
   the main knobs, which are laid out in a grid automatically, `secondaryKnobs`
   can be used to add a single row of smaller knobs below main gird for fine
   tuning or utility controls. `toggles` contain the boolean parameters. The
   constructor should call `updateDefaults` before returning.
-- Similarly, the base class contain a spec for the UI named `guiSpec`, which can
+- Similarly, the base class contain a spec for the UI named `uiSpec`, which can
   be modified for customization of the UI.
 - Use the following commands to configure and build your project:
 

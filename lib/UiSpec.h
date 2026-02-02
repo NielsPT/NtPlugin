@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2026 Niels Thøgersen, NTlyd
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ **/
+
 #pragma once
 
 #include <cstdint>
@@ -5,6 +22,7 @@
 #include <vector>
 
 namespace NtFx {
+
 /**
  * @brief Specification for a knob.
  *
@@ -70,53 +88,6 @@ struct MeterSpec {
 };
 
 /**
- * @brief General settings for to UI.
- *
- */
-struct GuiSpec {
-  /** Add meters to the UI. */
-  bool includeMeters { true };
-  /** Add titlebar to the top of the UI. This includes oversampling and display
-   * scaling.
-   */
-  bool includeTitleBar { true };
-  /** Enable row of smaller knobs below the main grid. */
-  bool includeSecondaryKnobs { true };
-  /** UI foreground colour in HEX format 0x[opacity][red][green][blue]. */
-  uint32_t foregroundColour { 0xFFFFFFFF };
-  /** UI background colour in HEX format 0x[opacity][red][green][blue]. */
-  uint32_t backgroundColour { 0xFF000000 };
-  /** Window width in pixels before scaling. */
-  int defaultWindowWidth { 1000 };
-  /** The maximum number of rows in main knob grid. */
-  int maxRows { 3 };
-  /** The maximum number of columns in main knob grid. */
-  int maxColumns { 6 };
-  /** Font size before scaling. */
-  float defaultFontSize { 16 };
-  /** Height of all text labels in the UI. */
-  float labelHeight { 20 };
-  /** Height of toggle row at the bottom of the UI. */
-  float toggleHeight { 50 };
-  /** Height or row of knobs in grid in UI. */
-  float knobHeight { 200 };
-  /** Width of secondary knobs in UI. */
-  float secondaryKnobWidth { 75 };
-  /** Height of secondary knobs in UI including text labels name and value. */
-  float secondaryKnobHeight { 115 };
-  /** Height of title bar in pixels before UI scaling. */
-  float titleBarHeight { 22 };
-  /** Number of dots in the meteres. */
-  int meterHeight_dots { 12 };
-  /** Width of each meter in pixels. */
-  int meterWidth { 35 };
-  /** Refresh rate of the timer that updates the meters in the UI. */
-  float meterRefreshRate_hz { 30 };
-  /** List of all meters to be displayed in the UI. */
-  std::vector<MeterSpec> meters;
-};
-
-/**
  * @brief Specification for drop down in UI.
  *
  */
@@ -160,5 +131,52 @@ struct TitleBarSpec {
         0,
     },
   };
+};
+
+/**
+ * @brief General settings for to UI.
+ *
+ */
+struct UiSpec {
+  /** Add meters to the UI. */
+  bool includeMeters { true };
+  /** Add titlebar to the top of the UI. This includes oversampling and display
+   * scaling.
+   */
+  bool includeTitleBar { true };
+  /** Enable row of smaller knobs below the main grid. */
+  bool includeSecondaryKnobs { true };
+  /** UI foreground colour in HEX format 0x[opacity][red][green][blue]. */
+  uint32_t foregroundColour { 0xFFFFFFFF };
+  /** UI background colour in HEX format 0x[opacity][red][green][blue]. */
+  uint32_t backgroundColour { 0xFF000000 };
+  /** Window width in pixels before scaling. */
+  int defaultWindowWidth { 1000 };
+  /** The maximum number of rows in main knob grid. */
+  int maxRows { 3 };
+  /** The maximum number of columns in main knob grid. */
+  int maxColumns { 6 };
+  /** Font size before scaling. */
+  float defaultFontSize { 16 };
+  /** Height of all text labels in the UI. */
+  float labelHeight { 20 };
+  /** Height of toggle row at the bottom of the UI. */
+  float toggleHeight { 50 };
+  /** Height or row of knobs in grid in UI. */
+  float knobHeight { 200 };
+  /** Width of secondary knobs in UI. */
+  float secondaryKnobWidth { 75 };
+  /** Height of secondary knobs in UI including text labels name and value. */
+  float secondaryKnobHeight { 115 };
+  /** Height of title bar in pixels before UI scaling. */
+  float titleBarHeight { 22 };
+  /** Number of dots in the meteres. */
+  int meterHeight_dots { 12 };
+  /** Width of each meter in pixels. */
+  int meterWidth { 35 };
+  /** Refresh rate of the timer that updates the meters in the UI. */
+  float meterRefreshRate_hz { 30 };
+  /** List of all meters to be displayed in the UI. */
+  std::vector<MeterSpec> meters;
 };
 } // namespace NtFx

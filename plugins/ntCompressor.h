@@ -1,3 +1,23 @@
+/*
+ * Copyright (C) 2026 Niels Thøgersen, NTlyd
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * You are free to download, build and use this code for commercial
+ * purposes. Just don't resell it or a build of it, modified or otherwise.
+ **/
+
 #pragma once
 #include <algorithm>
 #include <array>
@@ -11,7 +31,6 @@
 
 template <typename signal_t>
 struct ntCompressor : public NtFx::NtPlugin<signal_t> {
-  // int errorVarId = 0;
   float fs;
 
   NtFx::SideChain::Settings<signal_t> scSettings;
@@ -122,15 +141,15 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
 
-    this->guiSpec.meters = {
+    this->uiSpec.meters = {
       { .name = "IN" },
       { .name = "OUT", .hasScale = true },
       { .name = "GR", .invert = true, .hasScale = true },
     };
-    this->guiSpec.foregroundColour = 0xFF000000;
-    this->guiSpec.backgroundColour = 0xFFFFFFFF;
-    // this->guiSpec.maxColumns         = 2;
-    // this->guiSpec.defaultWindowWidth = 600;
+    this->uiSpec.foregroundColour = 0xFF000000;
+    this->uiSpec.backgroundColour = 0xFFFFFFFF;
+    // this->uiSpec.maxColumns         = 2;
+    // this->uiSpec.defaultWindowWidth = 600;
     this->softClipCoeffs       = NtFx::calculateSoftClipCoeffs<signal_t, 2>();
     this->hpf.settings.fc_hz   = 20;
     this->boost.settings.fc_hz = 3000.0;
@@ -140,8 +159,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     this->updateDefaults();
   }
 
-  NtFx::Stereo<signal_t> processSample(
-      NtFx::Stereo<signal_t> x) noexcept override {
+  NtFx::Stereo<signal_t> process(NtFx::Stereo<signal_t> x) noexcept override {
     this->template updatePeakLevel<0>(x);
     if (this->bypassEnable) {
       this->template updatePeakLevel<1>(x);
@@ -152,8 +170,8 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     NtFx::Stereo<signal_t> xHpf = x;
     if (this->feedbackEnable) { xHpf = this->fbState; }
 
-    NtFx::Stereo<signal_t> xBoost = hpf.processSample(xHpf);
-    NtFx::Stereo<signal_t> xSc    = boost.processSample(xBoost);
+    NtFx::Stereo<signal_t> xBoost = hpf.process(xHpf);
+    NtFx::Stereo<signal_t> xSc    = boost.process(xBoost);
 
     NtFx::Stereo<signal_t> gr;
     if (this->linEnable) {
@@ -180,13 +198,9 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     return y;
   }
 
-  void updateCoeffs() noexcept override {
-    // this->scHpfCoeffs =
-    //     NtFx::Biquad::calcCoeffs5<signal_t>(this->scHpfSettings, this->fs);
-    // this->scBoostCoeffs =
-    //     NtFx::Biquad::calcCoeffs5<signal_t>(this->scBoostSettings, this->fs);
-    this->hpf.updateCoeffs(this->fs);
-    this->boost.updateCoeffs(this->fs);
+  void update() noexcept override {
+    this->hpf.update(this->fs);
+    this->boost.update(this->fs);
     this->scCoeffs   = NtFx::SideChain::calcCoeffs(this->fs, &this->scSettings);
     this->makeup_lin = NtFx::invDb(this->makeup_db);
     this->mix_lin    = this->mix_percent / 100.0;
@@ -201,6 +215,6 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     this->fbState       = static_cast<signal_t>(0);
     this->scState[0].reset();
     this->scState[1].reset();
-    this->updateCoeffs();
+    this->update();
   }
 };

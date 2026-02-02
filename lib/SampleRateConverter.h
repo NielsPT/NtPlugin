@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2026 Niels Thøgersen, NTlyd
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ **/
+
 #pragma once
 
 #include "Plugin.h"
@@ -48,8 +65,8 @@ namespace Src {
     State<signal_t> state;
     Coeffs<signal_t> coeffs;
     SampleRateConverter(NtPlugin<signal_t>& plug) : plug(plug) { }
-    Stereo<signal_t> processSample(Stereo<signal_t> x) {
-      if (this->coeffs.disable) { return this->plug.processSample(x); }
+    Stereo<signal_t> process(Stereo<signal_t> x) {
+      if (this->coeffs.disable) { return this->plug.process(x); }
       this->state.dlInterpolation[this->state.iStoreIn]              = x;
       this->state.dlInterpolation[this->state.iStoreIn + nDelayLine] = x;
       if (++this->state.iStoreIn >= nDelayLine) { this->state.iStoreIn = 0; }
@@ -61,7 +78,7 @@ namespace Src {
               * this->state.dlInterpolation[iReadIn - j];
         }
         auto xProc = accum * this->coeffs.osFactor;
-        auto yProc = this->plug.processSample(xProc);
+        auto yProc = this->plug.process(xProc);
         this->state.dlAntialiasing[this->state.iStoreOut]              = yProc;
         this->state.dlAntialiasing[this->state.iStoreOut + nDelayLine] = yProc;
         if (++this->state.iStoreOut >= nDelayLine) {

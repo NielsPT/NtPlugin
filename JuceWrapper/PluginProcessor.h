@@ -1,15 +1,26 @@
 /*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
+ * Copyright (C) 2026 Niels Thøgersen, NTlyd
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * Modified from JUCE template.
+ **/
+#pragma once
 
 #define Q(x) #x
 #define QUOTE(x) Q(x)
 
-#pragma once
 #if !JUCE_DONT_DECLARE_PROJECTINFO
 namespace ProjectInfo {
 const char* const projectName   = QUOTE(NTFX_PLUGIN);
@@ -80,7 +91,9 @@ struct NtCompressorAudioProcessor : public juce::AudioProcessor {
   NTFX_PLUGIN<float> plug;
   NtFx::Src::SampleRateConverter<float> src;
   juce::AudioProcessorValueTreeState parameters;
-  // bool isInitialized = false;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtCompressorAudioProcessor)
 };
+
+#undef Q
+#undef QUOTE

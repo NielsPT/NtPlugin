@@ -1,10 +1,21 @@
 /*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
+ * Copyright (C) 2026 Niels Thøgersen, NTlyd
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * Modified from JUCE template.
+ **/
 
 #include <algorithm>
 #include <string>
@@ -127,7 +138,7 @@ void NtCompressorAudioProcessor::processBlock(
   auto leftBuffer  = buffer.getWritePointer(0);
   auto rightBuffer = buffer.getWritePointer(1);
   for (size_t i = 0; i < buffer.getNumSamples(); i++) {
-    auto y = src.processSample({ leftBuffer[i], rightBuffer[i] });
+    auto y = src.process({ leftBuffer[i], rightBuffer[i] });
 
     leftBuffer[i]  = y.l;
     rightBuffer[i] = y.r;
