@@ -50,12 +50,14 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
   std::array<NtFx::Stereo<signal_t>, delayLineLength> delayLine;
   signal_t fb_lin    = 0.2;
   signal_t noise_lin = 0;
+  signal_t tGlide    = 0.1;
   // size_t nDelayGui        = 24000;
   // size_t nDelayGlided     = 24000;
-  NtFx::ExpGlider<signal_t> nDelay = 24000;
-  size_t iStore                    = 0;
-  signal_t aClip_lin               = 1;
-  size_t timeCounter               = 0;
+  // NtFx::LinGlider<signal_t> nDelay = 24000;
+  NtFx::ExpGlider<signal_t> nDelay;
+  size_t iStore      = 0;
+  signal_t aClip_lin = 1;
+  size_t timeCounter = 0;
   // size_t nOffset                = 0;
   NtFx::ExpGlider<signal_t> nOffset;
   // TODO: Mix should have -3 dB law.
@@ -95,6 +97,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       // { &this->nGlide, "Glide_Speed", "", 0, 10 },
       { &this->noise_db, "Noise", " dB", -100, 0 },
       { &this->mix_percent, "Dry_Mix", " %", 0, 100 },
+      { &this->tGlide, "Glide", " s", 0.01, 1, 0.1 },
     };
 
     this->secondaryKnobs[0].setLogScale();
@@ -159,9 +162,10 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       this->timeCounter++;
     }
 
-    int iLoadL = this->iStore - nModL;
+    // TODO: DelayLine class.
+    int iLoadL = this->iStore - std::round(nModL);
     if (iLoadL < 0) { iLoadL += delayLineLength; }
-    int iLoadR = this->iStore - nModR;
+    int iLoadR = this->iStore - std::round(nModR);
     if (iLoadR < 0) { iLoadR += delayLineLength; }
     NtFx::Stereo<signal_t> yDelay = {
       this->delayLine[iLoadL].l,
@@ -192,7 +196,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     if (this->clip) {
       yOutClip = NtFx::softClip5thStereo(this->softClipCoeffs, yLp);
     }
-    auto y = (1 - this->mix_lin) * x + this->mix_lin * yOutClip;
+    auto y = this->mix_lin * x + yOutClip;
     this->template updatePeakLevel<0>(x);
     if (this->bypass) {
       this->template updatePeakLevel<1>(x);
@@ -235,22 +239,23 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     // this->glideCount     = this->nGlide;
     // for (auto g : this->allGliders) { g.update(this->fs); }
     this->onTempoChanged();
+    this->modDepth.update(this->fs, this->tGlide * 2.2);
+    this->thetaMod.update(this->fs, this->tGlide * 2.2);
+    this->thetaModOffset.update(this->fs, this->tGlide * 2.2);
+    this->nOffset.update(this->fs, this->tGlide * 2.2);
+    this->nDelay.update(this->fs, this->tGlide);
+    //   this->nDelay.update(this->fs,
+    //       std::abs(this->tGui * this->fs - this->nDelay.pr),
+    //       this->tGlide * 2.2);
+  }
+  virtual void reset(int fs) noexcept override {
+    this->fs = fs;
+    std::fill(this->delayLine.begin(), this->delayLine.end(), 0);
     // this->nDelay.update(this->fs);
     // this->modDepth.update(this->fs);
     // this->thetaMod.update(this->fs);
     // this->thetaModOffset.update(this->fs);
     // this->nOffset.update(this->fs);
-  }
-  virtual void reset(int fs) noexcept override {
-    this->fs = fs;
-    std::fill(this->delayLine.begin(), this->delayLine.end(), 0);
-    this->nDelay.update(this->fs); //,
-                                   //(this->primaryKnobs[0].maxVal * fs
-                                   //    - this->primaryKnobs[0].minVal * fs));
-    this->modDepth.update(this->fs);
-    this->thetaMod.update(this->fs);
-    this->thetaModOffset.update(this->fs);
-    this->nOffset.update(this->fs);
     this->updateCoeffs();
   }
   virtual void onTempoChanged() noexcept override {

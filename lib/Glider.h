@@ -21,9 +21,9 @@ struct ExpGlider {
 
 template <typename signal_t>
 struct LinGlider {
-  signal_t ui = 0; // UI side that is glided to
-  signal_t pr = 0; // Processing side
-  signal_t s  = 0;
+  signal_t ui = 0.0; // UI side that is glided to
+  signal_t pr = 0.0; // Processing side
+  signal_t s  = 0.0;
   LinGlider(signal_t def = 0) : ui(def), pr(def) { }
   inline signal_t process() noexcept {
     if (this->ui == this->pr) { return this->pr; }
