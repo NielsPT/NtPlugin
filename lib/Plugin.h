@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 
+#include "lib/Component.h"
 #include "lib/Stereo.h"
 #include "lib/UiSpec.h"
 #include "lib/utils.h"
@@ -39,7 +40,7 @@ namespace NtFx {
  * @tparam signal_t Basic datatype for audio signal.
  */
 template <typename signal_t>
-struct NtPlugin {
+struct NtPlugin : public Component<Stereo<signal_t>> {
   /** Specification for UI. Modify this to change the look of your plugin. */
   UiSpec uiSpec;
   /** vector of primary knobs. Add your number paramters to this to display them
@@ -57,29 +58,6 @@ struct NtPlugin {
   signal_t tempo = 0;
   /** Set this to true if you want to force an update of the UI */
   bool uiNeedsUpdate = false;
-
-  /**
-   * @brief Called for every sample as audio is processed.
-   *
-   * @param x Stereo<signal_t> Input
-   * @return Stereo<signal_t> output.
-   */
-  virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept = 0;
-
-  /**
-   * @brief Called when ever a parameter (knob or toggle) changes. Update your
-   * coefficients here.
-   *
-   */
-  virtual void update() noexcept = 0;
-
-  /**
-   * @brief Called when the plugin loads and when ever the samplerate or buffer
-   * size changes.
-   *
-   * @param fs Sample rate. If you need it for calculateCoeffs, store it.
-   */
-  virtual void reset(int fs) noexcept = 0;
 
   /**
    * @brief Called by the wrapper whenever the tempo changes.

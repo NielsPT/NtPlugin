@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  **/
+#include "lib/Component.h"
 #include "lib/Stereo.h"
 #include <math.h>
 
@@ -27,13 +28,12 @@ namespace FirstOrder {
   };
 
   template <typename signal_t, Shape shape>
-  struct Filter {
-    float fs       = 48000;
+  struct Filter : public Component<signal_t> {
     signal_t fc_hz = 1000;
     signal_t alpha = 0;
     signal_t yn1   = 0;
     signal_t xn1   = 0;
-    signal_t process(signal_t x) noexcept {
+    virtual signal_t process(signal_t x) noexcept override {
       signal_t y;
       if constexpr (shape == Shape::none) {
         return x;
@@ -50,7 +50,7 @@ namespace FirstOrder {
       return y;
     }
 
-    void update() {
+    virtual void update() noexcept override {
       signal_t z = 2 * M_PI * this->fc_hz / this->fs;
       if constexpr (shape == Shape::hpf) {
         this->alpha = 1.0 / (z + 1.0);
@@ -59,7 +59,7 @@ namespace FirstOrder {
       }
     }
 
-    void reset(float fs) {
+    virtual void reset(float fs) noexcept override {
       this->fs  = fs;
       this->xn1 = 0;
       this->yn1 = 0;
@@ -68,27 +68,27 @@ namespace FirstOrder {
   };
 
   template <typename signal_t, Shape shape>
-  struct FilterStereo {
+  struct FilterStereo : public Component<Stereo<signal_t>> {
     Filter<signal_t, shape> l;
     Filter<signal_t, shape> r;
 
-    Stereo<signal_t> process(Stereo<signal_t> x) noexcept {
+    Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
       return { l.process(x.l), r.process(x.r) };
     }
 
-    void update() {
+    virtual void update() noexcept override {
       l.update();
       r.update();
     }
 
-    void reset(float fs) {
+    virtual void reset(float fs) noexcept override {
       l.reset(fs);
       r.reset(fs);
     }
 
-    void setFc(signal_t f) {
-      l.fc_hz = f;
-      r.fc_hz = f;
+    void setFc(signal_t fc) noexcept {
+      l.fc_hz = fc;
+      r.fc_hz = fc;
     }
   };
 }

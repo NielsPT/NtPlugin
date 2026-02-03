@@ -35,7 +35,6 @@ enum Order : int {
 
 template <typename signal_t>
 struct ntFilters : public NtFx::NtPlugin<signal_t> {
-  float fs;
   signal_t fHpf = 20;
   signal_t fLpf = 20000;
   signal_t qHpf = 0.707;
@@ -159,7 +158,7 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
     this->uiNeedsUpdate = true;
   }
 
-  void reset(int fs) noexcept override {
+  void reset(float fs) noexcept override {
     this->fs = fs;
     this->firstOrderHpf.reset(fs);
     this->firstOrderLpf.reset(fs);

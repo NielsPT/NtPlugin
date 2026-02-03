@@ -47,7 +47,6 @@ constexpr int delayLineLength = 192e3 * 2 * 8 * 2 * 2;
 
 template <typename signal_t>
 struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
-  float fs;
   signal_t tGui             = 0.5;
   signal_t fb_percent       = 20;
   signal_t modFreq          = 1.0;
@@ -252,7 +251,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     this->nDelay.update(this->fs, tGlide);
   }
 
-  virtual void reset(int fs) noexcept override {
+  virtual void reset(float fs) noexcept override {
     this->fs = fs;
     std::fill(this->delayLine.begin(), this->delayLine.end(), 0);
     this->update();

@@ -31,8 +31,6 @@
 
 template <typename signal_t>
 struct ntCompressor : public NtFx::NtPlugin<signal_t> {
-  float fs;
-
   NtFx::SideChain::Settings<signal_t> scSettings;
   NtFx::SideChain::Coeffs<signal_t> scCoeffs;
   std::array<NtFx::SideChain::State<signal_t>, 2> scState;
@@ -206,7 +204,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     this->mix_lin    = this->mix_percent / 100.0;
   }
 
-  void reset(int fs) noexcept override {
+  void reset(float fs) noexcept override {
     this->fs = fs;
     std::fill(this->peakLevels.begin(),
         this->peakLevels.end(),

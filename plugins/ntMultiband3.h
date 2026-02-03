@@ -31,8 +31,6 @@ enum Band { hi, mid, lo };
 
 template <typename signal_t>
 struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
-  signal_t fs;
-
   signal_t xOverLo_hz { 200 };
   signal_t xOverHi_hz { 4000 };
   signal_t ouputGain_db { 0 };
@@ -233,7 +231,7 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
     }
   }
 
-  void reset(int fs) noexcept override {
+  void reset(float fs) noexcept override {
     this->fs = fs;
     this->hiFlt.reset(this->fs);
     this->hiMidFlt.reset(this->fs);
