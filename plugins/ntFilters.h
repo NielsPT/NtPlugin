@@ -53,13 +53,13 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
   NtFx::Biquad::EqBand<signal_t> bqHpf1;
   ntFilters() {
     this->uiSpec.defaultWindowWidth = 800;
-    this->primaryKnobs              = {
+
+    this->primaryKnobs = {
       { &this->fHpf, "HPF", " Hz", 20, 20e3, 2e3 },
       { &this->qHpf, "Q_HPF", "", 0.1, 2 },
       { &this->fLpf, "LPF", " Hz", 20, 20e3, 2e3 },
       { &this->qLpf, "Q_LPF", "", 0.1, 2 },
     };
-    // this->secondaryKnobs = {};
     this->dropdowns = {
       {
           (int*)&this->orderHpf,
