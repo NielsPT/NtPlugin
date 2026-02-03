@@ -42,9 +42,9 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
   Order orderHpf;
   Order orderLpf;
   bool bypass = false;
-  NtFx::FirstOrder::FilterStereo<signal_t, NtFx::FirstOrder::Shape::hpf>
+  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::hpf>
       firstOrderHpf;
-  NtFx::FirstOrder::FilterStereo<signal_t, NtFx::FirstOrder::Shape::lpfZero>
+  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::lpfZero>
       firstOrderLpf;
   NtFx::Biquad::EqBand<signal_t> bqLpf0;
   NtFx::Biquad::EqBand<signal_t> bqLpf1;

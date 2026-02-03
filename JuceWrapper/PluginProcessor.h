@@ -51,9 +51,9 @@ const int versionNumber         = 0x100;
 //==============================================================================
 /**
  */
-struct NtCompressorAudioProcessor : public juce::AudioProcessor {
-  NtCompressorAudioProcessor();
-  ~NtCompressorAudioProcessor() override;
+struct NtPluginAudioProcessor : public juce::AudioProcessor {
+  NtPluginAudioProcessor();
+  ~NtPluginAudioProcessor() override;
   void prepareToPlay(double sampleRate, int samplesPerBlock) override;
   void releaseResources() override;
 
@@ -92,7 +92,7 @@ struct NtCompressorAudioProcessor : public juce::AudioProcessor {
   NtFx::Src::SampleRateConverter<float> src;
   juce::AudioProcessorValueTreeState parameters;
 
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtCompressorAudioProcessor)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtPluginAudioProcessor)
 };
 
 #undef Q

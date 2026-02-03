@@ -38,20 +38,20 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_gui_extra/juce_gui_extra.h>
 
-struct NtCompressorAudioProcessorEditor : public juce::AudioProcessorEditor,
-                                          private juce::Timer,
-                                          private juce::Slider::Listener,
-                                          private juce::ToggleButton::Listener,
-                                          private juce::ComboBox::Listener {
+struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
+                                      private juce::Timer,
+                                      private juce::Slider::Listener,
+                                      private juce::ToggleButton::Listener,
+                                      private juce::ComboBox::Listener {
 
-  NtCompressorAudioProcessorEditor(NtCompressorAudioProcessor&);
-  ~NtCompressorAudioProcessorEditor() override;
+  NtPluginAudioProcessorEditor(NtPluginAudioProcessor&);
+  ~NtPluginAudioProcessorEditor() override;
 
   //==============================================================================
   void paint(juce::Graphics&) override;
   void resized() override;
 
-  NtCompressorAudioProcessor& proc;
+  NtPluginAudioProcessor& proc;
   NtFx::MeterGroup meters;
   NtFx::KnobLookAndFeel knobLookAndFeel;
 
@@ -111,5 +111,5 @@ struct NtCompressorAudioProcessorEditor : public juce::AudioProcessorEditor,
       float colWidth,
       float rowHeight,
       float pad);
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtCompressorAudioProcessorEditor)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtPluginAudioProcessorEditor)
 };

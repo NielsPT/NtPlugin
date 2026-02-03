@@ -27,8 +27,9 @@
 #include "lib/Stereo.h"
 #include "lib/utils.h"
 #include <array>
+#include <string>
 
-enum Band { hi, mid, lo, n };
+enum Bands { hi, mid, lo, n };
 
 template <typename signal_t>
 struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
@@ -39,133 +40,60 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
   bool linkEnable;
   bool bypass;
 
-  std::array<NtFx::SideChain::SideChain<signal_t, true>, 3> sc;
+  std::array<NtFx::SideChain<signal_t, true>, 3> sc;
   // TODO: Add makeup gain to sidechain?
   std::array<signal_t, 3> makeup_db;
   std::array<signal_t, 3> makeup_lin;
-
-  NtFx::FirstOrder::FilterStereo<signal_t, NtFx::FirstOrder::Shape::lpf> loFlt;
-  NtFx::FirstOrder::FilterStereo<signal_t, NtFx::FirstOrder::Shape::hpf>
+  const std::array<std::string, Bands::n> BandNames = { "High", "Mid", "Low" };
+  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::lpf> loFlt;
+  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::hpf>
       loMidFlt;
-  NtFx::FirstOrder::FilterStereo<signal_t, NtFx::FirstOrder::Shape::lpf>
+  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::lpf>
       hiMidFlt;
-  NtFx::FirstOrder::FilterStereo<signal_t, NtFx::FirstOrder::Shape::hpf> hiFlt;
+  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::hpf> hiFlt;
   ntMultiband3() {
     this->uiSpec.maxColumns = 5;
-    this->uiSpec.maxRows    = 3;
+    this->uiSpec.maxRows    = Bands::n;
 
-    this->primaryKnobs = {
-      {
-          {
-              .p_val  = &this->sc[Band::hi].settings.thresh_db,
-              .name   = "Hi_Threshold",
-              .suffix = " dB",
-              .minVal = -60.0,
-              .maxVal = 0.0,
-          },
-          {
-              .p_val    = &this->sc[Band::hi].settings.ratio_db,
-              .name     = "Hi_Ratio",
-              .suffix   = "",
-              .minVal   = 1.0,
-              .maxVal   = 20.0,
-              .midPoint = 2.0,
-          },
-          {
-              .p_val  = &this->sc[Band::hi].settings.tAtt_ms,
-              .name   = "Hi_Attack",
-              .suffix = " ms",
-              .minVal = 0.01,
-              .maxVal = 50.0,
-          },
-          {
-              .p_val  = &this->sc[Band::hi].settings.tRel_ms,
-              .name   = "Hi_Release",
-              .suffix = " ms",
-              .minVal = 10.0,
-              .maxVal = 1000.0,
-          },
-          {
-              .p_val  = &this->makeup_db[Band::hi],
-              .name   = "Hi_Makeup",
-              .suffix = " dB",
-              .minVal = 0.0,
-              .maxVal = 24.0,
-          },
-          {
-              .p_val  = &this->sc[Band::mid].settings.thresh_db,
-              .name   = "Mid_Threshold",
-              .suffix = " dB",
-              .minVal = -60.0,
-              .maxVal = 0.0,
-          },
-          {
-              .p_val    = &this->sc[Band::mid].settings.ratio_db,
-              .name     = "Mid_Ratio",
-              .suffix   = "",
-              .minVal   = 1.0,
-              .maxVal   = 20.0,
-              .midPoint = 2.0,
-          },
-          {
-              .p_val  = &this->sc[Band::mid].settings.tAtt_ms,
-              .name   = "Mid_Attack",
-              .suffix = " ms",
-              .minVal = 0.01,
-              .maxVal = 50.0,
-          },
-          {
-              .p_val  = &this->sc[Band::mid].settings.tRel_ms,
-              .name   = "Mid_Release",
-              .suffix = " ms",
-              .minVal = 10.0,
-              .maxVal = 1000.0,
-          },
-          {
-              .p_val  = &this->makeup_db[Band::mid],
-              .name   = "Mid_Makeup",
-              .suffix = " dB",
-              .minVal = 0.0,
-              .maxVal = 24.0,
-          },
-          {
-              .p_val  = &this->sc[Band::lo].settings.thresh_db,
-              .name   = "Low_Threshold",
-              .suffix = " dB",
-              .minVal = -60.0,
-              .maxVal = 0.0,
-          },
-          {
-              .p_val    = &this->sc[Band::lo].settings.ratio_db,
-              .name     = "Low_Ratio",
-              .suffix   = "",
-              .minVal   = 1.0,
-              .maxVal   = 20.0,
-              .midPoint = 2.0,
-          },
-          {
-              .p_val  = &this->sc[Band::lo].settings.tAtt_ms,
-              .name   = "Low_Attack",
-              .suffix = " ms",
-              .minVal = 0.01,
-              .maxVal = 50.0,
-          },
-          {
-              .p_val  = &this->sc[Band::lo].settings.tRel_ms,
-              .name   = "Low_Release",
-              .suffix = " ms",
-              .minVal = 10.0,
-              .maxVal = 1000.0,
-          },
-          {
-              .p_val  = &this->makeup_db[Band::lo],
-              .name   = "Low_Makeup",
-              .suffix = " dB",
-              .minVal = 0.0,
-              .maxVal = 24.0,
-          },
-      },
-    };
+    for (size_t i = 0; i < Bands::n; i++) {
+      this->primaryKnobs.push_back({
+          .p_val  = &this->sc[i].settings.thresh_db,
+          .name   = this->BandNames[i] + "_Threshold",
+          .suffix = " dB",
+          .minVal = -60,
+          .maxVal = 0,
+      });
+      this->primaryKnobs.push_back({
+          .p_val    = &this->sc[i].settings.ratio_db,
+          .name     = this->BandNames[i] + "_Ratio",
+          .suffix   = "",
+          .minVal   = 1.0,
+          .maxVal   = 20.0,
+          .midPoint = 2.0,
+      });
+      this->primaryKnobs.push_back({
+          .p_val  = &this->sc[i].settings.tAtt_ms,
+          .name   = this->BandNames[i] + "_Attack",
+          .suffix = " ms",
+          .minVal = 0.01,
+          .maxVal = 50.0,
+      });
+      this->primaryKnobs.push_back({
+          .p_val  = &this->sc[i].settings.tRel_ms,
+          .name   = this->BandNames[i] + "_Release",
+          .suffix = " ms",
+          .minVal = 10.0,
+          .maxVal = 1000.0,
+
+      });
+      this->primaryKnobs.push_back({
+          .p_val  = &this->makeup_db[i],
+          .name   = this->BandNames[i] + "_Makeup",
+          .suffix = " dB",
+          .minVal = 0.0,
+          .maxVal = 24.0,
+      });
+    }
     this->secondaryKnobs = {
       { &this->xOverLo_hz, "Lo_Xover", " Hz", 20, 2000, 200 },
       { &this->xOverHi_hz, "Hi_Xover", " Hz", 200, 20000, 2000 },
@@ -175,40 +103,37 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
       { &this->linkEnable, "Link" },
       { &this->bypass, "Bypass" },
     };
-    this->uiSpec.meters = {
-      { .name = "IN" },
-      { .name = "OUT", .hasScale = true },
-      { .name = "LOW", .invert = true },
-      { .name = "MID", .invert = true },
-      { .name = "HI", .invert = true, .hasScale = true },
-    };
+    this->uiSpec.meters = { { "IN" }, { "OUT", true } };
+    for (int i = Bands::n - 1; i >= 0; i--) {
+      this->uiSpec.meters.push_back({ this->BandNames[i], true });
+    }
+    this->uiSpec.meters[Bands::n - 1 + 2].hasScale = true;
     this->updateDefaults();
   }
 
   NtFx::Stereo<signal_t> process(NtFx::Stereo<signal_t> x) noexcept override {
     if (this->bypass) { return x; }
     std::array<NtFx::Stereo<signal_t>, 3> xComp;
-    xComp[Band::hi]  = this->hiFlt.process(x);
-    auto xLoMidFlt   = this->hiMidFlt.process(x);
-    xComp[Band::mid] = this->loMidFlt.process(xLoMidFlt);
-    xComp[Band::lo]  = this->loFlt.process(x);
-    // TODO: What we want here is to call sc[Band::hi].process(xScHi)
-    std::array<NtFx::Stereo<signal_t>, Band::n> gr;
-    for (size_t i = 0; i < Band::n; i++) {
+    xComp[Bands::hi]  = this->hiFlt.process(x);
+    auto xLoMidFlt    = this->hiMidFlt.process(x);
+    xComp[Bands::mid] = this->loMidFlt.process(xLoMidFlt);
+    xComp[Bands::lo]  = this->loFlt.process(x);
+    std::array<NtFx::Stereo<signal_t>, Bands::n> gr;
+    for (size_t i = 0; i < Bands::n; i++) {
       gr[i] = this->sc[i].process(xComp[i]);
       if (this->linkEnable) { gr[i] = gr[i].absMin(); }
     }
-    NtFx::Stereo<signal_t> y;
-    for (size_t i = 0; i < Band::n; i++) {
-      y += xComp[i] * gr[i] * this->makeup_lin[i];
+    NtFx::Stereo<signal_t> yComp;
+    for (size_t i = 0; i < Bands::n; i++) {
+      yComp += xComp[i] * gr[i] * this->makeup_lin[i];
     }
-
+    auto y = yComp * this->ouputGain_lin;
     this->template updatePeakLevel<0>(x);
     this->template updatePeakLevel<1>(y);
-    this->template updatePeakLevel<2, true>(gr[Band::lo]);
-    this->template updatePeakLevel<3, true>(gr[Band::mid]);
-    this->template updatePeakLevel<4, true>(gr[Band::hi]);
-    return y * this->ouputGain_lin;
+    this->template updatePeakLevel<2, true>(gr[Bands::lo]);
+    this->template updatePeakLevel<3, true>(gr[Bands::mid]);
+    this->template updatePeakLevel<4, true>(gr[Bands::hi]);
+    return y;
   }
 
   void update() noexcept override {
@@ -221,7 +146,7 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
     this->loMidFlt.update();
     this->loFlt.update();
     this->ouputGain_lin = NtFx::invDb(this->ouputGain_db);
-    for (size_t i = 0; i < Band::n; i++) {
+    for (size_t i = 0; i < Bands::n; i++) {
       this->makeup_lin[i] = NtFx::invDb(makeup_db[i]);
       this->sc[i].update();
     }
@@ -233,7 +158,7 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
     this->hiMidFlt.reset(this->fs);
     this->loMidFlt.reset(this->fs);
     this->loFlt.reset(this->fs);
-    for (size_t i = 0; i < Band::n; i++) { this->sc[i].reset(this->fs); }
+    for (size_t i = 0; i < Bands::n; i++) { this->sc[i].reset(this->fs); }
     this->update();
   }
 };

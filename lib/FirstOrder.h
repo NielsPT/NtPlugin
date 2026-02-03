@@ -68,7 +68,7 @@ namespace FirstOrder {
   };
 
   template <typename signal_t, Shape shape>
-  struct FilterStereo : public Component<Stereo<signal_t>> {
+  struct StereoFilter : public Component<Stereo<signal_t>> {
     Filter<signal_t, shape> l;
     Filter<signal_t, shape> r;
 

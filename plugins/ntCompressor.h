@@ -31,8 +31,8 @@
 
 template <typename signal_t>
 struct ntCompressor : public NtFx::NtPlugin<signal_t> {
-  NtFx::SideChain::SideChain<signal_t, false> scLin;
-  NtFx::SideChain::SideChain<signal_t, true> scDb;
+  NtFx::SideChain<signal_t, false> scLin;
+  NtFx::SideChain<signal_t, true> scDb;
   signal_t makeup_db   = static_cast<signal_t>(0.0);
   signal_t mix_percent = static_cast<signal_t>(100.0);
 

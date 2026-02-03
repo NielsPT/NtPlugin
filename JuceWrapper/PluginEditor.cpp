@@ -29,8 +29,8 @@
 
 enum TitleBarDropDowns { e_uiScale, e_theme, e_oversampling };
 
-NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
-    NtCompressorAudioProcessor& p)
+NtPluginAudioProcessorEditor::NtPluginAudioProcessorEditor(
+    NtPluginAudioProcessor& p)
     : AudioProcessorEditor(&p), proc(p), meters(proc.plug.uiSpec) {
   this->updateColours();
   for (auto& k : this->proc.plug.primaryKnobs) { this->initPrimaryKnob(k); }
@@ -73,7 +73,7 @@ NtCompressorAudioProcessorEditor::NtCompressorAudioProcessorEditor(
   this->updateUi();
 }
 
-NtCompressorAudioProcessorEditor::~NtCompressorAudioProcessorEditor() {
+NtPluginAudioProcessorEditor::~NtPluginAudioProcessorEditor() {
   for (auto& toggle : this->allToggles) { toggle->setLookAndFeel(nullptr); }
   for (auto& slider : this->allPrimaryKnobs) {
     slider->setLookAndFeel(nullptr);
@@ -83,7 +83,7 @@ NtCompressorAudioProcessorEditor::~NtCompressorAudioProcessorEditor() {
   }
 }
 
-void NtCompressorAudioProcessorEditor::updateColours() {
+void NtPluginAudioProcessorEditor::updateColours() {
   this->knobLookAndFeel.backgroundColour =
       this->proc.plug.uiSpec.backgroundColour;
   this->knobLookAndFeel.foregroundColour =
@@ -108,7 +108,7 @@ void NtCompressorAudioProcessorEditor::updateColours() {
   for (auto& knob : this->allSecondaryKnobs) { knob->lookAndFeelChanged(); }
 }
 
-void NtCompressorAudioProcessorEditor::initDropDown(
+void NtPluginAudioProcessorEditor::initDropDown(
     NtFx::DropDownSpec& spec, bool addToTitleBar) {
   auto p_box = std::make_unique<juce::ComboBox>();
   p_box->setTitle(spec.name);
@@ -148,7 +148,7 @@ void NtCompressorAudioProcessorEditor::initDropDown(
   }
 }
 
-void NtCompressorAudioProcessorEditor::initPrimaryKnob(
+void NtPluginAudioProcessorEditor::initPrimaryKnob(
     NtFx::KnobSpec<float>& spec) {
   auto p_knob  = std::make_unique<juce::Slider>(spec.name);
   auto p_label = std::make_unique<juce::Label>(spec.name);
@@ -157,7 +157,7 @@ void NtCompressorAudioProcessorEditor::initPrimaryKnob(
   this->allPrimaryKnobLabels.push_back(std::move(p_label));
 }
 
-void NtCompressorAudioProcessorEditor::initSecondaryKnob(
+void NtPluginAudioProcessorEditor::initSecondaryKnob(
     NtFx::KnobSpec<float>& spec) {
   std::string name = spec.name;
   auto p_knob      = std::make_unique<juce::Slider>(name);
@@ -167,7 +167,7 @@ void NtCompressorAudioProcessorEditor::initSecondaryKnob(
   this->allSecondaryKnobLabels.push_back(std::move(p_label));
 }
 
-void NtCompressorAudioProcessorEditor::_initKnob(NtFx::KnobSpec<float>& spec,
+void NtPluginAudioProcessorEditor::_initKnob(NtFx::KnobSpec<float>& spec,
     std::unique_ptr<juce::Slider>& p_slider,
     std::unique_ptr<juce::Label>& p_label) {
   if (!spec.p_val) { return; }
@@ -188,7 +188,7 @@ void NtCompressorAudioProcessorEditor::_initKnob(NtFx::KnobSpec<float>& spec,
   if (spec.midPoint) { p_slider->setSkewFactorFromMidPoint(spec.midPoint); }
 }
 
-void NtCompressorAudioProcessorEditor::initToggle(NtFx::ToggleSpec& spec) {
+void NtPluginAudioProcessorEditor::initToggle(NtFx::ToggleSpec& spec) {
   auto p_button = std::make_unique<NtFx::Toggle>(spec.name);
   if (spec.p_val) {
     this->addAndMakeVisible(p_button.get());
@@ -205,7 +205,7 @@ void NtCompressorAudioProcessorEditor::initToggle(NtFx::ToggleSpec& spec) {
   this->allToggles.push_back(std::move(p_button));
 }
 
-void NtCompressorAudioProcessorEditor::paint(juce::Graphics& g) {
+void NtPluginAudioProcessorEditor::paint(juce::Graphics& g) {
   g.fillAll(juce::Colour(this->proc.plug.uiSpec.backgroundColour));
   g.setColour(juce::Colours::darkgrey);
   for (size_t i = 0; i < grayAreas.size(); i++) {
@@ -218,12 +218,12 @@ void NtCompressorAudioProcessorEditor::paint(juce::Graphics& g) {
   }
 }
 
-void NtCompressorAudioProcessorEditor::resized() {
+void NtPluginAudioProcessorEditor::resized() {
   DBG("Resized");
   this->updateUi();
 }
 
-void NtCompressorAudioProcessorEditor::updateUi() {
+void NtPluginAudioProcessorEditor::updateUi() {
   if (!this->isInitialized) { return; }
   this->grayAreas.clear();
   this->borderedAreas.clear();
@@ -248,8 +248,7 @@ void NtCompressorAudioProcessorEditor::updateUi() {
   this->repaint();
 }
 
-void NtCompressorAudioProcessorEditor::updateTitleBar(
-    juce::Rectangle<int>& area) {
+void NtPluginAudioProcessorEditor::updateTitleBar(juce::Rectangle<int>& area) {
   auto pad = 3.0f * this->uiScale;
   auto titleBarArea =
       area.removeFromTop(this->proc.plug.uiSpec.titleBarHeight * this->uiScale);
@@ -268,8 +267,7 @@ void NtCompressorAudioProcessorEditor::updateTitleBar(
   }
 }
 
-void NtCompressorAudioProcessorEditor::updateMeters(
-    juce::Rectangle<int>& area) {
+void NtPluginAudioProcessorEditor::updateMeters(juce::Rectangle<int>& area) {
   auto meterArea =
       area.removeFromLeft(this->meters.getMinimalWidth() * this->uiScale);
   this->meters.setFontSize(
@@ -279,8 +277,7 @@ void NtCompressorAudioProcessorEditor::updateMeters(
   this->borderedAreas.push_back(meterArea);
 }
 
-void NtCompressorAudioProcessorEditor::updateBottomRow(
-    juce::Rectangle<int>& area) {
+void NtPluginAudioProcessorEditor::updateBottomRow(juce::Rectangle<int>& area) {
   // TODO: wrap to next row if too many.
   auto bottomRowArea = area.removeFromBottom(
       this->proc.plug.uiSpec.toggleHeight * this->uiScale);
@@ -313,7 +310,7 @@ void NtCompressorAudioProcessorEditor::updateBottomRow(
   }
 }
 
-void NtCompressorAudioProcessorEditor::updateSecondaryKnobs(
+void NtPluginAudioProcessorEditor::updateSecondaryKnobs(
     juce::Rectangle<int>& area) {
   // TODO: wrap to next row if too many.
   auto pad                = 10 * this->uiScale;
@@ -337,7 +334,7 @@ void NtCompressorAudioProcessorEditor::updateSecondaryKnobs(
   }
 }
 
-void NtCompressorAudioProcessorEditor::updatePrimaryKnobs(
+void NtPluginAudioProcessorEditor::updatePrimaryKnobs(
     juce::Rectangle<int>& area) {
   auto pad    = 10 * this->uiScale;
   auto nKnobs = this->proc.plug.primaryKnobs.size();
@@ -387,7 +384,7 @@ void NtCompressorAudioProcessorEditor::updatePrimaryKnobs(
   }
 }
 
-void NtCompressorAudioProcessorEditor::timerCallback() {
+void NtPluginAudioProcessorEditor::timerCallback() {
   for (size_t i = 0; i < this->meters.size(); i++) {
     this->meters.refresh(i, this->proc.plug.getAndResetPeakLevel(i));
   }
@@ -397,8 +394,7 @@ void NtCompressorAudioProcessorEditor::timerCallback() {
   }
 }
 
-void NtCompressorAudioProcessorEditor::sliderValueChanged(
-    juce::Slider* p_slider) {
+void NtPluginAudioProcessorEditor::sliderValueChanged(juce::Slider* p_slider) {
   auto name   = p_slider->getName().toStdString();
   auto* p_val = this->proc.plug.getKnobValuePtr(name);
   if (!p_val) {
@@ -409,7 +405,7 @@ void NtCompressorAudioProcessorEditor::sliderValueChanged(
   this->proc.plug.update();
 }
 
-void NtCompressorAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
+void NtPluginAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
   auto name   = p_button->getName().toStdString();
   auto* p_val = this->proc.plug.getToggleValuePtr(name);
   if (!p_val) {
@@ -420,7 +416,7 @@ void NtCompressorAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
   this->proc.plug.update();
 }
 
-void NtCompressorAudioProcessorEditor::comboBoxChanged(juce::ComboBox* p_box) {
+void NtPluginAudioProcessorEditor::comboBoxChanged(juce::ComboBox* p_box) {
   // TODO: this stinks.
   if (this->titleBarDropDowns.size() < 3) { return; }
   if (p_box == this->titleBarDropDowns[e_uiScale].get()) {
@@ -437,7 +433,7 @@ void NtCompressorAudioProcessorEditor::comboBoxChanged(juce::ComboBox* p_box) {
   this->proc.plug.update();
 }
 
-void NtCompressorAudioProcessorEditor::updateUiScale() {
+void NtPluginAudioProcessorEditor::updateUiScale() {
   auto p_box = this->titleBarDropDowns[e_uiScale].get();
   switch (p_box->getSelectedId()) {
   case 1:
@@ -468,12 +464,12 @@ void NtCompressorAudioProcessorEditor::updateUiScale() {
       this->unscaledWindowHeight * this->uiScale);
 }
 
-void NtCompressorAudioProcessorEditor::updateOversampling() {
+void NtPluginAudioProcessorEditor::updateOversampling() {
   auto p_box = this->titleBarDropDowns[e_oversampling].get();
   this->proc.updateOversampling(p_box->getSelectedId());
 }
 
-void NtCompressorAudioProcessorEditor::updateTheme() {
+void NtPluginAudioProcessorEditor::updateTheme() {
   if (!(this->proc.plug.uiSpec.backgroundColour == 0xFF000000
           || this->proc.plug.uiSpec.backgroundColour == 0xFFFFFFFF)
       || !(this->proc.plug.uiSpec.foregroundColour == 0xFF000000
@@ -498,7 +494,7 @@ void NtCompressorAudioProcessorEditor::updateTheme() {
   this->updateUi();
 }
 
-void NtCompressorAudioProcessorEditor::calcSliderRowsCols(
+void NtPluginAudioProcessorEditor::calcSliderRowsCols(
     int nKnobs, int& nRows, int& nColumns, int maxRows, int maxColumns) {
   if (nKnobs > maxRows * maxColumns) {
     juce::NativeMessageBox::showMessageBoxAsync(

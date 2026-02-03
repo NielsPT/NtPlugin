@@ -26,7 +26,7 @@
 #include "lib/UiSpec.h"
 
 //==============================================================================
-NtCompressorAudioProcessor::NtCompressorAudioProcessor()
+NtPluginAudioProcessor::NtPluginAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
     : AudioProcessor(BusesProperties()
   #if !JucePlugin_IsMidiEffect
@@ -45,14 +45,14 @@ NtCompressorAudioProcessor::NtCompressorAudioProcessor()
       src(plug) {
 }
 
-NtCompressorAudioProcessor::~NtCompressorAudioProcessor() { }
+NtPluginAudioProcessor::~NtPluginAudioProcessor() { }
 
 //==============================================================================
-const juce::String NtCompressorAudioProcessor::getName() const {
+const juce::String NtPluginAudioProcessor::getName() const {
   return JucePlugin_Name;
 }
 
-bool NtCompressorAudioProcessor::acceptsMidi() const {
+bool NtPluginAudioProcessor::acceptsMidi() const {
 #if JucePlugin_WantsMidiInput
   return true;
 #else
@@ -60,7 +60,7 @@ bool NtCompressorAudioProcessor::acceptsMidi() const {
 #endif
 }
 
-bool NtCompressorAudioProcessor::producesMidi() const {
+bool NtPluginAudioProcessor::producesMidi() const {
 #if JucePlugin_ProducesMidiOutput
   return true;
 #else
@@ -68,7 +68,7 @@ bool NtCompressorAudioProcessor::producesMidi() const {
 #endif
 }
 
-bool NtCompressorAudioProcessor::isMidiEffect() const {
+bool NtPluginAudioProcessor::isMidiEffect() const {
 #if JucePlugin_IsMidiEffect
   return true;
 #else
@@ -76,18 +76,18 @@ bool NtCompressorAudioProcessor::isMidiEffect() const {
 #endif
 }
 
-double NtCompressorAudioProcessor::getTailLengthSeconds() const { return 0.0; }
-int NtCompressorAudioProcessor::getNumPrograms() { return 1; }
-int NtCompressorAudioProcessor::getCurrentProgram() { return 0; }
-void NtCompressorAudioProcessor::setCurrentProgram(int index) { }
-const juce::String NtCompressorAudioProcessor::getProgramName(int index) {
+double NtPluginAudioProcessor::getTailLengthSeconds() const { return 0.0; }
+int NtPluginAudioProcessor::getNumPrograms() { return 1; }
+int NtPluginAudioProcessor::getCurrentProgram() { return 0; }
+void NtPluginAudioProcessor::setCurrentProgram(int index) { }
+const juce::String NtPluginAudioProcessor::getProgramName(int index) {
   return {};
 }
-void NtCompressorAudioProcessor::changeProgramName(
+void NtPluginAudioProcessor::changeProgramName(
     int index, const juce::String& newName) { }
 
 //==============================================================================
-void NtCompressorAudioProcessor::prepareToPlay(
+void NtPluginAudioProcessor::prepareToPlay(
     double sampleRate, int samplesPerBlock) {
   // if (!this->isInitialized) { return; }
   this->fsBase = sampleRate;
@@ -95,10 +95,10 @@ void NtCompressorAudioProcessor::prepareToPlay(
 }
 
 juce::AudioChannelSet m_outputFormat;
-void NtCompressorAudioProcessor::releaseResources() { }
+void NtPluginAudioProcessor::releaseResources() { }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool NtCompressorAudioProcessor::isBusesLayoutSupported(
+bool NtPluginAudioProcessor::isBusesLayoutSupported(
     const BusesLayout& layouts) const {
   #if JucePlugin_IsMidiEffect
   juce::ignoreUnused(layouts);
@@ -117,7 +117,7 @@ bool NtCompressorAudioProcessor::isBusesLayoutSupported(
 }
 #endif
 
-void NtCompressorAudioProcessor::processBlock(
+void NtPluginAudioProcessor::processBlock(
     juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) {
   juce::ScopedNoDenormals noDenormals;
   auto totalNumInputChannels  = getTotalNumInputChannels();
@@ -145,22 +145,21 @@ void NtCompressorAudioProcessor::processBlock(
   }
 }
 
-bool NtCompressorAudioProcessor::hasEditor() const {
+bool NtPluginAudioProcessor::hasEditor() const {
   return true; // (change this to false if you choose to not supply an editor)
 }
 
-juce::AudioProcessorEditor* NtCompressorAudioProcessor::createEditor() {
-  return new NtCompressorAudioProcessorEditor(*this);
+juce::AudioProcessorEditor* NtPluginAudioProcessor::createEditor() {
+  return new NtPluginAudioProcessorEditor(*this);
 }
 
-void NtCompressorAudioProcessor::getStateInformation(
-    juce::MemoryBlock& destData) {
+void NtPluginAudioProcessor::getStateInformation(juce::MemoryBlock& destData) {
   auto state = this->parameters.copyState();
   std::unique_ptr<juce::XmlElement> xml(state.createXml());
   copyXmlToBinary(*xml, destData);
 }
 
-void NtCompressorAudioProcessor::setStateInformation(
+void NtPluginAudioProcessor::setStateInformation(
     const void* data, int sizeInBytes) {
   std::unique_ptr<juce::XmlElement> xmlState(
       getXmlFromBinary(data, sizeInBytes));
@@ -169,7 +168,7 @@ void NtCompressorAudioProcessor::setStateInformation(
       parameters.replaceState(juce::ValueTree::fromXml(*xmlState));
 }
 
-void NtCompressorAudioProcessor::updateOversampling(int mode) {
+void NtPluginAudioProcessor::updateOversampling(int mode) {
   this->src.update(
       static_cast<NtFx::Src::oversamplingMode>(mode), this->fsBase);
   this->src.reset();
@@ -180,11 +179,11 @@ void NtCompressorAudioProcessor::updateOversampling(int mode) {
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
   DBG("Creating new NtFx plugin editor.");
-  return new NtCompressorAudioProcessor();
+  return new NtPluginAudioProcessor();
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout
-NtCompressorAudioProcessor::createParameterLayout() {
+NtPluginAudioProcessor::createParameterLayout() {
   int i = 1;
   juce::AudioProcessorValueTreeState::ParameterLayout parameters;
   for (auto k : this->plug.primaryKnobs) {
