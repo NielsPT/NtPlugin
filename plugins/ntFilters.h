@@ -162,5 +162,6 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
     this->fs = fs;
     this->firstOrderHpf.reset(fs);
     this->firstOrderLpf.reset(fs);
+    this->update();
   }
 };

@@ -31,9 +31,8 @@
 
 template <typename signal_t>
 struct ntCompressor : public NtFx::NtPlugin<signal_t> {
-  NtFx::SideChain::Settings<signal_t> scSettings;
-  NtFx::SideChain::Coeffs<signal_t> scCoeffs;
-  std::array<NtFx::SideChain::State<signal_t>, 2> scState;
+  NtFx::SideChain::SideChain<signal_t, false> scLin;
+  NtFx::SideChain::SideChain<signal_t, true> scDb;
   signal_t makeup_db   = static_cast<signal_t>(0.0);
   signal_t mix_percent = static_cast<signal_t>(100.0);
 
@@ -54,14 +53,14 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   ntCompressor() {
     this->primaryKnobs = {
       {
-          .p_val  = &this->scSettings.thresh_db,
+          .p_val  = &this->sc.settings.thresh_db,
           .name   = "Threshold",
           .suffix = " dB",
           .minVal = -60.0,
           .maxVal = 0.0,
       },
       {
-          .p_val    = &this->scSettings.ratio_db,
+          .p_val    = &this->sc.settings.ratio_db,
           .name     = "Ratio",
           .suffix   = "",
           .minVal   = 1.0,
@@ -69,14 +68,14 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
           .midPoint = 2.0,
       },
       {
-          .p_val  = &this->scSettings.tAtt_ms,
+          .p_val  = &this->sc.settings.tAtt_ms,
           .name   = "Attack",
           .suffix = " ms",
           .minVal = 0.01,
           .maxVal = 50.0,
       },
       {
-          .p_val  = &this->scSettings.tRel_ms,
+          .p_val  = &this->sc.settings.tRel_ms,
           .name   = "Release",
           .suffix = " ms",
           .minVal = 10.0,
@@ -93,14 +92,14 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
 
     this->secondaryKnobs = {
       {
-          .p_val  = &this->scSettings.knee_db,
+          .p_val  = &this->sc.settings.knee_db,
           .name   = "Knee",
           .suffix = " dB",
           .minVal = 0.0,
           .maxVal = 24.0,
       },
       {
-          .p_val  = &this->scSettings.tRms_ms,
+          .p_val  = &this->sc.settings.tRms_ms,
           .name   = "RMS_time",
           .suffix = " ms",
           .minVal = 1.0,
@@ -131,7 +130,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     };
 
     this->toggles = {
-      { .p_val = &this->scSettings.rmsEnable, .name = "RMS" },
+      { .p_val = &this->sc.settings.rmsEnable, .name = "RMS" },
       { .p_val = &this->feedbackEnable, .name = "Feedback" },
       { .p_val = &this->linEnable, .name = "Linear" },
       { .p_val = &this->linkEnable, .name = "Link" },
@@ -173,15 +172,9 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
 
     NtFx::Stereo<signal_t> gr;
     if (this->linEnable) {
-      gr.l = NtFx::SideChain::sideChain_lin(
-          &this->scCoeffs, &this->scState[0], xSc.l);
-      gr.r = NtFx::SideChain::sideChain_lin(
-          &this->scCoeffs, &this->scState[1], xSc.r);
+      gr = scLin.process(xSc);
     } else {
-      gr.l = NtFx::SideChain::sideChain_db(
-          &this->scCoeffs, &this->scState[0], xSc.l);
-      gr.r = NtFx::SideChain::sideChain_db(
-          &this->scCoeffs, &this->scState[1], xSc.r);
+      gr = scDb.process(xSc);
     }
     if (this->linkEnable) { gr = gr.absMin(); }
     this->template updatePeakLevel<2, true>(gr);
@@ -199,7 +192,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   void update() noexcept override {
     this->hpf.update(this->fs);
     this->boost.update(this->fs);
-    this->scCoeffs   = NtFx::SideChain::calcCoeffs(this->fs, &this->scSettings);
+    this->sc.update();
     this->makeup_lin = NtFx::invDb(this->makeup_db);
     this->mix_lin    = this->mix_percent / 100.0;
   }
@@ -211,8 +204,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
         static_cast<signal_t>(0));
     this->peakLevels[2] = static_cast<signal_t>(1);
     this->fbState       = static_cast<signal_t>(0);
-    this->scState[0].reset();
-    this->scState[1].reset();
+    this->sc.reset(this->fs);
     this->update();
   }
 };

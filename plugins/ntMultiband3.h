@@ -25,9 +25,10 @@
 #include "lib/Plugin.h"
 #include "lib/SideChain.h"
 #include "lib/Stereo.h"
+#include "lib/utils.h"
 #include <array>
 
-enum Band { hi, mid, lo };
+enum Band { hi, mid, lo, n };
 
 template <typename signal_t>
 struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
@@ -35,11 +36,11 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
   signal_t xOverHi_hz { 4000 };
   signal_t ouputGain_db { 0 };
   signal_t ouputGain_lin { 1 };
+  bool linkEnable;
   bool bypass;
 
-  std::array<NtFx::SideChain::Settings<signal_t>, 3> scSettings;
-  std::array<NtFx::SideChain::Coeffs<signal_t>, 3> scCoeffs;
-  std::array<NtFx::SideChain::State<signal_t>, 3> scState;
+  std::array<NtFx::SideChain::SideChain<signal_t, true>, 3> sc;
+  // TODO: Add makeup gain to sidechain?
   std::array<signal_t, 3> makeup_db;
   std::array<signal_t, 3> makeup_lin;
 
@@ -56,14 +57,14 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
     this->primaryKnobs = {
       {
           {
-              .p_val  = &this->scSettings[Band::hi].thresh_db,
+              .p_val  = &this->sc[Band::hi].settings.thresh_db,
               .name   = "Hi_Threshold",
               .suffix = " dB",
               .minVal = -60.0,
               .maxVal = 0.0,
           },
           {
-              .p_val    = &this->scSettings[Band::hi].ratio_db,
+              .p_val    = &this->sc[Band::hi].settings.ratio_db,
               .name     = "Hi_Ratio",
               .suffix   = "",
               .minVal   = 1.0,
@@ -71,14 +72,14 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
               .midPoint = 2.0,
           },
           {
-              .p_val  = &this->scSettings[Band::hi].tAtt_ms,
+              .p_val  = &this->sc[Band::hi].settings.tAtt_ms,
               .name   = "Hi_Attack",
               .suffix = " ms",
               .minVal = 0.01,
               .maxVal = 50.0,
           },
           {
-              .p_val  = &this->scSettings[Band::hi].tRel_ms,
+              .p_val  = &this->sc[Band::hi].settings.tRel_ms,
               .name   = "Hi_Release",
               .suffix = " ms",
               .minVal = 10.0,
@@ -92,14 +93,14 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
               .maxVal = 24.0,
           },
           {
-              .p_val  = &this->scSettings[Band::mid].thresh_db,
+              .p_val  = &this->sc[Band::mid].settings.thresh_db,
               .name   = "Mid_Threshold",
               .suffix = " dB",
               .minVal = -60.0,
               .maxVal = 0.0,
           },
           {
-              .p_val    = &this->scSettings[Band::mid].ratio_db,
+              .p_val    = &this->sc[Band::mid].settings.ratio_db,
               .name     = "Mid_Ratio",
               .suffix   = "",
               .minVal   = 1.0,
@@ -107,14 +108,14 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
               .midPoint = 2.0,
           },
           {
-              .p_val  = &this->scSettings[Band::mid].tAtt_ms,
+              .p_val  = &this->sc[Band::mid].settings.tAtt_ms,
               .name   = "Mid_Attack",
               .suffix = " ms",
               .minVal = 0.01,
               .maxVal = 50.0,
           },
           {
-              .p_val  = &this->scSettings[Band::mid].tRel_ms,
+              .p_val  = &this->sc[Band::mid].settings.tRel_ms,
               .name   = "Mid_Release",
               .suffix = " ms",
               .minVal = 10.0,
@@ -128,14 +129,14 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
               .maxVal = 24.0,
           },
           {
-              .p_val  = &this->scSettings[Band::lo].thresh_db,
+              .p_val  = &this->sc[Band::lo].settings.thresh_db,
               .name   = "Low_Threshold",
               .suffix = " dB",
               .minVal = -60.0,
               .maxVal = 0.0,
           },
           {
-              .p_val    = &this->scSettings[Band::lo].ratio_db,
+              .p_val    = &this->sc[Band::lo].settings.ratio_db,
               .name     = "Low_Ratio",
               .suffix   = "",
               .minVal   = 1.0,
@@ -143,14 +144,14 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
               .midPoint = 2.0,
           },
           {
-              .p_val  = &this->scSettings[Band::lo].tAtt_ms,
+              .p_val  = &this->sc[Band::lo].settings.tAtt_ms,
               .name   = "Low_Attack",
               .suffix = " ms",
               .minVal = 0.01,
               .maxVal = 50.0,
           },
           {
-              .p_val  = &this->scSettings[Band::lo].tRel_ms,
+              .p_val  = &this->sc[Band::lo].settings.tRel_ms,
               .name   = "Low_Release",
               .suffix = " ms",
               .minVal = 10.0,
@@ -170,11 +171,14 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
       { &this->xOverHi_hz, "Hi_Xover", " Hz", 200, 20000, 2000 },
       { &this->ouputGain_db, "Out", " dB", -12, 12 },
     };
-    this->toggles       = { { &this->bypass, "Bypass" } };
+    this->toggles = {
+      { &this->linkEnable, "Link" },
+      { &this->bypass, "Bypass" },
+    };
     this->uiSpec.meters = {
       { .name = "IN" },
       { .name = "OUT", .hasScale = true },
-      { .name = "LOW", .invert = true, .hasScale = true },
+      { .name = "LOW", .invert = true },
       { .name = "MID", .invert = true },
       { .name = "HI", .invert = true, .hasScale = true },
     };
@@ -183,37 +187,28 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
 
   NtFx::Stereo<signal_t> process(NtFx::Stereo<signal_t> x) noexcept override {
     if (this->bypass) { return x; }
-    auto xHi       = this->hiFlt.process(x);
-    auto xLoMidFlt = this->hiMidFlt.process(x);
-    auto xMid      = this->loMidFlt.process(xLoMidFlt);
-    auto xLo       = this->loFlt.process(x);
+    std::array<NtFx::Stereo<signal_t>, 3> xComp;
+    xComp[Band::hi]  = this->hiFlt.process(x);
+    auto xLoMidFlt   = this->hiMidFlt.process(x);
+    xComp[Band::mid] = this->loMidFlt.process(xLoMidFlt);
+    xComp[Band::lo]  = this->loFlt.process(x);
     // TODO: What we want here is to call sc[Band::hi].process(xScHi)
-    NtFx::Stereo<signal_t> grHi = {
-      NtFx::SideChain::sideChain_lin(
-          &this->scCoeffs[Band::hi], &this->scState[Band::hi], xHi.l),
-      NtFx::SideChain::sideChain_lin(
-          &this->scCoeffs[Band::hi], &this->scState[Band::hi], xHi.r)
-    };
-    NtFx::Stereo<signal_t> grMid = {
-      NtFx::SideChain::sideChain_lin(
-          &this->scCoeffs[Band::mid], &this->scState[Band::mid], xMid.l),
-      NtFx::SideChain::sideChain_lin(
-          &this->scCoeffs[Band::mid], &this->scState[Band::mid], xMid.r)
-    };
-    NtFx::Stereo<signal_t> grLo = {
-      NtFx::SideChain::sideChain_lin(
-          &this->scCoeffs[Band::lo], &this->scState[Band::lo], xLo.l),
-      NtFx::SideChain::sideChain_lin(
-          &this->scCoeffs[Band::lo], &this->scState[Band::lo], xLo.r)
-    };
-    auto y = xHi * grHi + xMid * grMid + xLo * grLo;
+    std::array<NtFx::Stereo<signal_t>, Band::n> gr;
+    for (size_t i = 0; i < Band::n; i++) {
+      gr[i] = this->sc[i].process(xComp[i]);
+      if (this->linkEnable) { gr[i] = gr[i].absMin(); }
+    }
+    NtFx::Stereo<signal_t> y;
+    for (size_t i = 0; i < Band::n; i++) {
+      y += xComp[i] * gr[i] * this->makeup_lin[i];
+    }
 
     this->template updatePeakLevel<0>(x);
     this->template updatePeakLevel<1>(y);
-    this->template updatePeakLevel<2, true>(grLo);
-    this->template updatePeakLevel<3, true>(grMid);
-    this->template updatePeakLevel<4, true>(grHi);
-    return y;
+    this->template updatePeakLevel<2, true>(gr[Band::lo]);
+    this->template updatePeakLevel<3, true>(gr[Band::mid]);
+    this->template updatePeakLevel<4, true>(gr[Band::hi]);
+    return y * this->ouputGain_lin;
   }
 
   void update() noexcept override {
@@ -225,9 +220,10 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
     this->hiMidFlt.update();
     this->loMidFlt.update();
     this->loFlt.update();
-    for (size_t i = 0; i < this->scSettings.size(); i++) {
-      this->scCoeffs[i] =
-          NtFx::SideChain::calcCoeffs(this->fs, &this->scSettings[i]);
+    this->ouputGain_lin = NtFx::invDb(this->ouputGain_db);
+    for (size_t i = 0; i < Band::n; i++) {
+      this->makeup_lin[i] = NtFx::invDb(makeup_db[i]);
+      this->sc[i].update();
     }
   }
 
@@ -237,5 +233,7 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
     this->hiMidFlt.reset(this->fs);
     this->loMidFlt.reset(this->fs);
     this->loFlt.reset(this->fs);
+    for (size_t i = 0; i < Band::n; i++) { this->sc[i].reset(this->fs); }
+    this->update();
   }
 };

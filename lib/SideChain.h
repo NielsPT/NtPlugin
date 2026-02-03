@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "lib/Component.h"
+#include "lib/Stereo.h"
 #include "lib/utils.h"
 
 #include <cmath>
@@ -36,9 +38,6 @@ namespace SideChain {
 
   template <typename signal_t>
   struct Coeffs {
-    signal_t thresh_db  = static_cast<signal_t>(0);
-    signal_t ratio_db   = static_cast<signal_t>(1);
-    signal_t knee_db    = static_cast<signal_t>(0);
     signal_t thresh_lin = static_cast<signal_t>(1);
     signal_t ratio_lin  = static_cast<signal_t>(1);
     signal_t knee_lin   = static_cast<signal_t>(1);
@@ -61,104 +60,121 @@ namespace SideChain {
     }
   };
 
-  template <typename signal_t>
-  static inline Coeffs<signal_t> calcCoeffs(
-      int fs, Settings<signal_t>* p_settings) {
+  template <typename signal_t, bool linDomain = false>
+  struct SideChain : public Component<Stereo<signal_t>> {
+    Settings<signal_t> settings;
     Coeffs<signal_t> coeffs;
-    coeffs.thresh_db = p_settings->thresh_db;
-    coeffs.ratio_db  = p_settings->ratio_db;
-    coeffs.knee_db   = p_settings->knee_db;
-    coeffs.rmsEnable = p_settings->rmsEnable;
-    coeffs.alphaAtt  = std::exp(-2200.0 / (p_settings->tAtt_ms * fs));
-    coeffs.alphaRel  = std::exp(-2200.0 / (p_settings->tRel_ms * fs));
-    if (coeffs.alphaRel < coeffs.alphaAtt) {
-      coeffs.alphaRel = coeffs.alphaAtt;
-    }
-    coeffs.alphaPeak      = std::exp(-2200.0 / (p_settings->tPeak_ms * fs));
-    coeffs.thresh_lin     = std::pow(10.0, (p_settings->thresh_db / 20.0));
-    coeffs.knee_lin       = std::pow(10.0, (p_settings->knee_db / 20.0));
-    signal_t oneOverSqrt2 = 1.0 / std::sqrt(2.0);
-    coeffs.ratio_lin      = (1.0 - 1.0 / p_settings->ratio_db)
-        * (oneOverSqrt2
-            - std::pow(
-                oneOverSqrt2 - (p_settings->ratio_db - 3.0) / 18.0, 5.0));
-    coeffs.nRms = std::floor(p_settings->tRms_ms * fs * 0.001);
-    return coeffs;
-  }
-
-  template <typename signal_t>
-  static inline signal_t sideChain_lin(Coeffs<signal_t>* p_coeffs,
-      State<signal_t>* p_state,
-      signal_t x) noexcept {
-    signal_t xAbs;
-    if (p_coeffs->rmsEnable) {
-      xAbs = rmsSensor(&p_state->rms, p_coeffs->nRms, x);
-    } else {
-      xAbs = std::abs(x);
+    State<signal_t> stateL;
+    State<signal_t> stateR;
+    virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+      if constexpr (linDomain) {
+        return { this->sideChain_lin(x.l, stateL),
+          this->sideChain_lin(x.r, stateR) };
+      }
+      return { this->sideChain_db(x.l, stateL),
+        this->sideChain_db(x.r, stateR) };
     }
 
-    signal_t sensRelease = p_coeffs->alphaPeak * p_state->ySensLast
-        + (1 - p_coeffs->alphaPeak) * xAbs;
-    signal_t ySens     = std::max(xAbs, sensRelease);
-    p_state->ySensLast = ySens;
-
-    signal_t target;
-    if (ySens < p_coeffs->thresh_lin / p_coeffs->knee_lin) {
-      target = static_cast<signal_t>(0);
-    } else if (ySens < p_coeffs->thresh_lin) {
-      target = (ySens / p_coeffs->thresh_lin) * p_coeffs->ratio_lin
-          * p_coeffs->thresh_lin / (p_coeffs->knee_lin * ySens);
-    } else {
-      target = (ySens / p_coeffs->thresh_lin) * p_coeffs->ratio_lin;
+    virtual void update() noexcept override {
+      this->coeffs.alphaAtt =
+          std::exp(-2200.0 / (this->settings.tAtt_ms * this->fs));
+      this->coeffs.alphaRel =
+          std::exp(-2200.0 / (this->settings.tRel_ms * this->fs));
+      if (this->coeffs.alphaRel < this->coeffs.alphaAtt) {
+        this->coeffs.alphaRel = this->coeffs.alphaAtt;
+      }
+      this->coeffs.alphaPeak =
+          std::exp(-2200.0 / (this->settings.tPeak_ms * this->fs));
+      this->coeffs.thresh_lin =
+          std::pow(10.0, (this->settings.thresh_db / 20.0));
+      this->coeffs.knee_lin  = std::pow(10.0, (this->settings.knee_db / 20.0));
+      signal_t oneOverSqrt2  = 1.0 / std::sqrt(2.0);
+      this->coeffs.ratio_lin = (1.0 - 1.0 / this->settings.ratio_db)
+          * (oneOverSqrt2
+              - std::pow(
+                  oneOverSqrt2 - (this->settings.ratio_db - 3.0) / 18.0, 5.0));
+      this->coeffs.nRms = std::floor(this->settings.tRms_ms * this->fs * 0.001);
     }
 
-    signal_t alpha = p_coeffs->alphaRel;
-    if (target > p_state->yFilterLast) { alpha = p_coeffs->alphaAtt; }
-
-    signal_t yFilter     = p_state->yFilterLast * alpha + target * (1 - alpha);
-    p_state->yFilterLast = yFilter;
-    return static_cast<signal_t>(1.0) / (yFilter + 1);
-  }
-
-  template <typename signal_t>
-  static inline signal_t sideChain_db(Coeffs<signal_t>* p_coeffs,
-      State<signal_t>* p_state,
-      signal_t x) noexcept {
-    signal_t xAbs;
-    if (p_coeffs->rmsEnable) {
-      xAbs = rmsSensor(&p_state->rms, p_coeffs->nRms, x);
-    } else {
-      xAbs = std::abs(x);
+    virtual void reset(float fs) noexcept override {
+      this->fs = fs;
+      this->update();
     }
 
-    signal_t sensRelease = p_coeffs->alphaPeak * p_state->ySensLast
-        + (1 - p_coeffs->alphaPeak) * xAbs;
-    signal_t ySens = std::max(xAbs, sensRelease);
-    if (ySens != ySens) { ySens = static_cast<signal_t>(0); }
-    p_state->ySensLast = ySens;
+    inline signal_t sideChain_lin(
+        signal_t x, State<signal_t>& p_state) noexcept {
+      signal_t xAbs;
+      if (this->coeffs.rmsEnable) {
+        xAbs = rmsSensor(&p_state.rms, this->coeffs.nRms, x);
+      } else {
+        xAbs = std::abs(x);
+      }
 
-    signal_t x_db = db(ySens);
-    signal_t y_db;
-    if ((x_db - p_coeffs->thresh_db) > (p_coeffs->knee_db / 2)) {
-      y_db = p_coeffs->thresh_db
-          + (x_db - p_coeffs->thresh_db) / p_coeffs->ratio_db;
-    } else if ((x_db - p_coeffs->thresh_db) < -(p_coeffs->knee_db / 2)) {
-      y_db = x_db;
-    } else {
-      signal_t tmp = (x_db - p_coeffs->thresh_db + p_coeffs->knee_db / 2);
-      y_db         = x_db
-          + (1 / p_coeffs->ratio_db - 1) * tmp * tmp / (2 * p_coeffs->knee_db);
+      signal_t sensRelease = this->coeffs.alphaPeak * p_state.ySensLast
+          + (1 - this->coeffs.alphaPeak) * xAbs;
+      signal_t ySens    = std::max(xAbs, sensRelease);
+      p_state.ySensLast = ySens;
+
+      signal_t target;
+      if (ySens < this->coeffs.thresh_lin / this->coeffs.knee_lin) {
+        target = static_cast<signal_t>(0);
+      } else if (ySens < this->coeffs.thresh_lin) {
+        target = (ySens / this->coeffs.thresh_lin) * this->coeffs.ratio_lin
+            * this->coeffs.thresh_lin / (this->coeffs.knee_lin * ySens);
+      } else {
+        target = (ySens / this->coeffs.thresh_lin) * this->coeffs.ratio_lin;
+      }
+
+      signal_t alpha = this->coeffs.alphaRel;
+      if (target > p_state.yFilterLast) { alpha = this->coeffs.alphaAtt; }
+
+      signal_t yFilter    = p_state.yFilterLast * alpha + target * (1 - alpha);
+      p_state.yFilterLast = yFilter;
+      return static_cast<signal_t>(1.0) / (yFilter + 1);
     }
 
-    signal_t target = x_db - y_db;
+    inline signal_t sideChain_db(
+        signal_t x, State<signal_t>& p_state) noexcept {
+      signal_t xAbs;
+      if (this->coeffs.rmsEnable) {
+        xAbs = rmsSensor(&p_state.rms, this->coeffs.nRms, x);
+      } else {
+        xAbs = std::abs(x);
+      }
 
-    signal_t alpha = p_coeffs->alphaRel;
-    if (target > p_state->yFilterLast) { alpha = p_coeffs->alphaAtt; }
+      signal_t sensRelease = this->coeffs.alphaPeak * p_state.ySensLast
+          + (1 - this->coeffs.alphaPeak) * xAbs;
+      signal_t ySens = std::max(xAbs, sensRelease);
+      if (ySens != ySens) { ySens = static_cast<signal_t>(0); }
+      p_state.ySensLast = ySens;
 
-    signal_t yFilter = p_state->yFilterLast * alpha + target * (1 - alpha);
-    if (yFilter != yFilter) { yFilter = static_cast<signal_t>(0); }
-    p_state->yFilterLast = yFilter;
-    return invDb(-yFilter);
-  }
+      signal_t x_db = db(ySens);
+      signal_t y_db;
+      if ((x_db - this->settings.thresh_db) > (this->settings.knee_db / 2)) {
+        y_db = this->settings.thresh_db
+            + (x_db - this->settings.thresh_db) / this->settings.ratio_db;
+      } else if ((x_db - this->settings.thresh_db)
+          < -(this->settings.knee_db / 2)) {
+        y_db = x_db;
+      } else {
+        signal_t tmp =
+            (x_db - this->settings.thresh_db + this->settings.knee_db / 2);
+        y_db = x_db
+            + (1 / this->settings.ratio_db - 1) * tmp * tmp
+                / (2 * this->settings.knee_db);
+      }
+
+      signal_t target = x_db - y_db;
+
+      signal_t alpha = this->coeffs.alphaRel;
+      if (target > p_state.yFilterLast) { alpha = this->coeffs.alphaAtt; }
+
+      signal_t yFilter = p_state.yFilterLast * alpha + target * (1 - alpha);
+      if (yFilter != yFilter) { yFilter = static_cast<signal_t>(0); }
+      p_state.yFilterLast = yFilter;
+      return invDb(-yFilter);
+    }
+  };
+
 } // namespace SideChain
 } // namespace NtFx
