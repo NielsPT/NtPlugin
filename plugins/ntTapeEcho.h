@@ -60,38 +60,32 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
   bool sync                 = false;
   bool mod                  = true;
   bool clip                 = true;
+  bool doGlide              = true;
   bool bypass               = false;
   SubDev subDev             = SubDev::fourth;
   signal_t tempoScale       = 1;
-  // size_t nGlide             = 4;
   NtFx::Biquad::EqBand<signal_t> hpf;
   NtFx::Biquad::EqBand<signal_t> lpf;
   NtFx::Stereo<signal_t> fbState;
   std::array<NtFx::Stereo<signal_t>, delayLineLength> delayLine;
   signal_t fb_lin    = 0.2;
   signal_t noise_lin = 0;
-  signal_t tGlide    = 0.1;
-  // size_t nDelayGui        = 24000;
-  // size_t nDelayGlided     = 24000;
-  // NtFx::LinGlider<signal_t> nDelay = 24000;
+  signal_t tGlide    = 0.36;
+  // NtFx::LinGlider<signal_t> nDelay;
   NtFx::ExpGlider<signal_t> nDelay;
   size_t iStore      = 0;
   signal_t aClip_lin = 1;
   size_t timeCounter = 0;
-  // size_t nOffset                = 0;
   NtFx::ExpGlider<signal_t> nOffset;
   // TODO: Mix should have -3 dB law.
   signal_t mix_lin = 1;
-  // signal_t modDepth       = 0.1;
   NtFx::ExpGlider<signal_t> modDepth;
+  // TODO: How in the world do we get mod to glide gracefully?
   NtFx::ExpGlider<signal_t> thetaMod;
-  NtFx::ExpGlider<signal_t> thetaModOffset;
-  // int glideCount          = 0;
+  NtFx::ExpGlider<signal_t> thetaModPhase;
   std::array<signal_t, 3> softClipCoeffs;
-  // std::vector<Glider<signal_t>> allGliders;
 
   ntTapeEcho() : modDepth(0.1) {
-    // this->allGliders   = { modDepth, thetaMod, thetaModOffset, nDelay };
     this->primaryKnobs = {
       { &this->tGui, "Time", " s", 0.02, 2 },
       { &this->fb_percent, "Feedback", " %", 0, 200 },
@@ -117,7 +111,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       // { &this->nGlide, "Glide_Speed", "", 0, 10 },
       { &this->noise_db, "Noise", " dB", -100, 0 },
       { &this->mix_percent, "Mix", " %", 0, 100 },
-      { &this->tGlide, "Glide", " s", 0.01, 1, 0.1 },
+      { &this->tGlide, "Glide_Time", " s", 0.0, 1 },
     };
 
     this->secondaryKnobs[0].setLogScale();
@@ -144,6 +138,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       { &this->sync, "Sync" },
       { &this->mod, "Mod" },
       { &this->clip, "Output drive" },
+      { &this->doGlide, "Glide" },
       { &this->bypass, "Bypass" },
     };
     this->uiSpec.meters      = { { "IN" }, { "OUT", .hasScale = true } };
@@ -160,7 +155,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     this->nDelay.process();
     this->modDepth.process();
     this->thetaMod.process();
-    this->thetaModOffset.process();
+    this->thetaModPhase.process();
     this->nOffset.process();
     auto xNoisy = x + NtFx::rand<signal_t>() * this->noise_lin;
     NtFx::ensureFinite<NtFx::Stereo<signal_t>>(xNoisy);
@@ -174,7 +169,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     if (this->mod) {
       auto modSawL = NtFx::saw(this->thetaMod.pr * this->timeCounter);
       auto modSawR = NtFx::saw(
-          this->thetaMod.pr * this->timeCounter + this->thetaModOffset.pr);
+          this->thetaMod.pr * this->timeCounter + this->thetaModPhase.pr);
       nModL = std::round(modSawL * this->nDelay.pr * this->modDepth.pr)
           + this->nDelay.pr;
       nModR = std::round(modSawR * this->nDelay.pr * this->modDepth.pr)
@@ -243,14 +238,18 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       this->tempoScale = 0.25;
       break;
     }
-    this->thetaMod.ui       = 2.0 * M_PI * this->modFreq / this->fs;
-    this->thetaModOffset.ui = this->modPhase * M_PI / 180;
+    this->thetaMod.ui      = 2.0 * M_PI * this->modFreq / this->fs;
+    this->thetaModPhase.ui = this->modPhase * M_PI / 180;
     this->onTempoChanged();
-    this->modDepth.update(this->fs, this->tGlide * 2.2);
-    this->thetaMod.update(this->fs, this->tGlide * 2.2);
-    this->thetaModOffset.update(this->fs, this->tGlide * 2.2);
-    this->nOffset.update(this->fs, this->tGlide * 2.2);
-    this->nDelay.update(this->fs, this->tGlide);
+    signal_t tGlide = 0.0;
+    if (this->doGlide) { tGlide = this->tGlide; }
+    this->modDepth.update(this->fs, tGlide);
+    // TODO: fix mod glider.
+    // this->thetaMod.update(this->fs, tGlide);
+    this->thetaMod.update(this->fs, 0);
+    this->thetaModPhase.update(this->fs, tGlide);
+    this->nOffset.update(this->fs, tGlide);
+    this->nDelay.update(this->fs, tGlide);
   }
 
   virtual void reset(int fs) noexcept override {

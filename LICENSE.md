@@ -1,8 +1,7 @@
 # NtPlugin License
 
 This project is licensed under the
-[AGPLv3](https://www.gnu.org/licenses/agpl-3.0.en.html). If you wish to use it
-for commercial purposes, reach out and we'll figure something out.
+[AGPLv3](https://www.gnu.org/licenses/agpl-3.0.en.html).
 
 Copyright (C) 2026 Niels Thøgersen
 

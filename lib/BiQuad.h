@@ -41,7 +41,6 @@ namespace Biquad {
     signal_t fc_hz { 1000.0 };
     signal_t gain_db { 0.0 };
     signal_t q { 0.707 };
-    bool enable { true };
   };
 
   template <typename signal_t>
@@ -157,8 +156,7 @@ namespace Biquad {
   template <typename signal_t>
   static inline Coeffs5<signal_t> calcCoeffs5(
       Settings<signal_t>& settings, float fs) {
-    return calcCoeffs5<signal_t>(
-        (settings.enable ? settings.shape : Shape::none),
+    return calcCoeffs5<signal_t>(settings.shape,
         fs,
         settings.fc_hz,
         settings.q,
@@ -175,8 +173,7 @@ namespace Biquad {
   template <typename signal_t>
   static inline Coeffs6<signal_t> calcCoeffs6(
       Settings<signal_t>& settings, float fs) {
-    return calcCoeffs6<signal_t>(
-        (settings.enable ? settings.shape : Shape::none),
+    return calcCoeffs6<signal_t>(settings.shape,
         fs,
         settings.fc_hz,
         settings.q,
