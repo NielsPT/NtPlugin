@@ -21,25 +21,68 @@
 
 #pragma once
 
+#include "lib/Biquad.h"
 #include "lib/FirstOrder.h"
 #include "lib/Plugin.h"
 #include "lib/Stereo.h"
+
+enum Order : int {
+  first,
+  second,
+  third,
+  fourth,
+};
 
 template <typename signal_t>
 struct ntFilters : public NtFx::NtPlugin<signal_t> {
   float fs;
   signal_t fHpf = 20;
   signal_t fLpf = 20000;
-  bool bypass   = false;
+  signal_t qHpf = 0.707;
+  signal_t qLpf = 0.707;
+  Order orderHpf;
+  Order orderLpf;
+  bool bypass = false;
   NtFx::FirstOrder::FilterStereo<signal_t, NtFx::FirstOrder::Shape::hpf>
       firstOrderHpf;
-  NtFx::FirstOrder::FilterStereo<signal_t, NtFx::FirstOrder::Shape::lpf>
+  NtFx::FirstOrder::FilterStereo<signal_t, NtFx::FirstOrder::Shape::lpfZero>
       firstOrderLpf;
+  NtFx::Biquad::EqBand<signal_t> bqLpf0;
+  NtFx::Biquad::EqBand<signal_t> bqLpf1;
+  NtFx::Biquad::EqBand<signal_t> bqHpf0;
+  NtFx::Biquad::EqBand<signal_t> bqHpf1;
   ntFilters() {
-    this->uiSpec.defaultWindowWidth = 400;
+    this->uiSpec.defaultWindowWidth = 800;
     this->primaryKnobs              = {
       { &this->fHpf, "HPF", " Hz", 20, 20e3, 2e3 },
+      { &this->qHpf, "Q_HPF", "", 0.1, 2 },
       { &this->fLpf, "LPF", " Hz", 20, 20e3, 2e3 },
+      { &this->qLpf, "Q_LPF", "", 0.1, 2 },
+    };
+    // this->secondaryKnobs = {};
+    this->dropdowns = {
+      {
+          (int*)&this->orderHpf,
+          "HPF_Order",
+          {
+              "first",
+              "second",
+              "third",
+              "fourth",
+          },
+          0,
+      },
+      {
+          (int*)&this->orderLpf,
+          "LPF_Order",
+          {
+              "first",
+              "second",
+              "third",
+              "fourth",
+          },
+          0,
+      },
     };
     this->toggles       = { { &this->bypass, "Bypass" } };
     this->uiSpec.meters = { { "IN" }, { "OUT", .hasScale = true } };
@@ -47,9 +90,19 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
   }
 
   NtFx::Stereo<signal_t> process(NtFx::Stereo<signal_t> x) noexcept override {
-    auto yHpf = this->firstOrderHpf.process(x);
-    auto yLpf = this->firstOrderLpf.process(yHpf);
-    auto y    = yLpf;
+    auto xBqHpf0 = x;
+    if ((this->orderHpf + 1) % 2) { xBqHpf0 = this->firstOrderHpf.process(x); }
+    auto yBqHpf0 = this->bqHpf0.process(xBqHpf0);
+    auto yBqHpf1 = this->bqHpf1.process(yBqHpf0);
+
+    auto xBqLpf0 = yBqHpf1;
+    if ((this->orderLpf + 1) % 2) {
+      xBqLpf0 = this->firstOrderLpf.process(yBqHpf1);
+    }
+    auto yBqLpf0 = this->bqLpf0.process(xBqLpf0);
+    auto yBqLpf1 = this->bqLpf1.process(yBqLpf0);
+
+    auto y = yBqLpf1;
     this->template updatePeakLevel<0>(x);
     if (this->bypass) {
       this->template updatePeakLevel<1>(x);
@@ -60,13 +113,54 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
   }
 
   void update() noexcept override {
+    this->primaryKnobs[1].isActive = true;
+    this->primaryKnobs[3].isActive = true;
     this->firstOrderHpf.setFc(fHpf);
-    this->firstOrderLpf.setFc(fLpf);
     this->firstOrderHpf.update();
+    if (this->orderHpf == Order::fourth) {
+      this->bqHpf0.settings.q     = std::sqrt(this->qHpf);
+      this->bqHpf1.settings.q     = std::sqrt(this->qHpf);
+      this->bqHpf0.settings.shape = NtFx::Biquad::Shape::hpf;
+      this->bqHpf1.settings.shape = NtFx::Biquad::Shape::hpf;
+    } else if (this->orderHpf == Order::first) {
+      this->bqHpf0.settings.shape    = NtFx::Biquad::Shape::none;
+      this->bqHpf1.settings.shape    = NtFx::Biquad::Shape::none;
+      this->primaryKnobs[1].isActive = false;
+    } else {
+      this->bqHpf0.settings.q     = this->qHpf;
+      this->bqHpf0.settings.shape = NtFx::Biquad::Shape::hpf;
+      this->bqHpf1.settings.shape = NtFx::Biquad::Shape::none;
+    }
+    this->bqHpf0.settings.fc_hz = fHpf;
+    this->bqHpf1.settings.fc_hz = fHpf;
+    this->bqHpf0.update(this->fs);
+    this->bqHpf1.update(this->fs);
+
+    this->firstOrderLpf.setFc(fLpf);
     this->firstOrderLpf.update();
+    if (this->orderLpf == Order::fourth) {
+      this->bqLpf0.settings.q     = std::sqrt(this->qLpf);
+      this->bqLpf1.settings.q     = std::sqrt(this->qLpf);
+      this->bqLpf0.settings.shape = NtFx::Biquad::Shape::lpf;
+      this->bqLpf1.settings.shape = NtFx::Biquad::Shape::lpf;
+    } else if (this->orderLpf == Order::first) {
+      this->bqLpf0.settings.shape    = NtFx::Biquad::Shape::none;
+      this->bqLpf1.settings.shape    = NtFx::Biquad::Shape::none;
+      this->primaryKnobs[3].isActive = false;
+    } else {
+      this->bqLpf0.settings.q     = this->qLpf;
+      this->bqLpf0.settings.shape = NtFx::Biquad::Shape::lpf;
+      this->bqLpf1.settings.shape = NtFx::Biquad::Shape::none;
+    }
+    this->bqLpf0.settings.fc_hz = fLpf;
+    this->bqLpf1.settings.fc_hz = fLpf;
+    this->bqLpf0.update(this->fs);
+    this->bqLpf1.update(this->fs);
+    this->uiNeedsUpdate = true;
   }
 
   void reset(int fs) noexcept override {
+    this->fs = fs;
     this->firstOrderHpf.reset(fs);
     this->firstOrderLpf.reset(fs);
   }

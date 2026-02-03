@@ -20,6 +20,7 @@
 namespace NtFx {
 namespace FirstOrder {
   enum class Shape {
+    none,
     lpf,
     lpfZero,
     hpf,
@@ -34,13 +35,15 @@ namespace FirstOrder {
     signal_t xn1   = 0;
     signal_t process(signal_t x) noexcept {
       signal_t y;
-      if constexpr (shape == Shape::hpf) {
-        y = this->alpha * (this->yn1 + x - this->xn1);
+      if constexpr (shape == Shape::none) {
+        return x;
       } else if constexpr (shape == Shape::lpf) {
         y = this->alpha * x + (1 - this->alpha) * yn1;
+      } else if constexpr (shape == Shape::hpf) {
+        y = this->alpha * (this->yn1 + x - this->xn1);
       } else {
         y = static_cast<signal_t>(0.5) * this->alpha * (x + xn1)
-            * (1 - this->alpha) * yn1;
+            + (1 - this->alpha) * yn1;
       }
       this->xn1 = x;
       this->yn1 = y;
