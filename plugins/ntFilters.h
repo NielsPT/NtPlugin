@@ -41,7 +41,8 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
   signal_t qLpf = 0.707;
   Order orderHpf;
   Order orderLpf;
-  bool bypass = false;
+  bool enableHpf = true;
+  bool enableLpf = true;
   NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::hpf>
       firstOrderHpf;
   NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::lpfZero>
@@ -83,7 +84,10 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
           0,
       },
     };
-    this->toggles       = { { &this->bypass, "Bypass" } };
+    this->toggles = {
+      { &this->enableHpf, "HPF_on" },
+      { &this->enableLpf, "LPF_on" },
+    };
     this->uiSpec.meters = { { "IN" }, { "OUT", .hasScale = true } };
     this->updateDefaults();
   }
@@ -94,19 +98,18 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
     auto yBqHpf0 = this->bqHpf0.process(xBqHpf0);
     auto yBqHpf1 = this->bqHpf1.process(yBqHpf0);
 
-    auto xBqLpf0 = yBqHpf1;
+    auto xLpf = yBqHpf1;
+    if (!this->enableHpf) { xLpf = x; }
+    auto xBqLpf0 = xLpf;
     if ((this->orderLpf + 1) % 2) {
-      xBqLpf0 = this->firstOrderLpf.process(yBqHpf1);
+      xBqLpf0 = this->firstOrderLpf.process(xLpf);
     }
     auto yBqLpf0 = this->bqLpf0.process(xBqLpf0);
     auto yBqLpf1 = this->bqLpf1.process(yBqLpf0);
 
     auto y = yBqLpf1;
+    if (!this->enableLpf) { y = xLpf; }
     this->template updatePeakLevel<0>(x);
-    if (this->bypass) {
-      this->template updatePeakLevel<1>(x);
-      return x;
-    }
     this->template updatePeakLevel<1>(y);
     return y;
   }
@@ -117,8 +120,8 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
     this->firstOrderHpf.setFc(fHpf);
     this->firstOrderHpf.update();
     if (this->orderHpf == Order::fourth) {
-      this->bqHpf0.settings.q     = std::sqrt(this->qHpf);
-      this->bqHpf1.settings.q     = std::sqrt(this->qHpf);
+      this->bqHpf0.settings.q     = gcem::sqrt(this->qHpf);
+      this->bqHpf1.settings.q     = gcem::sqrt(this->qHpf);
       this->bqHpf0.settings.shape = NtFx::Biquad::Shape::hpf;
       this->bqHpf1.settings.shape = NtFx::Biquad::Shape::hpf;
     } else if (this->orderHpf == Order::first) {
@@ -132,14 +135,14 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
     }
     this->bqHpf0.settings.fc_hz = fHpf;
     this->bqHpf1.settings.fc_hz = fHpf;
-    this->bqHpf0.update(this->fs);
-    this->bqHpf1.update(this->fs);
+    this->bqHpf0.update();
+    this->bqHpf1.update();
 
     this->firstOrderLpf.setFc(fLpf);
     this->firstOrderLpf.update();
     if (this->orderLpf == Order::fourth) {
-      this->bqLpf0.settings.q     = std::sqrt(this->qLpf);
-      this->bqLpf1.settings.q     = std::sqrt(this->qLpf);
+      this->bqLpf0.settings.q     = gcem::sqrt(this->qLpf);
+      this->bqLpf1.settings.q     = gcem::sqrt(this->qLpf);
       this->bqLpf0.settings.shape = NtFx::Biquad::Shape::lpf;
       this->bqLpf1.settings.shape = NtFx::Biquad::Shape::lpf;
     } else if (this->orderLpf == Order::first) {
@@ -153,8 +156,8 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
     }
     this->bqLpf0.settings.fc_hz = fLpf;
     this->bqLpf1.settings.fc_hz = fLpf;
-    this->bqLpf0.update(this->fs);
-    this->bqLpf1.update(this->fs);
+    this->bqLpf0.update();
+    this->bqLpf1.update();
     this->uiNeedsUpdate = true;
   }
 
@@ -162,6 +165,10 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
     this->fs = fs;
     this->firstOrderHpf.reset(fs);
     this->firstOrderLpf.reset(fs);
+    this->bqHpf0.reset(fs);
+    this->bqHpf1.reset(fs);
+    this->bqLpf0.reset(fs);
+    this->bqLpf1.reset(fs);
     this->update();
   }
 };

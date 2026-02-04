@@ -25,10 +25,10 @@
 #include "lib/Plugin.h"
 #include "lib/SoftClip.h"
 #include "lib/Stereo.h"
+#include "lib/gcem/include/gcem.hpp"
 #include "lib/utils.h"
 #include <algorithm>
 #include <array>
-#include <cmath>
 #include <cstddef>
 
 enum SubDev : int {
@@ -82,7 +82,6 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
   // TODO: How in the world do we get mod to glide gracefully?
   NtFx::ExpGlider<signal_t> thetaMod;
   NtFx::ExpGlider<signal_t> thetaModPhase;
-  std::array<signal_t, 3> softClipCoeffs;
 
   ntTapeEcho() : modDepth(0.1) {
     this->primaryKnobs = {
@@ -136,7 +135,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     this->toggles = {
       { &this->sync, "Sync" },
       { &this->mod, "Mod" },
-      { &this->clip, "Output drive" },
+      { &this->clip, "Softclip" },
       { &this->doGlide, "Glide" },
       { &this->bypass, "Bypass" },
     };
@@ -145,7 +144,6 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     this->hpf.settings.shape = NtFx::Biquad::Shape::hpf;
     this->lpf.settings.fc_hz = 20e3;
     this->hpf.settings.fc_hz = 20;
-    this->softClipCoeffs     = NtFx::calculateSoftClipCoeffs<signal_t, 2>();
     this->updateDefaults();
   }
 
@@ -192,13 +190,11 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     auto yLp      = lpf.process(yHp);
     this->fbState = yLp;
     auto yOutClip = yLp;
-    if (this->clip) {
-      yOutClip = NtFx::softClip5thStereo(this->softClipCoeffs, yLp);
-    }
+    if (this->clip) { yOutClip = NtFx::softClip5thStereo(yLp); }
     auto y = (static_cast<signal_t>(1.0) - this->mix_lin) * x
         + this->mix_lin * yOutClip;
     // TODO: Make this a member.
-    y *= (2 - std::abs(this->mix_lin * 2 - 1));
+    y *= (2 - gcem::abs(this->mix_lin * 2 - 1));
     this->template updatePeakLevel<0>(x);
     if (this->bypass) {
       this->template updatePeakLevel<1>(x);
@@ -209,8 +205,8 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
   }
 
   virtual void update() noexcept override {
-    this->hpf.update(this->fs);
-    this->lpf.update(this->fs);
+    this->hpf.update();
+    this->lpf.update();
     this->nOffset.ui  = std::round(this->tOffset / 1000 * this->fs);
     this->aClip_lin   = NtFx::invDb(this->clipG_db);
     this->mix_lin     = this->mix_percent / 100;
@@ -237,8 +233,8 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       this->tempoScale = 0.25;
       break;
     }
-    this->thetaMod.ui      = 2.0 * M_PI * this->modFreq / this->fs;
-    this->thetaModPhase.ui = this->modPhase * M_PI / 180;
+    this->thetaMod.ui      = 2.0 * GCEM_PI * this->modFreq / this->fs;
+    this->thetaModPhase.ui = this->modPhase * GCEM_PI / 180;
     this->onTempoChanged();
     signal_t tGlide = 0.0;
     if (this->doGlide) { tGlide = this->tGlide; }
@@ -254,6 +250,8 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
   virtual void reset(float fs) noexcept override {
     this->fs = fs;
     std::fill(this->delayLine.begin(), this->delayLine.end(), 0);
+    this->hpf.reset(this->fs);
+    this->lpf.reset(this->fs);
     this->update();
   }
 

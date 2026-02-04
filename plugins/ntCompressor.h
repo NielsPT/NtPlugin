@@ -19,8 +19,6 @@
  **/
 
 #pragma once
-#include <algorithm>
-#include <array>
 
 #include "lib/Biquad.h"
 #include "lib/Plugin.h"
@@ -29,23 +27,25 @@
 #include "lib/Stereo.h"
 #include "lib/utils.h"
 
+#include <algorithm>
+
 template <typename signal_t>
 struct ntCompressor : public NtFx::NtPlugin<signal_t> {
-  NtFx::SideChain<signal_t, false> scLin;
-  NtFx::SideChain<signal_t, true> scDb;
+  NtFx::SideChain<signal_t> sc_db;
+  NtFx::SideChain<signal_t, true> sc_lin;
   signal_t makeup_db   = static_cast<signal_t>(0.0);
   signal_t mix_percent = static_cast<signal_t>(100.0);
 
-  bool bypassEnable   = false;
   bool linEnable      = false;
   bool feedbackEnable = false;
   bool scListenEnable = false;
   bool linkEnable     = false;
+  bool clip           = true;
+  bool bypassEnable   = false;
 
   signal_t mix_lin               = static_cast<signal_t>(1.0);
   signal_t makeup_lin            = static_cast<signal_t>(1.0);
   NtFx::Stereo<signal_t> fbState = static_cast<signal_t>(0.0);
-  std::array<signal_t, 3> softClipCoeffs;
 
   NtFx::Biquad::EqBand<signal_t> hpf;
   NtFx::Biquad::EqBand<signal_t> boost;
@@ -53,14 +53,14 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   ntCompressor() {
     this->primaryKnobs = {
       {
-          .p_val  = &this->sc.settings.thresh_db,
+          .p_val  = &this->sc_db.settings.thresh_db,
           .name   = "Threshold",
           .suffix = " dB",
           .minVal = -60.0,
           .maxVal = 0.0,
       },
       {
-          .p_val    = &this->sc.settings.ratio_db,
+          .p_val    = &this->sc_db.settings.ratio_db,
           .name     = "Ratio",
           .suffix   = "",
           .minVal   = 1.0,
@@ -68,14 +68,14 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
           .midPoint = 2.0,
       },
       {
-          .p_val  = &this->sc.settings.tAtt_ms,
+          .p_val  = &this->sc_db.settings.tAtt_ms,
           .name   = "Attack",
           .suffix = " ms",
           .minVal = 0.01,
           .maxVal = 50.0,
       },
       {
-          .p_val  = &this->sc.settings.tRel_ms,
+          .p_val  = &this->sc_db.settings.tRel_ms,
           .name   = "Release",
           .suffix = " ms",
           .minVal = 10.0,
@@ -92,14 +92,14 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
 
     this->secondaryKnobs = {
       {
-          .p_val  = &this->sc.settings.knee_db,
+          .p_val  = &this->sc_db.settings.knee_db,
           .name   = "Knee",
           .suffix = " dB",
           .minVal = 0.0,
           .maxVal = 24.0,
       },
       {
-          .p_val  = &this->sc.settings.tRms_ms,
+          .p_val  = &this->sc_db.settings.tRms_ms,
           .name   = "RMS_time",
           .suffix = " ms",
           .minVal = 1.0,
@@ -130,11 +130,12 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     };
 
     this->toggles = {
-      { .p_val = &this->sc.settings.rmsEnable, .name = "RMS" },
+      { .p_val = &this->sc_db.settings.rmsEnable, .name = "RMS" },
       { .p_val = &this->feedbackEnable, .name = "Feedback" },
       { .p_val = &this->linEnable, .name = "Linear" },
       { .p_val = &this->linkEnable, .name = "Link" },
       { .p_val = &this->scListenEnable, .name = "SC_Listen" },
+      { .p_val = &this->clip, .name = "Softclip" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
 
@@ -147,7 +148,6 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     this->uiSpec.backgroundColour = 0xFFFFFFFF;
     // this->uiSpec.maxColumns         = 2;
     // this->uiSpec.defaultWindowWidth = 600;
-    this->softClipCoeffs       = NtFx::calculateSoftClipCoeffs<signal_t, 2>();
     this->hpf.settings.fc_hz   = 20;
     this->boost.settings.fc_hz = 3000.0;
     this->hpf.settings.shape   = NtFx::Biquad::Shape::hpf;
@@ -172,27 +172,38 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
 
     NtFx::Stereo<signal_t> gr;
     if (this->linEnable) {
-      gr = scLin.process(xSc);
+      gr = sc_lin.process(xSc);
     } else {
-      gr = scDb.process(xSc);
+      gr = sc_db.process(xSc);
     }
     if (this->linkEnable) { gr = gr.absMin(); }
     this->template updatePeakLevel<2, true>(gr);
     NtFx::ensureFinite(gr, static_cast<signal_t>(1.0));
     NtFx::Stereo<signal_t> yComp = x * gr;
     this->fbState                = yComp;
-    auto ySoftClip               = NtFx::softClip5thStereo<signal_t>(
-        this->softClipCoeffs, yComp * this->makeup_lin);
-    auto y = this->mix_lin * ySoftClip + (1 - this->mix_lin) * x;
+    auto xClip                   = yComp * this->makeup_lin;
+    auto xMix                    = xClip;
+    if (this->clip) { xMix = NtFx::softClip5thStereo<signal_t>(xClip); }
+    auto y = this->mix_lin * xMix + (1 - this->mix_lin) * x;
     this->template updatePeakLevel<1>(y);
     if (this->scListenEnable) { return xSc; }
     return y;
   }
 
   void update() noexcept override {
-    this->hpf.update(this->fs);
-    this->boost.update(this->fs);
-    this->sc.update();
+    this->hpf.update();
+    this->boost.update();
+    // this->sc_lin.settings           = this->sc_db.settings;s
+    this->sc_lin.settings.thresh_db = this->sc_db.settings.thresh_db;
+    this->sc_lin.settings.ratio_db  = this->sc_db.settings.ratio_db;
+    this->sc_lin.settings.knee_db   = this->sc_db.settings.knee_db;
+    this->sc_lin.settings.tAtt_ms   = this->sc_db.settings.tAtt_ms;
+    this->sc_lin.settings.tRel_ms   = this->sc_db.settings.tRel_ms;
+    this->sc_lin.settings.tRms_ms   = this->sc_db.settings.tRms_ms;
+    this->sc_lin.settings.tPeak_ms  = this->sc_db.settings.tPeak_ms;
+    this->sc_lin.settings.rmsEnable = this->sc_db.settings.rmsEnable;
+    this->sc_db.update();
+    this->sc_lin.update();
     this->makeup_lin = NtFx::invDb(this->makeup_db);
     this->mix_lin    = this->mix_percent / 100.0;
   }
@@ -204,7 +215,10 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
         static_cast<signal_t>(0));
     this->peakLevels[2] = static_cast<signal_t>(1);
     this->fbState       = static_cast<signal_t>(0);
-    this->sc.reset(this->fs);
+    this->sc_db.reset(this->fs);
+    this->sc_lin.reset(this->fs);
+    this->hpf.reset(this->fs);
+    this->boost.reset(this->fs);
     this->update();
   }
 };

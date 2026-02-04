@@ -72,18 +72,20 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
           .midPoint = 2.0,
       });
       this->primaryKnobs.push_back({
-          .p_val  = &this->sc[i].settings.tAtt_ms,
-          .name   = this->BandNames[i] + "_Attack",
-          .suffix = " ms",
-          .minVal = 0.01,
-          .maxVal = 50.0,
+          .p_val    = &this->sc[i].settings.tAtt_ms,
+          .name     = this->BandNames[i] + "_Attack",
+          .suffix   = " ms",
+          .minVal   = 0.01,
+          .maxVal   = 50.0,
+          .midPoint = 5,
       });
       this->primaryKnobs.push_back({
-          .p_val  = &this->sc[i].settings.tRel_ms,
-          .name   = this->BandNames[i] + "_Release",
-          .suffix = " ms",
-          .minVal = 10.0,
-          .maxVal = 1000.0,
+          .p_val    = &this->sc[i].settings.tRel_ms,
+          .name     = this->BandNames[i] + "_Release",
+          .suffix   = " ms",
+          .minVal   = 10.0,
+          .maxVal   = 1000.0,
+          .midPoint = 100.0,
 
       });
       this->primaryKnobs.push_back({

@@ -16,15 +16,17 @@
  **/
 
 #pragma once
-#include <array>
-#include <cstddef>
-#include <string>
-#include <vector>
 
 #include "lib/Component.h"
 #include "lib/Stereo.h"
 #include "lib/UiSpec.h"
 #include "lib/utils.h"
+
+#include <array>
+#include <cstddef>
+#include <string>
+#include <type_traits>
+#include <vector>
 
 #ifndef NTFX_PLUGIN
   #error NTFX_PLUGIN is not defined. Please add '-DNTFX_PLUGIN=[your plugin \
@@ -40,6 +42,7 @@ namespace NtFx {
  * @tparam signal_t Basic datatype for audio signal.
  */
 template <typename signal_t>
+  requires std::is_floating_point_v<signal_t>
 struct NtPlugin : public Component<Stereo<signal_t>> {
   /** Specification for UI. Modify this to change the look of your plugin. */
   UiSpec uiSpec;

@@ -51,7 +51,7 @@ namespace FirstOrder {
     }
 
     virtual void update() noexcept override {
-      signal_t z = 2 * M_PI * this->fc_hz / this->fs;
+      signal_t z = 2 * GCEM_PI * this->fc_hz / this->fs;
       if constexpr (shape == Shape::hpf) {
         this->alpha = 1.0 / (z + 1.0);
       } else {

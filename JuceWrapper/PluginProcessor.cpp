@@ -17,15 +17,14 @@
  * Modified from JUCE template.
  **/
 
-#include <algorithm>
-#include <string>
-
-#include "PluginEditor.h"
 #include "PluginProcessor.h"
+#include "PluginEditor.h"
 #include "lib/SampleRateConverter.h"
 #include "lib/UiSpec.h"
 
-//==============================================================================
+#include <algorithm>
+#include <string>
+
 NtPluginAudioProcessor::NtPluginAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
     : AudioProcessor(BusesProperties()
@@ -47,7 +46,6 @@ NtPluginAudioProcessor::NtPluginAudioProcessor()
 
 NtPluginAudioProcessor::~NtPluginAudioProcessor() { }
 
-//==============================================================================
 const juce::String NtPluginAudioProcessor::getName() const {
   return JucePlugin_Name;
 }
@@ -86,10 +84,8 @@ const juce::String NtPluginAudioProcessor::getProgramName(int index) {
 void NtPluginAudioProcessor::changeProgramName(
     int index, const juce::String& newName) { }
 
-//==============================================================================
 void NtPluginAudioProcessor::prepareToPlay(
     double sampleRate, int samplesPerBlock) {
-  // if (!this->isInitialized) { return; }
   this->fsBase = sampleRate;
   this->updateOversampling(1);
 }
@@ -145,9 +141,7 @@ void NtPluginAudioProcessor::processBlock(
   }
 }
 
-bool NtPluginAudioProcessor::hasEditor() const {
-  return true; // (change this to false if you choose to not supply an editor)
-}
+bool NtPluginAudioProcessor::hasEditor() const { return true; }
 
 juce::AudioProcessorEditor* NtPluginAudioProcessor::createEditor() {
   return new NtPluginAudioProcessorEditor(*this);
@@ -175,8 +169,6 @@ void NtPluginAudioProcessor::updateOversampling(int mode) {
   this->plug.reset(this->src.coeffs.fsHi);
 }
 
-//==============================================================================
-// This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
   DBG("Creating new NtFx plugin editor.");
   return new NtPluginAudioProcessor();
@@ -211,7 +203,6 @@ NtPluginAudioProcessor::createParameterLayout() {
         std::make_unique<juce::AudioParameterBool>(id, name, t.defaultVal));
   }
   for (auto d : this->titleBarSpec.dropDowns) {
-    // if (!d.p_val) { continue; }
     juce::ParameterID id(d.name, i++);
     std::string name(d.name);
     std::replace(name.begin(), name.end(), '_', ' ');
@@ -221,7 +212,6 @@ NtPluginAudioProcessor::createParameterLayout() {
         id, name, options, d.defaultIdx));
   }
   for (auto d : this->plug.dropdowns) {
-    // if (!d.p_val) { continue; }
     juce::ParameterID id(d.name, i++);
     std::string name(d.name);
     std::replace(name.begin(), name.end(), '_', ' ');

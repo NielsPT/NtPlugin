@@ -64,7 +64,9 @@ namespace Src {
     NtPlugin<signal_t>& plug;
     State<signal_t> state;
     Coeffs<signal_t> coeffs;
+
     SampleRateConverter(NtPlugin<signal_t>& plug) : plug(plug) { }
+
     Stereo<signal_t> process(Stereo<signal_t> x) {
       if (this->coeffs.disable) { return this->plug.process(x); }
       this->state.dlInterpolation[this->state.iStoreIn]              = x;
@@ -94,7 +96,7 @@ namespace Src {
       }
       return accum;
     }
-    // TODO: All of this only toucheds this->coeffs. Should we have a class?
+
     inline void update(oversamplingMode mode, signal_t fs) {
       switch (mode) {
 
@@ -146,8 +148,6 @@ namespace Src {
       }
       this->coeffs.fsHi = fs * this->coeffs.osFactor;
       this->coeffs.n    = this->coeffs.osFactor * this->coeffs.osFirLenMult;
-      // TODO: Does it make sense to replace the this->coeffs in place instead?
-      // These vectors do NOT improve stability anyway,
       if (!this->coeffs.disable) {
         auto b = windowMethod<signal_t>(fc, this->coeffs.n, this->coeffs.fsHi);
         std::fill(this->coeffs.b.begin(), this->coeffs.b.end(), 0.0);
@@ -156,6 +156,7 @@ namespace Src {
         }
       }
     }
+
     inline void reset() {
       this->state.iStoreIn  = 0;
       this->state.iStoreOut = 0;

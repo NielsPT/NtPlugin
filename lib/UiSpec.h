@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "lib/gcem/include/gcem.hpp"
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -45,7 +46,7 @@ struct KnobSpec {
   signal_t midPoint { 0.0 };
   /** Sets midPoint for logarithmic scale. */
   void setLogScale() {
-    this->midPoint = std::sqrt(this->minVal * this->maxVal);
+    this->midPoint = gcem::sqrt(this->minVal * this->maxVal);
   }
   signal_t defaultVal { 0.0 };
   bool isActive { true };

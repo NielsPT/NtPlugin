@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include <cmath>
+#include "lib/gcem/include/gcem.hpp"
 
 namespace NtFx {
 template <typename signal_t>
@@ -36,7 +36,7 @@ struct ExpGlider {
       this->pr = this->ui;
       return;
     }
-    this->a = 1.0 - std::exp(-1.0 / (fs * tSmooth));
+    this->a = 1.0 - gcem::exp(-1.0 / (fs * tSmooth));
   }
 };
 
@@ -53,7 +53,7 @@ struct LinGlider {
     } else {
       this->pr -= s;
     }
-    if (std::abs(this->ui - this->pr) < std::abs(this->s)) {
+    if (gcem::abs(this->ui - this->pr) < gcem::abs(this->s)) {
       this->pr = this->ui;
     }
     return this->pr;
@@ -63,7 +63,7 @@ struct LinGlider {
       this->pr = this->ui;
       return;
     }
-    this->s = std::abs(this->ui - this->pr) / (tSmooth * fs);
+    this->s = gcem::abs(this->ui - this->pr) / (tSmooth * fs);
   }
 };
 }

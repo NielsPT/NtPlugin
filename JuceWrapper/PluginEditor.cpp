@@ -17,15 +17,16 @@
  * Modified from JUCE template.
  **/
 
-#include <algorithm>
-#include <string>
-
-#include "Meter.h"
 #include "PluginEditor.h"
+#include "Meter.h"
 #include "PluginProcessor.h"
 #include "Toggle.h"
+
 #include "juce_graphics/juce_graphics.h"
 #include "juce_gui_basics/juce_gui_basics.h"
+
+#include <algorithm>
+#include <string>
 
 enum TitleBarDropDowns { e_uiScale, e_theme, e_oversampling };
 

@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include <cmath>
+#include "lib/gcem/include/gcem.hpp"
 #include <cstddef>
 
 namespace NtFx {
@@ -86,10 +86,10 @@ struct Stereo {
     return (this->l * this->l + this->r * this->r) * 0.5f;
   }
   signal_t absMax() const noexcept {
-    return std::abs(this->l) > std::abs(this->r) ? this->l : this->r;
+    return gcem::abs(this->l) > gcem::abs(this->r) ? this->l : this->r;
   }
   signal_t absMin() const noexcept {
-    return std::abs(this->l) < std::abs(this->r) ? this->l : this->r;
+    return gcem::abs(this->l) < gcem::abs(this->r) ? this->l : this->r;
   }
 };
 template <typename signal_t>

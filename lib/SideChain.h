@@ -21,7 +21,7 @@
 #include "lib/Stereo.h"
 #include "lib/utils.h"
 
-#include <cmath>
+#include "lib/gcem/include/gcem.hpp"
 namespace NtFx {
 template <typename signal_t, bool linDomain = false>
 struct SideChain : public Component<Stereo<signal_t>> {
@@ -71,20 +71,21 @@ struct SideChain : public Component<Stereo<signal_t>> {
 
   virtual void update() noexcept override {
     this->coeffs.alphaAtt =
-        std::exp(-2200.0 / (this->settings.tAtt_ms * this->fs));
+        gcem::exp(-2200.0 / (this->settings.tAtt_ms * this->fs));
     this->coeffs.alphaRel =
-        std::exp(-2200.0 / (this->settings.tRel_ms * this->fs));
+        gcem::exp(-2200.0 / (this->settings.tRel_ms * this->fs));
     if (this->coeffs.alphaRel < this->coeffs.alphaAtt) {
       this->coeffs.alphaRel = this->coeffs.alphaAtt;
     }
     this->coeffs.alphaPeak =
-        std::exp(-2200.0 / (this->settings.tPeak_ms * this->fs));
-    this->coeffs.thresh_lin = std::pow(10.0, (this->settings.thresh_db / 20.0));
-    this->coeffs.knee_lin   = std::pow(10.0, (this->settings.knee_db / 20.0));
-    signal_t oneOverSqrt2   = 1.0 / std::sqrt(2.0);
-    this->coeffs.ratio_lin  = (1.0 - 1.0 / this->settings.ratio_db)
+        gcem::exp(-2200.0 / (this->settings.tPeak_ms * this->fs));
+    this->coeffs.thresh_lin =
+        gcem::pow(10.0, (this->settings.thresh_db / 20.0));
+    this->coeffs.knee_lin  = gcem::pow(10.0, (this->settings.knee_db / 20.0));
+    signal_t oneOverSqrt2  = 1.0 / gcem::sqrt(2.0);
+    this->coeffs.ratio_lin = (1.0 - 1.0 / this->settings.ratio_db)
         * (oneOverSqrt2
-            - std::pow(
+            - gcem::pow(
                 oneOverSqrt2 - (this->settings.ratio_db - 3.0) / 18.0, 5.0));
     this->coeffs.nRms = std::floor(this->settings.tRms_ms * this->fs * 0.001);
   }
@@ -99,7 +100,7 @@ struct SideChain : public Component<Stereo<signal_t>> {
     if (this->settings.rmsEnable) {
       xAbs = rmsSensor(&p_state.rms, this->coeffs.nRms, x);
     } else {
-      xAbs = std::abs(x);
+      xAbs = gcem::abs(x);
     }
 
     signal_t sensRelease = this->coeffs.alphaPeak * p_state.ySensLast
@@ -130,7 +131,7 @@ struct SideChain : public Component<Stereo<signal_t>> {
     if (this->settings.rmsEnable) {
       xAbs = rmsSensor(&p_state.rms, this->coeffs.nRms, x);
     } else {
-      xAbs = std::abs(x);
+      xAbs = gcem::abs(x);
     }
 
     signal_t sensRelease = this->coeffs.alphaPeak * p_state.ySensLast

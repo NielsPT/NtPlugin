@@ -86,7 +86,6 @@ struct NtPluginAudioProcessor : public juce::AudioProcessor {
   juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
   NtFx::TitleBarSpec titleBarSpec;
-  // TODO: this should not be here.
   float fsBase = 48000;
   NTFX_PLUGIN<float> plug;
   NtFx::Src::SampleRateConverter<float> src;
