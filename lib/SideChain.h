@@ -21,7 +21,7 @@
 #include "lib/Stereo.h"
 #include "lib/utils.h"
 
-#include "lib/gcem/include/gcem.hpp"
+#include "gcem.hpp"
 namespace NtFx {
 template <typename signal_t, bool linDomain = false>
 struct SideChain : public Component<Stereo<signal_t>> {

@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "lib/gcem/include/gcem.hpp"
+#include "gcem.hpp"
 #include <cstdint>
 #include <string>
 #include <vector>

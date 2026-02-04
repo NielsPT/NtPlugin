@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "lib/gcem/include/gcem.hpp"
+#include "gcem.hpp"
 
 namespace NtFx {
 template <typename signal_t>

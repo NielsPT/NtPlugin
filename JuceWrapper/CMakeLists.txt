@@ -1,6 +1,8 @@
 # set(NTFX_PLUGIN ntCompressor)
 
-
+if(NOT DEFINED NTFX_PLUGIN)
+  message(FATAL_ERROR "Define plugin to build using '-DNTFX_PLUGIN=[plugin name]'.")
+endif()
 set(NTFX_PLUGIN_FILE "\"plugins/${NTFX_PLUGIN}.h\"")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -188,7 +190,7 @@ target_link_libraries(${NTFX_PLUGIN}
   # juce::juce_recommended_warning_flags
 )
 
-target_include_directories(${NTFX_PLUGIN} PRIVATE ..)
+target_include_directories(${NTFX_PLUGIN} PRIVATE .. ../lib/gcem/include)
 
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
 # into your build tree. This should be included with `#include "JuceHeader.h"`. The include path for

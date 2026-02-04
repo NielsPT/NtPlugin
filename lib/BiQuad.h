@@ -20,7 +20,7 @@
 #include "lib/Component.h"
 #include "lib/Stereo.h"
 
-#include "lib/gcem/include/gcem.hpp"
+#include "gcem.hpp"
 
 namespace NtFx {
 namespace Biquad {
@@ -86,7 +86,6 @@ namespace Biquad {
     inline void update(Settings<signal_t>& settings, signal_t fs) {
       this->coeffs = calcCoeffs6<signal_t>(settings, fs);
     }
-    // inline void reset() { this->state.reset(); }
   };
 
   template <typename signal_t>
@@ -101,10 +100,6 @@ namespace Biquad {
       this->l.update(this->settings, fs);
       this->r.update(this->settings, fs);
     }
-    // inline void reset() {
-    //   this->l.reset();
-    //   this->r.reset();
-    // }
   };
 
   template <typename signal_t>
@@ -132,7 +127,6 @@ namespace Biquad {
     Settings<signal_t> settings;
     Biquad5<signal_t> l;
     Biquad5<signal_t> r;
-    // TODO: Gliders here?
     virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
       return { l.process(x.l), r.process(x.r) };
     }

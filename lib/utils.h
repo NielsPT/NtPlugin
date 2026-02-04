@@ -16,7 +16,7 @@
  **/
 
 #pragma once
-#include "lib/gcem/include/gcem.hpp"
+#include "gcem.hpp"
 #include <algorithm>
 #include <array>
 #include <climits>
