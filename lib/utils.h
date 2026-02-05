@@ -26,18 +26,17 @@ namespace NtFx {
 
 template <typename signal_t>
 static inline signal_t db(signal_t x) noexcept {
-  return static_cast<signal_t>(20.0) * std::log10(x);
+  return signal_t(20.0) * std::log10(x);
 }
 
 template <typename signal_t>
 static inline signal_t invDb(signal_t x) noexcept {
-  return gcem::pow(
-      static_cast<signal_t>(10.0), x * static_cast<signal_t>(0.05));
+  return gcem::pow(signal_t(10.0), x * signal_t(0.05));
 }
 
 template <typename signal_t>
 static inline signal_t ensureFinite(
-    signal_t x, signal_t def = static_cast<signal_t>(0)) noexcept {
+    signal_t x, signal_t def = signal_t(0)) noexcept {
   signal_t y = def;
   if (x == x) { y = x; }
   return y;
@@ -47,27 +46,38 @@ constexpr int rmsDelayLineLength = 16384;
 template <typename signal_t>
 struct RmsSensorState {
   std::array<signal_t, rmsDelayLineLength> delayLine;
-  signal_t accum = static_cast<signal_t>(0.0);
+  signal_t accum = signal_t(0.0);
   int i          = 0;
   void reset() noexcept {
-    std::fill(delayLine.begin(), delayLine.end(), static_cast<signal_t>(0.0));
-    accum = static_cast<signal_t>(0.0);
+    std::fill(delayLine.begin(), delayLine.end(), signal_t(0.0));
+    accum = signal_t(0.0);
   }
 };
 
 template <typename signal_t>
 static inline signal_t rmsSensor(
     RmsSensorState<signal_t>* p_state, size_t nRms, signal_t x) noexcept {
-  if (nRms > rmsDelayLineLength) { return static_cast<signal_t>(0.0); }
+  if (nRms > rmsDelayLineLength) { return signal_t(0.0); }
   signal_t _x = x * x;
-  if (_x != _x) { _x = static_cast<signal_t>(0.0); }
+  if (_x != _x) { _x = signal_t(0.0); }
   p_state->accum += _x - p_state->delayLine[p_state->i];
   p_state->delayLine[p_state->i] = _x;
   p_state->i++;
   if (p_state->i >= nRms) { p_state->i = 0; }
   signal_t y = gcem::sqrt(2.0 * p_state->accum / nRms);
-  if (y != y) { y = static_cast<signal_t>(0.0); }
+  if (y != y) { y = signal_t(0.0); }
   return y;
+}
+
+template <typename signal_t>
+static inline signal_t peakSensor(
+    signal_t x, signal_t alpha, signal_t& p_state) {
+  auto xAbs            = gcem::abs(x);
+  signal_t sensRelease = alpha * p_state + (1 - alpha) * xAbs;
+  signal_t ySens       = gcem::max(xAbs, sensRelease);
+  if (ySens != ySens) { ySens = signal_t(0); }
+  p_state = ySens;
+  return ySens;
 }
 
 template <typename T>

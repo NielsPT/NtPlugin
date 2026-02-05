@@ -33,8 +33,8 @@ template <typename signal_t>
 struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   NtFx::SideChain<signal_t> sc_db;
   NtFx::SideChain<signal_t, true> sc_lin;
-  signal_t makeup_db   = static_cast<signal_t>(0.0);
-  signal_t mix_percent = static_cast<signal_t>(100.0);
+  signal_t makeup_db   = signal_t(0.0);
+  signal_t mix_percent = signal_t(100.0);
 
   bool linEnable      = false;
   bool feedbackEnable = false;
@@ -43,9 +43,9 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   bool clip           = true;
   bool bypassEnable   = false;
 
-  signal_t mix_lin               = static_cast<signal_t>(1.0);
-  signal_t makeup_lin            = static_cast<signal_t>(1.0);
-  NtFx::Stereo<signal_t> fbState = static_cast<signal_t>(0.0);
+  signal_t mix_lin               = signal_t(1.0);
+  signal_t makeup_lin            = signal_t(1.0);
+  NtFx::Stereo<signal_t> fbState = signal_t(0.0);
 
   NtFx::Biquad::EqBand<signal_t> hpf;
   NtFx::Biquad::EqBand<signal_t> boost;
@@ -178,7 +178,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     }
     if (this->linkEnable) { gr = gr.absMin(); }
     this->template updatePeakLevel<2, true>(gr);
-    NtFx::ensureFinite(gr, static_cast<signal_t>(1.0));
+    NtFx::ensureFinite(gr, signal_t(1.0));
     NtFx::Stereo<signal_t> yComp = x * gr;
     this->fbState                = yComp;
     auto xClip                   = yComp * this->makeup_lin;
@@ -210,11 +210,9 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
 
   void reset(float fs) noexcept override {
     this->fs = fs;
-    std::fill(this->peakLevels.begin(),
-        this->peakLevels.end(),
-        static_cast<signal_t>(0));
-    this->peakLevels[2] = static_cast<signal_t>(1);
-    this->fbState       = static_cast<signal_t>(0);
+    std::fill(this->peakLevels.begin(), this->peakLevels.end(), signal_t(0));
+    this->peakLevels[2] = signal_t(1);
+    this->fbState       = signal_t(0);
     this->sc_db.reset(this->fs);
     this->sc_lin.reset(this->fs);
     this->hpf.reset(this->fs);

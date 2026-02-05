@@ -245,7 +245,7 @@ void NtPluginAudioProcessorEditor::updateUi() {
       && this->proc.plug.secondaryKnobs.size()) {
     this->updateSecondaryKnobs(area);
   }
-  this->updatePrimaryKnobs(area);
+  if (this->proc.plug.primaryKnobs.size()) { this->updatePrimaryKnobs(area); }
   this->repaint();
 }
 
@@ -274,6 +274,7 @@ void NtPluginAudioProcessorEditor::updateMeters(juce::Rectangle<int>& area) {
   this->meters.setFontSize(
       this->proc.plug.uiSpec.defaultFontSize * this->uiScale * 0.9);
   this->meters.setUiScale(this->uiScale);
+  this->meters.updateRelease(this->proc.plug.uiSpec.meterRefreshRate_hz);
   this->meters.setBounds(meterArea);
   this->borderedAreas.push_back(meterArea);
 }

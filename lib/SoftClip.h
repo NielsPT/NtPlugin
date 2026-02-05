@@ -52,8 +52,8 @@ constexpr std::array<signal_t, 2> coeffsThird =
 template <typename signal_t>
 static inline signal_t softClip5thMono(signal_t x) noexcept {
   signal_t x_ = x / coeffsFifth<signal_t>[0];
-  if (x_ > 1.0) { return static_cast<signal_t>(1.0); }
-  if (x_ < -1.0) { return static_cast<signal_t>(-1.0); }
+  if (x_ > 1.0) { return signal_t(1.0); }
+  if (x_ < -1.0) { return signal_t(-1.0); }
   auto x3 = x_ * x_ * x_;
   auto x5 = x3 * x_ * x_;
   return coeffsFifth<signal_t>[0] * x_ + coeffsFifth<signal_t>[1] * x3
@@ -67,8 +67,8 @@ static inline Stereo<signal_t> softClip5thStereo(Stereo<signal_t> x) noexcept {
 
 template <typename signal_t>
 static inline signal_t softClip3rdMono(signal_t x) {
-  if (x > 1.0) { return static_cast<signal_t>(1.0); }
-  if (x < -1.0) { return static_cast<signal_t>(-1.0); }
+  if (x > 1.0) { return signal_t(1.0); }
+  if (x < -1.0) { return signal_t(-1.0); }
   auto x_ = x / coeffsThird<signal_t>[0];
   auto x3 = x_ * x_ * x_;
   return x - coeffsThird<signal_t>[1] * x3;

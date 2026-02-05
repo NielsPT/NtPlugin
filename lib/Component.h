@@ -48,7 +48,7 @@ struct Component {
    * coefficients here.
    *
    */
-  virtual void update() noexcept = 0;
+  virtual void update() noexcept { }
 
   /**
    * @brief Called when the plugin loads and when ever the samplerate or buffer
@@ -56,6 +56,9 @@ struct Component {
    *
    * @param fs Sample rate. If you need it for calculateCoeffs, store it.
    */
-  virtual void reset(float fs) noexcept = 0;
+  virtual void reset(float fs) noexcept {
+    this->fs = fs;
+    this->update();
+  };
 };
 }

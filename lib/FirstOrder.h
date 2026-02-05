@@ -42,8 +42,7 @@ namespace FirstOrder {
       } else if constexpr (shape == Shape::hpf) {
         y = this->alpha * (this->yn1 + x - this->xn1);
       } else {
-        y = static_cast<signal_t>(0.5) * this->alpha * (x + xn1)
-            + (1 - this->alpha) * yn1;
+        y = signal_t(0.5) * this->alpha * (x + xn1) + (1 - this->alpha) * yn1;
       }
       this->xn1 = x;
       this->yn1 = y;

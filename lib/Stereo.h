@@ -91,6 +91,7 @@ struct Stereo {
   signal_t absMin() const noexcept {
     return gcem::abs(this->l) < gcem::abs(this->r) ? this->l : this->r;
   }
+  Stereo<signal_t> operator-() const { return { -this->l, -this->r }; }
 };
 template <typename signal_t>
 static inline Stereo<signal_t> operator+(
@@ -110,6 +111,26 @@ static inline Stereo<signal_t> operator*(
 template <typename signal_t>
 static inline Stereo<signal_t> operator/(
     const Stereo<signal_t>& y, const signal_t& x) noexcept {
+  return { (y.l / x), (y.r / x) };
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator+(
+    const Stereo<signal_t>& y, const int& x) noexcept {
+  return { (y.l + x), (y.r + x) };
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator-(
+    const Stereo<signal_t>& y, const int& x) noexcept {
+  return { (y.l - x), (y.r - x) };
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator*(
+    const Stereo<signal_t>& y, const int& x) noexcept {
+  return { (y.l * x), (y.r * x) };
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator/(
+    const Stereo<signal_t>& y, const int& x) noexcept {
   return { (y.l / x), (y.r / x) };
 }
 template <typename signal_t>
@@ -155,16 +176,16 @@ static inline Stereo<signal_t> operator/(
 template <typename signal_t>
 static inline Stereo<signal_t> operator*(
     const Stereo<signal_t>& y, const size_t& x) noexcept {
-  return { (y.l * static_cast<signal_t>(x)), (y.r * static_cast<signal_t>(x)) };
+  return { (y.l * signal_t(x)), (y.r * signal_t(x)) };
 }
 template <typename signal_t>
 static inline Stereo<signal_t> operator*(
     const size_t x, const Stereo<signal_t>& y) noexcept {
-  return { (y.l * static_cast<signal_t>(x)), (y.r * static_cast<signal_t>(x)) };
+  return { (y.l * signal_t(x)), (y.r * signal_t(x)) };
 }
 template <typename signal_t>
 static inline Stereo<signal_t> ensureFinite(
-    Stereo<signal_t> x, signal_t def = static_cast<signal_t>(0)) noexcept {
+    Stereo<signal_t> x, signal_t def = signal_t(0)) noexcept {
   Stereo<signal_t> y(def, def);
   if (x.l == x.l) { y.l = x.l; };
   if (x.r == x.r) { y.r = x.r; }

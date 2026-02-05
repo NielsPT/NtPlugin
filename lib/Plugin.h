@@ -157,11 +157,11 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
    * @return NtFx::Stereo<signal_t> Highest signal level since last call.
    */
   NtFx::Stereo<signal_t> getAndResetPeakLevel(size_t idx) noexcept {
-    signal_t def = static_cast<signal_t>(0);
+    signal_t def = signal_t(0);
     if (idx >= this->uiSpec.meters.size()) { return def; }
-    if (this->uiSpec.meters[idx].invert) { def = static_cast<signal_t>(1); }
+    if (this->uiSpec.meters[idx].invert) { def = signal_t(1); }
     NtFx::Stereo<signal_t> tmp = this->peakLevels[idx];
-    this->peakLevels[idx]      = static_cast<signal_t>(def);
+    this->peakLevels[idx]      = signal_t(def);
     ensureFinite(tmp, def);
     return tmp;
   }

@@ -44,37 +44,33 @@ namespace NtFx {
 struct MonoMeter : public juce::Component {
   MeterSpec& meterSpec;
   UiSpec& uiSpec;
-  int pad                = 10;
-  int dotDiameter        = 0;
-  int dotDist            = 0;
-  int nDots              = 14;
-  int nActiveDots        = 0;
-  float peakLast_db      = 0;
-  int decayRate_db       = 0;
-  float peakVal_lin      = 0;
-  float dbPrDot          = 0;
+  int pad           = 10;
+  int dotDiameter   = 0;
+  int dotDist       = 0;
+  int nDots         = 14;
+  int nActiveDots   = 0;
+  float peakVal_lin = 0;
+  float dbPrDot     = 0;
+
+  std::string label  = "";
+  bool isInitialized = false;
+  int fontSize       = 20;
+
+  // Peak hold dot
   int nHold_frames       = 0;
   int holdCounter_frames = 0;
   float holdVal_db       = 0;
   int iHoldDot           = 0;
-  std::string label      = "";
-  bool isInitialized     = false;
-  int fontSize           = 20;
+
+  // Release filter
+  float alphaPeak = 0;
+  float statePeak = 0;
 
   MonoMeter(MeterSpec& meterSpec, UiSpec& uiSpec)
       : meterSpec(meterSpec), uiSpec(uiSpec), nDots(uiSpec.meterHeight_dots) {
     this->refresh();
+
     this->isInitialized = true;
-    float dbPerSecond = (this->meterSpec.maxVal_db - this->meterSpec.minVal_db)
-        / this->meterSpec.decay_s;
-    this->decayRate_db = dbPerSecond / this->uiSpec.meterRefreshRate_hz;
-    this->nHold_frames =
-        this->meterSpec.hold_s * this->uiSpec.meterRefreshRate_hz;
-    if (this->meterSpec.invert) {
-      this->peakLast_db = this->meterSpec.minVal_db;
-    } else {
-      this->peakLast_db = this->meterSpec.maxVal_db;
-    }
   };
   ~MonoMeter() = default;
 
@@ -90,9 +86,9 @@ struct MonoMeter : public juce::Component {
         this->getWidth(),
         this->fontSize,
         juce::Justification::centred);
-    for (size_t i = 1; i < this->nDots + 1; i++) {
+    for (size_t i = 0; i < this->nDots; i++) {
       int y;
-      y = this->pad + i * this->dotDist;
+      y = this->pad + (i + 1) * this->dotDist;
       g.setColour(juce::Colour(this->uiSpec.foregroundColour));
       g.drawEllipse(this->pad, y, this->dotDiameter, this->dotDiameter, 1);
       float fillPad      = this->getWidth() * 4.0 / 35.0;
@@ -100,14 +96,15 @@ struct MonoMeter : public juce::Component {
       if (fillDiameter < 0) { return; }
       float fillX = this->pad + fillPad / 2;
       float fillY = y + fillPad / 2;
-      if ((!this->meterSpec.invert && i > this->nDots - this->nActiveDots)
-          || (this->meterSpec.invert && i < this->nDots - this->nActiveDots)) {
+      if ((!this->meterSpec.invert && i >= this->nDots - this->nActiveDots)
+          || (this->meterSpec.invert && i <= this->nDots - this->nActiveDots)) {
         g.setColour(juce::Colour(
-            this->uiSpec.foregroundColour & 0x00FFFFFF | 0xDD000000));
+            this->uiSpec.foregroundColour & 0x00FFFFFF | 0x7F000000));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
-      if (i == this->iHoldDot) {
-        g.setColour(juce::Colour(this->uiSpec.foregroundColour));
+      if (i == this->iHoldDot && this->meterSpec.hold_s) {
+        g.setColour(juce::Colour(
+            this->uiSpec.foregroundColour & 0x00FFFFFF | 0x8F000000));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
     }
@@ -115,31 +112,43 @@ struct MonoMeter : public juce::Component {
 
   void resized() override { repaint(); }
 
+  void refresh(float level) {
+    this->peakVal_lin = level;
+    this->refresh();
+  }
+
   void refresh(bool repaint = true) {
-    // this->nDots = (this->getHeight() - this->dotDiameter) / this->dotDist;
-    if (!(this->peakLast_db == this->peakLast_db)) {
-      this->peakLast_db = this->meterSpec.maxVal_db;
-    }
-    this->dbPrDot =
-        (this->meterSpec.maxVal_db - this->meterSpec.minVal_db) / this->nDots;
-    float peak_db = NtFx::db(this->peakVal_lin);
-    if (this->peakVal_lin <= 0) { peak_db = -100; }
-    if (this->meterSpec.invert) {
-      if (peak_db > this->peakLast_db) {
-        peak_db = this->peakLast_db + this->decayRate_db;
-      }
-    } else {
-      if (peak_db < this->peakLast_db) {
-        peak_db = this->peakLast_db - this->decayRate_db;
-      }
-    }
+    auto ySens =
+        peakSensor(this->peakVal_lin, this->alphaPeak, this->statePeak);
+    float peak_db = NtFx::db(ySens);
+
     if (peak_db < this->meterSpec.minVal_db) {
       peak_db = this->meterSpec.minVal_db;
     }
     if (peak_db > this->meterSpec.maxVal_db) {
       peak_db = this->meterSpec.maxVal_db;
     }
-    this->peakLast_db = peak_db;
+
+    this->refreshNActiveDots(peak_db);
+    this->refreshPeakHold(peak_db);
+
+    auto w = this->getWidth();
+    if (!repaint || !w) { w = this->uiSpec.meterWidth; }
+    this->pad         = w * 10.0 / this->uiSpec.meterWidth;
+    this->dotDiameter = w * 15.0 / this->uiSpec.meterWidth;
+    this->dotDist     = this->pad + this->dotDiameter;
+    if (repaint) { this->repaint(); }
+  }
+
+  void updateRelease(float fs, float t_ms) {
+    this->alphaPeak = gcem::exp(-2200.0 / (t_ms * fs));
+    this->nHold_frames =
+        this->meterSpec.hold_s * this->uiSpec.meterRefreshRate_hz;
+    this->dbPrDot =
+        (this->meterSpec.maxVal_db - this->meterSpec.minVal_db) / this->nDots;
+  }
+
+  void refreshNActiveDots(float peak_db) {
     if (peak_db >= 0.0) {
       this->nActiveDots = this->nDots;
     } else if (peak_db >= -1.0) {
@@ -149,40 +158,28 @@ struct MonoMeter : public juce::Component {
     } else {
       this->nActiveDots =
           (peak_db + this->meterSpec.maxVal_db - this->meterSpec.minVal_db)
-              / this->dbPrDot
-          - 2;
-      if (this->nActiveDots < 0) { this->nActiveDots = 0; }
+          / this->dbPrDot;
     }
+  }
 
-    // Refresh hold.
+  void refreshPeakHold(float peak_db) {
     if ((!this->meterSpec.invert && peak_db > this->holdVal_db)
         || (this->meterSpec.invert && peak_db < this->holdVal_db)) {
       this->holdVal_db         = peak_db;
       this->iHoldDot           = this->nDots - this->nActiveDots;
       this->holdCounter_frames = 0;
-    } else {
-      this->holdCounter_frames++;
-      if (this->holdCounter_frames > this->nHold_frames) {
-        this->holdCounter_frames = 0;
-        if (this->meterSpec.invert) {
-          this->holdVal_db = this->meterSpec.maxVal_db;
-        } else {
-          this->holdVal_db = this->meterSpec.minVal_db;
-        }
-        this->iHoldDot = 0;
-      }
+      return;
     }
-    auto w = this->getWidth();
-    if (!repaint || !w) { w = this->uiSpec.meterWidth; }
-    this->pad         = w * 10.0 / this->uiSpec.meterWidth;
-    this->dotDiameter = w * 15.0 / this->uiSpec.meterWidth;
-    this->dotDist     = this->pad + this->dotDiameter;
-    if (repaint) { this->repaint(); }
-  }
-
-  void refresh(float level) {
-    this->peakVal_lin = level;
-    this->refresh();
+    this->holdCounter_frames++;
+    if (this->holdCounter_frames > this->nHold_frames) {
+      this->holdCounter_frames = 0;
+      if (this->meterSpec.invert) {
+        this->holdVal_db = this->meterSpec.maxVal_db;
+      } else {
+        this->holdVal_db = this->meterSpec.minVal_db;
+      }
+      this->iHoldDot = this->nDots - this->nActiveDots;
+    }
   }
 };
 
@@ -319,6 +316,12 @@ struct MeterGroup : public juce::Component {
     auto& m = this->meters[0]->l;
     m.refresh(false);
     return (m.uiSpec.labelHeight) * 2 + (m.nDots + 2) * m.dotDist + m.pad;
+  }
+  void updateRelease(float fs) {
+    for (auto& m : this->meters) {
+      m->l.updateRelease(fs, m->l.meterSpec.decay_s * 1000);
+      m->r.updateRelease(fs, m->r.meterSpec.decay_s * 1000);
+    }
   }
 };
 } // namespace NtFx

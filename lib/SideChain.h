@@ -22,37 +22,38 @@
 #include "lib/utils.h"
 
 #include "gcem.hpp"
+
 namespace NtFx {
 template <typename signal_t, bool linDomain = false>
 struct SideChain : public Component<Stereo<signal_t>> {
   struct Settings {
-    signal_t thresh_db = static_cast<signal_t>(0);
-    signal_t ratio_db  = static_cast<signal_t>(2);
-    signal_t knee_db   = static_cast<signal_t>(12);
-    signal_t tAtt_ms   = static_cast<signal_t>(1);
-    signal_t tRel_ms   = static_cast<signal_t>(100);
-    signal_t tRms_ms   = static_cast<signal_t>(80);
-    signal_t tPeak_ms  = static_cast<signal_t>(20.0);
+    signal_t thresh_db = signal_t(0);
+    signal_t ratio_db  = signal_t(2);
+    signal_t knee_db   = signal_t(12);
+    signal_t tAtt_ms   = signal_t(1);
+    signal_t tRel_ms   = signal_t(100);
+    signal_t tRms_ms   = signal_t(80);
+    signal_t tPeak_ms  = signal_t(20.0);
     bool rmsEnable     = false;
   };
 
   struct Coeffs {
-    signal_t thresh_lin = static_cast<signal_t>(1);
-    signal_t ratio_lin  = static_cast<signal_t>(1);
-    signal_t knee_lin   = static_cast<signal_t>(1);
-    signal_t alphaAtt   = static_cast<signal_t>(0);
-    signal_t alphaRel   = static_cast<signal_t>(0);
-    signal_t alphaPeak  = static_cast<signal_t>(0);
+    signal_t thresh_lin = signal_t(1);
+    signal_t ratio_lin  = signal_t(1);
+    signal_t knee_lin   = signal_t(1);
+    signal_t alphaAtt   = signal_t(0);
+    signal_t alphaRel   = signal_t(0);
+    signal_t alphaPeak  = signal_t(0);
     size_t nRms         = 1;
   };
 
   struct State {
-    signal_t ySensLast   = static_cast<signal_t>(0.0);
-    signal_t yFilterLast = static_cast<signal_t>(0.0);
+    signal_t ySensLast   = signal_t(0.0);
+    signal_t yFilterLast = signal_t(0.0);
     RmsSensorState<signal_t> rms;
     void reset() {
-      this->ySensLast   = static_cast<signal_t>(0.0);
-      this->yFilterLast = static_cast<signal_t>(0.0);
+      this->ySensLast   = signal_t(0.0);
+      this->yFilterLast = signal_t(0.0);
       rms.reset();
     }
   };
@@ -96,21 +97,16 @@ struct SideChain : public Component<Stereo<signal_t>> {
   }
 
   inline signal_t sideChain_lin(signal_t x, State& p_state) noexcept {
-    signal_t xAbs;
+    signal_t ySens;
     if (this->settings.rmsEnable) {
-      xAbs = rmsSensor(&p_state.rms, this->coeffs.nRms, x);
+      ySens = rmsSensor(&p_state.rms, this->coeffs.nRms, x);
     } else {
-      xAbs = gcem::abs(x);
+      ySens = peakSensor(x, this->coeffs.alphaPeak, p_state->ySensLast);
     }
-
-    signal_t sensRelease = this->coeffs.alphaPeak * p_state.ySensLast
-        + (1 - this->coeffs.alphaPeak) * xAbs;
-    signal_t ySens    = std::max(xAbs, sensRelease);
-    p_state.ySensLast = ySens;
 
     signal_t target;
     if (ySens < this->coeffs.thresh_lin / this->coeffs.knee_lin) {
-      target = static_cast<signal_t>(0);
+      target = signal_t(0);
     } else if (ySens < this->coeffs.thresh_lin) {
       target = (ySens / this->coeffs.thresh_lin) * this->coeffs.ratio_lin
           * this->coeffs.thresh_lin / (this->coeffs.knee_lin * ySens);
@@ -123,22 +119,16 @@ struct SideChain : public Component<Stereo<signal_t>> {
 
     signal_t yFilter    = p_state.yFilterLast * alpha + target * (1 - alpha);
     p_state.yFilterLast = yFilter;
-    return static_cast<signal_t>(1.0) / (yFilter + 1);
+    return signal_t(1.0) / (yFilter + 1);
   }
 
   inline signal_t sideChain_db(signal_t x, State& p_state) noexcept {
-    signal_t xAbs;
+    signal_t ySens;
     if (this->settings.rmsEnable) {
-      xAbs = rmsSensor(&p_state.rms, this->coeffs.nRms, x);
+      ySens = rmsSensor(&p_state.rms, this->coeffs.nRms, x);
     } else {
-      xAbs = gcem::abs(x);
+      ySens = peakSensor(x, this->coeffs.alphaPeak, p_state->ySensLast);
     }
-
-    signal_t sensRelease = this->coeffs.alphaPeak * p_state.ySensLast
-        + (1 - this->coeffs.alphaPeak) * xAbs;
-    signal_t ySens = std::max(xAbs, sensRelease);
-    if (ySens != ySens) { ySens = static_cast<signal_t>(0); }
-    p_state.ySensLast = ySens;
 
     signal_t x_db = db(ySens);
     signal_t y_db;
@@ -162,7 +152,7 @@ struct SideChain : public Component<Stereo<signal_t>> {
     if (target > p_state.yFilterLast) { alpha = this->coeffs.alphaAtt; }
 
     signal_t yFilter = p_state.yFilterLast * alpha + target * (1 - alpha);
-    if (yFilter != yFilter) { yFilter = static_cast<signal_t>(0); }
+    if (yFilter != yFilter) { yFilter = signal_t(0); }
     p_state.yFilterLast = yFilter;
     return invDb(-yFilter);
   }

@@ -110,6 +110,8 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
       this->uiSpec.meters.push_back({ this->BandNames[i], .invert = true });
     }
     this->uiSpec.meters[Bands::n - 1 + 2].hasScale = true;
+    this->uiSpec.meterHeight_dots                  = 25;
+    for (auto& m : this->uiSpec.meters) { m.minVal_db = -50; }
     this->updateDefaults();
   }
 

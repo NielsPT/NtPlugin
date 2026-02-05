@@ -191,8 +191,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     this->fbState = yLp;
     auto yOutClip = yLp;
     if (this->clip) { yOutClip = NtFx::softClip5thStereo(yLp); }
-    auto y = (static_cast<signal_t>(1.0) - this->mix_lin) * x
-        + this->mix_lin * yOutClip;
+    auto y = (signal_t(1.0) - this->mix_lin) * x + this->mix_lin * yOutClip;
     // TODO: Make this a member.
     y *= (2 - gcem::abs(this->mix_lin * 2 - 1));
     this->template updatePeakLevel<0>(x);
