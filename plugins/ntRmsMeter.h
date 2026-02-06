@@ -17,17 +17,18 @@
 
 #pragma once
 
-#include "lib/MsRmsSensor.h"
-#include "lib/MultitapRmsSensor.h"
 #include "lib/Plugin.h"
+#include "lib/RmsSensor.h"
 #include "lib/Stereo.h"
 
 template <typename signal_t>
 struct ntRmsMeter : NtFx::NtPlugin<signal_t> {
-  enum Meter { Peak, RMS, RMS_10_ms, RMS_100_ms, RMS_1_s };
+  enum Meter {
+    Peak,
+    RMS,
+  };
 
-  NtFx::MultitapRmsSensor<signal_t> multitap;
-  NtFx::MsRmsSensor<signal_t> msSensor;
+  NtFx::RmsSensor<signal_t> msSensor;
   signal_t decay_s = 0.1;
   signal_t hold_s  = 2;
   signal_t tRms_ms = 10;
@@ -36,16 +37,15 @@ struct ntRmsMeter : NtFx::NtPlugin<signal_t> {
     this->uiSpec.meters = {
       { "Peak", .minVal_db = -50 },
       { "RMS", .hasScale = true, .minVal_db = -50 },
-      { "RMS_10_ms", .minVal_db = -50 },
-      { "RMS_100_ms", .minVal_db = -50 },
-      { "RMS_1_s", .hasScale = true, .minVal_db = -50 },
     };
-    this->secondaryKnobs = {
+    this->primaryKnobs = {
       { &this->decay_s, "Decay", " s", 0, 1 },
       { &this->hold_s, "Hold", " s", 0, 10 },
       { &this->tRms_ms, "RMS_Time", " ms", 1, 1000 },
     };
-    this->uiSpec.meterHeight_dots = 25;
+    this->uiSpec.meterHeight_dots   = 25;
+    this->uiSpec.defaultWindowWidth = 350;
+    this->uiSpec.maxColumns         = 1;
     this->updateDefaults();
   }
 
@@ -54,10 +54,6 @@ struct ntRmsMeter : NtFx::NtPlugin<signal_t> {
     this->template updatePeakLevel<Peak>(x);
     msSensor.process(x);
     this->template updatePeakLevel<RMS>(msSensor.getRms());
-    multitap.process(x);
-    this->template updatePeakLevel<RMS_10_ms>(multitap.getRms(1));
-    this->template updatePeakLevel<RMS_100_ms>(multitap.getRms(2));
-    this->template updatePeakLevel<RMS_1_s>(multitap.getRms(3));
     return x;
   }
 
@@ -70,7 +66,6 @@ struct ntRmsMeter : NtFx::NtPlugin<signal_t> {
 
   virtual void reset(float fs) noexcept override {
     this->fs = fs;
-    this->multitap.reset(fs);
     this->msSensor.reset(fs);
     this->update();
   }

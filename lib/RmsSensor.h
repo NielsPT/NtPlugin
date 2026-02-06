@@ -27,7 +27,7 @@ constexpr int maxSampleDLineLen = 192 * 8;
 constexpr int maxMsDLineLen     = 1000;
 
 template <typename signal_t>
-struct MsRmsSensor : public Component<Stereo<signal_t>> {
+struct RmsSensor : public Component<Stereo<signal_t>> {
   bool resetAccums   = false;
   int msDLineLen     = maxMsDLineLen;
   int sampleDLineLen = maxSampleDLineLen;
