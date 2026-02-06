@@ -119,7 +119,7 @@ struct MonoMeter : public juce::Component {
 
   void refresh(bool repaint = true) {
     auto ySens =
-        peakSensor(this->peakVal_lin, this->alphaPeak, this->statePeak);
+        peakSensor(this->alphaPeak, this->statePeak, this->peakVal_lin);
     float peak_db = NtFx::db(ySens);
 
     if (peak_db < this->meterSpec.minVal_db) {

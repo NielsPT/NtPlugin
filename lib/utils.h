@@ -18,7 +18,6 @@
 #pragma once
 #include "gcem.hpp"
 #include <algorithm>
-#include <array>
 #include <climits>
 #include <vector>
 
@@ -42,36 +41,36 @@ static inline signal_t ensureFinite(
   return y;
 }
 
-constexpr int rmsDelayLineLength = 16384;
-template <typename signal_t>
-struct RmsSensorState {
-  std::array<signal_t, rmsDelayLineLength> delayLine;
-  signal_t accum = signal_t(0.0);
-  int i          = 0;
-  void reset() noexcept {
-    std::fill(delayLine.begin(), delayLine.end(), signal_t(0.0));
-    accum = signal_t(0.0);
-  }
-};
+// constexpr int rmsDelayLineLength = 16384;
+// template <typename signal_t>
+// struct RmsSensorState {
+//   std::array<signal_t, rmsDelayLineLength> delayLine;
+//   signal_t accum = signal_t(0.0);
+//   int i          = 0;
+//   void reset() noexcept {
+//     std::fill(delayLine.begin(), delayLine.end(), signal_t(0.0));
+//     accum = signal_t(0.0);
+//   }
+// };
 
-template <typename signal_t>
-static inline signal_t rmsSensor(
-    RmsSensorState<signal_t>* p_state, size_t nRms, signal_t x) noexcept {
-  if (nRms > rmsDelayLineLength) { return signal_t(0.0); }
-  signal_t _x = x * x;
-  if (_x != _x) { _x = signal_t(0.0); }
-  p_state->accum += _x - p_state->delayLine[p_state->i];
-  p_state->delayLine[p_state->i] = _x;
-  p_state->i++;
-  if (p_state->i >= nRms) { p_state->i = 0; }
-  signal_t y = gcem::sqrt(2.0 * p_state->accum / nRms);
-  if (y != y) { y = signal_t(0.0); }
-  return y;
-}
+// template <typename signal_t>
+// static inline signal_t rmsSensor(
+//     RmsSensorState<signal_t>* p_state, size_t nRms, signal_t x) noexcept {
+//   if (nRms > rmsDelayLineLength) { return signal_t(0.0); }
+//   signal_t _x = x * x;
+//   if (_x != _x) { _x = signal_t(0.0); }
+//   p_state->accum += _x - p_state->delayLine[p_state->i];
+//   p_state->delayLine[p_state->i] = _x;
+//   p_state->i++;
+//   if (p_state->i >= nRms) { p_state->i = 0; }
+//   signal_t y = gcem::sqrt(2.0 * p_state->accum / nRms);
+//   if (y != y) { y = signal_t(0.0); }
+//   return y;
+// }
 
 template <typename signal_t>
 static inline signal_t peakSensor(
-    signal_t x, signal_t alpha, signal_t& p_state) {
+    signal_t alpha, signal_t& p_state, signal_t x) {
   auto xAbs            = gcem::abs(x);
   signal_t sensRelease = alpha * p_state + (1 - alpha) * xAbs;
   signal_t ySens       = gcem::max(xAbs, sensRelease);

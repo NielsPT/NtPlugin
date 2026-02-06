@@ -39,17 +39,6 @@ struct RmsSensor : public Component<Stereo<signal_t>> {
   int msIdx;
 
   virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
-    if (this->resetAccums) {
-      this->sampleIdx   = 0;
-      this->msIdx       = 0;
-      this->sampleAccum = 0;
-      this->msAccum     = 0;
-      std::fill(this->samleDLine.begin(), this->samleDLine.end(), 0);
-      std::fill(this->msDLine.begin(), this->msDLine.end(), 0);
-      this->resetAccums = false;
-      return 0;
-    }
-
     auto x2 = x * x;
     if (x2 != x2) { x2 = signal_t(0.0); }
     this->sampleAccum += x2 - this->samleDLine[this->sampleIdx];
@@ -63,22 +52,38 @@ struct RmsSensor : public Component<Stereo<signal_t>> {
     return this->getRms();
   }
 
-  virtual void update() noexcept override { }
+  virtual void update() noexcept override {
+    if (this->resetAccums) {
+      this->sampleIdx   = 0;
+      this->msIdx       = 0;
+      this->sampleAccum = 0;
+      this->msAccum     = 0;
+      std::fill(this->samleDLine.begin(), this->samleDLine.end(), 0);
+      std::fill(this->msDLine.begin(), this->msDLine.end(), 0);
+      this->resetAccums = false;
+    }
+  }
 
   virtual void reset(float fs) noexcept override {
+    this->fs             = fs;
     this->sampleDLineLen = fs / 1000;
     this->resetAccums    = true;
     this->update();
   }
 
   Stereo<signal_t> getRms() const noexcept {
-    Stereo<signal_t> y = gcem::sqrt(signal_t(2.0) * this->msAccum
-        / signal_t(this->sampleDLineLen * this->msDLineLen));
+    Stereo<signal_t> y = {
+      gcem::sqrt(signal_t(2.0) * this->msAccum.l
+          / signal_t(this->sampleDLineLen * this->msDLineLen)),
+      gcem::sqrt(signal_t(2.0) * this->msAccum.r
+          / signal_t(this->sampleDLineLen * this->msDLineLen)),
+    };
     if (y != y) { y = signal_t(0.0); }
     return y;
   }
 
   void setRmsAvgTime(int t_ms) {
+    if (t_ms == this->msDLineLen) { return; }
     this->msDLineLen  = t_ms;
     this->resetAccums = true;
   }

@@ -19,6 +19,7 @@
 
 #include "gcem.hpp"
 #include <cstddef>
+#include <type_traits>
 
 namespace NtFx {
 
@@ -26,7 +27,10 @@ template <typename signal_t>
 struct Stereo {
   signal_t l { 0 };
   signal_t r { 0 };
-  Stereo() : l(0.0f), r(0.0f) { }
+  Stereo() : l(0.0f), r(0.0f) {
+    static_assert(
+        std::is_floating_point_v<signal_t>, "Type must be floating point.");
+  }
   Stereo(signal_t x) : l(x), r(x) { }
   Stereo(signal_t left, signal_t right) : l(left), r(right) { }
   Stereo<signal_t>& operator=(const Stereo<signal_t>& x) noexcept {

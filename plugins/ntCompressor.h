@@ -103,7 +103,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
           .name   = "RMS_time",
           .suffix = " ms",
           .minVal = 1.0,
-          .maxVal = 80.0,
+          .maxVal = 1000.0,
       },
       {
           .p_val    = &this->hpf.settings.fc_hz,
