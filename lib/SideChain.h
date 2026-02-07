@@ -146,7 +146,7 @@ struct PeakSideChainLinear : public PeakSideChainDb<signal_t> {
 
 template <typename signal_t>
 struct RmsSideChainDb : public PeakSideChainDb<signal_t> {
-  RmsSensor<signal_t> rmsSensor;
+  RmsSensorStereo<signal_t> rmsSensor;
 
   RmsSideChainDb(ScSettings<signal_t>& settings)
       : PeakSideChainDb<signal_t>(settings) { }
@@ -175,7 +175,7 @@ struct RmsSideChainDb : public PeakSideChainDb<signal_t> {
 
 template <typename signal_t>
 struct RmsSideChainLinear : public PeakSideChainLinear<signal_t> {
-  RmsSensor<signal_t> rmsSensor;
+  RmsSensorStereo<signal_t> rmsSensor;
 
   RmsSideChainLinear(ScSettings<signal_t>& settings)
       : PeakSideChainLinear<signal_t>(settings) { }

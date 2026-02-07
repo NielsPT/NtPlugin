@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "lib/Stereo.h"
 namespace NtFx {
 /**
  * @brief Base class for audio components in NtPlugin. All processors adhere to
@@ -60,5 +61,32 @@ struct Component {
     this->fs = fs;
     this->update();
   };
+};
+
+/**
+ * @brief Wraps two objects of type Component<signal_t> as a
+ * Component<Stereo<signal_t>> and calls through the both objects.
+ *
+ * @tparam signal_t Datatype for signal. Must be a floating point type.
+ * @tparam component_t Type of Component to wrap.
+ */
+template <typename signal_t, typename component_t>
+struct StereoComponent : public Component<Stereo<signal_t>> {
+  component_t l;
+  component_t r;
+
+  virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+    return { this->l.process(x.l), this->r.process(x.r) };
+  }
+
+  virtual void update() noexcept override {
+    this->l.update();
+    this->r.update();
+  }
+
+  virtual void reset(float fs) noexcept override {
+    this->l.reset(fs);
+    this->r.reset(fs);
+  }
 };
 }

@@ -49,27 +49,9 @@ struct PeakSensor : public Component<signal_t> {
   }
 };
 
-// TODO: This is totally general. Can we make a base class that takes a mono
-// class as template arg and creates a stereo component?
 template <typename signal_t>
-struct PeakSensorStereo : public Component<Stereo<signal_t>> {
-  PeakSensor<signal_t> l;
-  PeakSensor<signal_t> r;
-
-  virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
-    return { this->l.process(x.l), this->r.process(x.r) };
-  }
-
-  virtual void update() noexcept override {
-    this->l.update();
-    this->r.update();
-  }
-
-  virtual void reset(float fs) noexcept override {
-    this->l.reset(fs);
-    this->r.reset(fs);
-  }
-
+struct PeakSensorStereo
+    : public StereoComponent<signal_t, PeakSensor<signal_t>> {
   void setT_ms(signal_t t_ms) {
     this->l.tPeak_ms = t_ms;
     this->r.tPeak_ms = t_ms;

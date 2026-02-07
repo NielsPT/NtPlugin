@@ -26,18 +26,18 @@ namespace NtFx {
 constexpr int maxSampleDLineLen = 192 * 8;
 
 template <typename signal_t, int maxT_ms = 1000>
-struct RmsSensor : public Component<Stereo<signal_t>> {
+struct RmsSensor : public Component<signal_t> {
   bool resetAccums   = false;
   int msDLineLen     = maxT_ms;
   int sampleDLineLen = maxSampleDLineLen;
-  std::array<Stereo<signal_t>, maxSampleDLineLen> samleDLine;
-  std::array<Stereo<signal_t>, maxT_ms> msDLine;
-  Stereo<signal_t> sampleAccum;
-  Stereo<signal_t> msAccum;
+  std::array<signal_t, maxSampleDLineLen> samleDLine;
+  std::array<signal_t, maxT_ms> msDLine;
+  signal_t sampleAccum;
+  signal_t msAccum;
   int sampleIdx;
   int msIdx;
 
-  virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+  virtual signal_t process(signal_t x) noexcept override {
     auto x2 = x * x;
     if (x2 != x2) { x2 = signal_t(0.0); }
     this->sampleAccum += x2 - this->samleDLine[this->sampleIdx];
@@ -71,13 +71,10 @@ struct RmsSensor : public Component<Stereo<signal_t>> {
     this->update();
   }
 
-  Stereo<signal_t> getRms() const noexcept {
-    Stereo<signal_t> y = {
-      gcem::sqrt(signal_t(2.0) * this->msAccum.l
-          / signal_t(this->sampleDLineLen * this->msDLineLen)),
-      gcem::sqrt(signal_t(2.0) * this->msAccum.r
-          / signal_t(this->sampleDLineLen * this->msDLineLen)),
-    };
+  signal_t getRms() const noexcept {
+    signal_t y = gcem::sqrt(signal_t(2.0) * this->msAccum
+        / signal_t(this->sampleDLineLen * this->msDLineLen));
+
     if (y != y) { y = signal_t(0.0); }
     return y;
   }
@@ -86,6 +83,18 @@ struct RmsSensor : public Component<Stereo<signal_t>> {
     if (t_ms == this->msDLineLen) { return; }
     this->msDLineLen  = t_ms;
     this->resetAccums = true;
+  }
+};
+
+template <typename signal_t, int maxT_ms = 1000>
+struct RmsSensorStereo
+    : public StereoComponent<signal_t, RmsSensor<signal_t, maxT_ms>> {
+  void setT_ms(int t_ms) {
+    this->l.setT_ms(t_ms);
+    this->r.setT_ms(t_ms);
+  }
+  Stereo<signal_t> getRms() const noexcept {
+    return { this->l.getRms(), this->r.getRms() };
   }
 };
 }

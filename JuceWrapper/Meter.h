@@ -305,14 +305,7 @@ struct MeterGroup : public juce::Component {
   }
   void setUiScale(float uiScale) {
     for (auto& m : meters) { m->uiScale = uiScale; }
-    // for (auto& s : scales) { s->uiScale=uiScale; }
   }
-  // void setHeight_dots(int nDots) {
-  //   for (auto& m : meters) {
-  //     m->l.nDots = nDots;
-  //     m->r.nDots = nDots;
-  //   }
-  // }
   float getMinimalWidth() const noexcept {
     if (!this->meters.size()) { return 0; }
     return this->meters[0]->l.uiSpec.meterWidth
