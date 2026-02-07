@@ -83,7 +83,7 @@ struct MeterSpec {
   /** Adds a text scale to the right of the meter. */
   bool hasScale { false };
   /** Decay of meter fall off in seconds. */
-  float decay_s { 1 };
+  float decay_s { 0.25 };
   /** Meter Hold time in seconds. */
   float hold_s { 2 };
 };
@@ -176,7 +176,7 @@ struct UiSpec {
   /** Width of each meter in pixels. */
   int meterWidth { 35 };
   /** Refresh rate of the timer that updates the meters in the UI. */
-  float meterRefreshRate_hz { 30 };
+  float meterRefreshRate_hz { 50 };
   /** List of all meters to be displayed in the UI. */
   std::vector<MeterSpec> meters;
 };

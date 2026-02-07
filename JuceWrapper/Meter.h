@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "lib/PeakSensor.h"
 #include "lib/Stereo.h"
 #include "lib/UiSpec.h"
 #include "lib/utils.h"
@@ -62,9 +63,7 @@ struct MonoMeter : public juce::Component {
   float holdVal_db       = 0;
   int iHoldDot           = 0;
 
-  // Release filter
-  float alphaPeak = 0;
-  float statePeak = 0;
+  PeakSensor<float> peakSensor;
 
   MonoMeter(MeterSpec& meterSpec, UiSpec& uiSpec)
       : meterSpec(meterSpec), uiSpec(uiSpec), nDots(uiSpec.meterHeight_dots) {
@@ -96,16 +95,18 @@ struct MonoMeter : public juce::Component {
       if (fillDiameter < 0) { return; }
       float fillX = this->pad + fillPad / 2;
       float fillY = y + fillPad / 2;
-      if ((!this->meterSpec.invert && i >= this->nDots - this->nActiveDots)
-          || (this->meterSpec.invert && i <= this->nDots - this->nActiveDots)) {
+      auto diff   = this->nDots - this->nActiveDots;
+      if ((!this->meterSpec.invert && i >= diff)
+          || (this->meterSpec.invert && i <= diff && diff != 0)) {
         g.setColour(juce::Colour(
             this->uiSpec.foregroundColour & 0x00FFFFFF | 0x7F000000));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
-      if (i == this->iHoldDot && this->meterSpec.hold_s) {
+      if (i == this->iHoldDot && this->meterSpec.hold_s
+          && !(this->meterSpec.invert && i == 0)) {
         g.setColour(juce::Colour(
-            this->uiSpec.foregroundColour & 0x00FFFFFF | 0x8F000000));
-        g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
+            this->uiSpec.foregroundColour)); // & 0x00FFFFFF | 0x8F000000));
+        g.drawEllipse(fillX, fillY, fillDiameter, fillDiameter, 1);
       }
     }
   }
@@ -118,8 +119,13 @@ struct MonoMeter : public juce::Component {
   }
 
   void refresh(bool repaint = true) {
-    auto ySens =
-        peakSensor(this->alphaPeak, this->statePeak, this->peakVal_lin);
+    float ySens;
+
+    if (this->meterSpec.invert) {
+      ySens = 1.0f - peakSensor.process(1.0f - this->peakVal_lin);
+    } else {
+      ySens = peakSensor.process(this->peakVal_lin);
+    }
     float peak_db = NtFx::db(ySens);
 
     if (peak_db < this->meterSpec.minVal_db) {
@@ -141,7 +147,8 @@ struct MonoMeter : public juce::Component {
   }
 
   void updateRelease(float fs, float t_ms) {
-    this->alphaPeak = gcem::exp(-2200.0 / (t_ms * fs));
+    this->peakSensor.tPeak_ms = t_ms;
+    this->peakSensor.reset(fs);
     this->nHold_frames =
         this->meterSpec.hold_s * this->uiSpec.meterRefreshRate_hz;
     this->dbPrDot =
@@ -149,7 +156,7 @@ struct MonoMeter : public juce::Component {
   }
 
   void refreshNActiveDots(float peak_db) {
-    if (peak_db >= 0.0) {
+    if (peak_db >= -0.01) {
       this->nActiveDots = this->nDots;
     } else if (peak_db >= -1.0) {
       this->nActiveDots = this->nDots - 1;

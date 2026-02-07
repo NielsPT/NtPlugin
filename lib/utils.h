@@ -17,7 +17,6 @@
 
 #pragma once
 #include "gcem.hpp"
-#include <algorithm>
 #include <climits>
 #include <vector>
 
@@ -34,11 +33,14 @@ static inline signal_t invDb(signal_t x) noexcept {
 }
 
 template <typename signal_t>
-static inline signal_t ensureFinite(
-    signal_t x, signal_t def = signal_t(0)) noexcept {
+static inline void ensureFinite(
+    signal_t& x, signal_t def = signal_t(0)) noexcept {
   signal_t y = def;
-  if (x == x) { y = x; }
-  return y;
+  if (x == x) {
+    ;
+  } else {
+    x = y;
+  }
 }
 
 // constexpr int rmsDelayLineLength = 16384;
@@ -68,16 +70,16 @@ static inline signal_t ensureFinite(
 //   return y;
 // }
 
-template <typename signal_t>
-static inline signal_t peakSensor(
-    signal_t alpha, signal_t& p_state, signal_t x) {
-  auto xAbs            = gcem::abs(x);
-  signal_t sensRelease = alpha * p_state + (1 - alpha) * xAbs;
-  signal_t ySens       = gcem::max(xAbs, sensRelease);
-  if (ySens != ySens) { ySens = signal_t(0); }
-  p_state = ySens;
-  return ySens;
-}
+// template <typename signal_t>
+// static inline signal_t peakSensor(
+//     signal_t alpha, signal_t& p_state, signal_t x) {
+//   auto xAbs            = gcem::abs(x);
+//   signal_t sensRelease = alpha * p_state + (1 - alpha) * xAbs;
+//   signal_t ySens       = gcem::max(xAbs, sensRelease);
+//   ensureFinite(ySens);
+//   p_state = ySens;
+//   return ySens;
+// }
 
 template <typename T>
 static inline std::vector<T> zeros(size_t n) {

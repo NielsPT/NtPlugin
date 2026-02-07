@@ -31,8 +31,12 @@
 
 template <typename signal_t>
 struct ntCompressor : public NtFx::NtPlugin<signal_t> {
-  NtFx::SideChain<signal_t> sc_db;
-  NtFx::SideChain<signal_t, true> sc_lin;
+  NtFx::ScSettings<signal_t> scSettings;
+  NtFx::PeakSideChainDb<signal_t> peakScDb;
+  NtFx::PeakSideChainLinear<signal_t> peakScLin;
+  NtFx::RmsSideChainDb<signal_t> rmsScDb;
+  NtFx::RmsSideChainLinear<signal_t> rmsScLin;
+
   signal_t makeup_db   = signal_t(0.0);
   signal_t mix_percent = signal_t(100.0);
 
@@ -41,6 +45,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   bool scListenEnable = false;
   bool linkEnable     = false;
   bool clip           = true;
+  bool rmsEnable      = false;
   bool bypassEnable   = false;
 
   signal_t mix_lin               = signal_t(1.0);
@@ -50,32 +55,34 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   NtFx::Biquad::EqBand<signal_t> hpf;
   NtFx::Biquad::EqBand<signal_t> boost;
 
-  ntCompressor() {
+  ntCompressor()
+      : peakScDb(scSettings), peakScLin(scSettings), rmsScDb(scSettings),
+        rmsScLin(scSettings) {
     this->primaryKnobs = {
       {
-          .p_val  = &this->sc_db.settings.thresh_db,
+          .p_val  = &this->scSettings.thresh_db,
           .name   = "Threshold",
           .suffix = " dB",
           .minVal = -60.0,
           .maxVal = 0.0,
       },
       {
-          .p_val    = &this->sc_db.settings.ratio_db,
+          .p_val    = &this->scSettings.ratio_db,
           .name     = "Ratio",
           .suffix   = "",
           .minVal   = 1.0,
-          .maxVal   = 20.0,
+          .maxVal   = 15.0,
           .midPoint = 2.0,
       },
       {
-          .p_val  = &this->sc_db.settings.tAtt_ms,
+          .p_val  = &this->scSettings.tAtt_ms,
           .name   = "Attack",
           .suffix = " ms",
           .minVal = 0.01,
           .maxVal = 50.0,
       },
       {
-          .p_val  = &this->sc_db.settings.tRel_ms,
+          .p_val  = &this->scSettings.tRel_ms,
           .name   = "Release",
           .suffix = " ms",
           .minVal = 10.0,
@@ -92,18 +99,18 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
 
     this->secondaryKnobs = {
       {
-          .p_val  = &this->sc_db.settings.knee_db,
+          .p_val  = &this->scSettings.knee_db,
           .name   = "Knee",
           .suffix = " dB",
           .minVal = 0.0,
           .maxVal = 24.0,
       },
       {
-          .p_val  = &this->sc_db.settings.tRms_ms,
+          .p_val  = &this->scSettings.tRms_ms,
           .name   = "RMS_time",
           .suffix = " ms",
           .minVal = 1.0,
-          .maxVal = 1000.0,
+          .maxVal = 250.0,
       },
       {
           .p_val    = &this->hpf.settings.fc_hz,
@@ -130,7 +137,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     };
 
     this->toggles = {
-      { .p_val = &this->sc_db.settings.rmsEnable, .name = "RMS" },
+      { .p_val = &this->rmsEnable, .name = "RMS" },
       { .p_val = &this->feedbackEnable, .name = "Feedback" },
       { .p_val = &this->linEnable, .name = "Linear" },
       { .p_val = &this->linkEnable, .name = "Link" },
@@ -144,15 +151,10 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
       { .name = "OUT", .hasScale = true },
       { .name = "GR", .invert = true, .hasScale = true },
     };
-    this->uiSpec.foregroundColour = 0xFF000000;
-    this->uiSpec.backgroundColour = 0xFFFFFFFF;
-    // this->uiSpec.maxColumns         = 2;
-    // this->uiSpec.defaultWindowWidth = 600;
     this->hpf.settings.fc_hz   = 20;
     this->boost.settings.fc_hz = 3000.0;
     this->hpf.settings.shape   = NtFx::Biquad::Shape::hpf;
     this->boost.settings.shape = NtFx::Biquad::Shape::bell;
-
     this->updateDefaults();
   }
 
@@ -172,9 +174,17 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
 
     NtFx::Stereo<signal_t> gr;
     if (this->linEnable) {
-      gr = sc_lin.process(xSc);
+      if (this->rmsEnable) {
+        gr = rmsScLin.process(xSc);
+      } else {
+        gr = peakScLin.process(xSc);
+      }
     } else {
-      gr = sc_db.process(xSc);
+      if (this->rmsEnable) {
+        gr = rmsScDb.process(xSc);
+      } else {
+        gr = peakScDb.process(xSc);
+      }
     }
     if (this->linkEnable) { gr = gr.absMin(); }
     this->template updatePeakLevel<2, true>(gr);
@@ -193,17 +203,10 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   void update() noexcept override {
     this->hpf.update();
     this->boost.update();
-    // this->sc_lin.settings           = this->sc_db.settings;s
-    this->sc_lin.settings.thresh_db = this->sc_db.settings.thresh_db;
-    this->sc_lin.settings.ratio_db  = this->sc_db.settings.ratio_db;
-    this->sc_lin.settings.knee_db   = this->sc_db.settings.knee_db;
-    this->sc_lin.settings.tAtt_ms   = this->sc_db.settings.tAtt_ms;
-    this->sc_lin.settings.tRel_ms   = this->sc_db.settings.tRel_ms;
-    this->sc_lin.settings.tRms_ms   = this->sc_db.settings.tRms_ms;
-    this->sc_lin.settings.tPeak_ms  = this->sc_db.settings.tPeak_ms;
-    this->sc_lin.settings.rmsEnable = this->sc_db.settings.rmsEnable;
-    this->sc_db.update();
-    this->sc_lin.update();
+    this->peakScDb.update();
+    this->peakScLin.update();
+    this->rmsScDb.update();
+    this->rmsScLin.update();
     this->makeup_lin = NtFx::invDb(this->makeup_db);
     this->mix_lin    = this->mix_percent / 100.0;
   }
@@ -213,8 +216,10 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     std::fill(this->peakLevels.begin(), this->peakLevels.end(), signal_t(0));
     this->peakLevels[2] = signal_t(1);
     this->fbState       = signal_t(0);
-    this->sc_db.reset(this->fs);
-    this->sc_lin.reset(this->fs);
+    this->peakScDb.reset(this->fs);
+    this->peakScLin.reset(this->fs);
+    this->rmsScDb.reset(this->fs);
+    this->rmsScLin.reset(this->fs);
     this->hpf.reset(this->fs);
     this->boost.reset(this->fs);
     this->update();

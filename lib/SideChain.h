@@ -18,6 +18,7 @@
 #pragma once
 
 #include "lib/Component.h"
+#include "lib/PeakSensor.h"
 #include "lib/RmsSensor.h"
 #include "lib/Stereo.h"
 #include "lib/utils.h"
@@ -25,118 +26,52 @@
 #include "gcem.hpp"
 
 namespace NtFx {
-template <typename signal_t, bool linDomain = false>
-struct SideChain : public Component<Stereo<signal_t>> {
-  struct Settings {
-    signal_t thresh_db = signal_t(0);
-    signal_t ratio_db  = signal_t(2);
-    signal_t knee_db   = signal_t(12);
-    signal_t tAtt_ms   = signal_t(1);
-    signal_t tRel_ms   = signal_t(100);
-    signal_t tRms_ms   = signal_t(80);
-    signal_t tPeak_ms  = signal_t(20.0);
-    bool rmsEnable     = false;
-  };
+template <typename signal_t>
+struct ScSettings {
+  signal_t thresh_db = signal_t(0);
+  signal_t ratio_db  = signal_t(2);
+  signal_t knee_db   = signal_t(12);
+  signal_t tAtt_ms   = signal_t(1);
+  signal_t tRel_ms   = signal_t(100);
+  signal_t tRms_ms   = signal_t(80);
+  signal_t tPeak_ms  = signal_t(20.0);
+};
 
-  struct Coeffs {
-    signal_t thresh_lin = signal_t(1);
-    signal_t ratio_lin  = signal_t(1);
-    signal_t knee_lin   = signal_t(1);
-    signal_t alphaAtt   = signal_t(0);
-    signal_t alphaRel   = signal_t(0);
-    signal_t alphaPeak  = signal_t(0);
-    // size_t nRms         = 1;
-  };
+template <typename signal_t>
+struct PeakSideChainDb : public Component<Stereo<signal_t>> {
+  PeakSensorStereo<signal_t> peakSensor;
+  signal_t alphaAtt = signal_t(0);
+  signal_t alphaRel = signal_t(0);
 
-  struct State {
-    signal_t ySensLast   = signal_t(0.0);
-    signal_t yFilterLast = signal_t(0.0);
-    // RmsSensorState<signal_t> rms;
-    void reset() {
-      this->ySensLast   = signal_t(0.0);
-      this->yFilterLast = signal_t(0.0);
-      // rms.reset();
-    }
-  };
+  ScSettings<signal_t>& settings;
+  Stereo<signal_t> stateFilter = signal_t(0.0);
 
-  Settings settings;
-  Coeffs coeffs;
-  State stateL;
-  State stateR;
-  RmsSensor<signal_t> rmsSensor;
+  PeakSideChainDb(ScSettings<signal_t>& settings) : settings(settings) { }
 
   virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
-    Stereo<signal_t> ySens;
-    if (this->settings.rmsEnable) {
-      ySens = rmsSensor.process(x);
-    } else {
-      ySens = {
-        peakSensor(this->coeffs.alphaPeak, this->stateL.ySensLast, x.l),
-        peakSensor(this->coeffs.alphaPeak, this->stateR.ySensLast, x.r),
-      };
-    }
-    if constexpr (linDomain) {
-      return {
-        this->_sideChain_lin(ySens.l, this->stateL),
-        this->_sideChain_lin(ySens.r, this->stateR),
-      };
-    }
+    auto ySens = this->peakSensor.process(x);
+    ensureFinite(this->stateFilter);
     return {
-      this->_sideChain_db(ySens.l, this->stateL),
-      this->_sideChain_db(ySens.r, this->stateR),
+      this->_gainComputer_db(ySens.l, this->stateFilter.l),
+      this->_gainComputer_db(ySens.r, this->stateFilter.r),
     };
   }
 
   virtual void update() noexcept override {
-    this->coeffs.alphaAtt =
-        gcem::exp(-2200.0 / (this->settings.tAtt_ms * this->fs));
-    this->coeffs.alphaRel =
-        gcem::exp(-2200.0 / (this->settings.tRel_ms * this->fs));
-    if (this->coeffs.alphaRel < this->coeffs.alphaAtt) {
-      this->coeffs.alphaRel = this->coeffs.alphaAtt;
-    }
-    this->coeffs.alphaPeak =
-        gcem::exp(-2200.0 / (this->settings.tPeak_ms * this->fs));
-    this->coeffs.thresh_lin =
-        gcem::pow(10.0, (this->settings.thresh_db / 20.0));
-    this->coeffs.knee_lin  = gcem::pow(10.0, (this->settings.knee_db / 20.0));
-    signal_t oneOverSqrt2  = 1.0 / gcem::sqrt(2.0);
-    this->coeffs.ratio_lin = (1.0 - 1.0 / this->settings.ratio_db)
-        * (oneOverSqrt2
-            - gcem::pow(
-                oneOverSqrt2 - (this->settings.ratio_db - 3.0) / 18.0, 5.0));
-    // this->coeffs.nRms = std::floor(this->settings.tRms_ms * this->fs *
-    // 0.001);
-    this->rmsSensor.setRmsAvgTime(this->settings.tRms_ms);
-    this->rmsSensor.update();
+    this->alphaAtt = gcem::exp(-2200.0 / (this->settings.tAtt_ms * this->fs));
+    this->alphaRel = gcem::exp(-2200.0 / (this->settings.tRel_ms * this->fs));
+    if (this->alphaRel < this->alphaAtt) { this->alphaRel = this->alphaAtt; }
+    this->peakSensor.setT_ms(this->settings.tPeak_ms);
+    this->peakSensor.update();
   }
 
   virtual void reset(float fs) noexcept override {
+    this->peakSensor.reset(fs);
     this->fs = fs;
-    this->rmsSensor.reset(fs);
     this->update();
   }
 
-  inline signal_t _sideChain_lin(signal_t x, State& p_state) noexcept {
-    signal_t target;
-    if (x < this->coeffs.thresh_lin / this->coeffs.knee_lin) {
-      target = signal_t(0);
-    } else if (x < this->coeffs.thresh_lin) {
-      target = (x / this->coeffs.thresh_lin) * this->coeffs.ratio_lin
-          * this->coeffs.thresh_lin / (this->coeffs.knee_lin * x);
-    } else {
-      target = (x / this->coeffs.thresh_lin) * this->coeffs.ratio_lin;
-    }
-
-    signal_t alpha = this->coeffs.alphaRel;
-    if (target > p_state.yFilterLast) { alpha = this->coeffs.alphaAtt; }
-
-    signal_t yFilter    = p_state.yFilterLast * alpha + target * (1 - alpha);
-    p_state.yFilterLast = yFilter;
-    return signal_t(1.0) / (yFilter + 1);
-  }
-
-  inline signal_t _sideChain_db(signal_t x, State& p_state) noexcept {
+  inline signal_t _gainComputer_db(signal_t x, signal_t& state) noexcept {
     signal_t x_db = db(x);
     signal_t y_db;
     if ((x_db - this->settings.thresh_db) > (this->settings.knee_db / 2)) {
@@ -152,16 +87,117 @@ struct SideChain : public Component<Stereo<signal_t>> {
           + (1 / this->settings.ratio_db - 1) * tmp * tmp
               / (2 * this->settings.knee_db);
     }
-
     signal_t target = x_db - y_db;
-
-    signal_t alpha = this->coeffs.alphaRel;
-    if (target > p_state.yFilterLast) { alpha = this->coeffs.alphaAtt; }
-
-    signal_t yFilter = p_state.yFilterLast * alpha + target * (1 - alpha);
+    signal_t alpha  = this->alphaRel;
+    if (target > state) { alpha = this->alphaAtt; }
+    signal_t yFilter = state * alpha + target * (1 - alpha);
     if (yFilter != yFilter) { yFilter = signal_t(0); }
-    p_state.yFilterLast = yFilter;
+    state = yFilter;
     return invDb(-yFilter);
+  }
+};
+
+template <typename signal_t>
+struct PeakSideChainLinear : public PeakSideChainDb<signal_t> {
+  signal_t thresh_lin = signal_t(1);
+  signal_t ratio_lin  = signal_t(1);
+  signal_t knee_lin   = signal_t(1);
+
+  PeakSideChainLinear(ScSettings<signal_t>& settings)
+      : PeakSideChainDb<signal_t>(settings) { }
+
+  virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+    auto ySens = this->peakSensor.process(x);
+    ensureFinite(this->stateFilter);
+    return {
+      this->_gainComputer_lin(ySens.l, this->stateFilter.l),
+      this->_gainComputer_lin(ySens.r, this->stateFilter.r),
+    };
+  }
+
+  virtual void update() noexcept override {
+    this->PeakSideChainDb<signal_t>::update();
+    this->thresh_lin            = invDb(this->settings.thresh_db);
+    this->knee_lin              = invDb(this->settings.knee_db);
+    const signal_t oneOverSqrt2 = 1.0 / gcem::sqrt(2.0);
+    this->ratio_lin             = (1.0 - 1.0 / this->settings.ratio_db)
+        * (oneOverSqrt2
+            - gcem::pow(
+                oneOverSqrt2 - (this->settings.ratio_db - 3.0) / 18.0, 5.0));
+  }
+
+  inline signal_t _gainComputer_lin(signal_t x, signal_t& state) noexcept {
+    signal_t target;
+    if (x < this->thresh_lin / this->knee_lin) {
+      target = signal_t(0);
+    } else if (x < this->thresh_lin) {
+      target = (x / this->thresh_lin) * this->ratio_lin * this->thresh_lin
+          / (this->knee_lin * x);
+    } else {
+      target = (x / this->thresh_lin) * this->ratio_lin;
+    }
+    signal_t alpha = this->alphaRel;
+    if (target > state) { alpha = this->alphaAtt; }
+    signal_t yFilter = state * alpha + target * (1 - alpha);
+    state            = yFilter;
+    return signal_t(1.0) / (yFilter + 1);
+  }
+};
+
+template <typename signal_t>
+struct RmsSideChainDb : public PeakSideChainDb<signal_t> {
+  RmsSensor<signal_t> rmsSensor;
+
+  RmsSideChainDb(ScSettings<signal_t>& settings)
+      : PeakSideChainDb<signal_t>(settings) { }
+
+  virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+    auto ySens = rmsSensor.process(x);
+    ensureFinite(this->stateFilter.l);
+    ensureFinite(this->stateFilter.r);
+    return {
+      this->_gainComputer_db(ySens.l, this->stateFilter.l),
+      this->_gainComputer_db(ySens.r, this->stateFilter.r),
+    };
+  }
+
+  virtual void update() noexcept override {
+    this->rmsSensor.setRmsAvgTime(this->settings.tRms_ms);
+    this->rmsSensor.update();
+    this->PeakSideChainDb<signal_t>::update();
+  }
+
+  virtual void reset(float fs) noexcept override {
+    this->rmsSensor.reset(fs);
+    this->PeakSideChainDb<signal_t>::reset(fs);
+  }
+};
+
+template <typename signal_t>
+struct RmsSideChainLinear : public PeakSideChainLinear<signal_t> {
+  RmsSensor<signal_t> rmsSensor;
+
+  RmsSideChainLinear(ScSettings<signal_t>& settings)
+      : PeakSideChainLinear<signal_t>(settings) { }
+
+  virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+    auto ySens = rmsSensor.process(x);
+    ensureFinite(this->stateFilter);
+    return {
+      this->_gainComputer_lin(ySens.l, this->stateFilter.l),
+      this->_gainComputer_lin(ySens.r, this->stateFilter.r),
+    };
+  }
+
+  virtual void update() noexcept override {
+    this->rmsSensor.setRmsAvgTime(this->settings.tRms_ms);
+    this->rmsSensor.update();
+    this->PeakSideChainLinear<signal_t>::update();
+  }
+
+  virtual void reset(float fs) noexcept override {
+    this->rmsSensor.reset(fs);
+    this->PeakSideChainLinear<signal_t>::reset(fs);
   }
 };
 } // namespace NtFx

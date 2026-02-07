@@ -24,15 +24,14 @@
 
 namespace NtFx {
 constexpr int maxSampleDLineLen = 192 * 8;
-constexpr int maxMsDLineLen     = 1000;
 
-template <typename signal_t>
+template <typename signal_t, int maxT_ms = 1000>
 struct RmsSensor : public Component<Stereo<signal_t>> {
   bool resetAccums   = false;
-  int msDLineLen     = maxMsDLineLen;
+  int msDLineLen     = maxT_ms;
   int sampleDLineLen = maxSampleDLineLen;
   std::array<Stereo<signal_t>, maxSampleDLineLen> samleDLine;
-  std::array<Stereo<signal_t>, maxMsDLineLen> msDLine;
+  std::array<Stereo<signal_t>, maxT_ms> msDLine;
   Stereo<signal_t> sampleAccum;
   Stereo<signal_t> msAccum;
   int sampleIdx;
@@ -65,6 +64,7 @@ struct RmsSensor : public Component<Stereo<signal_t>> {
   }
 
   virtual void reset(float fs) noexcept override {
+    if (this->fs == fs) { return; }
     this->fs             = fs;
     this->sampleDLineLen = fs / 1000;
     this->resetAccums    = true;

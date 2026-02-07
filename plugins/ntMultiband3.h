@@ -40,7 +40,7 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
   bool linkEnable;
   bool bypass;
 
-  std::array<NtFx::SideChain<signal_t, true>, 3> sc;
+  std::array<NtFx::PeakSideChainLinear<signal_t>, 3> sc;
   // TODO: Add makeup gain to sidechain?
   std::array<signal_t, 3> makeup_db;
   std::array<signal_t, 3> makeup_lin;
