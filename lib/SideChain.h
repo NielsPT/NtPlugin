@@ -120,10 +120,10 @@ struct PeakSideChainLinear : public PeakSideChainDb<signal_t> {
     this->thresh_lin            = invDb(this->settings.thresh_db);
     this->knee_lin              = invDb(this->settings.knee_db);
     const signal_t oneOverSqrt2 = 1.0 / gcem::sqrt(2.0);
-    this->ratio_lin             = (1.0 - 1.0 / this->settings.ratio_db)
-        * (oneOverSqrt2
-            - gcem::pow(
-                oneOverSqrt2 - (this->settings.ratio_db - 3.0) / 18.0, 5.0));
+    const signal_t tmp          = oneOverSqrt2
+        - (this->settings.ratio_db - signal_t(3.0)) / signal_t(18.0);
+    this->ratio_lin = (signal_t(1.0) - signal_t(1.0) / this->settings.ratio_db)
+        * (oneOverSqrt2 - tmp * tmp * tmp * tmp * tmp);
   }
 
   inline signal_t _gainComputer_lin(signal_t x, signal_t& state) noexcept {
@@ -162,7 +162,7 @@ struct RmsSideChainDb : public PeakSideChainDb<signal_t> {
   }
 
   virtual void update() noexcept override {
-    this->rmsSensor.setRmsAvgTime(this->settings.tRms_ms);
+    this->rmsSensor.setT_ms(this->settings.tRms_ms);
     this->rmsSensor.update();
     this->PeakSideChainDb<signal_t>::update();
   }
@@ -190,7 +190,7 @@ struct RmsSideChainLinear : public PeakSideChainLinear<signal_t> {
   }
 
   virtual void update() noexcept override {
-    this->rmsSensor.setRmsAvgTime(this->settings.tRms_ms);
+    this->rmsSensor.setT_ms(this->settings.tRms_ms);
     this->rmsSensor.update();
     this->PeakSideChainLinear<signal_t>::update();
   }

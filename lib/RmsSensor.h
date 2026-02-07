@@ -82,7 +82,7 @@ struct RmsSensor : public Component<Stereo<signal_t>> {
     return y;
   }
 
-  void setRmsAvgTime(int t_ms) {
+  void setT_ms(int t_ms) {
     if (t_ms == this->msDLineLen) { return; }
     this->msDLineLen  = t_ms;
     this->resetAccums = true;

@@ -71,7 +71,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
           .name     = "Ratio",
           .suffix   = "",
           .minVal   = 1.0,
-          .maxVal   = 15.0,
+          .maxVal   = 20.0,
           .midPoint = 2.0,
       },
       {
