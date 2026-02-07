@@ -134,8 +134,6 @@ void NtPluginAudioProcessorEditor::initDropDown(
   this->allDropDownAttachments.emplace_back(
       new juce::AudioProcessorValueTreeState::ComboBoxAttachment(
           this->proc.parameters, spec.name, *p_box));
-  // TODO: I think I understand something about JUCE now. The TitleBar should
-  // have it's own look and feel.
   if (addToTitleBar) {
     p_box->setColour(
         juce::ComboBox::ColourIds::backgroundColourId, juce::Colours::darkgrey);
@@ -420,7 +418,6 @@ void NtPluginAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
 }
 
 void NtPluginAudioProcessorEditor::comboBoxChanged(juce::ComboBox* p_box) {
-  // TODO: this stinks.
   if (this->titleBarDropDowns.size() < 3) { return; }
   if (p_box == this->titleBarDropDowns[e_uiScale].get()) {
     this->updateUiScale();

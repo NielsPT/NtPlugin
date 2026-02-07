@@ -162,9 +162,29 @@ void NtPluginAudioProcessor::setStateInformation(
     const void* data, int sizeInBytes) {
   std::unique_ptr<juce::XmlElement> xmlState(
       getXmlFromBinary(data, sizeInBytes));
-  if (xmlState.get() != nullptr)
-    if (xmlState->hasTagName(parameters.state.getType()))
-      parameters.replaceState(juce::ValueTree::fromXml(*xmlState));
+  if (xmlState.get() == nullptr) { return; }
+  if (!xmlState->hasTagName(this->parameters.state.getType())) { return; }
+  this->parameters.replaceState(juce::ValueTree::fromXml(*xmlState));
+  for (auto& k : this->plug.primaryKnobs) {
+    if (!k.p_val) { continue; }
+    auto par = this->parameters.getParameterAsValue(k.name);
+    *k.p_val = par.getValue();
+  }
+  for (auto& k : this->plug.secondaryKnobs) {
+    if (!k.p_val) { continue; }
+    auto par = this->parameters.getParameterAsValue(k.name);
+    *k.p_val = par.getValue();
+  }
+  for (auto& k : this->plug.toggles) {
+    if (!k.p_val) { continue; }
+    auto par = this->parameters.getParameterAsValue(k.name);
+    *k.p_val = par.getValue();
+  }
+  for (auto& k : this->plug.dropdowns) {
+    if (!k.p_val) { continue; }
+    auto par = this->parameters.getParameterAsValue(k.name);
+    *k.p_val = par.getValue();
+  }
 }
 
 void NtPluginAudioProcessor::updateOversampling(int mode) {
