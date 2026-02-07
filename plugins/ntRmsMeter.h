@@ -28,14 +28,14 @@ struct ntRmsMeter : NtFx::NtPlugin<signal_t> {
     RMS,
   };
 
-  NtFx::RmsSensor<signal_t> msSensor;
+  NtFx::RmsSensorStereo<signal_t> msSensor;
   signal_t decay_s = 0.1;
   signal_t hold_s  = 2;
   signal_t tRms_ms = 10;
 
   ntRmsMeter() {
     this->uiSpec.meters = {
-      { "Peak", .minVal_db = -50 },
+      { "Peak", .minVal_db = -50, .addRms = true },
       { "RMS", .hasScale = true, .minVal_db = -50 },
     };
     this->primaryKnobs = {
@@ -60,7 +60,7 @@ struct ntRmsMeter : NtFx::NtPlugin<signal_t> {
   virtual void update() noexcept override {
     for (auto& m : this->uiSpec.meters) { m.decay_s = this->decay_s; }
     for (auto& m : this->uiSpec.meters) { m.hold_s = this->hold_s; }
-    this->msSensor.setRmsAvgTime(this->tRms_ms);
+    this->msSensor.setT_ms(this->tRms_ms);
     this->uiNeedsUpdate = true;
   }
 

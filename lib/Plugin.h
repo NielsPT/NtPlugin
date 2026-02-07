@@ -18,6 +18,7 @@
 #pragma once
 
 #include "lib/Component.h"
+#include "lib/RmsSensor.h"
 #include "lib/Stereo.h"
 #include "lib/UiSpec.h"
 #include "lib/utils.h"
@@ -61,6 +62,8 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
   signal_t tempo = 0;
   /** Set this to true if you want to force an update of the UI */
   bool uiNeedsUpdate = false;
+
+  std::array<RmsSensorStereo<signal_t, 250, 192>, 2> xRms;
 
   /**
    * @brief Called by the wrapper whenever the tempo changes.
@@ -164,6 +167,11 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
     this->peakLevels[idx]      = signal_t(def);
     ensureFinite(tmp, def);
     return tmp;
+  }
+
+  NtFx::Stereo<signal_t> getRms(size_t idx) noexcept {
+    if (idx >= 2) { return signal_t(0); }
+    return this->xRms[idx].getRms();
   }
 };
 }

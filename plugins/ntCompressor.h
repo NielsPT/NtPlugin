@@ -147,8 +147,8 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     };
 
     this->uiSpec.meters = {
-      { .name = "IN" },
-      { .name = "OUT", .hasScale = true },
+      { "IN", .addRms = true },
+      { "OUT", .addRms = true, .hasScale = true },
       { .name = "GR", .invert = true, .hasScale = true },
     };
     this->hpf.settings.fc_hz   = 20;

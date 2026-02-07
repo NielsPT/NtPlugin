@@ -106,7 +106,10 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
       { &this->linkEnable, "Link" },
       { &this->bypass, "Bypass" },
     };
-    this->uiSpec.meters = { { "IN" }, { "OUT", .hasScale = true } };
+    this->uiSpec.meters = {
+      { "IN", .addRms = true },
+      { "OUT", .addRms = true, .hasScale = true },
+    };
     for (int i = Bands::n - 1; i >= 0; i--) {
       this->uiSpec.meters.push_back({ this->BandNames[i], .invert = true });
     }

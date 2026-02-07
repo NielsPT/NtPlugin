@@ -86,6 +86,9 @@ struct MeterSpec {
   float decay_s { 0.25 };
   /** Meter Hold time in seconds. */
   float hold_s { 2 };
+  /** Adds RMS to meter. Currently works for the first two meters. RMS of input
+   * will be added to meter 0 and RMS of output will be added to meter 1.*/
+  bool addRms = false;
 };
 
 /**

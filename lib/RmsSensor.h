@@ -23,9 +23,10 @@
 #include <array>
 
 namespace NtFx {
-constexpr int maxSampleDLineLen = 192 * 8;
 
-template <typename signal_t, int maxT_ms = 1000>
+template <typename signal_t,
+    int maxT_ms           = 1000,
+    int maxSampleDLineLen = 192 * 8>
 struct RmsSensor : public Component<signal_t> {
   bool resetAccums   = false;
   int msDLineLen     = maxT_ms;
@@ -83,12 +84,15 @@ struct RmsSensor : public Component<signal_t> {
     if (t_ms == this->msDLineLen) { return; }
     this->msDLineLen  = t_ms;
     this->resetAccums = true;
+    this->update();
   }
 };
 
-template <typename signal_t, int maxT_ms = 1000>
-struct RmsSensorStereo
-    : public StereoComponent<signal_t, RmsSensor<signal_t, maxT_ms>> {
+template <typename signal_t,
+    int maxT_ms           = 1000,
+    int maxSampleDLineLen = 192 * 8>
+struct RmsSensorStereo : public StereoComponent<signal_t,
+                             RmsSensor<signal_t, maxT_ms, maxSampleDLineLen>> {
   void setT_ms(int t_ms) {
     this->l.setT_ms(t_ms);
     this->r.setT_ms(t_ms);

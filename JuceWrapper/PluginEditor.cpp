@@ -388,7 +388,8 @@ void NtPluginAudioProcessorEditor::updatePrimaryKnobs(
 
 void NtPluginAudioProcessorEditor::timerCallback() {
   for (size_t i = 0; i < this->meters.size(); i++) {
-    this->meters.refresh(i, this->proc.plug.getAndResetPeakLevel(i));
+    this->meters.refresh(
+        i, this->proc.plug.getAndResetPeakLevel(i), this->proc.plug.getRms(i));
   }
   if (this->proc.plug.uiNeedsUpdate) {
     this->updateUi();

@@ -20,6 +20,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "lib/SampleRateConverter.h"
+#include "lib/Stereo.h"
 #include "lib/UiSpec.h"
 
 #include <algorithm>
@@ -39,7 +40,7 @@ NtPluginAudioProcessor::NtPluginAudioProcessor()
       ,
       parameters(*this,
           nullptr,
-          juce::Identifier("NtCompressor_01"),
+          juce::Identifier(JucePlugin_Name),
           createParameterLayout()),
       src(plug) {
 }
@@ -88,6 +89,8 @@ void NtPluginAudioProcessor::prepareToPlay(
     double sampleRate, int samplesPerBlock) {
   this->fsBase = sampleRate;
   this->updateOversampling(1);
+  this->plug.xRms[0].reset(sampleRate);
+  this->plug.xRms[1].reset(sampleRate);
 }
 
 juce::AudioChannelSet m_outputFormat;
@@ -134,8 +137,10 @@ void NtPluginAudioProcessor::processBlock(
   auto leftBuffer  = buffer.getWritePointer(0);
   auto rightBuffer = buffer.getWritePointer(1);
   for (size_t i = 0; i < buffer.getNumSamples(); i++) {
-    auto y = src.process({ leftBuffer[i], rightBuffer[i] });
-
+    NtFx::Stereo<float> x { leftBuffer[i], rightBuffer[i] };
+    auto y = this->src.process(x);
+    if (this->plug.uiSpec.meters[0].addRms) { this->plug.xRms[0].process(x); }
+    if (this->plug.uiSpec.meters[1].addRms) { this->plug.xRms[1].process(y); }
     leftBuffer[i]  = y.l;
     rightBuffer[i] = y.r;
   }
@@ -174,6 +179,9 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
   return new NtPluginAudioProcessor();
 }
 
+// This is all fine, and stores to XML and reads from XML when the UI is
+// initialized, but not when the plugin editor has not been opened in the
+// session. How do we get the values on load?
 juce::AudioProcessorValueTreeState::ParameterLayout
 NtPluginAudioProcessor::createParameterLayout() {
   int i = 1;
