@@ -119,7 +119,7 @@ void NtPluginAudioProcessorEditor::initDropDown(
     std::transform(option.begin(), option.end(), option.begin(), ::toupper);
     p_box->addItem(option, i + 1);
   }
-  p_box->setLookAndFeel(&this->knobLookAndFeel);
+  p_box->setLookAndFeel(&this->dropDownLookAndFeel);
   p_box->setSelectedItemIndex(2, juce::NotificationType::dontSendNotification);
   p_box->setName(spec.name);
   p_box->addListener(this);
@@ -228,7 +228,10 @@ void NtPluginAudioProcessorEditor::updateUi() {
   this->borderedAreas.clear();
   this->knobLookAndFeel.fontSize =
       this->proc.plug.uiSpec.defaultFontSize * this->uiScale;
-  this->knobLookAndFeel.uiScale = this->uiScale;
+  this->knobLookAndFeel.uiScale      = this->uiScale;
+  this->dropDownLookAndFeel.fontSize = this->proc.plug.uiSpec.defaultFontSize
+      * this->uiScale * this->titleBarScale;
+  this->dropDownLookAndFeel.uiScale = this->uiScale * this->titleBarScale;
 
   auto area = this->getLocalBounds();
   if (this->proc.plug.uiSpec.includeTitleBar) { this->updateTitleBar(area); }
@@ -248,21 +251,31 @@ void NtPluginAudioProcessorEditor::updateUi() {
 }
 
 void NtPluginAudioProcessorEditor::updateTitleBar(juce::Rectangle<int>& area) {
-  auto pad = 3.0f * this->uiScale;
+  auto pad = 4.0f * this->uiScale;
   auto titleBarArea =
       area.removeFromTop(this->proc.plug.uiSpec.titleBarHeight * this->uiScale);
   this->grayAreas.push_back(titleBarArea);
   titleBarArea.reduce(pad, pad);
   for (int i = 0; i < this->proc.titleBarSpec.dropDowns.size(); i++) {
-    // TODO: 0.6?? Store somewhere.
-    this->titleBarDropDownLabels[i]->setFont(juce::FontOptions(
-        this->proc.plug.uiSpec.defaultFontSize * this->uiScale)); // * 0.6));
+    auto font       = juce::FontOptions(this->proc.plug.uiSpec.defaultFontSize
+        * this->uiScale * this->titleBarScale);
+    auto labelWidth = (juce::TextLayout::getStringWidth(juce::AttributedString(
+                          this->proc.titleBarSpec.dropDowns[i].name)))
+        * this->uiScale;
+    auto options           = this->proc.titleBarSpec.dropDowns[i].options;
+    float minDropDownWidth = 0;
+    for (auto option : options) {
+      auto w = juce::TextLayout::getStringWidth(juce::AttributedString(option));
+      if (w > minDropDownWidth) { minDropDownWidth = w; }
+    }
+    auto dropDownWidth = (minDropDownWidth + 50) * this->uiScale;
+    this->titleBarDropDownLabels[i]->setFont(font);
     this->titleBarDropDownLabels[i]->setColour(
         juce::Label::ColourIds::textColourId, juce::Colours::white);
     this->titleBarDropDownLabels[i]->setBounds(
-        titleBarArea.removeFromLeft(100 * this->uiScale));
+        titleBarArea.removeFromLeft(labelWidth));
     this->titleBarDropDowns[i]->setBounds(
-        titleBarArea.removeFromLeft(100 * this->uiScale));
+        titleBarArea.removeFromLeft(dropDownWidth));
   }
 }
 

@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "Knob.h"
+#include "LookAndFeel.h"
 #include "Meter.h"
 #include "PluginProcessor.h"
 #include "Toggle.h"
@@ -54,6 +54,7 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   NtPluginAudioProcessor& proc;
   NtFx::MeterGroup meters;
   NtFx::KnobLookAndFeel knobLookAndFeel;
+  NtFx::TitleBarLookAndFeel dropDownLookAndFeel;
 
   // TODO: allToggleLabels and on/off text for toggles.
   std::vector<std::unique_ptr<juce::Slider>> allPrimaryKnobs;
@@ -80,6 +81,7 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
 
   float unscaledWindowHeight = 0;
   float uiScale              = 1;
+  float titleBarScale        = 0.7;
   bool isInitialized         = false;
 
   void sliderValueChanged(juce::Slider* slider) override;

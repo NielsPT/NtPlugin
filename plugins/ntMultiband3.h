@@ -37,8 +37,9 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
   signal_t xOverHi_hz { 4000 };
   signal_t ouputGain_db { 0 };
   signal_t ouputGain_lin { 1 };
-  bool linkEnable;
-  bool bypass;
+  bool linkEnable { false };
+  bool feedbackEnable { false };
+  bool bypass { false };
 
   std::array<NtFx::ScSettings<signal_t>, 3> scSettings;
   std::array<NtFx::PeakSideChainLinear<signal_t>, 3> sc;
@@ -104,6 +105,7 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
     };
     this->toggles = {
       { &this->linkEnable, "Link" },
+      { &this->feedbackEnable, "Feedback" },
       { &this->bypass, "Bypass" },
     };
     this->uiSpec.meters = {
