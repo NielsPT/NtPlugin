@@ -84,6 +84,8 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   float titleBarScale        = 0.7;
   bool isInitialized         = false;
 
+  juce::Label pluginNameLabel;
+
   void sliderValueChanged(juce::Slider* slider) override;
   void buttonClicked(juce::Button* button) override;
   void comboBoxChanged(juce::ComboBox* p_box) override;

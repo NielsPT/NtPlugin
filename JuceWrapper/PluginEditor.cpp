@@ -22,6 +22,7 @@
 #include "PluginProcessor.h"
 #include "Toggle.h"
 
+#include "juce_events/juce_events.h"
 #include "juce_graphics/juce_graphics.h"
 #include "juce_gui_basics/juce_gui_basics.h"
 
@@ -41,6 +42,9 @@ NtPluginAudioProcessorEditor::NtPluginAudioProcessorEditor(
   for (auto& d : this->proc.titleBarSpec.dropDowns) {
     this->initDropDown(d, true);
   }
+
+  this->pluginNameLabel.setText(
+      JucePlugin_Name, juce::NotificationType::dontSendNotification);
 
   int nRows, nCols;
   this->calcSliderRowsCols(this->allPrimaryKnobs.size(),
@@ -82,31 +86,6 @@ NtPluginAudioProcessorEditor::~NtPluginAudioProcessorEditor() {
   for (auto& slider : this->allSecondaryKnobs) {
     slider->setLookAndFeel(nullptr);
   }
-}
-
-void NtPluginAudioProcessorEditor::updateColours() {
-  this->knobLookAndFeel.backgroundColour =
-      this->proc.plug.uiSpec.backgroundColour;
-  this->knobLookAndFeel.foregroundColour =
-      this->proc.plug.uiSpec.foregroundColour; // & 0x00FFFFFF | 0xDD000000;
-  this->knobLookAndFeel.setColour(
-      juce::Slider::ColourIds::textBoxBackgroundColourId,
-      juce::Colour(this->proc.plug.uiSpec.backgroundColour));
-  this->knobLookAndFeel.setColour(juce::Slider::ColourIds::textBoxTextColourId,
-      juce::Colour(this->proc.plug.uiSpec.foregroundColour));
-  this->getLookAndFeel().setColour(juce::Slider::ColourIds::textBoxTextColourId,
-      juce::Colour(this->proc.plug.uiSpec.foregroundColour));
-  this->getLookAndFeel().setColour(
-      juce::Slider::ColourIds::textBoxBackgroundColourId,
-      juce::Colour(this->proc.plug.uiSpec.backgroundColour));
-  this->getLookAndFeel().setColour(juce::Label::ColourIds::textColourId,
-      juce::Colour(this->proc.plug.uiSpec.foregroundColour));
-  this->knobLookAndFeel.setColour(juce::ComboBox::ColourIds::backgroundColourId,
-      juce::Colour(this->proc.plug.uiSpec.backgroundColour));
-  this->knobLookAndFeel.setColour(juce::ComboBox::ColourIds::textColourId,
-      juce::Colour(this->proc.plug.uiSpec.foregroundColour));
-  for (auto& knob : this->allPrimaryKnobs) { knob->lookAndFeelChanged(); }
-  for (auto& knob : this->allSecondaryKnobs) { knob->lookAndFeelChanged(); }
 }
 
 void NtPluginAudioProcessorEditor::initDropDown(
@@ -277,6 +256,12 @@ void NtPluginAudioProcessorEditor::updateTitleBar(juce::Rectangle<int>& area) {
     this->titleBarDropDowns[i]->setBounds(
         titleBarArea.removeFromLeft(dropDownWidth));
   }
+  this->pluginNameLabel.setFont(
+      juce::FontOptions(this->proc.plug.uiSpec.defaultFontSize * this->uiScale,
+          juce::Font::FontStyleFlags::italic));
+  this->pluginNameLabel.setJustificationType(juce::Justification::right);
+  this->addAndMakeVisible(this->pluginNameLabel);
+  this->pluginNameLabel.setBounds(titleBarArea);
 }
 
 void NtPluginAudioProcessorEditor::updateMeters(juce::Rectangle<int>& area) {
@@ -395,6 +380,31 @@ void NtPluginAudioProcessorEditor::updatePrimaryKnobs(
     l->setFont(juce::FontOptions(
         this->proc.plug.uiSpec.defaultFontSize * this->uiScale));
   }
+}
+
+void NtPluginAudioProcessorEditor::updateColours() {
+  this->knobLookAndFeel.backgroundColour =
+      this->proc.plug.uiSpec.backgroundColour;
+  this->knobLookAndFeel.foregroundColour =
+      this->proc.plug.uiSpec.foregroundColour; // & 0x00FFFFFF | 0xDD000000;
+  this->knobLookAndFeel.setColour(
+      juce::Slider::ColourIds::textBoxBackgroundColourId,
+      juce::Colour(this->proc.plug.uiSpec.backgroundColour));
+  this->knobLookAndFeel.setColour(juce::Slider::ColourIds::textBoxTextColourId,
+      juce::Colour(this->proc.plug.uiSpec.foregroundColour));
+  this->getLookAndFeel().setColour(juce::Slider::ColourIds::textBoxTextColourId,
+      juce::Colour(this->proc.plug.uiSpec.foregroundColour));
+  this->getLookAndFeel().setColour(
+      juce::Slider::ColourIds::textBoxBackgroundColourId,
+      juce::Colour(this->proc.plug.uiSpec.backgroundColour));
+  this->getLookAndFeel().setColour(juce::Label::ColourIds::textColourId,
+      juce::Colour(this->proc.plug.uiSpec.foregroundColour));
+  this->knobLookAndFeel.setColour(juce::ComboBox::ColourIds::backgroundColourId,
+      juce::Colour(this->proc.plug.uiSpec.backgroundColour));
+  this->knobLookAndFeel.setColour(juce::ComboBox::ColourIds::textColourId,
+      juce::Colour(this->proc.plug.uiSpec.foregroundColour));
+  for (auto& knob : this->allPrimaryKnobs) { knob->lookAndFeelChanged(); }
+  for (auto& knob : this->allSecondaryKnobs) { knob->lookAndFeelChanged(); }
 }
 
 void NtPluginAudioProcessorEditor::timerCallback() {
