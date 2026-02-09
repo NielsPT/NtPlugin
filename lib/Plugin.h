@@ -142,7 +142,7 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
    * @return
    */
   template <size_t idx, bool invert = false>
-  void updatePeakLevel(NtFx::Stereo<signal_t> val) noexcept {
+  NtFx::Stereo<signal_t> updatePeakLevel(NtFx::Stereo<signal_t> val) noexcept {
     if constexpr (idx >= nMetersMax) {
       static_assert(false, "Meter index is out of bounds.");
     }
@@ -151,6 +151,7 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
     } else {
       if (val > this->peakLevels[idx]) { this->peakLevels[idx] = val; }
     }
+    return val;
   }
 
   /**

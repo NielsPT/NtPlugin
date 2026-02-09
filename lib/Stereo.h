@@ -18,6 +18,7 @@
 #pragma once
 
 #include "gcem.hpp"
+#include "gcem_incl/abs.hpp"
 #include "lib/utils.h"
 #include <cstddef>
 #include <type_traits>
@@ -95,6 +96,9 @@ struct Stereo {
   }
   signal_t absMin() const noexcept {
     return gcem::abs(this->l) < gcem::abs(this->r) ? this->l : this->r;
+  }
+  Stereo<signal_t> abs() const noexcept {
+    return { gcem::abs(this->l), gcem::abs(this->r) };
   }
   Stereo<signal_t> operator-() const { return { -this->l, -this->r }; }
 };

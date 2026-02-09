@@ -181,6 +181,9 @@ struct UiSpec {
   /** Refresh rate of the timer that updates the meters in the UI. */
   float meterRefreshRate_hz { 50 };
   /** List of all meters to be displayed in the UI. */
-  std::vector<MeterSpec> meters;
+  std::vector<MeterSpec> meters = {
+    { "IN", .addRms = true },
+    { "OUT", .addRms = true, .hasScale = true },
+  };
 };
 } // namespace NtFx
