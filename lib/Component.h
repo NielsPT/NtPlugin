@@ -29,6 +29,7 @@ namespace NtFx {
  * @tparam signal_t Datatype for audio signals.
  */
 template <typename T>
+// TODO: constraint to be floating point or Stereo<floating point>
 struct Component {
   /**
    * @brief Sample rate of component.
@@ -72,6 +73,7 @@ struct Component {
  */
 template <typename signal_t, typename component_t>
 struct StereoComponent : public Component<Stereo<signal_t>> {
+  // TODO: constraint component_t to Component base class.
   component_t l;
   component_t r;
 

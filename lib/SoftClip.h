@@ -56,8 +56,7 @@ static inline signal_t softClip5thMono(signal_t x) noexcept {
   if (x_ < -1.0) { return signal_t(-1.0); }
   auto x3 = x_ * x_ * x_;
   auto x5 = x3 * x_ * x_;
-  return coeffsFifth<signal_t>[0] * x_ + coeffsFifth<signal_t>[1] * x3
-      + coeffsFifth<signal_t>[2] * x5;
+  return x + coeffsFifth<signal_t>[1] * x3 + coeffsFifth<signal_t>[2] * x5;
 }
 
 template <typename signal_t>
