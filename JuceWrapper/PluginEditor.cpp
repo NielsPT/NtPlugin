@@ -361,8 +361,7 @@ void NtPluginAudioProcessorEditor::updateBottomRow(juce::Rectangle<int>& area) {
     this->allToggles[i]->setBounds(toggleArea);
     this->allToggles[i]->fontSize =
         this->proc.plug.uiSpec.defaultFontSize * this->uiScale;
-    this->allToggles[i]->colour =
-        this->proc.plug.uiSpec.foregroundColour | 0x00FFFFFF & 0x7F000000;
+    this->allToggles[i]->colour = this->proc.plug.uiSpec.foregroundColour;
   }
 }
 

@@ -76,7 +76,7 @@ struct RadioButtonSet : public juce::Component, public juce::ChangeBroadcaster {
     if (!w || !h || !n) { return; }
     for (size_t i = 0; i < n; i++) {
       auto p_toggle      = this->toggles[i].get();
-      p_toggle->colour   = uiSpec.foregroundColour | 0x00FFFFFF & 0x7F000000;
+      p_toggle->colour   = uiSpec.foregroundColour;
       p_toggle->fontSize = this->uiSpec.defaultFontSize * this->uiScale;
       auto toggleArea =
           area.removeFromTop(this->uiSpec.radioButtonHeight * this->uiScale);
@@ -84,9 +84,7 @@ struct RadioButtonSet : public juce::Component, public juce::ChangeBroadcaster {
       p_toggle->setBounds(toggleArea);
       if (this->val == i) {
         p_toggle->setToggleState(
-            // TODO: Do we need a notification here?
-            true,
-            juce::NotificationType::dontSendNotification);
+            true, juce::NotificationType::dontSendNotification);
       }
     }
     this->repaint();

@@ -63,10 +63,11 @@ public:
     float yDot       = y + (dRing - dDot) / 2;
     juce::Rectangle<float> r2(xDot, yDot, dDot, dDot);
     if (this->getToggleState()) {
+      g.setOpacity(0.5);
       g.fillEllipse(r2);
-    } else {
-      g.drawEllipse(r2, h / 100.0);
+      g.setOpacity(1.0);
     }
+    g.drawEllipse(r2, h / 100.0);
     x = (h + dRing) / 2 + h * 0.2;
     juce::Rectangle<float> r3(x, 0, 100, h);
     g.setFont(juce::FontOptions(this->fontSize));
