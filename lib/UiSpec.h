@@ -65,6 +65,10 @@ struct ToggleSpec {
   bool defaultVal { false };
 };
 
+static inline ToggleSpec makeTmpToggle(std::string name, std::string option) {
+  return { nullptr, "_rb:" + name + ":" + option };
+}
+
 /** Size of meter peak level array and thus max number of meters available. */
 constexpr int nMetersMax = 8;
 /**
@@ -95,7 +99,7 @@ struct MeterSpec {
  * @brief Specification for drop down in UI.
  *
  */
-struct DropDownSpec {
+struct OptionsSpec {
   int* p_val { nullptr };
   /** Name of drop down, used for label and id. */
   std::string name;
@@ -105,6 +109,9 @@ struct DropDownSpec {
   int defaultIdx;
 };
 
+struct DropDownSpec : public OptionsSpec { };
+struct RadioButtonSpec : public OptionsSpec { };
+
 /**
  * @brief Specifies the layout of the title bar.
  *
@@ -113,7 +120,7 @@ struct TitleBarSpec {
   std::vector<DropDownSpec> dropDowns {
     {
         nullptr,
-        "UI Scale",
+        "UI_Scale",
         { "50%", "75%", "100%", "125%", "150%", "175%", "200%" },
         2,
     },
@@ -166,6 +173,8 @@ struct UiSpec {
   float labelHeight { 20 };
   /** Height of toggle row at the bottom of the UI. */
   float toggleHeight { 50 };
+  /** Height of radio buttons. */
+  float radioButtonHeight { 25 };
   /** Height or row of knobs in grid in UI. */
   float knobHeight { 200 };
   /** Width of secondary knobs in UI. */

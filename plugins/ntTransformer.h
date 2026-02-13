@@ -30,27 +30,28 @@ template <typename signal_t>
 struct ntTransformer : public NtFx::NtPlugin<signal_t> {
   NtFx::Biquad::EqBand<signal_t> bqHpf0;
   NtFx::Transformer<signal_t> transformer;
+  int rbVal;
   signal_t drive_db  = -10;
   signal_t drive_lin = 0.3;
+  bool bypass        = false;
   ntTransformer() {
     this->primaryKnobs = {
-      // { &this->transformer.fc_hz, "Frequency", " Hz", 20, 300 },
       { &this->drive_db, "Drive", " dB", -24, 24 },
-      { &this->bqHpf0.settings.fc_hz, "HPF", " Hz", 20, 200 },
     };
-    this->uiSpec.maxColumns = 1;
-    // this->uiSpec.meters.push_back({ "GR", .invert = true, .hasScale = true
-    // });
+    this->toggles                   = { { &this->bypass, "Bypass" } };
     this->uiSpec.defaultWindowWidth = 350;
   }
   virtual NtFx::Stereo<signal_t> process(
       NtFx::Stereo<signal_t> x) noexcept override {
+    this->template updatePeakLevel<0>(x);
+    if (this->bypass) {
+      this->template updatePeakLevel<1>(x);
+      return x;
+    }
     auto xTrans = this->bqHpf0.process(x);
     auto y =
         this->transformer.process(xTrans * this->drive_lin) / this->drive_lin;
-    this->template updatePeakLevel<0>(x);
     this->template updatePeakLevel<1>(y);
-    // this->template updatePeakLevel<2>(signal_t(1) - (x.abs() - y.abs()));
     return y;
   }
   virtual void update() noexcept override {
@@ -61,7 +62,7 @@ struct ntTransformer : public NtFx::NtPlugin<signal_t> {
   virtual void reset(float fs) noexcept override {
     this->fs = fs;
     this->transformer.reset(fs);
-    this->bqHpf0.settings.fc_hz = 45;
+    this->bqHpf0.settings.fc_hz = 40;
     this->bqHpf0.settings.q     = 1.1;
     this->bqHpf0.settings.shape = NtFx::Biquad::Shape::hpf;
     this->bqHpf0.reset(fs);

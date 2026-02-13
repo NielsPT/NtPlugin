@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "juce_core/system/juce_PlatformDefs.h"
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_audio_formats/juce_audio_formats.h>
@@ -39,7 +40,7 @@ public:
   //==============================================================================
   Toggle(const juce::String& buttonName = {}) : juce::TextButton(buttonName) { }
 
-  float fontSize { 0 };
+  float fontSize { 10 };
   uint32_t colour { 0xFFFFFFFF };
 
   //==============================================================================
@@ -49,11 +50,11 @@ public:
       const bool isMouseDown) override {
     auto h            = this->getHeight();
     auto w            = this->getWidth();
-    float outPadScale = 0.5;
+    float outPadScale = 0.95;
     float dRing       = h * outPadScale;
     auto x            = (h - dRing) / 2;
     auto y            = (h - dRing) / 2;
-    g.setColour(juce::Colour(colour));
+    g.setColour(juce::Colour(this->colour));
     juce::Rectangle<float> r1(x, y, dRing, dRing);
     g.drawEllipse(r1, h / 50.0);
     float inPadScale = outPadScale * 0.6;
@@ -66,11 +67,10 @@ public:
     } else {
       g.drawEllipse(r2, h / 100.0);
     }
-    x = (h + dRing) / 2 + h * 0.1;
-    juce::Rectangle<float> r3(x, 0, 1000, h);
-    juce::String t = this->getButtonText();
-    g.setFont(this->fontSize);
-    g.drawText(t, r3, juce::Justification::centredLeft);
+    x = (h + dRing) / 2 + h * 0.2;
+    juce::Rectangle<float> r3(x, 0, 100, h);
+    g.setFont(juce::FontOptions(this->fontSize));
+    g.drawText(this->getButtonText(), r3, juce::Justification::centredLeft);
   }
 
   //==============================================================================

@@ -19,10 +19,12 @@
 
 #pragma once
 
+#include "JuceWrapper/RadioButtons.h"
 #include "LookAndFeel.h"
 #include "Meter.h"
 #include "PluginProcessor.h"
 #include "Toggle.h"
+#include "lib/UiSpec.h"
 
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_devices/juce_audio_devices.h>
@@ -42,7 +44,8 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
                                       private juce::Timer,
                                       private juce::Slider::Listener,
                                       private juce::ToggleButton::Listener,
-                                      private juce::ComboBox::Listener {
+                                      private juce::ComboBox::Listener,
+                                      private juce::ChangeListener {
 
   NtPluginAudioProcessorEditor(NtPluginAudioProcessor&);
   ~NtPluginAudioProcessorEditor() override;
@@ -64,6 +67,8 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   std::vector<std::unique_ptr<NtFx::Toggle>> allToggles;
   std::vector<std::unique_ptr<juce::ComboBox>> allDropDowns;
   std::vector<std::unique_ptr<juce::Label>> allDropDownLabels;
+  std::vector<std::unique_ptr<NtFx::RadioButton>> allRadioButtons;
+  std::vector<std::unique_ptr<juce::Label>> allRadioButtonLabels;
   std::vector<std::unique_ptr<juce::ComboBox>> titleBarDropDowns;
   std::vector<std::unique_ptr<juce::Label>> titleBarDropDownLabels;
   std::vector<
@@ -75,6 +80,9 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   std::vector<
       std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>>
       allDropDownAttachments;
+  std::vector<
+      std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>>
+      allRadioButtonAttachments;
 
   std::vector<juce::Rectangle<int>> borderedAreas;
   std::vector<juce::Rectangle<int>> grayAreas;
@@ -88,11 +96,13 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
 
   void sliderValueChanged(juce::Slider* slider) override;
   void buttonClicked(juce::Button* button) override;
+  void changeListenerCallback(juce::ChangeBroadcaster* source) override;
   void comboBoxChanged(juce::ComboBox* p_box) override;
   void timerCallback() override;
   void updateUi();
   void updateTitleBar(juce::Rectangle<int>& area);
   void updateMeters(juce::Rectangle<int>& area);
+  void updateRadioButtons(juce::Rectangle<int>& area);
   void updateBottomRow(juce::Rectangle<int>& area);
   void updateSecondaryKnobs(juce::Rectangle<int>& area);
   void updatePrimaryKnobs(juce::Rectangle<int>& area);
@@ -103,6 +113,7 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
       std::unique_ptr<juce::Label>& p_label);
   void initToggle(NtFx::ToggleSpec& spec);
   void initDropDown(NtFx::DropDownSpec& p_spec, bool addToTitleBar = false);
+  void initRadioButton(NtFx::RadioButtonSpec& p_spec);
   void updateColours();
   void updateUiScale();
   void updateOversampling();

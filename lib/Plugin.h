@@ -56,6 +56,8 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
   std::vector<DropDownSpec> dropdowns;
   /** vector of toggles to be displayed at the bottom of the UI. */
   std::vector<ToggleSpec> toggles;
+  /** vector of radioButtons to be displayed at the right of the UI. */
+  std::vector<NtFx::RadioButtonSpec> radioButtons;
   /** Peak level to be displayed in the meters. */
   std::array<NtFx::Stereo<signal_t>, nMetersMax> peakLevels;
   /** Session tempo. Automatically updated by wrapper. */

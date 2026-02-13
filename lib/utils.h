@@ -22,6 +22,8 @@
 
 namespace NtFx {
 
+constexpr int factorial(int n) { return gcem::tgamma(n + 1); }
+
 template <typename signal_t>
 static inline signal_t db(signal_t x) noexcept {
   return signal_t(20.0) * std::log10(x);

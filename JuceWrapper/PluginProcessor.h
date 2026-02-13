@@ -82,6 +82,15 @@ struct NtPluginAudioProcessor : public juce::AudioProcessor {
   void getStateInformation(juce::MemoryBlock& destData) override;
   void setStateInformation(const void* data, int sizeInBytes) override;
 
+  template <typename T>
+  void loadParameter(std::vector<T>& v);
+  void loadRadioButtons(std::vector<NtFx::RadioButtonSpec>& v);
+
+  template <typename t_val, typename t_spec>
+  void createParameters(std::vector<t_spec>& vParams,
+      juce::AudioProcessorValueTreeState::ParameterLayout& parameters,
+      int& i);
+
   void updateOversampling(int mode);
   juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
@@ -89,7 +98,8 @@ struct NtPluginAudioProcessor : public juce::AudioProcessor {
   float fsBase = 48000;
   NTFX_PLUGIN<float> plug;
   NtFx::Src::SampleRateConverter<float> src;
-  juce::AudioProcessorValueTreeState parameters;
+  juce::AudioProcessorValueTreeState paramLayout;
+  // std::vector<std::vector<bool>> dummyBools;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtPluginAudioProcessor)
 };

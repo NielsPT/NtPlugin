@@ -23,16 +23,22 @@
 #include <array>
 
 namespace NtFx {
+
+/**
+ * @brief Calculates coefficients for symmetrical soft clipper at compile time.
+ *
+ * @tparam signal_t Audio signal type.
+ * @tparam N. Determines order. Order = 2 * N + 1.
+ * @return consteval array coefficients. Length N + 1;
+ */
 template <typename signal_t, size_t N>
 consteval inline std::array<signal_t, N + 1>
 calculateSoftClipCoeffs() noexcept {
-  // order = 2 * N + 1
   std::array<signal_t, N + 1> a_n;
-  // TODO: factorial func.
   for (int n = 0; n < N + 1; n++) {
-    a_n[n] = (gcem::pow(-1, n) * gcem::tgamma((2 * N + 1) + 1)
-        / (gcem::pow(4, N) * gcem::tgamma(N + 1) * (2 * n + 1)
-            * gcem::tgamma(n + 1) * gcem::tgamma(N - n + 1)));
+    a_n[n] = (gcem::pow(-1, n) * factorial((2 * N) + 1)
+        / (gcem::pow(4, N) * factorial(N) * (2 * n + 1) * factorial(n)
+            * factorial(N - n)));
   }
   return a_n;
 }

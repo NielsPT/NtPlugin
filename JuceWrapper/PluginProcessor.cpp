@@ -18,13 +18,19 @@
  **/
 
 #include "PluginProcessor.h"
+#include "JuceWrapper/Toggle.h"
 #include "PluginEditor.h"
+#include "juce_core/system/juce_PlatformDefs.h"
 #include "lib/SampleRateConverter.h"
 #include "lib/Stereo.h"
 #include "lib/UiSpec.h"
 
 #include <algorithm>
+#include <cstddef>
+#include <sstream>
 #include <string>
+#include <type_traits>
+#include <vector>
 
 NtPluginAudioProcessor::NtPluginAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -38,7 +44,7 @@ NtPluginAudioProcessor::NtPluginAudioProcessor()
               )
 #endif
       ,
-      parameters(*this,
+      paramLayout(*this,
           nullptr,
           juce::Identifier(JucePlugin_Name),
           createParameterLayout()),
@@ -153,7 +159,7 @@ juce::AudioProcessorEditor* NtPluginAudioProcessor::createEditor() {
 }
 
 void NtPluginAudioProcessor::getStateInformation(juce::MemoryBlock& destData) {
-  auto state = this->parameters.copyState();
+  auto state = this->paramLayout.copyState();
   std::unique_ptr<juce::XmlElement> xml(state.createXml());
   copyXmlToBinary(*xml, destData);
 }
@@ -163,27 +169,64 @@ void NtPluginAudioProcessor::setStateInformation(
   std::unique_ptr<juce::XmlElement> xmlState(
       getXmlFromBinary(data, sizeInBytes));
   if (xmlState.get() == nullptr) { return; }
-  if (!xmlState->hasTagName(this->parameters.state.getType())) { return; }
-  this->parameters.replaceState(juce::ValueTree::fromXml(*xmlState));
-  for (auto& k : this->plug.primaryKnobs) {
-    if (!k.p_val) { continue; }
-    auto par = this->parameters.getParameterAsValue(k.name);
-    *k.p_val = par.getValue();
+  if (!xmlState->hasTagName(this->paramLayout.state.getType())) { return; }
+  this->paramLayout.replaceState(juce::ValueTree::fromXml(*xmlState));
+  this->loadParameter(this->plug.primaryKnobs);
+  this->loadParameter(this->plug.secondaryKnobs);
+  this->loadParameter(this->plug.toggles);
+  this->loadParameter(this->plug.dropdowns);
+  // TODO: Load all the bools.
+  this->loadRadioButtons(this->plug.radioButtons);
+  // TODO: Oversampling is not loaded.
+
+  //  for (auto& k : this->plug.primaryKnobs) {
+  //  if (!k.p_val) { continue; }
+  //  auto par = this->parameters.getParameterAsValue(k.name);
+  //  *k.p_val = par.getValue();
+  //  }
+  //  for (auto& k : this->plug.secondaryKnobs) {
+  //  if (!k.p_val) { continue; }
+  //  auto par = this->parameters.getParameterAsValue(k.name);
+  //  *k.p_val = par.getValue();
+  //  }
+  //  for (auto& k : this->plug.toggles) {
+  //  if (!k.p_val) { continue; }
+  //  auto par = this->parameters.getParameterAsValue(k.name);
+  //  *k.p_val = par.getValue();
+  //  }
+  //  for (auto& k : this->plug.dropdowns) {
+  //  if (!k.p_val) { continue; }
+  //  auto par = this->parameters.getParameterAsValue(k.name);
+  //  *k.p_val = par.getValue();
+  //  }
+  //  for (auto& k : this->plug.radioButtons) {
+  //  if (!k.p_val) { continue; }
+  //  auto par = this->parameters.getParameterAsValue(k.name);
+  //  *k.p_val = par.getValue();
+  //  }
+}
+
+template <typename T>
+void NtPluginAudioProcessor::loadParameter(std::vector<T>& v) {
+  for (auto& p : v) {
+    if (!p.p_val) { continue; }
+    auto par = this->paramLayout.getParameterAsValue(p.name);
+    *p.p_val = par.getValue();
+    DBG("Loaded '" << p.name << "': " << float(*p.p_val));
   }
-  for (auto& k : this->plug.secondaryKnobs) {
-    if (!k.p_val) { continue; }
-    auto par = this->parameters.getParameterAsValue(k.name);
-    *k.p_val = par.getValue();
-  }
-  for (auto& k : this->plug.toggles) {
-    if (!k.p_val) { continue; }
-    auto par = this->parameters.getParameterAsValue(k.name);
-    *k.p_val = par.getValue();
-  }
-  for (auto& k : this->plug.dropdowns) {
-    if (!k.p_val) { continue; }
-    auto par = this->parameters.getParameterAsValue(k.name);
-    *k.p_val = par.getValue();
+}
+
+void NtPluginAudioProcessor::loadRadioButtons(
+    std::vector<NtFx::RadioButtonSpec>& v) {
+  for (auto& p : v) {
+    int val;
+    for (size_t i = 0; i < p.options.size(); i++) {
+      auto par = this->paramLayout.getParameterAsValue(
+          NtFx::makeTmpToggle(p.name, p.options[i]).name);
+      if (par.getValue()) { val = i; }
+    }
+    *p.p_val = val + 1;
+    DBG("Loaded '" << p.name << "': " << float(*p.p_val));
   }
 }
 
@@ -206,48 +249,45 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 NtPluginAudioProcessor::createParameterLayout() {
   int i = 1;
   juce::AudioProcessorValueTreeState::ParameterLayout parameters;
-  for (auto k : this->plug.primaryKnobs) {
-    if (!k.p_val) { continue; }
-    juce::ParameterID id(k.name, i++);
-    std::string name(k.name);
-    std::replace(name.begin(), name.end(), '_', ' ');
-    parameters.add(std::make_unique<juce::AudioParameterFloat>(
-        id, name, k.minVal, k.maxVal, k.defaultVal));
+  this->createParameters<float>(this->plug.primaryKnobs, parameters, i);
+  this->createParameters<float>(this->plug.secondaryKnobs, parameters, i);
+  this->createParameters<bool>(this->plug.toggles, parameters, i);
+  this->createParameters<int>(this->plug.dropdowns, parameters, i);
+  this->createParameters<int>(this->titleBarSpec.dropDowns, parameters, i);
+  std::vector<NtFx::ToggleSpec> vRadioButtonParams;
+  for (auto& r : this->plug.radioButtons) {
+    vRadioButtonParams.clear();
+    for (auto& option : r.options) {
+      vRadioButtonParams.push_back(NtFx::makeTmpToggle(r.name, option));
+    }
+    this->createParameters<bool>(vRadioButtonParams, parameters, i);
   }
-  for (auto k : this->plug.secondaryKnobs) {
-    if (!k.p_val) { continue; }
-    juce::ParameterID id(k.name, i++);
-    std::string name(k.name);
-    std::replace(name.begin(), name.end(), '_', ' ');
-    parameters.add(std::make_unique<juce::AudioParameterFloat>(
-        id, name, k.minVal, k.maxVal, k.defaultVal));
-  }
-  for (auto t : this->plug.toggles) {
-    if (!t.p_val) { continue; }
-    juce::ParameterID id(t.name, i++);
-    std::string name(t.name);
-    std::replace(name.begin(), name.end(), '_', ' ');
-    parameters.add(
-        std::make_unique<juce::AudioParameterBool>(id, name, t.defaultVal));
-  }
-  for (auto d : this->titleBarSpec.dropDowns) {
-    juce::ParameterID id(d.name, i++);
-    std::string name(d.name);
-    std::replace(name.begin(), name.end(), '_', ' ');
-    juce::StringArray options;
-    for (const auto& str : d.options) { options.add(juce::String(str)); }
-    parameters.add(std::make_unique<juce::AudioParameterChoice>(
-        id, name, options, d.defaultIdx));
-  }
-  for (auto d : this->plug.dropdowns) {
-    juce::ParameterID id(d.name, i++);
-    std::string name(d.name);
-    std::replace(name.begin(), name.end(), '_', ' ');
-    juce::StringArray options;
-    for (const auto& str : d.options) { options.add(juce::String(str)); }
-    parameters.add(std::make_unique<juce::AudioParameterChoice>(
-        id, name, options, d.defaultIdx));
-  }
-  DBG("Created " + std::to_string(i) + " paramters.");
+  DBG("Created " + std::to_string(i - 1) + " paramters.");
   return parameters;
+}
+
+template <typename t_val, typename t_spec>
+void NtPluginAudioProcessor::createParameters(std::vector<t_spec>& vParams,
+    juce::AudioProcessorValueTreeState::ParameterLayout& paramLayout,
+    int& i) {
+  for (auto p : vParams) {
+    juce::ParameterID id(p.name, i++);
+    if constexpr (std::is_same_v<t_val, int>) {
+      juce::StringArray options;
+      for (const auto& option : p.options) {
+        options.add(juce::String(option));
+      }
+      paramLayout.add(std::make_unique<juce::AudioParameterChoice>(
+          id, p.name, options, p.defaultIdx));
+    }
+    if constexpr (std::is_same_v<t_val, bool>) {
+      paramLayout.add(
+          std::make_unique<juce::AudioParameterBool>(id, p.name, p.defaultVal));
+    }
+    if constexpr (std::is_floating_point_v<t_val>) {
+      paramLayout.add(std::make_unique<juce::AudioParameterFloat>(
+          id, p.name, p.minVal, p.maxVal, p.defaultVal));
+    }
+    DBG("Created parameter '" << p.name << "'.");
+  }
 }

@@ -18,13 +18,17 @@
  **/
 
 #include "PluginEditor.h"
+#include "JuceWrapper/RadioButtons.h"
 #include "Meter.h"
 #include "PluginProcessor.h"
 #include "Toggle.h"
 
+#include "juce_audio_processors/juce_audio_processors.h"
+#include "juce_core/system/juce_PlatformDefs.h"
 #include "juce_events/juce_events.h"
 #include "juce_graphics/juce_graphics.h"
 #include "juce_gui_basics/juce_gui_basics.h"
+#include "lib/UiSpec.h"
 
 #include <algorithm>
 #include <string>
@@ -34,18 +38,21 @@ enum TitleBarDropDowns { e_uiScale, e_theme, e_oversampling };
 NtPluginAudioProcessorEditor::NtPluginAudioProcessorEditor(
     NtPluginAudioProcessor& p)
     : AudioProcessorEditor(&p), proc(p), meters(proc.plug.uiSpec) {
+  // NtFx::RadioButton::id = 0;
   this->updateColours();
   for (auto& k : this->proc.plug.primaryKnobs) { this->initPrimaryKnob(k); }
   for (auto& k : this->proc.plug.secondaryKnobs) { this->initSecondaryKnob(k); }
   for (auto& t : this->proc.plug.toggles) { this->initToggle(t); }
   for (auto& d : this->proc.plug.dropdowns) { this->initDropDown(d); }
+  for (auto& d : this->proc.plug.radioButtons) { this->initRadioButton(d); }
   for (auto& d : this->proc.titleBarSpec.dropDowns) {
     this->initDropDown(d, true);
   }
 
   this->pluginNameLabel.setText(
       JucePlugin_Name, juce::NotificationType::dontSendNotification);
-
+  this->pluginNameLabel.setJustificationType(juce::Justification::right);
+  this->addAndMakeVisible(this->pluginNameLabel);
   int nRows, nCols;
   this->calcSliderRowsCols(this->allPrimaryKnobs.size(),
       nRows,
@@ -112,7 +119,7 @@ void NtPluginAudioProcessorEditor::initDropDown(
   this->addAndMakeVisible(*p_label);
   this->allDropDownAttachments.emplace_back(
       new juce::AudioProcessorValueTreeState::ComboBoxAttachment(
-          this->proc.parameters, spec.name, *p_box));
+          this->proc.paramLayout, spec.name, *p_box));
   if (addToTitleBar) {
     p_box->setColour(
         juce::ComboBox::ColourIds::backgroundColourId, juce::Colours::darkgrey);
@@ -124,6 +131,32 @@ void NtPluginAudioProcessorEditor::initDropDown(
     this->allDropDowns.push_back(std::move(p_box));
     this->allDropDownLabels.push_back(std::move(p_label));
   }
+}
+
+void NtPluginAudioProcessorEditor::initRadioButton(
+    NtFx::RadioButtonSpec& spec) {
+  auto p_box =
+      std::make_unique<NtFx::RadioButton>(spec, this->proc.plug.uiSpec);
+  p_box->setTitle(spec.name);
+  p_box->setName(spec.name);
+  p_box->addChangeListener(this);
+  this->addAndMakeVisible(*p_box);
+  auto p_label = std::make_unique<juce::Label>(spec.name);
+  p_box->setColour(juce::Label::ColourIds::textColourId, juce::Colours::white);
+  p_label->setJustificationType(juce::Justification::centred);
+  std::string name = spec.name;
+  std::replace(name.begin(), name.end(), '_', ' ');
+  p_label->setText(name, juce::NotificationType::dontSendNotification);
+  this->addAndMakeVisible(*p_label);
+  for (size_t i = 0; i < spec.options.size(); i++) {
+    this->allToggleAttachments.emplace_back(
+        new juce::AudioProcessorValueTreeState::ButtonAttachment(
+            this->proc.paramLayout,
+            NtFx::makeTmpToggle(spec.name, spec.options[i]).name,
+            *p_box->toggles[i].get()));
+  }
+  this->allRadioButtons.push_back(std::move(p_box));
+  this->allRadioButtonLabels.push_back(std::move(p_label));
 }
 
 void NtPluginAudioProcessorEditor::initPrimaryKnob(
@@ -161,7 +194,7 @@ void NtPluginAudioProcessorEditor::_initKnob(NtFx::KnobSpec<float>& spec,
   this->addAndMakeVisible(p_label.get());
   this->allKnobAttachments.emplace_back(
       new juce::AudioProcessorValueTreeState::SliderAttachment(
-          this->proc.parameters, spec.name, *p_slider));
+          this->proc.paramLayout, spec.name, *p_slider));
   p_slider->setRange(spec.minVal, spec.maxVal);
   if (spec.midPoint) { p_slider->setSkewFactorFromMidPoint(spec.midPoint); }
 }
@@ -178,7 +211,7 @@ void NtPluginAudioProcessorEditor::initToggle(NtFx::ToggleSpec& spec) {
     p_button->setButtonText(name);
     this->allToggleAttachments.emplace_back(
         new juce::AudioProcessorValueTreeState::ButtonAttachment(
-            this->proc.parameters, spec.name, *p_button));
+            this->proc.paramLayout, spec.name, *p_button));
   }
   this->allToggles.push_back(std::move(p_button));
 }
@@ -220,6 +253,7 @@ void NtPluginAudioProcessorEditor::updateUi() {
       && this->proc.plug.uiSpec.meters.size() != 0) {
     this->updateMeters(area);
   }
+  if (this->proc.plug.radioButtons.size()) { this->updateRadioButtons(area); }
   if (this->proc.plug.toggles.size()) { this->updateBottomRow(area); }
   if (this->proc.plug.uiSpec.includeSecondaryKnobs
       && this->proc.plug.secondaryKnobs.size()) {
@@ -259,8 +293,6 @@ void NtPluginAudioProcessorEditor::updateTitleBar(juce::Rectangle<int>& area) {
   this->pluginNameLabel.setFont(
       juce::FontOptions(this->proc.plug.uiSpec.defaultFontSize * this->uiScale,
           juce::Font::FontStyleFlags::italic));
-  this->pluginNameLabel.setJustificationType(juce::Justification::right);
-  this->addAndMakeVisible(this->pluginNameLabel);
   this->pluginNameLabel.setBounds(titleBarArea);
 }
 
@@ -273,6 +305,23 @@ void NtPluginAudioProcessorEditor::updateMeters(juce::Rectangle<int>& area) {
   this->meters.updateRelease(this->proc.plug.uiSpec.meterRefreshRate_hz);
   this->meters.setBounds(meterArea);
   this->borderedAreas.push_back(meterArea);
+}
+
+void NtPluginAudioProcessorEditor::updateRadioButtons(
+    juce::Rectangle<int>& area) {
+  auto radioButtonArea = area.removeFromRight(200 * this->uiScale);
+  auto n               = this->proc.plug.radioButtons.size();
+  auto h               = area.getHeight() / n;
+  this->borderedAreas.push_back(radioButtonArea);
+  for (size_t i = 0; i < n; i++) {
+    this->allRadioButtonLabels[i]->setFont(juce::FontOptions(
+        this->proc.plug.uiSpec.defaultFontSize * this->uiScale));
+    this->allRadioButtonLabels[i]->setBounds(radioButtonArea.removeFromTop(
+        this->proc.plug.uiSpec.labelHeight * this->uiScale));
+    this->allRadioButtons[i]->uiScale = this->uiScale;
+    this->allRadioButtons[i]->updateUi();
+    this->allRadioButtons[i]->setBounds(radioButtonArea.removeFromTop(h));
+  }
 }
 
 void NtPluginAudioProcessorEditor::updateBottomRow(juce::Rectangle<int>& area) {
@@ -301,6 +350,7 @@ void NtPluginAudioProcessorEditor::updateBottomRow(juce::Rectangle<int>& area) {
   }
   for (size_t i = 0; i < nToggles; i++) {
     auto toggleArea = bottomRowArea.removeFromLeft(columnWidth);
+    toggleArea.reduce(pad, pad);
     this->allToggles[i]->setBounds(toggleArea);
     this->allToggles[i]->fontSize =
         this->proc.plug.uiSpec.defaultFontSize * this->uiScale;
@@ -422,7 +472,7 @@ void NtPluginAudioProcessorEditor::sliderValueChanged(juce::Slider* p_slider) {
   auto name   = p_slider->getName().toStdString();
   auto* p_val = this->proc.plug.getKnobValuePtr(name);
   if (!p_val) {
-    jassert("Knob name in UI not found in plugin knobs.");
+    DBG("Knob name in UI not found in plugin knobs.");
     return;
   }
   *p_val = p_slider->getValue();
@@ -433,11 +483,28 @@ void NtPluginAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
   auto name   = p_button->getName().toStdString();
   auto* p_val = this->proc.plug.getToggleValuePtr(name);
   if (!p_val) {
-    jassert("Toggle name in UI not found in plugin toggles.");
+    DBG("Toggle name in UI not found in plugin toggles.");
     return;
   }
   *p_val = p_button->getToggleState();
   this->proc.plug.update();
+}
+
+void NtPluginAudioProcessorEditor::changeListenerCallback(
+    juce::ChangeBroadcaster* p_r) {
+  for (size_t i = 0; i < this->proc.plug.radioButtons.size(); i++) {
+    auto& r = this->allRadioButtons[i];
+    if (p_r != r.get()) { continue; }
+    auto p_val = this->proc.plug.radioButtons[i].p_val;
+    if (!p_val) {
+      DBG("RadioButton value is null.");
+      continue;
+    }
+    *p_val                        = r->val;
+    this->proc.plug.uiNeedsUpdate = true;
+    return;
+  }
+  DBG("RadioButton name in UI not found in plugin toggles.");
 }
 
 void NtPluginAudioProcessorEditor::comboBoxChanged(juce::ComboBox* p_box) {
