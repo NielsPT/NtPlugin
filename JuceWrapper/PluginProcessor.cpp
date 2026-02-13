@@ -18,16 +18,13 @@
  **/
 
 #include "PluginProcessor.h"
-#include "JuceWrapper/Toggle.h"
 #include "PluginEditor.h"
 #include "juce_core/system/juce_PlatformDefs.h"
 #include "lib/SampleRateConverter.h"
 #include "lib/Stereo.h"
 #include "lib/UiSpec.h"
 
-#include <algorithm>
 #include <cstddef>
-#include <sstream>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -145,8 +142,8 @@ void NtPluginAudioProcessor::processBlock(
   for (size_t i = 0; i < buffer.getNumSamples(); i++) {
     NtFx::Stereo<float> x { leftBuffer[i], rightBuffer[i] };
     auto y = this->src.process(x);
-    if (this->plug.uiSpec.meters[0].addRms) { this->plug.xRms[0].process(x); }
-    if (this->plug.uiSpec.meters[1].addRms) { this->plug.xRms[1].process(y); }
+    if (this->plug.meters[0].addRms) { this->plug.xRms[0].process(x); }
+    if (this->plug.meters[1].addRms) { this->plug.xRms[1].process(y); }
     leftBuffer[i]  = y.l;
     rightBuffer[i] = y.r;
   }
@@ -175,35 +172,8 @@ void NtPluginAudioProcessor::setStateInformation(
   this->loadParameter(this->plug.secondaryKnobs);
   this->loadParameter(this->plug.toggles);
   this->loadParameter(this->plug.dropdowns);
-  // TODO: Load all the bools.
   this->loadRadioButtons(this->plug.radioButtons);
   // TODO: Oversampling is not loaded.
-
-  //  for (auto& k : this->plug.primaryKnobs) {
-  //  if (!k.p_val) { continue; }
-  //  auto par = this->parameters.getParameterAsValue(k.name);
-  //  *k.p_val = par.getValue();
-  //  }
-  //  for (auto& k : this->plug.secondaryKnobs) {
-  //  if (!k.p_val) { continue; }
-  //  auto par = this->parameters.getParameterAsValue(k.name);
-  //  *k.p_val = par.getValue();
-  //  }
-  //  for (auto& k : this->plug.toggles) {
-  //  if (!k.p_val) { continue; }
-  //  auto par = this->parameters.getParameterAsValue(k.name);
-  //  *k.p_val = par.getValue();
-  //  }
-  //  for (auto& k : this->plug.dropdowns) {
-  //  if (!k.p_val) { continue; }
-  //  auto par = this->parameters.getParameterAsValue(k.name);
-  //  *k.p_val = par.getValue();
-  //  }
-  //  for (auto& k : this->plug.radioButtons) {
-  //  if (!k.p_val) { continue; }
-  //  auto par = this->parameters.getParameterAsValue(k.name);
-  //  *k.p_val = par.getValue();
-  //  }
 }
 
 template <typename T>
@@ -217,7 +187,7 @@ void NtPluginAudioProcessor::loadParameter(std::vector<T>& v) {
 }
 
 void NtPluginAudioProcessor::loadRadioButtons(
-    std::vector<NtFx::RadioButtonSpec>& v) {
+    std::vector<NtFx::RadioButtonSetSpec>& v) {
   for (auto& p : v) {
     int val;
     for (size_t i = 0; i < p.options.size(); i++) {
@@ -278,15 +248,15 @@ void NtPluginAudioProcessor::createParameters(std::vector<t_spec>& vParams,
         options.add(juce::String(option));
       }
       paramLayout.add(std::make_unique<juce::AudioParameterChoice>(
-          id, p.name, options, p.defaultIdx));
+          id, p.name, options, p._defaultVal));
     }
     if constexpr (std::is_same_v<t_val, bool>) {
-      paramLayout.add(
-          std::make_unique<juce::AudioParameterBool>(id, p.name, p.defaultVal));
+      paramLayout.add(std::make_unique<juce::AudioParameterBool>(
+          id, p.name, p._defaultVal));
     }
     if constexpr (std::is_floating_point_v<t_val>) {
       paramLayout.add(std::make_unique<juce::AudioParameterFloat>(
-          id, p.name, p.minVal, p.maxVal, p.defaultVal));
+          id, p.name, p.minVal, p.maxVal, p._defaultVal));
     }
     DBG("Created parameter '" << p.name << "'.");
   }

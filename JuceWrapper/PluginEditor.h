@@ -59,7 +59,6 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   NtFx::KnobLookAndFeel knobLookAndFeel;
   NtFx::TitleBarLookAndFeel dropDownLookAndFeel;
 
-  // TODO: allToggleLabels and on/off text for toggles.
   std::vector<std::unique_ptr<juce::Slider>> allPrimaryKnobs;
   std::vector<std::unique_ptr<juce::Label>> allPrimaryKnobLabels;
   std::vector<std::unique_ptr<juce::Slider>> allSecondaryKnobs;
@@ -67,7 +66,7 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   std::vector<std::unique_ptr<NtFx::Toggle>> allToggles;
   std::vector<std::unique_ptr<juce::ComboBox>> allDropDowns;
   std::vector<std::unique_ptr<juce::Label>> allDropDownLabels;
-  std::vector<std::unique_ptr<NtFx::RadioButton>> allRadioButtons;
+  std::vector<std::unique_ptr<NtFx::RadioButtonSet>> allRadioButtons;
   std::vector<std::unique_ptr<juce::Label>> allRadioButtonLabels;
   std::vector<std::unique_ptr<juce::ComboBox>> titleBarDropDowns;
   std::vector<std::unique_ptr<juce::Label>> titleBarDropDownLabels;
@@ -113,7 +112,7 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
       std::unique_ptr<juce::Label>& p_label);
   void initToggle(NtFx::ToggleSpec& spec);
   void initDropDown(NtFx::DropDownSpec& p_spec, bool addToTitleBar = false);
-  void initRadioButton(NtFx::RadioButtonSpec& p_spec);
+  void initRadioButton(NtFx::RadioButtonSetSpec& p_spec);
   void updateColours();
   void updateUiScale();
   void updateOversampling();

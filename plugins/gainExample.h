@@ -55,8 +55,8 @@ struct gainExample : NtFx::NtPlugin<signal_t> {
     this->uiSpec.meterHeight_dots = 8;
 
     // Add two meters.
-    this->uiSpec.meters.push_back({ .name = "IN" });
-    this->uiSpec.meters.push_back({ .name = "OUT", .hasScale = true });
+    this->meters.push_back({ .name = "IN" });
+    this->meters.push_back({ .name = "OUT", .hasScale = true });
 
     // Always remember to update defaults. This will load the member values into
     // the UI and session storage.

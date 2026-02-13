@@ -34,10 +34,12 @@
 #include <string>
 
 enum TitleBarDropDowns { e_uiScale, e_theme, e_oversampling };
+int NtFx::RadioButtonSet::id = 1;
 
 NtPluginAudioProcessorEditor::NtPluginAudioProcessorEditor(
     NtPluginAudioProcessor& p)
-    : AudioProcessorEditor(&p), proc(p), meters(proc.plug.uiSpec) {
+    : AudioProcessorEditor(&p), proc(p),
+      meters(proc.plug.uiSpec, proc.plug.meters) {
   // NtFx::RadioButton::id = 0;
   this->updateColours();
   for (auto& k : this->proc.plug.primaryKnobs) { this->initPrimaryKnob(k); }
@@ -134,9 +136,9 @@ void NtPluginAudioProcessorEditor::initDropDown(
 }
 
 void NtPluginAudioProcessorEditor::initRadioButton(
-    NtFx::RadioButtonSpec& spec) {
+    NtFx::RadioButtonSetSpec& spec) {
   auto p_box =
-      std::make_unique<NtFx::RadioButton>(spec, this->proc.plug.uiSpec);
+      std::make_unique<NtFx::RadioButtonSet>(spec, this->proc.plug.uiSpec);
   p_box->setTitle(spec.name);
   p_box->setName(spec.name);
   p_box->addChangeListener(this);
@@ -250,7 +252,7 @@ void NtPluginAudioProcessorEditor::updateUi() {
   auto pad = 10 * this->uiScale;
   area.reduce(pad, pad);
   if (this->proc.plug.uiSpec.includeMeters
-      && this->proc.plug.uiSpec.meters.size() != 0) {
+      && this->proc.plug.meters.size() != 0) {
     this->updateMeters(area);
   }
   if (this->proc.plug.radioButtons.size()) { this->updateRadioButtons(area); }
@@ -309,18 +311,23 @@ void NtPluginAudioProcessorEditor::updateMeters(juce::Rectangle<int>& area) {
 
 void NtPluginAudioProcessorEditor::updateRadioButtons(
     juce::Rectangle<int>& area) {
-  auto radioButtonArea = area.removeFromRight(200 * this->uiScale);
-  auto n               = this->proc.plug.radioButtons.size();
-  auto h               = area.getHeight() / n;
+  auto radioButtonArea = area.removeFromRight(
+      this->proc.plug.uiSpec.radioButtonAreaWidth * this->uiScale);
+  auto n = this->proc.plug.radioButtons.size();
   this->borderedAreas.push_back(radioButtonArea);
+  float pad = 7 * this->uiScale;
+  radioButtonArea.removeFromLeft(pad);
   for (size_t i = 0; i < n; i++) {
     this->allRadioButtonLabels[i]->setFont(juce::FontOptions(
         this->proc.plug.uiSpec.defaultFontSize * this->uiScale));
+    radioButtonArea.removeFromTop(pad);
     this->allRadioButtonLabels[i]->setBounds(radioButtonArea.removeFromTop(
         this->proc.plug.uiSpec.labelHeight * this->uiScale));
     this->allRadioButtons[i]->uiScale = this->uiScale;
     this->allRadioButtons[i]->updateUi();
-    this->allRadioButtons[i]->setBounds(radioButtonArea.removeFromTop(h));
+    this->allRadioButtons[i]->setBounds(
+        radioButtonArea.removeFromTop(this->allRadioButtons[i]->toggles.size()
+            * this->proc.plug.uiSpec.radioButtonHeight * this->uiScale));
   }
 }
 
@@ -354,7 +361,8 @@ void NtPluginAudioProcessorEditor::updateBottomRow(juce::Rectangle<int>& area) {
     this->allToggles[i]->setBounds(toggleArea);
     this->allToggles[i]->fontSize =
         this->proc.plug.uiSpec.defaultFontSize * this->uiScale;
-    this->allToggles[i]->colour = this->proc.plug.uiSpec.foregroundColour;
+    this->allToggles[i]->colour =
+        this->proc.plug.uiSpec.foregroundColour | 0x00FFFFFF & 0x7F000000;
   }
 }
 
@@ -419,7 +427,6 @@ void NtPluginAudioProcessorEditor::updatePrimaryKnobs(
       iKnob++;
     }
   }
-  // TODO: add bool scalingChanged and check it.
   for (auto& k : this->allPrimaryKnobs) {
     k->setTextBoxStyle(juce::Slider::TextBoxBelow,
         false,

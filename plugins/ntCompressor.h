@@ -137,16 +137,27 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     };
 
     this->toggles = {
-      { .p_val = &this->rmsEnable, .name = "RMS" },
+      // { .p_val = &this->rmsEnable, .name = "RMS" },
       { .p_val = &this->feedbackEnable, .name = "Feedback" },
-      { .p_val = &this->linEnable, .name = "Linear" },
+      // { .p_val = &this->linEnable, .name = "Linear" },
       { .p_val = &this->linkEnable, .name = "Link" },
       { .p_val = &this->scListenEnable, .name = "SC_Listen" },
       { .p_val = &this->clip, .name = "Softclip" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
 
-    this->uiSpec.meters = {
+    this->radioButtons.push_back({
+        .p_val   = (int*)&this->linEnable,
+        .name    = "Domain",
+        .options = { "dB", "Linear" },
+    });
+    this->radioButtons.push_back({
+        .p_val   = (int*)&this->rmsEnable,
+        .name    = "Sensor",
+        .options = { "Peak", "RMS" },
+    });
+
+    this->meters = {
       { "IN", .addRms = true },
       { "OUT", .addRms = true, .hasScale = true },
       { .name = "GR", .invert = true, .hasScale = true },

@@ -57,9 +57,14 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
   /** vector of toggles to be displayed at the bottom of the UI. */
   std::vector<ToggleSpec> toggles;
   /** vector of radioButtons to be displayed at the right of the UI. */
-  std::vector<NtFx::RadioButtonSpec> radioButtons;
+  std::vector<RadioButtonSetSpec> radioButtons;
   /** Peak level to be displayed in the meters. */
-  std::array<NtFx::Stereo<signal_t>, nMetersMax> peakLevels;
+  std::array<Stereo<signal_t>, nMetersMax> peakLevels;
+  /** List of all meters to be displayed in the UI. */
+  std::vector<MeterSpec> meters = {
+    { "IN", .addRms = true },
+    { "OUT", .addRms = true, .hasScale = true },
+  };
   /** Session tempo. Automatically updated by wrapper. */
   signal_t tempo = 0;
   /** Set this to true if you want to force an update of the UI */
@@ -123,13 +128,19 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
    */
   constexpr void updateDefaults() noexcept {
     for (auto& k : this->primaryKnobs) {
-      if (k.p_val) { k.defaultVal = *k.p_val; }
+      if (k.p_val) { k._defaultVal = *k.p_val; }
     }
     for (auto& k : this->secondaryKnobs) {
-      if (k.p_val) { k.defaultVal = *k.p_val; }
+      if (k.p_val) { k._defaultVal = *k.p_val; }
     }
     for (auto& t : this->toggles) {
-      if (t.p_val) { t.defaultVal = *t.p_val; }
+      if (t.p_val) { t._defaultVal = *t.p_val; }
+    }
+    for (auto& t : this->dropdowns) {
+      if (t.p_val) { t._defaultVal = *t.p_val; }
+    }
+    for (auto& t : this->radioButtons) {
+      if (t.p_val) { t._defaultVal = *t.p_val; }
     }
   }
 
@@ -164,8 +175,8 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
    */
   NtFx::Stereo<signal_t> getAndResetPeakLevel(size_t idx) noexcept {
     signal_t def = signal_t(0);
-    if (idx >= this->uiSpec.meters.size()) { return def; }
-    if (this->uiSpec.meters[idx].invert) { def = signal_t(1); }
+    if (idx >= this->meters.size()) { return def; }
+    if (this->meters[idx].invert) { def = signal_t(1); }
     NtFx::Stereo<signal_t> tmp = this->peakLevels[idx];
     this->peakLevels[idx]      = signal_t(def);
     ensureFinite(tmp, def);

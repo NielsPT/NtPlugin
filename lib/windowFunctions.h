@@ -544,7 +544,7 @@ static inline std::vector<T> generateFreqRespFft(T fc, size_t n, T fs) {
   std::vector<T> ft(n, 0.0);
   auto hzPrBin = fs / static_cast<T>(n);
   std::fill(ft.begin(), ft.begin() + std::ceil(fc / hzPrBin), 1);
-  std::fill(ft.begin() + std::ceil((fs - fc) / hzPrBin) /* +1 ?*/, ft.end(), 1);
+  std::fill(ft.begin() + std::ceil((fs - fc) / hzPrBin), ft.end(), 1);
   return ft;
 }
 

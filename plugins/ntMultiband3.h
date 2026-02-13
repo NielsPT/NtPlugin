@@ -109,16 +109,16 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
       { &this->feedbackEnable, "Feedback" },
       { &this->bypass, "Bypass" },
     };
-    this->uiSpec.meters = {
+    this->meters = {
       { "IN", .addRms = true },
       { "OUT", .addRms = true, .hasScale = true },
     };
     for (int i = Bands::n - 1; i >= 0; i--) {
-      this->uiSpec.meters.push_back({ this->BandNames[i], .invert = true });
+      this->meters.push_back({ this->BandNames[i], .invert = true });
     }
-    this->uiSpec.meters[Bands::n - 1 + 2].hasScale = true;
-    this->uiSpec.meterHeight_dots                  = 25;
-    for (auto& m : this->uiSpec.meters) { m.minVal_db = -50; }
+    this->meters[Bands::n - 1 + 2].hasScale = true;
+    this->uiSpec.meterHeight_dots           = 25;
+    for (auto& m : this->meters) { m.minVal_db = -50; }
     this->updateDefaults();
   }
 

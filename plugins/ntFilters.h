@@ -88,7 +88,7 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
       { &this->enableHpf, "HPF_on" },
       { &this->enableLpf, "LPF_on" },
     };
-    this->uiSpec.meters = {
+    this->meters = {
       { "IN", .addRms = true },
       { "OUT", .addRms = true, .hasScale = true },
     };

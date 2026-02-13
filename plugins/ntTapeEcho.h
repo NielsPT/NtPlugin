@@ -129,7 +129,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
               "sixteenth_dot",
               "sixteenth",
           }, 
-          .defaultIdx = 0,
+          ._defaultVal = 0,
       },
     };
     this->toggles = {
@@ -139,7 +139,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       { &this->doGlide, "Glide" },
       { &this->bypass, "Bypass" },
     };
-    this->uiSpec.meters      = { { "IN" }, { "OUT", .hasScale = true } };
+    this->meters             = { { "IN" }, { "OUT", .hasScale = true } };
     this->lpf.settings.shape = NtFx::Biquad::Shape::lpf;
     this->hpf.settings.shape = NtFx::Biquad::Shape::hpf;
     this->lpf.settings.fc_hz = 20e3;

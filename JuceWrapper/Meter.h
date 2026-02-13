@@ -280,9 +280,9 @@ struct StereoMeter : public juce::Component {
 struct MeterGroup : public juce::Component {
   std::vector<std::unique_ptr<StereoMeter>> meters;
   std::vector<std::unique_ptr<MeterScale>> scales;
-  MeterGroup(UiSpec& uiSpec) {
+  MeterGroup(UiSpec& uiSpec, std::vector<MeterSpec>& meterSpecs) {
     size_t i = 0;
-    for (auto& spec : uiSpec.meters) {
+    for (auto& spec : meterSpecs) {
       auto meter = std::make_unique<StereoMeter>(spec, uiSpec);
       this->addAndMakeVisible(meter.get());
       if (spec.hasScale) {

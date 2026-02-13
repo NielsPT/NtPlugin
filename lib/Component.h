@@ -21,6 +21,7 @@
 #pragma once
 
 #include "lib/Stereo.h"
+
 namespace NtFx {
 /**
  * @brief Base class for audio components in NtPlugin. All processors adhere to
@@ -29,7 +30,6 @@ namespace NtFx {
  * @tparam signal_t Datatype for audio signals.
  */
 template <typename T>
-// TODO: constraint to be floating point or Stereo<floating point>
 struct Component {
   /**
    * @brief Sample rate of component.

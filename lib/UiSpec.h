@@ -23,7 +23,6 @@
 #include <vector>
 
 namespace NtFx {
-
 /**
  * @brief Specification for a knob.
  *
@@ -48,7 +47,7 @@ struct KnobSpec {
   void setLogScale() {
     this->midPoint = gcem::sqrt(this->minVal * this->maxVal);
   }
-  signal_t defaultVal { 0.0 };
+  signal_t _defaultVal;
   bool isActive { true };
 };
 
@@ -62,7 +61,7 @@ struct ToggleSpec {
   /** Name of knob, used for IDs and label in UI. Can't contain ' '. '_' is
    * replaced with ' ' in UI lables. */
   std::string name;
-  bool defaultVal { false };
+  bool _defaultVal { false };
 };
 
 static inline ToggleSpec makeTmpToggle(std::string name, std::string option) {
@@ -106,11 +105,13 @@ struct OptionsSpec {
   /** Vector of options in the drop down. */
   std::vector<std::string> options;
   /** Index of default option. */
-  int defaultIdx;
+  int _defaultVal { 0 };
 };
 
-struct DropDownSpec : public OptionsSpec { };
-struct RadioButtonSpec : public OptionsSpec { };
+// struct DropDownSpec : public OptionsSpec { };
+// struct RadioButtonSetSpec : public OptionsSpec { };
+typedef OptionsSpec DropDownSpec;
+typedef OptionsSpec RadioButtonSetSpec;
 
 /**
  * @brief Specifies the layout of the title bar.
@@ -173,8 +174,10 @@ struct UiSpec {
   float labelHeight { 20 };
   /** Height of toggle row at the bottom of the UI. */
   float toggleHeight { 50 };
-  /** Height of radio buttons. */
+  /** Height of each separate radio button. */
   float radioButtonHeight { 25 };
+  /** Width of the radio buttons ares to the right of the UI. */
+  float radioButtonAreaWidth { 100 };
   /** Height or row of knobs in grid in UI. */
   float knobHeight { 200 };
   /** Width of secondary knobs in UI. */
@@ -189,10 +192,5 @@ struct UiSpec {
   int meterWidth { 35 };
   /** Refresh rate of the timer that updates the meters in the UI. */
   float meterRefreshRate_hz { 50 };
-  /** List of all meters to be displayed in the UI. */
-  std::vector<MeterSpec> meters = {
-    { "IN", .addRms = true },
-    { "OUT", .addRms = true, .hasScale = true },
-  };
 };
 } // namespace NtFx

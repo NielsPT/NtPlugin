@@ -38,16 +38,15 @@
 #include "lib/UiSpec.h"
 
 namespace NtFx {
-struct RadioButton : public juce::Component, public juce::ChangeBroadcaster {
+struct RadioButtonSet : public juce::Component, public juce::ChangeBroadcaster {
   std::vector<std::unique_ptr<Toggle>> toggles;
-  RadioButtonSpec& spec;
+  RadioButtonSetSpec& spec;
   UiSpec& uiSpec;
-  // TODO: static id.
-  int id        = 1;
+  static int id;
   float uiScale = 1;
   int val;
-  RadioButton(RadioButtonSpec& spec, UiSpec& uiSpec)
-      : spec(spec), uiSpec(uiSpec) {
+  RadioButtonSet(RadioButtonSetSpec& spec, UiSpec& uiSpec)
+      : spec(spec), uiSpec(uiSpec), val(spec._defaultVal) {
     this->id++;
     for (size_t i = 0; i < spec.options.size(); i++) {
       auto option   = spec.options[i];
@@ -64,7 +63,7 @@ struct RadioButton : public juce::Component, public juce::ChangeBroadcaster {
   void resized() override { this->updateUi(); }
 
   void toggleStateChanged(int idx) {
-    this->val = idx + 1;
+    this->val = idx;
     this->sendChangeMessage();
   }
 
@@ -77,21 +76,21 @@ struct RadioButton : public juce::Component, public juce::ChangeBroadcaster {
     if (!w || !h || !n) { return; }
     for (size_t i = 0; i < n; i++) {
       auto p_toggle      = this->toggles[i].get();
-      p_toggle->colour   = uiSpec.foregroundColour;
+      p_toggle->colour   = uiSpec.foregroundColour | 0x00FFFFFF & 0x7F000000;
       p_toggle->fontSize = this->uiSpec.defaultFontSize * this->uiScale;
       auto toggleArea =
           area.removeFromTop(this->uiSpec.radioButtonHeight * this->uiScale);
       toggleArea.reduce(pad, pad);
       p_toggle->setBounds(toggleArea);
-      if (this->val - 1 == i) {
+      if (this->val == i) {
         p_toggle->setToggleState(
             // TODO: Do we need a notification here?
             true,
-            juce::NotificationType::sendNotification);
+            juce::NotificationType::dontSendNotification);
       }
     }
     this->repaint();
   }
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RadioButton)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RadioButtonSet)
 };
 }
