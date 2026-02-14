@@ -22,7 +22,11 @@
 
 namespace NtFx {
 
-constexpr int factorial(int n) { return gcem::tgamma(n + 1); }
+// TODO: How does this not work?
+// template <typename T>
+// static inline constexpr T factorial(T n) {
+//   return gcem::tgamma(n + 1);
+// }
 
 template <typename signal_t>
 static inline signal_t db(signal_t x) noexcept {

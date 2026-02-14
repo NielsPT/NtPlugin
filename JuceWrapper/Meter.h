@@ -110,8 +110,15 @@ struct MonoMeter : public juce::Component {
             this->uiSpec.foregroundColour & 0x00FFFFFF | (opacity << 24)));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
-      if (i == this->nActiveDotsPeak + 1) {
-        uint8_t opacity = 255.0f * this->fractPeak * this->opacity;
+      if (this->meterSpec.invert && i == this->nActiveDotsPeak + 1
+          && this->nActiveDotsPeak != 0) {
+        uint8_t opacity = 255.0f * (1 - this->fractPeak) * this->opacity;
+        g.setColour(juce::Colour(
+            this->uiSpec.foregroundColour & 0x00FFFFFF | (opacity << 24)));
+        g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
+      }
+      if (!this->meterSpec.invert && i == this->nActiveDotsPeak - 1) {
+        uint8_t opacity = 255.0f * (this->fractPeak) * this->opacity;
         g.setColour(juce::Colour(
             this->uiSpec.foregroundColour & 0x00FFFFFF | (opacity << 24)));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
