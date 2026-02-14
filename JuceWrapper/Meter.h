@@ -17,11 +17,14 @@
 
 #pragma once
 
+#include "gcem.hpp"
+#include "juce_core/system/juce_PlatformDefs.h"
 #include "lib/PeakSensor.h"
 #include "lib/Stereo.h"
 #include "lib/UiSpec.h"
 #include "lib/utils.h"
 
+#include <cstdint>
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_audio_formats/juce_audio_formats.h>
@@ -50,10 +53,12 @@ struct MonoMeter : public juce::Component {
   int dotDist         = 0;
   int nDots           = 14;
   int nActiveDotsPeak = 0;
+  float fractPeak     = 0;
   int nActiveDotsRms  = 0;
   float peakVal_lin   = 0;
   float rmsVal_lin    = 0;
   float dbPrDot       = 0;
+  float opacity       = 1.0f;
 
   std::string label  = "";
   bool isInitialized = false;
@@ -69,8 +74,8 @@ struct MonoMeter : public juce::Component {
 
   MonoMeter(MeterSpec& meterSpec, UiSpec& uiSpec)
       : meterSpec(meterSpec), uiSpec(uiSpec), nDots(uiSpec.meterHeight_dots) {
+    this->updateRelease(48000, 250);
     this->refresh();
-
     this->isInitialized = true;
   };
   ~MonoMeter() = default;
@@ -97,16 +102,21 @@ struct MonoMeter : public juce::Component {
       if (fillDiameter < 0) { return; }
       float fillX = this->pad + fillPad / 2;
       float fillY = y + fillPad / 2;
-      auto diff   = this->nDots - this->nActiveDotsPeak;
-      if ((!this->meterSpec.invert && i >= diff)
-          || (this->meterSpec.invert && i <= diff && diff != 0)) {
-        // || (this->meterSpec.invert && i <= diff)) {
+      if ((!this->meterSpec.invert && i >= this->nActiveDotsPeak)
+          || (this->meterSpec.invert && i <= this->nActiveDotsPeak
+              && this->nActiveDotsPeak != 0)) {
+        uint8_t opacity = 255.0f * this->opacity;
         g.setColour(juce::Colour(
-            this->uiSpec.foregroundColour & 0x00FFFFFF | 0x7F000000));
+            this->uiSpec.foregroundColour & 0x00FFFFFF | (opacity << 24)));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
-      diff = this->nDots - this->nActiveDotsRms;
-      if (!this->meterSpec.invert && i >= diff) {
+      if (i == this->nActiveDotsPeak + 1) {
+        uint8_t opacity = 255.0f * this->fractPeak * this->opacity;
+        g.setColour(juce::Colour(
+            this->uiSpec.foregroundColour & 0x00FFFFFF | (opacity << 24)));
+        g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
+      }
+      if (!this->meterSpec.invert && i >= this->nActiveDotsRms) {
         g.setColour(juce::Colour(
             this->uiSpec.foregroundColour & 0x00FFFFFF | 0x7F000000));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
@@ -155,6 +165,9 @@ struct MonoMeter : public juce::Component {
     this->nActiveDotsPeak = this->refreshNActiveDots(peak_db);
     this->nActiveDotsRms  = this->refreshNActiveDots(rms_db);
     this->refreshPeakHold(peak_db);
+    this->fractPeak = gcem::abs(peak_db + this->nActiveDotsPeak * this->dbPrDot)
+        / this->dbPrDot;
+    jassert(this->fractPeak <= 1 && this->fractPeak >= 0);
 
     auto w = this->getWidth();
     if (!repaint || !w) { w = this->uiSpec.meterWidth; }
@@ -186,14 +199,14 @@ struct MonoMeter : public juce::Component {
           (peak_db + this->meterSpec.maxVal_db - this->meterSpec.minVal_db)
           / this->dbPrDot;
     }
-    return nActiveDots;
+    return this->nDots - nActiveDots;
   }
 
   void refreshPeakHold(float peak_db) {
     if ((!this->meterSpec.invert && peak_db > this->holdVal_db)
         || (this->meterSpec.invert && peak_db < this->holdVal_db)) {
       this->holdVal_db         = peak_db;
-      this->iHoldDot           = this->nDots - this->nActiveDotsPeak;
+      this->iHoldDot           = this->nActiveDotsPeak;
       this->holdCounter_frames = 0;
       return;
     }
@@ -205,7 +218,7 @@ struct MonoMeter : public juce::Component {
       } else {
         this->holdVal_db = this->meterSpec.minVal_db;
       }
-      this->iHoldDot = this->nDots - this->nActiveDotsPeak;
+      this->iHoldDot = this->nActiveDotsPeak;
     }
   }
 };
