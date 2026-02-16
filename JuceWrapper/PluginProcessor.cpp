@@ -19,6 +19,7 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/system/juce_PlatformDefs.h"
 #include "lib/SampleRateConverter.h"
 #include "lib/Stereo.h"
@@ -30,23 +31,15 @@
 #include <vector>
 
 NtPluginAudioProcessor::NtPluginAudioProcessor()
-#ifndef JucePlugin_PreferredChannelConfigurations
     : AudioProcessor(BusesProperties()
-  #if !JucePlugin_IsMidiEffect
-    #if !JucePlugin_IsSynth
               .withInput("Input", juce::AudioChannelSet::stereo(), true)
-    #endif
               .withOutput("Output", juce::AudioChannelSet::stereo(), true)
-  #endif
-              )
-#endif
-      ,
+              .withInput("SideChain", juce::AudioChannelSet::mono(), true)),
       paramLayout(*this,
           nullptr,
           juce::Identifier(JucePlugin_Name),
           createParameterLayout()),
-      src(plug) {
-}
+      src(plug) { }
 
 NtPluginAudioProcessor::~NtPluginAudioProcessor() { }
 
@@ -139,8 +132,17 @@ void NtPluginAudioProcessor::processBlock(
   }
   auto leftBuffer  = buffer.getWritePointer(0);
   auto rightBuffer = buffer.getWritePointer(1);
+
+  bool scConnected = false;
+  const float* scBuffer;
+  const auto& sidechainBus = this->getBusBuffer(buffer, true, 1);
+  if (sidechainBus.getNumChannels() > 0) {
+    scConnected = true;
+    scBuffer    = sidechainBus.getReadPointer(0);
+  }
   for (size_t i = 0; i < buffer.getNumSamples(); i++) {
     NtFx::Stereo<float> x { leftBuffer[i], rightBuffer[i] };
+    if (scConnected) { this->plug.xSc = scBuffer[i]; }
     auto y = this->src.process(x);
     if (this->plug.meters[0].addRms) { this->plug.xRms[0].process(x); }
     if (this->plug.meters[1].addRms) { this->plug.xRms[1].process(y); }
@@ -212,9 +214,6 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
   return new NtPluginAudioProcessor();
 }
 
-// This is all fine, and stores to XML and reads from XML when the UI is
-// initialized, but not when the plugin editor has not been opened in the
-// session. How do we get the values on load?
 juce::AudioProcessorValueTreeState::ParameterLayout
 NtPluginAudioProcessor::createParameterLayout() {
   int i = 1;

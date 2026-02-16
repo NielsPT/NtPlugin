@@ -58,7 +58,7 @@ struct MonoMeter : public juce::Component {
   float peakVal_lin   = 0;
   float rmsVal_lin    = 0;
   float dbPrDot       = 0;
-  float opacity       = 1.0f;
+  float opacity       = 0.7f;
 
   std::string label  = "";
   bool isInitialized = false;
@@ -102,6 +102,7 @@ struct MonoMeter : public juce::Component {
       if (fillDiameter < 0) { return; }
       float fillX = this->pad + fillPad / 2;
       float fillY = y + fillPad / 2;
+      if (this->meterSpec.invert && i < 2) { continue; }
       if ((!this->meterSpec.invert && i >= this->nActiveDotsPeak)
           || (this->meterSpec.invert && i <= this->nActiveDotsPeak
               && this->nActiveDotsPeak != 0)) {
@@ -112,20 +113,21 @@ struct MonoMeter : public juce::Component {
       }
       if (this->meterSpec.invert && i == this->nActiveDotsPeak + 1
           && this->nActiveDotsPeak != 0) {
-        uint8_t opacity = 255.0f * (1 - this->fractPeak) * this->opacity;
+        uint8_t opacity = 255.0f * (1 - this->fractPeak);
         g.setColour(juce::Colour(
             this->uiSpec.foregroundColour & 0x00FFFFFF | (opacity << 24)));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
       if (!this->meterSpec.invert && i == this->nActiveDotsPeak - 1) {
-        uint8_t opacity = 255.0f * (this->fractPeak) * this->opacity;
+        uint8_t opacity = 255.0f * this->fractPeak;
         g.setColour(juce::Colour(
             this->uiSpec.foregroundColour & 0x00FFFFFF | (opacity << 24)));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
       if (!this->meterSpec.invert && i >= this->nActiveDotsRms) {
+        uint8_t opacity = 255.0f * this->opacity;
         g.setColour(juce::Colour(
-            this->uiSpec.foregroundColour & 0x00FFFFFF | 0x7F000000));
+            this->uiSpec.foregroundColour & 0x00FFFFFF | (opacity << 24)));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
       if (i == this->iHoldDot && this->meterSpec.hold_s

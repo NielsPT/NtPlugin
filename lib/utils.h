@@ -30,7 +30,7 @@ namespace NtFx {
 
 template <typename signal_t>
 static inline signal_t db(signal_t x) noexcept {
-  return signal_t(20.0) * std::log10(x);
+  return signal_t(20.0) * std::log10(gcem::abs(x));
 }
 
 template <typename signal_t>

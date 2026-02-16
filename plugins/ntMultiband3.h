@@ -110,8 +110,8 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
       { &this->bypass, "Bypass" },
     };
     this->meters = {
-      { "IN", .addRms = true },
-      { "OUT", .addRms = true, .hasScale = true },
+      { "IN", .addRms = true, .decay_s = 0.75 },
+      { "OUT", .addRms = true, .hasScale = true, .decay_s = 0.75 },
     };
     for (int i = Bands::n - 1; i >= 0; i--) {
       this->meters.push_back({ this->BandNames[i], .invert = true });

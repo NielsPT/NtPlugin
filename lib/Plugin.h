@@ -71,6 +71,7 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
   bool uiNeedsUpdate = false;
 
   std::array<RmsSensorStereo<signal_t, 250, 192>, 2> xRms;
+  signal_t xSc;
 
   /**
    * @brief Called by the wrapper whenever the tempo changes.
