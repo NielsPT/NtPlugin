@@ -45,6 +45,7 @@ namespace NtFx {
 template <typename signal_t>
   requires std::is_floating_point_v<signal_t>
 struct NtPlugin : public Component<Stereo<signal_t>> {
+  std::array<RmsSensorStereo<signal_t, 250, 192>, 2> _xRms;
   /** Specification for UI. Modify this to change the look of your plugin. */
   UiSpec uiSpec;
   /** vector of primary knobs. Add your number paramters to this to display them
@@ -70,7 +71,8 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
   /** Set this to true if you want to force an update of the UI */
   bool uiNeedsUpdate = false;
 
-  std::array<RmsSensorStereo<signal_t, 250, 192>, 2> xRms;
+  /** Updated at base sample rate and can be used in process() for exenal side
+   * chain input. */
   signal_t xSc;
 
   /**
@@ -186,7 +188,7 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
 
   NtFx::Stereo<signal_t> getRms(size_t idx) noexcept {
     if (idx >= 2) { return signal_t(0); }
-    return this->xRms[idx].getRms();
+    return this->_xRms[idx].getRms();
   }
 };
 }

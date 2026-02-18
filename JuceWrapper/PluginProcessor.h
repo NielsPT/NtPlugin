@@ -91,7 +91,7 @@ struct NtPluginAudioProcessor : public juce::AudioProcessor {
       juce::AudioProcessorValueTreeState::ParameterLayout& parameters,
       int& i);
 
-  void updateOversampling(int mode);
+  void updateOversampling(int mode = 0);
   juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
   NtFx::TitleBarSpec titleBarSpec;

@@ -64,6 +64,8 @@ namespace Src {
     NtPlugin<signal_t>& plug;
     State<signal_t> state;
     Coeffs<signal_t> coeffs;
+    oversamplingMode mode;
+    float fs;
 
     SampleRateConverter(NtPlugin<signal_t>& plug) : plug(plug) { }
 
@@ -97,8 +99,8 @@ namespace Src {
       return accum;
     }
 
-    inline void update(oversamplingMode mode, signal_t fs) {
-      switch (mode) {
+    inline void update() {
+      switch (this->mode) {
 
         // TODO: IIR oversampling
         // case iir_2x:
@@ -146,7 +148,7 @@ namespace Src {
         this->coeffs.osFirLenMult = 1;
         this->coeffs.disable      = true;
       }
-      this->coeffs.fsHi = fs * this->coeffs.osFactor;
+      this->coeffs.fsHi = this->fs * this->coeffs.osFactor;
       this->coeffs.n    = this->coeffs.osFactor * this->coeffs.osFirLenMult;
       if (!this->coeffs.disable) {
         auto b = windowMethod<signal_t>(fc, this->coeffs.n, this->coeffs.fsHi);
@@ -157,7 +159,8 @@ namespace Src {
       }
     }
 
-    inline void reset() {
+    inline void reset(float fs) {
+      this->fs              = fs;
       this->state.iStoreIn  = 0;
       this->state.iStoreOut = 0;
       std::fill(this->state.dlAntialiasing.begin(),
@@ -166,6 +169,7 @@ namespace Src {
       std::fill(this->state.dlInterpolation.begin(),
           this->state.dlInterpolation.end(),
           0.0);
+      this->update();
     }
   };
 }
