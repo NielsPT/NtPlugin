@@ -1,2 +1,7 @@
 CompileFlags:
-  Add: ["-DNTFX_FS=48e3"]
+  Add:
+    - -std=c++20
+    - -I.
+    - -Ilib
+    - -Iplugins
+    - -IJuceWrapper
