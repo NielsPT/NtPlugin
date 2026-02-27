@@ -90,6 +90,8 @@ endfunction()
 
 if(NOT DEFINED NTFX_PLUGIN_CODE OR "${NTFX_PLUGIN_CODE}" STREQUAL "")
   generate_plugin_id(NTFX_PLUGIN_CODE)
+elseif(DEFINED NTFX_ID)
+  set(NTFX_PLUGIN_CODE NTFX_ID)
 endif()
 
 message(STATUS "Building with plugin id: ${NTFX_PLUGIN_CODE}")

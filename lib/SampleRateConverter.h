@@ -1,5 +1,8 @@
-/*
- * Copyright (C) 2026 Niels Thøgersen, NTlyd
+/**
+ * @file SampleRateConverter.h
+ * @brief Sample rate converter using FIR filtering for oversampling
+ * @author Niels Thøgersen
+ * @copyright Copyright (C) 2026 Niels Thøgersen, NTlyd
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License as published by the Free
@@ -13,7 +16,7 @@
  *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
- **/
+ */
 
 #pragma once
 
@@ -26,10 +29,25 @@
 
 namespace NtFx {
 namespace Src {
-  constexpr int nDelayLine            = 192;
+  /**
+   * @brief Delay line size for interpolation and antialiasing
+   */
+  constexpr int nDelayLine = 192;
+  /**
+   * @brief Oversampling FIR multiplier for high quality mode
+   */
   constexpr int oversamplingFirMultHq = 24;
+  /**
+   * @brief Oversampling FIR multiplier for low quality mode
+   */
   constexpr int oversamplingFirMultLq = 12;
-  constexpr int fc                    = 22e3;
+  /**
+   * @brief Cutoff frequency for anti-aliasing filter
+   */
+  constexpr int fc = 22e3;
+  /**
+   * @brief Oversampling mode enumeration
+   */
   enum oversamplingMode : int {
     disable = 1,
     // iir_2x,
@@ -43,32 +61,99 @@ namespace Src {
     fir_8x_hq,
     end = fir_8x_hq
   };
+  /**
+   * @brief State structure for sample rate converter
+   * @tparam signal_t Type of signal samples
+   */
   template <typename signal_t>
   struct State {
+    /**
+     * @brief Index for storing input samples
+     */
     size_t iStoreIn;
+    /**
+     * @brief Index for storing output samples
+     */
     size_t iStoreOut;
+    /**
+     * @brief Delay line for interpolation filter (at base sample rate).
+     */
     std::array<Stereo<signal_t>, nDelayLine * 2> dlInterpolation;
+    /**
+     * @brief Delay line for antialiasing (stores processed samples at high
+     * sample rate).
+     */
     std::array<Stereo<signal_t>, nDelayLine * 2> dlAntialiasing;
   };
+  /**
+   * @brief Coefficients structure for sample rate converter
+   * @tparam signal_t Type of signal samples
+   */
   template <typename signal_t>
   struct Coeffs {
-    bool disable        = false;
-    size_t osFactor     = 1;
+    /**
+     * @brief Flag to disable sample rate conversion
+     */
+    bool disable = false;
+    /**
+     * @brief Oversampling factor
+     */
+    size_t osFactor = 1;
+    /**
+     * @brief FIR filter length multiplier
+     */
     size_t osFirLenMult = 12;
-    size_t n            = 12;
-    signal_t fsHi       = 48000;
+    /**
+     * @brief FIR filter length
+     */
+    size_t n = 12;
+    /**
+     * @brief High sampling rate
+     */
+    signal_t fsHi = 48000;
+    /**
+     * @brief FIR filter coefficients
+     */
     std::array<signal_t, nDelayLine> b;
   };
+  /**
+   * @brief Sample rate converter class
+   * @tparam signal_t Type of signal samples
+   */
   template <typename signal_t>
   struct SampleRateConverter {
+    /**
+     * @brief Reference to the plugin
+     */
     NtPlugin<signal_t>& plug;
+    /**
+     * @brief State of the sample rate converter
+     */
     State<signal_t> state;
+    /**
+     * @brief Coefficients of the sample rate converter
+     */
     Coeffs<signal_t> coeffs;
+    /**
+     * @brief Oversampling mode
+     */
     oversamplingMode mode;
+    /**
+     * @brief Sampling rate
+     */
     float fs;
 
+    /**
+     * @brief Constructor
+     * @param plug Reference to the plugin
+     */
     SampleRateConverter(NtPlugin<signal_t>& plug) : plug(plug) { }
 
+    /**
+     * @brief Process audio samples through the sample rate converter
+     * @param x Input audio samples
+     * @return Processed audio samples
+     */
     Stereo<signal_t> process(Stereo<signal_t> x) {
       if (this->coeffs.disable) { return this->plug.process(x); }
       this->state.dlInterpolation[this->state.iStoreIn]              = x;
@@ -99,6 +184,9 @@ namespace Src {
       return accum;
     }
 
+    /**
+     * @brief Update coefficients based on current mode
+     */
     inline void update() {
       switch (this->mode) {
 
@@ -159,6 +247,10 @@ namespace Src {
       }
     }
 
+    /**
+     * @brief Reset the sample rate converter and change the sample rate.
+     * @param fs Sampling rate
+     */
     inline void reset(float fs) {
       this->fs              = fs;
       this->state.iStoreIn  = 0;

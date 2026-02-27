@@ -45,35 +45,72 @@ namespace NtFx {
 template <typename signal_t>
   requires std::is_floating_point_v<signal_t>
 struct NtPlugin : public Component<Stereo<signal_t>> {
-  std::array<RmsSensorStereo<signal_t, 250, 192>, 2> _xRms;
-  /** Specification for UI. Modify this to change the look of your plugin. */
-  UiSpec uiSpec;
-  /** vector of primary knobs. Add your number paramters to this to display them
-   * in the UI. */
-  std::vector<KnobSpec<signal_t>> primaryKnobs;
-  /** vector of secondary knobs. */
-  std::vector<KnobSpec<signal_t>> secondaryKnobs;
-  /** vector of DropDowns to be displayed */
-  std::vector<DropDownSpec> dropdowns;
-  /** vector of toggles to be displayed at the bottom of the UI. */
-  std::vector<ToggleSpec> toggles;
-  /** vector of radioButtons to be displayed at the right of the UI. */
-  std::vector<RadioButtonSetSpec> radioButtons;
-  /** Peak level to be displayed in the meters. */
+  /**
+   * @brief Array of rms sensors for RMS meter.
+   *
+   */
+  std::array<RmsSensorStereo<signal_t, 250, 192>, 2> xRms;
+
+  /**
+   * @brief Peak level to be displayed in the meters.
+   */
   std::array<Stereo<signal_t>, nMetersMax> peakLevels;
-  /** List of all meters to be displayed in the UI. */
+
+  /**
+   * @brief Specification for UI. Modify this to change the look of your
+   * plugin.
+   */
+  UiSpec uiSpec;
+
+  /**
+   * @brief vector of primary knobs. Add your number paramters to this to
+   * display them in the UI.
+   */
+  std::vector<KnobSpec<signal_t>> primaryKnobs;
+
+  /**
+   * @brief vector of secondary knobs.
+   */
+  std::vector<KnobSpec<signal_t>> secondaryKnobs;
+
+  /**
+   * @brief vector of DropDowns to be displayed
+   */
+  std::vector<DropDownSpec> dropdowns;
+
+  /**
+   * @brief vector of toggles to be displayed at the bottom of the UI.
+   */
+  std::vector<ToggleSpec> toggles;
+
+  /**
+   * @brief vector of radioButtons to be displayed at the right of the UI.
+   */
+  std::vector<RadioButtonSetSpec> radioButtons;
+
+  /**
+   * @brief List of all meters to be displayed in the UI.
+   */
   std::vector<MeterSpec> meters = {
     { "IN", .addRms = true },
     { "OUT", .addRms = true, .hasScale = true },
   };
-  /** Session tempo. Automatically updated by wrapper. */
-  signal_t tempo = 0;
-  /** Set this to true if you want to force an update of the UI */
-  bool uiNeedsUpdate = false;
 
-  /** Updated at base sample rate and can be used in process() for exenal side
-   * chain input. */
+  /**
+   * @brief Session tempo. Automatically updated by wrapper.
+   */
+  signal_t tempo = 0;
+
+  /**
+   * @brief Updated at base sample rate and can be used in process() for exenal
+   * side chain input.
+   */
   signal_t xSc;
+
+  /**
+   * @brief Set this to true if you want to force an update of the UI
+   */
+  bool uiNeedsUpdate = false;
 
   /**
    * @brief Called by the wrapper whenever the tempo changes.
@@ -186,9 +223,16 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
     return tmp;
   }
 
+  /**
+   * @brief Get the RMS level of meter with index idx. RMS level is calculated
+   * from the peak level.
+   *
+   * @param idx Index of meter to get RMS level for.
+   * @return NtFx::Stereo<signal_t> RMS level.
+   */
   NtFx::Stereo<signal_t> getRms(size_t idx) noexcept {
     if (idx >= 2) { return signal_t(0); }
-    return this->_xRms[idx].getRms();
+    return this->xRms[idx].getRms();
   }
 };
 }

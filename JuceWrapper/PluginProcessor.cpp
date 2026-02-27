@@ -85,8 +85,8 @@ void NtPluginAudioProcessor::prepareToPlay(
     double sampleRate, int samplesPerBlock) {
   this->fsBase = sampleRate;
   this->updateOversampling();
-  this->plug._xRms[0].reset(sampleRate);
-  this->plug._xRms[1].reset(sampleRate);
+  this->plug.xRms[0].reset(sampleRate);
+  this->plug.xRms[1].reset(sampleRate);
 }
 
 juce::AudioChannelSet m_outputFormat;
@@ -144,8 +144,10 @@ void NtPluginAudioProcessor::processBlock(
     NtFx::Stereo<float> x { leftBuffer[i], rightBuffer[i] };
     if (scConnected) { this->plug.xSc = scBuffer[i]; }
     auto y = this->src.process(x);
-    if (this->plug.meters[0].addRms) { this->plug._xRms[0].process(x); }
-    if (this->plug.meters[1].addRms) { this->plug._xRms[1].process(y); }
+    if (this->plug.meters.size() <= 2) {
+      if (this->plug.meters[0].addRms) { this->plug.xRms[0].process(x); }
+      if (this->plug.meters[1].addRms) { this->plug.xRms[1].process(y); }
+    }
     leftBuffer[i]  = y.l;
     rightBuffer[i] = y.r;
   }

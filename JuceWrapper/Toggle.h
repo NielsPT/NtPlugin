@@ -63,7 +63,7 @@ public:
     float yDot       = y + (dRing - dDot) / 2;
     juce::Rectangle<float> r2(xDot, yDot, dDot, dDot);
     if (this->getToggleState()) {
-      g.setOpacity(0.5);
+      g.setOpacity(0.7);
       g.fillEllipse(r2);
       g.setOpacity(1.0);
     }

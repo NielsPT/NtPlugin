@@ -173,11 +173,11 @@ struct UiSpec {
   /** Height of all text labels in the UI. */
   float labelHeight { 20 };
   /** Height of toggle row at the bottom of the UI. */
-  float toggleHeight { 50 };
+  float toggleHeight { 45 };
   /** Height of each separate radio button. */
   float radioButtonHeight { 25 };
   /** Width of the radio buttons ares to the right of the UI. */
-  float radioButtonAreaWidth { 100 };
+  float radioButtonAreaWidth { 120 };
   /** Height or row of knobs in grid in UI. */
   float knobHeight { 200 };
   /** Width of secondary knobs in UI. */

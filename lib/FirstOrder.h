@@ -30,22 +30,22 @@ namespace FirstOrder {
   template <typename signal_t, Shape shape>
   struct Filter : public Component<signal_t> {
     signal_t fc_hz = 1000;
-    signal_t alpha = 0;
-    signal_t yn1   = 0;
-    signal_t xn1   = 0;
+    signal_t _a    = 0;
+    signal_t _yn1  = 0;
+    signal_t _xn1  = 0;
     virtual signal_t process(signal_t x) noexcept override {
       signal_t y;
       if constexpr (shape == Shape::none) {
         return x;
       } else if constexpr (shape == Shape::lpf) {
-        y = this->alpha * x + (1 - this->alpha) * yn1;
+        y = this->_a * x + (1 - this->_a) * _yn1;
       } else if constexpr (shape == Shape::hpf) {
-        y = this->alpha * (this->yn1 + x - this->xn1);
+        y = this->_a * (this->_yn1 + x - this->_xn1);
       } else {
-        y = signal_t(0.5) * this->alpha * (x + xn1) + (1 - this->alpha) * yn1;
+        y = signal_t(0.5) * this->_a * (x + _xn1) + (1 - this->_a) * _yn1;
       }
-      this->xn1 = x;
-      this->yn1 = y;
+      this->_xn1 = x;
+      this->_yn1 = y;
       return y;
     }
 
@@ -53,16 +53,16 @@ namespace FirstOrder {
       if (this->fs <= 0) { return; }
       signal_t z = 2 * GCEM_PI * this->fc_hz / this->fs;
       if constexpr (shape == Shape::hpf) {
-        this->alpha = 1.0 / (z + 1.0);
+        this->_a = 1.0 / (z + 1.0);
       } else {
-        this->alpha = z / (z + 1.0);
+        this->_a = z / (z + 1.0);
       }
     }
 
     virtual void reset(float fs) noexcept override {
-      this->fs  = fs;
-      this->xn1 = 0;
-      this->yn1 = 0;
+      this->fs   = fs;
+      this->_xn1 = 0;
+      this->_yn1 = 0;
       this->update();
     }
   };

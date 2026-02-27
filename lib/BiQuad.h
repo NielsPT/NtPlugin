@@ -317,6 +317,8 @@ namespace Biquad {
     case Shape::notch:
       c = calcCoeffsNotch<signal_t>(fs, fc_hz, q);
       break;
+    case Shape::none:
+    case Shape::unknown:
     default:
       c = { 1.0, 0.0, 0.0, 1.0, 0.0, 0.0 };
       break;
@@ -324,10 +326,10 @@ namespace Biquad {
     return c;
   }
 
-} // namespace Eq
+} // namespace Biquad
 } // namespace NtFx
 
-#pragma once
+// #pragma once
 
 // // Indexes for coeffs
 // constexpr int b0     = 0;

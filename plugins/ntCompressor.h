@@ -46,6 +46,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   int rmsEnable = 0;
   int scMode    = 0;
   // int extScEnable     = 0;
+  // bool hey;
   // bool feedbackEnable = false;
   bool scListenEnable = false;
   bool linkEnable     = false;
@@ -143,7 +144,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     this->toggles = {
       // { .p_val = &this->rmsEnable, .name = "RMS" },
       // { .p_val = &this->feedbackEnable, .name = "Feedback" },
-      // { .p_val = &this->linEnable, .name = "Linear" },
+      // { .p_val = &this->hey, .name = "Hey" },
       { .p_val = &this->linkEnable, .name = "Link" },
       { .p_val = &this->scListenEnable, .name = "SC_Listen" },
       { .p_val = &this->clip, .name = "Softclip" },

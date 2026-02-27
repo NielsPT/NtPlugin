@@ -19,25 +19,29 @@
 
 #include "gcem.hpp"
 
+// TODO: Doxygen
+
 namespace NtFx {
 template <typename signal_t>
 struct ExpGlider {
   signal_t ui = 0;
   signal_t pr = 0;
-  signal_t a  = 0;
+  signal_t _a = 0;
   ExpGlider(signal_t def = 0) : ui(def), pr(def) { }
   inline signal_t process() noexcept {
-    this->pr += this->a * (this->ui - this->pr);
+    this->pr += this->_a * (this->ui - this->pr);
     return this->pr;
   }
-  inline void update(signal_t fs, signal_t tSmooth) {
+  inline void update(signal_t fs, signal_t tSmooth) noexcept {
     if (tSmooth <= 0) {
-      this->a  = 0;
+      this->_a = 0;
       this->pr = this->ui;
       return;
     }
-    this->a = 1.0 - gcem::exp(-1.0 / (fs * tSmooth));
+    this->_a = 1.0 - gcem::exp(-1.0 / (fs * tSmooth));
   }
+  // signal_t get() { return this->pr; }
+  // void set(signal_t uiVal) { this->ui = uiVal; }
 };
 
 template <typename signal_t>
