@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include <bitset>
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_audio_formats/juce_audio_formats.h>
@@ -55,7 +54,7 @@ struct ToggleSetBase : public juce::Component, public juce::ChangeBroadcaster {
     return std::move(p_toggle);
   }
 
-  virtual void updateToggleStates(int i) = 0;
+  virtual void updateToggleStates(int i) { };
 
   void resized() override { this->updateUi(); }
 
@@ -80,25 +79,17 @@ struct ToggleSetBase : public juce::Component, public juce::ChangeBroadcaster {
   }
 };
 
-struct ToggleGroup : public ToggleSetBase {
-  ToggleGroupSpec spec;
-  // std::bitset<64> vals;
-  ToggleGroup(ToggleGroupSpec spec, UiSpec& uiSpec)
-      : spec(spec), ToggleSetBase(uiSpec)
-  // TODO: What about default val?
-  {
+struct ToggleSet : public ToggleSetBase {
+  ToggleSetSpec spec;
+  ToggleSet(ToggleSetSpec spec, UiSpec& uiSpec)
+      : spec(spec), ToggleSetBase(uiSpec) {
     for (size_t i = 0; i < spec.toggles.size(); i++) {
       auto p_toggle     = this->makeToggle(spec.toggles[i].name);
       p_toggle->onClick = [this]() { this->sendChangeMessage(); };
       toggles.push_back(std::move(p_toggle));
     }
   }
-
-  virtual void updateToggleStates(int i) override {
-    for (size_t i = 0; i < this->spec.toggles.size(); i++) {
-      // TODO: ??
-    }
-  }
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ToggleSet)
 };
 
 struct RadioButtonSet : public ToggleSetBase {

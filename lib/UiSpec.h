@@ -69,7 +69,7 @@ static inline ToggleSpec makeTmpToggle(
   return { nullptr, prefix + ":" + name + ":" + option };
 }
 
-struct ToggleGroupSpec {
+struct ToggleSetSpec {
   std::string name;
   std::vector<ToggleSpec> toggles;
 };

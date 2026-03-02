@@ -46,7 +46,7 @@ NtPluginAudioProcessorEditor::NtPluginAudioProcessorEditor(
   for (auto& k : this->proc.plug.primaryKnobs) { this->initPrimaryKnob(k); }
   for (auto& k : this->proc.plug.secondaryKnobs) { this->initSecondaryKnob(k); }
   for (auto& t : this->proc.plug.toggles) { this->initToggle(t); }
-  for (auto& g : this->proc.plug.toggleGroups) { this->initToggleGroup(g); }
+  for (auto& g : this->proc.plug.toggleSets) { this->initToggleGroup(g); }
   for (auto& d : this->proc.plug.dropdowns) { this->initDropDown(d); }
   for (auto& d : this->proc.plug.radioButtons) { this->initRadioButton(d); }
   for (auto& d : this->proc.titleBarSpec.dropDowns) {
@@ -166,10 +166,9 @@ void NtPluginAudioProcessorEditor::initRadioButton(
 }
 
 // TODO: this is almost the same code as initRadioButton. DRY! Refactor, please.
-void NtPluginAudioProcessorEditor::initToggleGroup(
-    NtFx::ToggleGroupSpec& spec) {
+void NtPluginAudioProcessorEditor::initToggleGroup(NtFx::ToggleSetSpec& spec) {
   auto p_group =
-      std::make_unique<NtFx::ToggleGroup>(spec, this->proc.plug.uiSpec);
+      std::make_unique<NtFx::ToggleSet>(spec, this->proc.plug.uiSpec);
   p_group->setTitle(spec.name);
   p_group->setName(spec.name);
   p_group->addChangeListener(this);
@@ -292,7 +291,7 @@ void NtPluginAudioProcessorEditor::updateUi() {
     this->updateMeters(area);
   }
   if (this->proc.plug.radioButtons.size()
-      || this->proc.plug.toggleGroups.size()) {
+      || this->proc.plug.toggleSets.size()) {
     this->updateRightSideArea(area);
   }
   if (this->proc.plug.toggles.size()) { this->updateBottomRow(area); }
@@ -368,7 +367,7 @@ void NtPluginAudioProcessorEditor::updateRightSideArea(
             * this->proc.plug.uiSpec.radioButtonHeight * this->uiScale));
   }
   // TODO: DRY
-  for (size_t i = 0; i < this->proc.plug.toggleGroups.size(); i++) {
+  for (size_t i = 0; i < this->proc.plug.toggleSets.size(); i++) {
     this->allToggleGroupLabels[i]->setFont(juce::FontOptions(
         this->proc.plug.uiSpec.defaultFontSize * this->uiScale));
     rightSideArea.removeFromTop(pad);
@@ -563,12 +562,11 @@ void NtPluginAudioProcessorEditor::changeListenerCallback(
     return;
   }
   // TODO: Look at this mess...
-  for (size_t i = 0; i < this->proc.plug.toggleGroups.size(); i++) {
+  for (size_t i = 0; i < this->proc.plug.toggleSets.size(); i++) {
     auto& g = this->allToggleGroups[i];
     if (p_b != g.get()) { continue; }
-    for (size_t j = 0; j < this->proc.plug.toggleGroups[i].toggles.size();
-        j++) {
-      auto& t = this->proc.plug.toggleGroups[i].toggles[j];
+    for (size_t j = 0; j < this->proc.plug.toggleSets[i].toggles.size(); j++) {
+      auto& t = this->proc.plug.toggleSets[i].toggles[j];
       if (!t.p_val) {
         DBG("Toggle value in group is null.");
         continue;

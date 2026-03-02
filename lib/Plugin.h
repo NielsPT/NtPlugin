@@ -87,7 +87,7 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
    * @brief vector of groups of toggles to be placed in the right side area.
    *
    */
-  std::vector<ToggleGroupSpec> toggleGroups;
+  std::vector<ToggleSetSpec> toggleSets;
 
   /**
    * @brief vector of radioButtons to be displayed at the right of the UI.
@@ -187,6 +187,11 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
     }
     for (auto& t : this->radioButtons) {
       if (t.p_val) { t._defaultVal = *t.p_val; }
+    }
+    for (auto& s : this->toggleSets) {
+      for (auto& t : s.toggles) {
+        if (t.p_val) { t._defaultVal = *t.p_val; }
+      }
     }
   }
 

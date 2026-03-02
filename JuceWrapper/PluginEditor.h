@@ -69,7 +69,7 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   std::vector<std::unique_ptr<juce::Label>> allDropDownLabels;
   std::vector<std::unique_ptr<NtFx::RadioButtonSet>> allRadioButtons;
   std::vector<std::unique_ptr<juce::Label>> allRadioButtonLabels;
-  std::vector<std::unique_ptr<NtFx::ToggleGroup>> allToggleGroups;
+  std::vector<std::unique_ptr<NtFx::ToggleSet>> allToggleGroups;
   std::vector<std::unique_ptr<juce::Label>> allToggleGroupLabels;
   std::vector<std::unique_ptr<juce::ComboBox>> titleBarDropDowns;
   std::vector<std::unique_ptr<juce::Label>> titleBarDropDownLabels;
@@ -117,7 +117,7 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
       std::unique_ptr<juce::Label>& p_label);
   void initToggle(NtFx::ToggleSpec& spec);
   void _initToggle(NtFx::Toggle* p_toggle, NtFx::ToggleSpec& spec);
-  void initToggleGroup(NtFx::ToggleGroupSpec& spec);
+  void initToggleGroup(NtFx::ToggleSetSpec& spec);
   void initDropDown(NtFx::DropDownSpec& p_spec, bool addToTitleBar = false);
   void initRadioButton(NtFx::RadioButtonSetSpec& p_spec);
   void updateColours();
