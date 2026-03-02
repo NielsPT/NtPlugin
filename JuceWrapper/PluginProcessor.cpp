@@ -177,7 +177,7 @@ void NtPluginAudioProcessor::setStateInformation(
   this->loadParameter(this->plug.toggles);
   this->loadParameter(this->plug.dropdowns);
   this->loadRadioButtons(this->plug.radioButtons);
-  // TODO: Load toggleGroups
+  this->loadToggleGroups(this->plug.toggleGroups);
   auto par = this->paramLayout.getParameterAsValue("Oversampling");
   auto val = par.getValue();
   if (val) {
@@ -202,11 +202,24 @@ void NtPluginAudioProcessor::loadRadioButtons(
     int val;
     for (size_t i = 0; i < p.options.size(); i++) {
       auto par = this->paramLayout.getParameterAsValue(
-          NtFx::makeTmpToggle(p.name, p.options[i]).name);
+          NtFx::makeTmpToggle(p.name, p.options[i], "radioButton").name);
       if (par.getValue()) { val = i; }
     }
     *p.p_val = val + 1;
     DBG("Loaded '" << p.name << "': " << float(*p.p_val));
+  }
+}
+
+void NtPluginAudioProcessor::loadToggleGroups(
+    std::vector<NtFx::ToggleGroupSpec>& v) {
+  for (auto& p : v) {
+    for (size_t i = 0; i < p.toggles.size(); i++) {
+      auto mangledName =
+          NtFx::makeTmpToggle(p.name, p.toggles[i].name, "toggleGroup").name;
+      auto par            = this->paramLayout.getParameterAsValue(mangledName);
+      *p.toggles[i].p_val = par.getValue();
+      DBG("Loaded '" << mangledName << "': " << float(*p.toggles[i].p_val));
+    }
   }
 }
 
@@ -230,18 +243,19 @@ NtPluginAudioProcessor::createParameterLayout() {
   this->createParameters<bool>(this->plug.toggles, parameters, i);
   this->createParameters<int>(this->plug.dropdowns, parameters, i);
   this->createParameters<int>(this->titleBarSpec.dropDowns, parameters, i);
+  // TODO: Look at this. Please DRY!
   std::vector<NtFx::ToggleSpec> vTmpToggles;
   for (auto& r : this->plug.radioButtons) {
     vTmpToggles.clear();
     for (auto& option : r.options) {
-      vTmpToggles.push_back(NtFx::makeTmpToggle(r.name, option));
+      vTmpToggles.push_back(NtFx::makeTmpToggle(r.name, option, "radioButton"));
     }
     this->createParameters<bool>(vTmpToggles, parameters, i);
   }
   for (auto& r : this->plug.toggleGroups) {
     vTmpToggles.clear();
     for (auto& t : r.toggles) {
-      vTmpToggles.push_back(NtFx::makeTmpToggle(r.name, t.name));
+      vTmpToggles.push_back(NtFx::makeTmpToggle(r.name, t.name, "toggleGroup"));
     }
     this->createParameters<bool>(vTmpToggles, parameters, i);
   }

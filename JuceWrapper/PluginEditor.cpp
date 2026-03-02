@@ -37,7 +37,6 @@
 
 // TODO: Major refactor. There are SO many repitions in this file.
 enum TitleBarDropDowns { e_uiScale, e_theme, e_oversampling };
-int NtFx::RadioButtonSet::id = 1;
 
 NtPluginAudioProcessorEditor::NtPluginAudioProcessorEditor(
     NtPluginAudioProcessor& p)
@@ -140,8 +139,9 @@ void NtPluginAudioProcessorEditor::initDropDown(
 
 void NtPluginAudioProcessorEditor::initRadioButton(
     NtFx::RadioButtonSetSpec& spec) {
-  auto p_box =
-      std::make_unique<NtFx::RadioButtonSet>(spec, this->proc.plug.uiSpec);
+  int id { 0 };
+  auto p_box = std::make_unique<NtFx::RadioButtonSet>(
+      spec, this->proc.plug.uiSpec, id++);
   p_box->setTitle(spec.name);
   p_box->setName(spec.name);
   p_box->addChangeListener(this);
@@ -158,7 +158,7 @@ void NtPluginAudioProcessorEditor::initRadioButton(
     this->allToggleAttachments.emplace_back(
         new juce::AudioProcessorValueTreeState::ButtonAttachment(
             this->proc.paramLayout,
-            NtFx::makeTmpToggle(spec.name, spec.options[i]).name,
+            NtFx::makeTmpToggle(spec.name, spec.options[i], "radioButton").name,
             *p_box->toggles[i].get()));
   }
   this->allRadioButtons.push_back(std::move(p_box));
@@ -186,7 +186,8 @@ void NtPluginAudioProcessorEditor::initToggleGroup(
     this->allToggleAttachments.emplace_back(
         new juce::AudioProcessorValueTreeState::ButtonAttachment(
             this->proc.paramLayout,
-            NtFx::makeTmpToggle(spec.name, spec.toggles[i].name).name,
+            NtFx::makeTmpToggle(spec.name, spec.toggles[i].name, "toggleGroup")
+                .name,
             *p_group->toggles[i].get()));
   }
   this->allToggleGroups.push_back(std::move(p_group));

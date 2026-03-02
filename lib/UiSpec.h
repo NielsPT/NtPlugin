@@ -64,8 +64,9 @@ struct ToggleSpec {
   bool _defaultVal { false };
 };
 
-static inline ToggleSpec makeTmpToggle(std::string name, std::string option) {
-  return { nullptr, "_rb:" + name + ":" + option };
+static inline ToggleSpec makeTmpToggle(
+    std::string name, std::string option, std::string prefix) {
+  return { nullptr, prefix + ":" + name + ":" + option };
 }
 
 struct ToggleGroupSpec {

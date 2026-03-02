@@ -103,18 +103,13 @@ struct ToggleGroup : public ToggleSetBase {
 
 struct RadioButtonSet : public ToggleSetBase {
   RadioButtonSetSpec& spec;
-  // TODO: Hmmm. What if we just used the bitset here as well? That would make
-  // the classes more like the same.
-  // TODO: Can we find a way to not use a static?
-  static int id;
   int val;
-  RadioButtonSet(RadioButtonSetSpec& spec, UiSpec& uiSpec)
+  RadioButtonSet(RadioButtonSetSpec& spec, UiSpec& uiSpec, int id)
       : spec(spec), ToggleSetBase(uiSpec), val(spec._defaultVal) {
-    this->id++;
     for (size_t i = 0; i < spec.options.size(); i++) {
       auto option   = spec.options[i];
       auto p_toggle = this->makeToggle(option);
-      p_toggle->setRadioGroupId(this->id);
+      p_toggle->setRadioGroupId(id);
       p_toggle->onClick = [this, i]() {
         this->val = i;
         this->sendChangeMessage();
