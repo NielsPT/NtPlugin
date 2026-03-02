@@ -177,6 +177,7 @@ void NtPluginAudioProcessor::setStateInformation(
   this->loadParameter(this->plug.toggles);
   this->loadParameter(this->plug.dropdowns);
   this->loadRadioButtons(this->plug.radioButtons);
+  // TODO: Load toggleGroups
   auto par = this->paramLayout.getParameterAsValue("Oversampling");
   auto val = par.getValue();
   if (val) {
@@ -229,13 +230,20 @@ NtPluginAudioProcessor::createParameterLayout() {
   this->createParameters<bool>(this->plug.toggles, parameters, i);
   this->createParameters<int>(this->plug.dropdowns, parameters, i);
   this->createParameters<int>(this->titleBarSpec.dropDowns, parameters, i);
-  std::vector<NtFx::ToggleSpec> vRadioButtonParams;
+  std::vector<NtFx::ToggleSpec> vTmpToggles;
   for (auto& r : this->plug.radioButtons) {
-    vRadioButtonParams.clear();
+    vTmpToggles.clear();
     for (auto& option : r.options) {
-      vRadioButtonParams.push_back(NtFx::makeTmpToggle(r.name, option));
+      vTmpToggles.push_back(NtFx::makeTmpToggle(r.name, option));
     }
-    this->createParameters<bool>(vRadioButtonParams, parameters, i);
+    this->createParameters<bool>(vTmpToggles, parameters, i);
+  }
+  for (auto& r : this->plug.toggleGroups) {
+    vTmpToggles.clear();
+    for (auto& t : r.toggles) {
+      vTmpToggles.push_back(NtFx::makeTmpToggle(r.name, t.name));
+    }
+    this->createParameters<bool>(vTmpToggles, parameters, i);
   }
   DBG("Created " + std::to_string(i - 1) + " paramters.");
   return parameters;

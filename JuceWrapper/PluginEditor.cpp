@@ -31,8 +31,11 @@
 #include "lib/UiSpec.h"
 
 #include <algorithm>
+#include <memory>
 #include <string>
+#include <utility>
 
+// TODO: Major refactor. There are SO many repitions in this file.
 enum TitleBarDropDowns { e_uiScale, e_theme, e_oversampling };
 int NtFx::RadioButtonSet::id = 1;
 
@@ -40,11 +43,11 @@ NtPluginAudioProcessorEditor::NtPluginAudioProcessorEditor(
     NtPluginAudioProcessor& p)
     : AudioProcessorEditor(&p), proc(p),
       meters(proc.plug.uiSpec, proc.plug.meters) {
-  // NtFx::RadioButton::id = 0;
   this->updateColours();
   for (auto& k : this->proc.plug.primaryKnobs) { this->initPrimaryKnob(k); }
   for (auto& k : this->proc.plug.secondaryKnobs) { this->initSecondaryKnob(k); }
   for (auto& t : this->proc.plug.toggles) { this->initToggle(t); }
+  for (auto& g : this->proc.plug.toggleGroups) { this->initToggleGroup(g); }
   for (auto& d : this->proc.plug.dropdowns) { this->initDropDown(d); }
   for (auto& d : this->proc.plug.radioButtons) { this->initRadioButton(d); }
   for (auto& d : this->proc.titleBarSpec.dropDowns) {
@@ -143,6 +146,7 @@ void NtPluginAudioProcessorEditor::initRadioButton(
   p_box->setName(spec.name);
   p_box->addChangeListener(this);
   this->addAndMakeVisible(*p_box);
+  // TODO: makeLabel method.
   auto p_label = std::make_unique<juce::Label>(spec.name);
   p_box->setColour(juce::Label::ColourIds::textColourId, juce::Colours::white);
   p_label->setJustificationType(juce::Justification::centred);
@@ -159,6 +163,34 @@ void NtPluginAudioProcessorEditor::initRadioButton(
   }
   this->allRadioButtons.push_back(std::move(p_box));
   this->allRadioButtonLabels.push_back(std::move(p_label));
+}
+
+// TODO: this is almost the same code as initRadioButton. DRY! Refactor, please.
+void NtPluginAudioProcessorEditor::initToggleGroup(
+    NtFx::ToggleGroupSpec& spec) {
+  auto p_group =
+      std::make_unique<NtFx::ToggleGroup>(spec, this->proc.plug.uiSpec);
+  p_group->setTitle(spec.name);
+  p_group->setName(spec.name);
+  p_group->addChangeListener(this);
+  this->addAndMakeVisible(*p_group);
+  auto p_label = std::make_unique<juce::Label>(spec.name);
+  p_group->setColour(
+      juce::Label::ColourIds::textColourId, juce::Colours::white);
+  p_label->setJustificationType(juce::Justification::centred);
+  std::string name = spec.name;
+  std::replace(name.begin(), name.end(), '_', ' ');
+  p_label->setText(name, juce::NotificationType::dontSendNotification);
+  this->addAndMakeVisible(*p_label);
+  for (size_t i = 0; i < spec.toggles.size(); i++) {
+    this->allToggleAttachments.emplace_back(
+        new juce::AudioProcessorValueTreeState::ButtonAttachment(
+            this->proc.paramLayout,
+            NtFx::makeTmpToggle(spec.name, spec.toggles[i].name).name,
+            *p_group->toggles[i].get()));
+  }
+  this->allToggleGroups.push_back(std::move(p_group));
+  this->allToggleGroupLabels.push_back(std::move(p_label));
 }
 
 void NtPluginAudioProcessorEditor::initPrimaryKnob(
@@ -202,20 +234,23 @@ void NtPluginAudioProcessorEditor::_initKnob(NtFx::KnobSpec<float>& spec,
 }
 
 void NtPluginAudioProcessorEditor::initToggle(NtFx::ToggleSpec& spec) {
-  auto p_button = std::make_unique<NtFx::Toggle>(spec.name);
-  if (spec.p_val) {
-    this->addAndMakeVisible(p_button.get());
-    p_button->setClickingTogglesState(true);
-    p_button->setToggleable(true);
-    p_button->addListener(this);
-    std::string name(spec.name);
-    std::replace(name.begin(), name.end(), '_', ' ');
-    p_button->setButtonText(name);
-    this->allToggleAttachments.emplace_back(
-        new juce::AudioProcessorValueTreeState::ButtonAttachment(
-            this->proc.paramLayout, spec.name, *p_button));
-  }
-  this->allToggles.push_back(std::move(p_button));
+  auto p_toggle = std::make_unique<NtFx::Toggle>(spec.name);
+  if (spec.p_val) { this->_initToggle(p_toggle.get(), spec); }
+  this->allToggles.push_back(std::move(p_toggle));
+}
+
+void NtPluginAudioProcessorEditor::_initToggle(
+    NtFx::Toggle* p_toggle, NtFx::ToggleSpec& spec) {
+  this->addAndMakeVisible(p_toggle);
+  p_toggle->setClickingTogglesState(true);
+  p_toggle->setToggleable(true);
+  p_toggle->addListener(this);
+  std::string name(spec.name);
+  std::replace(name.begin(), name.end(), '_', ' ');
+  p_toggle->setButtonText(name);
+  this->allToggleAttachments.emplace_back(
+      new juce::AudioProcessorValueTreeState::ButtonAttachment(
+          this->proc.paramLayout, spec.name, *p_toggle));
 }
 
 void NtPluginAudioProcessorEditor::paint(juce::Graphics& g) {
@@ -255,7 +290,10 @@ void NtPluginAudioProcessorEditor::updateUi() {
       && this->proc.plug.meters.size() != 0) {
     this->updateMeters(area);
   }
-  if (this->proc.plug.radioButtons.size()) { this->updateRadioButtons(area); }
+  if (this->proc.plug.radioButtons.size()
+      || this->proc.plug.toggleGroups.size()) {
+    this->updateRightSideArea(area);
+  }
   if (this->proc.plug.toggles.size()) { this->updateBottomRow(area); }
   if (this->proc.plug.uiSpec.includeSecondaryKnobs
       && this->proc.plug.secondaryKnobs.size()) {
@@ -309,24 +347,36 @@ void NtPluginAudioProcessorEditor::updateMeters(juce::Rectangle<int>& area) {
   this->borderedAreas.push_back(meterArea);
 }
 
-void NtPluginAudioProcessorEditor::updateRadioButtons(
+void NtPluginAudioProcessorEditor::updateRightSideArea(
     juce::Rectangle<int>& area) {
-  auto radioButtonArea = area.removeFromRight(
+  auto rightSideArea = area.removeFromRight(
       this->proc.plug.uiSpec.radioButtonAreaWidth * this->uiScale);
-  auto n = this->proc.plug.radioButtons.size();
-  this->borderedAreas.push_back(radioButtonArea);
+  this->borderedAreas.push_back(rightSideArea);
   float pad = 7 * this->uiScale;
-  radioButtonArea.removeFromLeft(pad);
-  for (size_t i = 0; i < n; i++) {
+  rightSideArea.removeFromLeft(pad);
+  for (size_t i = 0; i < this->proc.plug.radioButtons.size(); i++) {
     this->allRadioButtonLabels[i]->setFont(juce::FontOptions(
         this->proc.plug.uiSpec.defaultFontSize * this->uiScale));
-    radioButtonArea.removeFromTop(pad);
-    this->allRadioButtonLabels[i]->setBounds(radioButtonArea.removeFromTop(
+    rightSideArea.removeFromTop(pad);
+    this->allRadioButtonLabels[i]->setBounds(rightSideArea.removeFromTop(
         this->proc.plug.uiSpec.labelHeight * this->uiScale));
     this->allRadioButtons[i]->uiScale = this->uiScale;
     this->allRadioButtons[i]->updateUi();
     this->allRadioButtons[i]->setBounds(
-        radioButtonArea.removeFromTop(this->allRadioButtons[i]->toggles.size()
+        rightSideArea.removeFromTop(this->allRadioButtons[i]->toggles.size()
+            * this->proc.plug.uiSpec.radioButtonHeight * this->uiScale));
+  }
+  // TODO: DRY
+  for (size_t i = 0; i < this->proc.plug.toggleGroups.size(); i++) {
+    this->allToggleGroupLabels[i]->setFont(juce::FontOptions(
+        this->proc.plug.uiSpec.defaultFontSize * this->uiScale));
+    rightSideArea.removeFromTop(pad);
+    this->allToggleGroupLabels[i]->setBounds(rightSideArea.removeFromTop(
+        this->proc.plug.uiSpec.labelHeight * this->uiScale));
+    this->allToggleGroups[i]->uiScale = this->uiScale;
+    this->allToggleGroups[i]->updateUi();
+    this->allToggleGroups[i]->setBounds(
+        rightSideArea.removeFromTop(this->allToggleGroups[i]->toggles.size()
             * this->proc.plug.uiSpec.radioButtonHeight * this->uiScale));
   }
 }
@@ -497,16 +547,34 @@ void NtPluginAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
 }
 
 void NtPluginAudioProcessorEditor::changeListenerCallback(
-    juce::ChangeBroadcaster* p_r) {
+    juce::ChangeBroadcaster* p_b) {
   for (size_t i = 0; i < this->proc.plug.radioButtons.size(); i++) {
     auto& r = this->allRadioButtons[i];
-    if (p_r != r.get()) { continue; }
+    if (p_b != r.get()) { continue; }
     auto p_val = this->proc.plug.radioButtons[i].p_val;
     if (!p_val) {
       DBG("RadioButton value is null.");
       continue;
     }
-    *p_val                        = r->val;
+    *p_val = r->val;
+    this->proc.plug.update();
+    this->proc.plug.uiNeedsUpdate = true;
+    return;
+  }
+  // TODO: Look at this mess...
+  for (size_t i = 0; i < this->proc.plug.toggleGroups.size(); i++) {
+    auto& g = this->allToggleGroups[i];
+    if (p_b != g.get()) { continue; }
+    for (size_t j = 0; j < this->proc.plug.toggleGroups[i].toggles.size();
+        j++) {
+      auto& t = this->proc.plug.toggleGroups[i].toggles[j];
+      if (!t.p_val) {
+        DBG("Toggle value in group is null.");
+        continue;
+      }
+      *t.p_val = g->toggles[j]->getToggleState();
+    }
+    this->proc.plug.update();
     this->proc.plug.uiNeedsUpdate = true;
     return;
   }

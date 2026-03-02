@@ -68,6 +68,11 @@ static inline ToggleSpec makeTmpToggle(std::string name, std::string option) {
   return { nullptr, "_rb:" + name + ":" + option };
 }
 
+struct ToggleGroupSpec {
+  std::string name;
+  std::vector<ToggleSpec> toggles;
+};
+
 /** Size of meter peak level array and thus max number of meters available. */
 constexpr int nMetersMax = 8;
 /**
