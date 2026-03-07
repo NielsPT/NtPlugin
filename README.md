@@ -70,6 +70,13 @@ cmake --build build
 in the terminal. This should build and install the simple gain knob example
 plugin.
 
+## Installation from source
+
+If you just want to install the included plugins, this can be done from source.
+The included `build_install.sh` script will do this for Mac and Linux once the
+[needed software](#install-needed-software) is installed. On Windows? You made
+your choice, you live with consequences.
+
 ## Usage
 
 - Create your plugin as `plugins/[name of your plugin].h` in the project
