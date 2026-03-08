@@ -98,8 +98,8 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
    * @brief List of all meters to be displayed in the UI.
    */
   std::vector<MeterSpec> meters = {
-    { "IN", .addRms = true },
-    { "OUT", .addRms = true, .hasScale = true },
+    { .name = "IN", .addRms = true },
+    { .name = "OUT", .hasScale = true, .addRms = true },
   };
 
   /**
