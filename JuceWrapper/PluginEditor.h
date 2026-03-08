@@ -69,8 +69,8 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   std::vector<std::unique_ptr<juce::Label>> allDropDownLabels;
   std::vector<std::unique_ptr<NtFx::RadioButtonSet>> allRadioButtons;
   std::vector<std::unique_ptr<juce::Label>> allRadioButtonLabels;
-  std::vector<std::unique_ptr<NtFx::ToggleSet>> allToggleGroups;
-  std::vector<std::unique_ptr<juce::Label>> allToggleGroupLabels;
+  std::vector<std::unique_ptr<NtFx::ToggleSet>> allToggleSets;
+  std::vector<std::unique_ptr<juce::Label>> allToggleSetLabels;
   std::vector<std::unique_ptr<juce::ComboBox>> titleBarDropDowns;
   std::vector<std::unique_ptr<juce::Label>> titleBarDropDownLabels;
   std::vector<
@@ -104,9 +104,7 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   void updateUi();
   void updateTitleBar(juce::Rectangle<int>& area);
   void updateMeters(juce::Rectangle<int>& area);
-  // void updateRightSideArea(juce::Rectangle<int>& area);
   void updateRightSideArea(juce::Rectangle<int>& area);
-  // void updateToggleGroups(juce::Rectangle<int>& area);
   void updateBottomRow(juce::Rectangle<int>& area);
   void updateSecondaryKnobs(juce::Rectangle<int>& area);
   void updatePrimaryKnobs(juce::Rectangle<int>& area);

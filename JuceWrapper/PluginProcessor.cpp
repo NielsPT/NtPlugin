@@ -177,7 +177,7 @@ void NtPluginAudioProcessor::setStateInformation(
   this->loadParameter(this->plug.toggles);
   this->loadParameter(this->plug.dropdowns);
   this->loadRadioButtons(this->plug.radioButtons);
-  this->loadToggleGroups(this->plug.toggleSets);
+  this->loadToggleSets(this->plug.toggleSets);
   auto par = this->paramLayout.getParameterAsValue("Oversampling");
   auto val = par.getValue();
   if (val) {
@@ -210,7 +210,7 @@ void NtPluginAudioProcessor::loadRadioButtons(
   }
 }
 
-void NtPluginAudioProcessor::loadToggleGroups(
+void NtPluginAudioProcessor::loadToggleSets(
     std::vector<NtFx::ToggleSetSpec>& v) {
   for (auto& p : v) {
     for (size_t i = 0; i < p.toggles.size(); i++) {

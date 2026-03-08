@@ -299,8 +299,8 @@ enhirets from the `NtPlugin` base plugin. The available vectors are:
 - `radioButtons` are placed in an area to the right of the main grid below each
   other in the order they are defined. They have the same underlying datatype as
   dropdowns and thus share the same members. Valued is an `int`.
-- `toggleGroups` is a vector of toggles grouped together in with a name. These
-  are placed in the right side column along with the radio buttons and look the
+- `toggleSets` is a vector of toggles grouped together in with a name. These are
+  placed in the right side column along with the radio buttons and look the
   same. Only difference is that more than one on no toggle can be enabled at any
   one time. Stored as i bunch of `bool`s.
 - `meters` are placed to the left. By default, an input and an output meter is

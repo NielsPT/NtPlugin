@@ -189,8 +189,8 @@ void NtPluginAudioProcessorEditor::initToggleGroup(NtFx::ToggleSetSpec& spec) {
                 .name,
             *p_group->toggles[i].get()));
   }
-  this->allToggleGroups.push_back(std::move(p_group));
-  this->allToggleGroupLabels.push_back(std::move(p_label));
+  this->allToggleSets.push_back(std::move(p_group));
+  this->allToggleSetLabels.push_back(std::move(p_label));
 }
 
 void NtPluginAudioProcessorEditor::initPrimaryKnob(
@@ -368,15 +368,15 @@ void NtPluginAudioProcessorEditor::updateRightSideArea(
   }
   // TODO: DRY
   for (size_t i = 0; i < this->proc.plug.toggleSets.size(); i++) {
-    this->allToggleGroupLabels[i]->setFont(juce::FontOptions(
+    this->allToggleSetLabels[i]->setFont(juce::FontOptions(
         this->proc.plug.uiSpec.defaultFontSize * this->uiScale));
     rightSideArea.removeFromTop(pad);
-    this->allToggleGroupLabels[i]->setBounds(rightSideArea.removeFromTop(
+    this->allToggleSetLabels[i]->setBounds(rightSideArea.removeFromTop(
         this->proc.plug.uiSpec.labelHeight * this->uiScale));
-    this->allToggleGroups[i]->uiScale = this->uiScale;
-    this->allToggleGroups[i]->updateUi();
-    this->allToggleGroups[i]->setBounds(
-        rightSideArea.removeFromTop(this->allToggleGroups[i]->toggles.size()
+    this->allToggleSets[i]->uiScale = this->uiScale;
+    this->allToggleSets[i]->updateUi();
+    this->allToggleSets[i]->setBounds(
+        rightSideArea.removeFromTop(this->allToggleSets[i]->toggles.size()
             * this->proc.plug.uiSpec.radioButtonHeight * this->uiScale));
   }
 }
@@ -563,7 +563,7 @@ void NtPluginAudioProcessorEditor::changeListenerCallback(
   }
   // TODO: Look at this mess...
   for (size_t i = 0; i < this->proc.plug.toggleSets.size(); i++) {
-    auto& g = this->allToggleGroups[i];
+    auto& g = this->allToggleSets[i];
     if (p_b != g.get()) { continue; }
     for (size_t j = 0; j < this->proc.plug.toggleSets[i].toggles.size(); j++) {
       auto& t = this->proc.plug.toggleSets[i].toggles[j];

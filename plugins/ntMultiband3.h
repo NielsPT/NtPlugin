@@ -115,23 +115,23 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
       { &this->feedbackEnable, "Feedback" },
       { &this->bypass, "Bypass" },
     };
-    this->toggleGroups = {
+    this->toggleSets = {
       { "Solo", {} },
       { "Mute", {} },
     };
     for (size_t i = 0; i < Bands::n; i++) {
-      this->toggleGroups[0].toggles.push_back({
+      this->toggleSets[0].toggles.push_back({
           .p_val = &this->solos[i],
           .name  = BandNames[i],
       });
-      this->toggleGroups[1].toggles.push_back({
+      this->toggleSets[1].toggles.push_back({
           .p_val = &this->mutesUi[i],
           .name  = BandNames[i],
       });
     }
     this->meters = {
-      { "IN", .addRms = true, .decay_s = 0.75 },
-      { "OUT", .addRms = true, .hasScale = true, .decay_s = 0.75 },
+      { .name = "IN", .addRms = true, .decay_s = 0.75 },
+      { .name = "OUT", .addRms = true, .hasScale = true, .decay_s = 0.75 },
     };
     for (int i = Bands::n - 1; i >= 0; i--) {
       this->meters.push_back({ this->BandNames[i], .invert = true });
