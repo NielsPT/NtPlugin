@@ -30,7 +30,7 @@ namespace NtFx {
 
 template <typename signal_t>
 static inline signal_t db(signal_t x) noexcept {
-  return signal_t(20.0) * std::log10(gcem::abs(x));
+  return signal_t(20.0) * gcem::log10(gcem::abs(x));
 }
 
 template <typename signal_t>
@@ -96,7 +96,7 @@ template <typename T>
 static inline T saw(T x) {
   const T alpha = 2 / GCEM_PI;
 
-  T x_ = std::fmod(x, static_cast<T>(2.0) * GCEM_PI);
+  T x_ = gcem::fmod(x, static_cast<T>(2.0) * GCEM_PI);
   x_   = (x_ < 0 ? x_ + 2 * GCEM_PI : x_);
   T y;
   if (x_ < 0.5 * GCEM_PI) {
