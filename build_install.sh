@@ -47,7 +47,7 @@ while IFS= read -r header_file; do
   echo "Processing plugin: $plugin_name, id: ${plugin_ids[$plugin_name]}"
 
   # Check if we have a stored ID for this plugin
-  local plugin_id=""
+  plugin_id=""
   if [ -n "${plugin_ids[$plugin_name]}" ]; then
     plugin_id="${plugin_ids[$plugin_name]}"
     echo "Reusing existing plugin ID: $plugin_id"
