@@ -4,3 +4,6 @@
 [submodule "lib/gcem"]
 	path = lib/gcem
 	url = https://github.com/kthohr/gcem.git
+[submodule "external/pluginval"]
+	path = external/pluginval
+	url = https://github.com/Tracktion/pluginval.git
