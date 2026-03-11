@@ -191,6 +191,8 @@ target_link_libraries(${NTFX_PLUGIN}
 )
 
 target_include_directories(${NTFX_PLUGIN} PRIVATE .. ../lib/gcem/include)
+add_subdirectory(external/pluginval)
+
 
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
 # into your build tree. This should be included with `#include "JuceHeader.h"`. The include path for
