@@ -270,3 +270,4 @@ __marimo__/
 *.code-workspace
 
 JuceWrapper/aax-sdk-*
+JuceWrapper/external/*
