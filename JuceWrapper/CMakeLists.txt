@@ -192,6 +192,8 @@ target_link_libraries(${NTFX_PLUGIN}
 )
 
 target_include_directories(${NTFX_PLUGIN} PRIVATE .. ../lib/gcem/include)
+add_subdirectory(external/pluginval)
+
 
 add_subdirectory(pluginval)
 add_subdirectory(tests)
