@@ -38,42 +38,33 @@
 #include "lib/UiSpec.h"
 
 namespace NtFx {
-struct RadioButtonSet : public juce::Component, public juce::ChangeBroadcaster {
-  std::vector<std::unique_ptr<Toggle>> toggles;
-  RadioButtonSetSpec& spec;
-  UiSpec& uiSpec;
-  static int id;
-  float uiScale = 1;
-  int val;
-  RadioButtonSet(RadioButtonSetSpec& spec, UiSpec& uiSpec)
-      : spec(spec), uiSpec(uiSpec), val(spec._defaultVal) {
-    this->id++;
-    for (size_t i = 0; i < spec.options.size(); i++) {
-      auto option   = spec.options[i];
-      auto p_toggle = std::make_unique<Toggle>(option);
-      this->addAndMakeVisible(p_toggle.get());
-      p_toggle->setButtonText(option);
-      p_toggle->setClickingTogglesState(true);
-      p_toggle->setToggleable(true);
-      p_toggle->setRadioGroupId(this->id);
-      p_toggle->onClick = [this, i]() { this->toggleStateChanged(i); };
-      toggles.push_back(std::move(p_toggle));
-    }
-  }
-  void resized() override { this->updateUi(); }
 
-  void toggleStateChanged(int idx) {
-    this->val = idx;
-    this->sendChangeMessage();
+struct ToggleSetBase : public juce::Component, public juce::ChangeBroadcaster {
+  UiSpec& uiSpec;
+  std::vector<std::unique_ptr<Toggle>> toggles;
+
+  float uiScale = 1;
+  ToggleSetBase(UiSpec& uiSpec) : uiSpec(uiSpec) { }
+  std::unique_ptr<Toggle> makeToggle(std::string option) {
+    auto p_toggle = std::make_unique<Toggle>(option);
+    this->addAndMakeVisible(p_toggle.get());
+    p_toggle->setButtonText(option);
+    p_toggle->setClickingTogglesState(true);
+    p_toggle->setToggleable(true);
+    return std::move(p_toggle);
   }
+
+  virtual void updateToggleStates(int i) { };
+
+  void resized() override { this->updateUi(); }
 
   void updateUi() {
     auto area = this->getLocalBounds();
     auto w    = area.getWidth();
     auto h    = area.getHeight();
     auto n    = this->toggles.size();
-    float pad = 3 * this->uiScale;
     if (!w || !h || !n) { return; }
+    float pad = 3 * this->uiScale;
     for (size_t i = 0; i < n; i++) {
       auto p_toggle      = this->toggles[i].get();
       p_toggle->colour   = uiSpec.foregroundColour;
@@ -82,12 +73,47 @@ struct RadioButtonSet : public juce::Component, public juce::ChangeBroadcaster {
           area.removeFromTop(this->uiSpec.radioButtonHeight * this->uiScale);
       toggleArea.reduce(pad, pad);
       p_toggle->setBounds(toggleArea);
-      if (this->val == i) {
-        p_toggle->setToggleState(
-            true, juce::NotificationType::dontSendNotification);
-      }
+      this->updateToggleStates(i);
     }
     this->repaint();
+  }
+};
+
+struct ToggleSet : public ToggleSetBase {
+  ToggleSetSpec spec;
+  ToggleSet(ToggleSetSpec spec, UiSpec& uiSpec)
+      : spec(spec), ToggleSetBase(uiSpec) {
+    for (size_t i = 0; i < spec.toggles.size(); i++) {
+      auto p_toggle     = this->makeToggle(spec.toggles[i].name);
+      p_toggle->onClick = [this]() { this->sendChangeMessage(); };
+      toggles.push_back(std::move(p_toggle));
+    }
+  }
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ToggleSet)
+};
+
+struct RadioButtonSet : public ToggleSetBase {
+  RadioButtonSetSpec& spec;
+  int val;
+  RadioButtonSet(RadioButtonSetSpec& spec, UiSpec& uiSpec, int id)
+      : spec(spec), ToggleSetBase(uiSpec), val(spec._defaultVal) {
+    for (size_t i = 0; i < spec.options.size(); i++) {
+      auto option   = spec.options[i];
+      auto p_toggle = this->makeToggle(option);
+      p_toggle->setRadioGroupId(id);
+      p_toggle->onClick = [this, i]() {
+        this->val = i;
+        this->sendChangeMessage();
+      };
+      toggles.push_back(std::move(p_toggle));
+    }
+  }
+
+  virtual void updateToggleStates(int i) override {
+    if (this->val == i) {
+      this->toggles[i]->setToggleState(
+          true, juce::NotificationType::dontSendNotification);
+    }
   }
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RadioButtonSet)
 };

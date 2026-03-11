@@ -39,6 +39,7 @@
 #include <juce_graphics/juce_graphics.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_gui_extra/juce_gui_extra.h>
+#include <memory>
 
 struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
                                       private juce::Timer,
@@ -68,6 +69,8 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   std::vector<std::unique_ptr<juce::Label>> allDropDownLabels;
   std::vector<std::unique_ptr<NtFx::RadioButtonSet>> allRadioButtons;
   std::vector<std::unique_ptr<juce::Label>> allRadioButtonLabels;
+  std::vector<std::unique_ptr<NtFx::ToggleSet>> allToggleSets;
+  std::vector<std::unique_ptr<juce::Label>> allToggleSetLabels;
   std::vector<std::unique_ptr<juce::ComboBox>> titleBarDropDowns;
   std::vector<std::unique_ptr<juce::Label>> titleBarDropDownLabels;
   std::vector<
@@ -79,9 +82,9 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   std::vector<
       std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>>
       allDropDownAttachments;
-  std::vector<
-      std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>>
-      allRadioButtonAttachments;
+  // std::vector<
+  //     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>>
+  //     allRadioButtonAttachments;
 
   std::vector<juce::Rectangle<int>> borderedAreas;
   std::vector<juce::Rectangle<int>> grayAreas;
@@ -101,7 +104,7 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   void updateUi();
   void updateTitleBar(juce::Rectangle<int>& area);
   void updateMeters(juce::Rectangle<int>& area);
-  void updateRadioButtons(juce::Rectangle<int>& area);
+  void updateRightSideArea(juce::Rectangle<int>& area);
   void updateBottomRow(juce::Rectangle<int>& area);
   void updateSecondaryKnobs(juce::Rectangle<int>& area);
   void updatePrimaryKnobs(juce::Rectangle<int>& area);
@@ -111,6 +114,8 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
       std::unique_ptr<juce::Slider>& p_slider,
       std::unique_ptr<juce::Label>& p_label);
   void initToggle(NtFx::ToggleSpec& spec);
+  void _initToggle(NtFx::Toggle* p_toggle, NtFx::ToggleSpec& spec);
+  void initToggleGroup(NtFx::ToggleSetSpec& spec);
   void initDropDown(NtFx::DropDownSpec& p_spec, bool addToTitleBar = false);
   void initRadioButton(NtFx::RadioButtonSetSpec& p_spec);
   void updateColours();

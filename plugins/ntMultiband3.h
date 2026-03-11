@@ -41,22 +41,28 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
   bool feedbackEnable { false };
   bool bypass { false };
 
+  std::array<bool, Bands::n> solos   = { false, false, false };
+  std::array<bool, Bands::n> mutesUi = { false, false, false };
+  std::array<bool, Bands::n> mutes   = { false, false, false };
+
   std::array<NtFx::ScSettings<signal_t>, 3> scSettings;
   std::array<NtFx::PeakSideChainLinear<signal_t>, 3> sc;
   // TODO: Add makeup gain to sidechain?
-  std::array<signal_t, 3> makeup_db;
-  std::array<signal_t, 3> makeup_lin;
-  std::array<NtFx::Stereo<signal_t>, 3> fbState;
+  std::array<signal_t, Bands::n> makeup_db;
+  std::array<signal_t, Bands::n> makeup_lin;
+  std::array<NtFx::Stereo<signal_t>, Bands::n> fbState;
   const std::array<std::string, Bands::n> BandNames = { "High", "Mid", "Low" };
-  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::lpf> loFlt;
+  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::lpfZero>
+      loFlt;
   NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::hpf>
       loMidFlt;
-  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::lpf>
+  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::lpfZero>
       hiMidFlt;
   NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::hpf> hiFlt;
   ntMultiband3() : sc { scSettings[0], scSettings[1], scSettings[2] } {
-    this->uiSpec.maxColumns = 5;
-    this->uiSpec.maxRows    = Bands::n;
+    this->uiSpec.maxColumns         = 5;
+    this->uiSpec.maxRows            = Bands::n;
+    this->uiSpec.defaultWindowWidth = 1200;
 
     for (size_t i = 0; i < Bands::n; i++) {
       this->primaryKnobs.push_back({
@@ -109,9 +115,23 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
       { &this->feedbackEnable, "Feedback" },
       { &this->bypass, "Bypass" },
     };
+    this->toggleSets = {
+      { "Solo", {} },
+      { "Mute", {} },
+    };
+    for (size_t i = 0; i < Bands::n; i++) {
+      this->toggleSets[0].toggles.push_back({
+          .p_val = &this->solos[i],
+          .name  = BandNames[i],
+      });
+      this->toggleSets[1].toggles.push_back({
+          .p_val = &this->mutesUi[i],
+          .name  = BandNames[i],
+      });
+    }
     this->meters = {
-      { "IN", .addRms = true },
-      { "OUT", .addRms = true, .hasScale = true },
+      { .name = "IN", .addRms = true, .decay_s = 0.75 },
+      { .name = "OUT", .addRms = true, .hasScale = true, .decay_s = 0.75 },
     };
     for (int i = Bands::n - 1; i >= 0; i--) {
       this->meters.push_back({ this->BandNames[i], .invert = true });
@@ -144,7 +164,7 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
     for (size_t i = 0; i < Bands::n; i++) {
       auto tmp         = xComp[i] * gr[i];
       this->fbState[i] = tmp;
-      yComp += tmp * this->makeup_lin[i];
+      if (!this->mutes[i]) { yComp += tmp * this->makeup_lin[i]; }
     }
     auto y = yComp * this->ouputGain_lin;
     this->template updatePeakLevel<0>(x);
@@ -168,6 +188,13 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
     for (size_t i = 0; i < Bands::n; i++) {
       this->makeup_lin[i] = NtFx::invDb(makeup_db[i]);
       this->sc[i].update();
+    }
+    for (size_t i = 0; i < Bands::n; i++) { this->mutes[i] = this->mutesUi[i]; }
+    for (size_t i = 0; i < Bands::n; i++) {
+      if (!this->solos[i]) { continue; }
+      for (size_t j = 0; j < Bands::n; j++) {
+        if (i != j && !this->solos[j]) { this->mutes[j] = true; }
+      }
     }
   }
 

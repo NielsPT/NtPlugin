@@ -29,6 +29,8 @@
 
 #include <algorithm>
 
+enum scMode { feedForward = 0, feedback, external };
+
 template <typename signal_t>
 struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   NtFx::ScSettings<signal_t> scSettings;
@@ -40,12 +42,15 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   signal_t makeup_db   = signal_t(0.0);
   signal_t mix_percent = signal_t(100.0);
 
-  bool linEnable      = false;
-  bool feedbackEnable = false;
+  int linEnable = 0;
+  int rmsEnable = 0;
+  int scMode    = 0;
+  // int extScEnable     = 0;
+  // bool hey;
+  // bool feedbackEnable = false;
   bool scListenEnable = false;
   bool linkEnable     = false;
   bool clip           = true;
-  bool rmsEnable      = false;
   bool bypassEnable   = false;
 
   signal_t mix_lin               = signal_t(1.0);
@@ -138,8 +143,8 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
 
     this->toggles = {
       // { .p_val = &this->rmsEnable, .name = "RMS" },
-      { .p_val = &this->feedbackEnable, .name = "Feedback" },
-      // { .p_val = &this->linEnable, .name = "Linear" },
+      // { .p_val = &this->feedbackEnable, .name = "Feedback" },
+      // { .p_val = &this->hey, .name = "Hey" },
       { .p_val = &this->linkEnable, .name = "Link" },
       { .p_val = &this->scListenEnable, .name = "SC_Listen" },
       { .p_val = &this->clip, .name = "Softclip" },
@@ -155,6 +160,11 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
         .p_val   = (int*)&this->rmsEnable,
         .name    = "Sensor",
         .options = { "Peak", "RMS" },
+    });
+    this->radioButtons.push_back({
+        .p_val   = (int*)&this->scMode,
+        .name    = "Side Chain",
+        .options = { "Internal", "Feedback", "External" },
     });
 
     this->meters = {
@@ -178,7 +188,11 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     NtFx::ensureFinite(x);
     NtFx::ensureFinite(this->fbState);
     NtFx::Stereo<signal_t> xHpf = x;
-    if (this->feedbackEnable) { xHpf = this->fbState; }
+    if (this->scMode == scMode::feedback) {
+      xHpf = this->fbState;
+    } else if (this->scMode == scMode::external) {
+      xHpf = this->xSc;
+    }
 
     NtFx::Stereo<signal_t> xBoost = hpf.process(xHpf);
     NtFx::Stereo<signal_t> xSc    = boost.process(xBoost);

@@ -36,12 +36,25 @@ consteval inline std::array<signal_t, N + 1>
 calculateSoftClipCoeffs() noexcept {
   std::array<signal_t, N + 1> a_n;
   for (int n = 0; n < N + 1; n++) {
-    a_n[n] = (gcem::pow(-1, n) * factorial((2 * N) + 1)
-        / (gcem::pow(4, N) * factorial(N) * (2 * n + 1) * factorial(n)
-            * factorial(N - n)));
+    a_n[n] = gcem::pow(-1, n) * gcem::tgamma((2 * N + 1) + 1)
+        / (gcem::pow(4, N) * gcem::tgamma(N + 1) * (2 * n + 1)
+            * gcem::tgamma(n + 1) * gcem::tgamma(N - n + 1));
   }
   return a_n;
 }
+
+// template <typename signal_t, int N>
+// consteval inline std::array<signal_t, N + 1>
+// calculateSoftClipCoeffs() noexcept {
+//   std::array<signal_t, N + 1> a_n;
+//   for (int n = 0; n < N + 1; n++) {
+//     a_n[n] = gcem::pow(signal_t(-1), n) * NtFx::factorial(2 * N + 1)
+//         / (gcem::pow(signal_t(4), N) * NtFx::factorial(N)
+//             * (signal_t(2) * n + signal_t(1)) * NtFx::factorial(n)
+//             * NtFx::factorial(N - n));
+//   }
+//   return a_n;
+// }
 
 template <typename signal_t>
 constexpr std::array<signal_t, 4> coeffsSeventh =

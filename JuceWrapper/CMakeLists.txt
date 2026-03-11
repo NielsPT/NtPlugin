@@ -87,8 +87,9 @@ function(generate_plugin_id OUT)
 endfunction()
 
 
-
-if(NOT DEFINED NTFX_PLUGIN_CODE OR "${NTFX_PLUGIN_CODE}" STREQUAL "")
+if(DEFINED NTFX_ID)
+  set(NTFX_PLUGIN_CODE ${NTFX_ID})
+elseif(NOT DEFINED NTFX_PLUGIN_CODE OR "${NTFX_PLUGIN_CODE}" STREQUAL "")
   generate_plugin_id(NTFX_PLUGIN_CODE)
 endif()
 

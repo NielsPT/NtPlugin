@@ -64,9 +64,15 @@ struct ToggleSpec {
   bool _defaultVal { false };
 };
 
-static inline ToggleSpec makeTmpToggle(std::string name, std::string option) {
-  return { nullptr, "_rb:" + name + ":" + option };
+static inline ToggleSpec makeTmpToggle(
+    std::string name, std::string option, std::string prefix) {
+  return { nullptr, prefix + ":" + name + ":" + option };
 }
+
+struct ToggleSetSpec {
+  std::string name;
+  std::vector<ToggleSpec> toggles;
+};
 
 /** Size of meter peak level array and thus max number of meters available. */
 constexpr int nMetersMax = 8;
@@ -173,11 +179,11 @@ struct UiSpec {
   /** Height of all text labels in the UI. */
   float labelHeight { 20 };
   /** Height of toggle row at the bottom of the UI. */
-  float toggleHeight { 50 };
+  float toggleHeight { 45 };
   /** Height of each separate radio button. */
   float radioButtonHeight { 25 };
   /** Width of the radio buttons ares to the right of the UI. */
-  float radioButtonAreaWidth { 100 };
+  float radioButtonAreaWidth { 120 };
   /** Height or row of knobs in grid in UI. */
   float knobHeight { 200 };
   /** Width of secondary knobs in UI. */

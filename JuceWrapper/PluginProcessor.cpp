@@ -19,6 +19,7 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/system/juce_PlatformDefs.h"
 #include "lib/SampleRateConverter.h"
 #include "lib/Stereo.h"
@@ -30,23 +31,15 @@
 #include <vector>
 
 NtPluginAudioProcessor::NtPluginAudioProcessor()
-#ifndef JucePlugin_PreferredChannelConfigurations
     : AudioProcessor(BusesProperties()
-  #if !JucePlugin_IsMidiEffect
-    #if !JucePlugin_IsSynth
               .withInput("Input", juce::AudioChannelSet::stereo(), true)
-    #endif
               .withOutput("Output", juce::AudioChannelSet::stereo(), true)
-  #endif
-              )
-#endif
-      ,
+              .withInput("SideChain", juce::AudioChannelSet::mono(), true)),
       paramLayout(*this,
           nullptr,
           juce::Identifier(JucePlugin_Name),
           createParameterLayout()),
-      src(plug) {
-}
+      src(plug) { }
 
 NtPluginAudioProcessor::~NtPluginAudioProcessor() { }
 
@@ -91,7 +84,7 @@ void NtPluginAudioProcessor::changeProgramName(
 void NtPluginAudioProcessor::prepareToPlay(
     double sampleRate, int samplesPerBlock) {
   this->fsBase = sampleRate;
-  this->updateOversampling(1);
+  this->updateOversampling();
   this->plug.xRms[0].reset(sampleRate);
   this->plug.xRms[1].reset(sampleRate);
 }
@@ -139,11 +132,22 @@ void NtPluginAudioProcessor::processBlock(
   }
   auto leftBuffer  = buffer.getWritePointer(0);
   auto rightBuffer = buffer.getWritePointer(1);
+
+  bool scConnected = false;
+  const float* scBuffer;
+  const auto& sidechainBus = this->getBusBuffer(buffer, true, 1);
+  if (sidechainBus.getNumChannels() > 0) {
+    scConnected = true;
+    scBuffer    = sidechainBus.getReadPointer(0);
+  }
   for (size_t i = 0; i < buffer.getNumSamples(); i++) {
     NtFx::Stereo<float> x { leftBuffer[i], rightBuffer[i] };
+    if (scConnected) { this->plug.xSc = scBuffer[i]; }
     auto y = this->src.process(x);
-    if (this->plug.meters[0].addRms) { this->plug.xRms[0].process(x); }
-    if (this->plug.meters[1].addRms) { this->plug.xRms[1].process(y); }
+    if (this->plug.meters.size() <= 2) {
+      if (this->plug.meters[0].addRms) { this->plug.xRms[0].process(x); }
+      if (this->plug.meters[1].addRms) { this->plug.xRms[1].process(y); }
+    }
     leftBuffer[i]  = y.l;
     rightBuffer[i] = y.r;
   }
@@ -173,7 +177,13 @@ void NtPluginAudioProcessor::setStateInformation(
   this->loadParameter(this->plug.toggles);
   this->loadParameter(this->plug.dropdowns);
   this->loadRadioButtons(this->plug.radioButtons);
-  // TODO: Oversampling is not loaded.
+  this->loadToggleSets(this->plug.toggleSets);
+  auto par = this->paramLayout.getParameterAsValue("Oversampling");
+  auto val = par.getValue();
+  if (val) {
+    this->src.mode = NtFx::Src::oversamplingMode((int)val);
+    this->src.reset(this->fsBase);
+  }
 }
 
 template <typename T>
@@ -192,7 +202,7 @@ void NtPluginAudioProcessor::loadRadioButtons(
     int val;
     for (size_t i = 0; i < p.options.size(); i++) {
       auto par = this->paramLayout.getParameterAsValue(
-          NtFx::makeTmpToggle(p.name, p.options[i]).name);
+          NtFx::makeTmpToggle(p.name, p.options[i], "radioButton").name);
       if (par.getValue()) { val = i; }
     }
     *p.p_val = val + 1;
@@ -200,10 +210,22 @@ void NtPluginAudioProcessor::loadRadioButtons(
   }
 }
 
+void NtPluginAudioProcessor::loadToggleSets(
+    std::vector<NtFx::ToggleSetSpec>& v) {
+  for (auto& p : v) {
+    for (size_t i = 0; i < p.toggles.size(); i++) {
+      auto mangledName =
+          NtFx::makeTmpToggle(p.name, p.toggles[i].name, "toggleGroup").name;
+      auto par            = this->paramLayout.getParameterAsValue(mangledName);
+      *p.toggles[i].p_val = par.getValue();
+      DBG("Loaded '" << mangledName << "': " << float(*p.toggles[i].p_val));
+    }
+  }
+}
+
 void NtPluginAudioProcessor::updateOversampling(int mode) {
-  this->src.update(
-      static_cast<NtFx::Src::oversamplingMode>(mode), this->fsBase);
-  this->src.reset();
+  if (mode) { this->src.mode = NtFx::Src::oversamplingMode(mode); }
+  this->src.reset(this->fsBase);
   this->plug.reset(this->src.coeffs.fsHi);
 }
 
@@ -212,9 +234,6 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
   return new NtPluginAudioProcessor();
 }
 
-// This is all fine, and stores to XML and reads from XML when the UI is
-// initialized, but not when the plugin editor has not been opened in the
-// session. How do we get the values on load?
 juce::AudioProcessorValueTreeState::ParameterLayout
 NtPluginAudioProcessor::createParameterLayout() {
   int i = 1;
@@ -224,13 +243,21 @@ NtPluginAudioProcessor::createParameterLayout() {
   this->createParameters<bool>(this->plug.toggles, parameters, i);
   this->createParameters<int>(this->plug.dropdowns, parameters, i);
   this->createParameters<int>(this->titleBarSpec.dropDowns, parameters, i);
-  std::vector<NtFx::ToggleSpec> vRadioButtonParams;
+  // TODO: Look at this. Please DRY!
+  std::vector<NtFx::ToggleSpec> vTmpToggles;
   for (auto& r : this->plug.radioButtons) {
-    vRadioButtonParams.clear();
+    vTmpToggles.clear();
     for (auto& option : r.options) {
-      vRadioButtonParams.push_back(NtFx::makeTmpToggle(r.name, option));
+      vTmpToggles.push_back(NtFx::makeTmpToggle(r.name, option, "radioButton"));
     }
-    this->createParameters<bool>(vRadioButtonParams, parameters, i);
+    this->createParameters<bool>(vTmpToggles, parameters, i);
+  }
+  for (auto& r : this->plug.toggleSets) {
+    vTmpToggles.clear();
+    for (auto& t : r.toggles) {
+      vTmpToggles.push_back(NtFx::makeTmpToggle(r.name, t.name, "toggleGroup"));
+    }
+    this->createParameters<bool>(vTmpToggles, parameters, i);
   }
   DBG("Created " + std::to_string(i - 1) + " paramters.");
   return parameters;
