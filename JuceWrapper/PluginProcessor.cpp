@@ -76,7 +76,7 @@ int NtPluginAudioProcessor::getNumPrograms() { return 1; }
 int NtPluginAudioProcessor::getCurrentProgram() { return 0; }
 void NtPluginAudioProcessor::setCurrentProgram(int index) { }
 const juce::String NtPluginAudioProcessor::getProgramName(int index) {
-  return "Not a program";
+  return "Default";
 }
 void NtPluginAudioProcessor::changeProgramName(
     int index, const juce::String& newName) { }
