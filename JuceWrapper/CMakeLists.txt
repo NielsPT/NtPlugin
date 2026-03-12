@@ -32,7 +32,7 @@ cmake_minimum_required(VERSION 3.22)
 # directories, and the current project version. This is a standard CMake command.
 
 project(${NTFX_PLUGIN} VERSION 0.1.0)
-
+enable_testing()
 # If you've installed JUCE somehow (via a package manager, or directly using the CMake install
 # target), you'll need to tell this project that it depends on the installed copy of JUCE. If you've
 # included JUCE directly in your source tree (perhaps as a submodule), you'll need to tell CMake to
@@ -192,8 +192,15 @@ target_link_libraries(${NTFX_PLUGIN}
 )
 
 target_include_directories(${NTFX_PLUGIN} PRIVATE .. ../lib/gcem/include)
-add_subdirectory(external/pluginval)
 
+add_subdirectory(external/pluginval)
+add_subdirectory(tests)
+
+# Verify 
+# add_custom_target(verify_pluginval
+#     COMMAND $<TARGET_FILE:pluginval> --help | grep "JUCE v${JUCE_VERSION}"
+#     DEPENDS pluginval
+#     COMMENT "Verify pluginval built with JUCE ${JUCE_VERSION}")
 
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
 # into your build tree. This should be included with `#include "JuceHeader.h"`. The include path for
