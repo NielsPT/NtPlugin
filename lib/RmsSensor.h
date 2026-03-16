@@ -42,24 +42,18 @@ template <typename signal_t,
     int maxT_ms           = 1000,
     int maxSampleDLineLen = 192 * 8>
 struct RmsSensor : public Component<signal_t> {
-  /** @brief Flag to reset accumulators */
-  bool resetAccums = false;
-  /** @brief Current time window in milliseconds */
-  int msDLineLen = maxT_ms;
-  /** @brief Current length of the sample delay line */
-  int sampleDLineLen = maxSampleDLineLen;
-  /** @brief Sample delay line for storing recent signal values */
-  std::array<signal_t, maxSampleDLineLen> samleDLine;
-  /** @brief Millisecond delay line for storing accumulated sample values */
-  std::array<signal_t, maxT_ms> msDLine;
-  /** @brief Accumulator for current sample values */
-  signal_t sampleAccum;
-  /** @brief Accumulator for millisecond-level values */
-  signal_t msAccum;
-  /** @brief Current index in the sample delay line */
-  int sampleIdx;
-  /** @brief Current index in the millisecond delay line */
-  int msIdx;
+  bool resetAccums = false;   ///< Flag to reset accumulators
+  int msDLineLen   = maxT_ms; ///< Current time window in milliseconds
+  int sampleDLineLen =
+      maxSampleDLineLen; ///< Current length of the sample delay line
+  std::array<signal_t, maxSampleDLineLen>
+      samleDLine; ///< Sample delay line for storing recent signal values
+  std::array<signal_t, maxT_ms> msDLine; ///< Millisecond delay line for
+                                         ///< storing accumulated sample values
+  signal_t sampleAccum; ///< Accumulator for current sample values
+  signal_t msAccum;     ///< Accumulator for millisecond-level values
+  int sampleIdx;        ///< Current index in the sample delay line
+  int msIdx;            ///< Current index in the millisecond delay line
 
   /**
    * @brief Process the input signal and update RMS calculation

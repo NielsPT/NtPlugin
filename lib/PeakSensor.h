@@ -123,6 +123,8 @@ struct PeakSensorStereo
   }
 };
 
+constexpr int defaultPeakSensorDelayLineLength = 192 * 10 * 8;
+
 /**
  * @brief Peak sensor with hold. Output will remain at the max value for
  * tHold_ms miliseconds when after peak and the curve will be delayed by the
@@ -131,7 +133,8 @@ struct PeakSensorStereo
  * @tparam signal_t Audio signal type.
  * @tparam delayLineLength Maximum delay time.
  */
-template <typename signal_t, int delayLineLength = 192 * 10 * 8>
+template <typename signal_t,
+    int delayLineLength = defaultPeakSensorDelayLineLength>
 struct PeakHoldSensor : public PeakSensor<signal_t> {
   std::array<signal_t, delayLineLength> _dl;
   signal_t tHold_ms { 10 };
@@ -175,7 +178,8 @@ struct PeakHoldSensor : public PeakSensor<signal_t> {
   }
 };
 
-template <typename signal_t, int delayLineLength>
+template <typename signal_t,
+    int delayLineLength = defaultPeakSensorDelayLineLength>
 struct PeakHoldSensorStereo : public StereoComponent<signal_t,
                                   PeakHoldSensor<signal_t, delayLineLength>> {
   /**
