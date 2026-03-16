@@ -30,6 +30,8 @@
 #include "lib/Component.h"
 #include "lib/Stereo.h"
 #include "lib/utils.h"
+#include <array>
+#include <cstddef>
 
 namespace NtFx {
 
@@ -120,46 +122,82 @@ struct PeakSensorStereo
     this->r.tPeak_ms = t_ms;
   }
 };
+
+/**
+ * @brief Peak sensor with hold. Output will remain at the max value for
+ * tHold_ms miliseconds when after peak and the curve will be delayed by the
+ * same amount time when going down.
+ *
+ * @tparam signal_t Audio signal type.
+ * @tparam delayLineLength Maximum delay time.
+ */
+template <typename signal_t, int delayLineLength = 192 * 10 * 8>
+struct PeakHoldSensor : public PeakSensor<signal_t> {
+  std::array<signal_t, delayLineLength> _dl;
+  signal_t tHold_ms { 10 };
+  signal_t _xMax { 0 };
+  int _idx { 0 };
+  int _nHold { 0 };
+  int _holdCnt { 0 };
+
+  /**
+   * @brief Processes signal with peak sensor with hold.
+   *
+   * @param x Input.
+   * @return signal_t Sensor output.
+   */
+  virtual signal_t process(signal_t x) noexcept override {
+    auto _x      = this->_peakSensor(this->_alpha, this->_state, x);
+    auto readIdx = this->_dl[this->_idx] - _nHold;
+    readIdx      = (readIdx < 0 ? readIdx + delayLineLength : readIdx);
+    this->_dl[this->_idx++] = _x;
+    if (_x > this->_xMax) {
+      this->_holdCnt = _nHold;
+      this->_xMax    = _x;
+      return _x;
+    }
+    if (this->_holdCnt > 0) {
+      this->_holdCnt--;
+      return _xMax;
+    }
+    return this->_dl[readIdx];
+  }
+
+  /**
+   * @brief Calculates coefficients.
+   *
+   */
+  virtual void update() noexcept override {
+    this->_nHold = this->tHold_ms * this->fs;
+    this->_nHold =
+        (this->_nHold >= delayLineLength ? delayLineLength - 1 : this->_nHold);
+    this->PeakSensor<signal_t>::update();
+  }
+};
+
+template <typename signal_t, int delayLineLength>
+struct PeakHoldSensorStereo : public StereoComponent<signal_t,
+                                  PeakHoldSensor<signal_t, delayLineLength>> {
+  /**
+   * @brief Sets the time constant for peak detection in milliseconds.
+   *
+   * This method updates the time constant for both the left and right channels.
+   *
+   * @param t_ms The time constant in milliseconds.
+   */
+  void setT_ms(signal_t t_ms) {
+    this->l.tPeak_ms = t_ms;
+    this->r.tPeak_ms = t_ms;
+  }
+
+  /**
+   * @brief Set the hold time in miliseconds.
+   *
+   * @param tHold_ms Hold time.
+   */
+  void setTHold_ms(signal_t tHold_ms) {
+    this->l.tHold_ms = tHold_ms;
+    this->r.tHold_ms = tHold_ms;
+  }
+};
 }
-
-// #include "gcem.hpp"
-// #include "lib/Component.h"
-// #include "lib/Stereo.h"
-// #include "lib/utils.h"
-
-// namespace NtFx {
-
-// template <typename signal_t>
-// struct PeakSensor : public Component<signal_t> {
-//   signal_t tPeak_ms;
-//   signal_t alpha;
-//   signal_t state;
-
-//   virtual signal_t process(signal_t x) noexcept override {
-//     return this->_peakSensor(this->alpha, this->state, x);
-//   }
-
-//   virtual void update() noexcept override {
-//     this->alpha = gcem::exp(-2200.0 / (this->tPeak_ms * this->fs));
-//   }
-
-//   static inline signal_t _peakSensor(
-//       signal_t alpha, signal_t& p_state, signal_t x) {
-//     auto xAbs            = gcem::abs(x);
-//     signal_t sensRelease = alpha * p_state + (1 - alpha) * xAbs;
-//     signal_t ySens       = gcem::max(xAbs, sensRelease);
-//     ensureFinite(ySens);
-//     p_state = ySens;
-//     return ySens;
-//   }
-// };
-
-// template <typename signal_t>
-// struct PeakSensorStereo
-//     : public StereoComponent<signal_t, PeakSensor<signal_t>> {
-//   void setT_ms(signal_t t_ms) {
-//     this->l.tPeak_ms = t_ms;
-//     this->r.tPeak_ms = t_ms;
-//   }
-// };
-// }

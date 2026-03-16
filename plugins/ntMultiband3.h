@@ -16,6 +16,11 @@
  *
  * You are free to download, build and use this code for commercial
  * purposes. Just don't resell it or a build of it, modified or otherwise.
+ **/
+
+/**
+ * @brief A 3-band multiband compressor with first order crossovers. Uses a
+ * linear domain, peak sensing sidechain for each band.
  *
  **/
 
@@ -116,8 +121,8 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
       { &this->bypass, "Bypass" },
     };
     this->toggleSets = {
-      { "Solo", {} },
-      { "Mute", {} },
+      { "Solo", { } },
+      { "Mute", { } },
     };
     for (size_t i = 0; i < Bands::n; i++) {
       this->toggleSets[0].toggles.push_back({
@@ -189,13 +194,7 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
       this->makeup_lin[i] = NtFx::invDb(makeup_db[i]);
       this->sc[i].update();
     }
-    for (size_t i = 0; i < Bands::n; i++) { this->mutes[i] = this->mutesUi[i]; }
-    for (size_t i = 0; i < Bands::n; i++) {
-      if (!this->solos[i]) { continue; }
-      for (size_t j = 0; j < Bands::n; j++) {
-        if (i != j && !this->solos[j]) { this->mutes[j] = true; }
-      }
-    }
+    this->_updateMutes();
   }
 
   void reset(float fs) noexcept override {
@@ -206,5 +205,15 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
     this->loFlt.reset(this->fs);
     for (size_t i = 0; i < Bands::n; i++) { this->sc[i].reset(this->fs); }
     this->update();
+  }
+
+  void _updateMutes() {
+    for (size_t i = 0; i < Bands::n; i++) { this->mutes[i] = this->mutesUi[i]; }
+    for (size_t i = 0; i < Bands::n; i++) {
+      if (!this->solos[i]) { continue; }
+      for (size_t j = 0; j < Bands::n; j++) {
+        if (i != j && !this->solos[j]) { this->mutes[j] = true; }
+      }
+    }
   }
 };
