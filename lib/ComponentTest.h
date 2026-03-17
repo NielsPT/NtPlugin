@@ -44,6 +44,7 @@ namespace NtFx {
  */
 template <typename signal_t>
 struct ComponentTest {
+  static int nComponents;
   static int nTests;                ///< Total tests run.
   static int nSuccessful;           ///< Number of successful tests.
   Component<Stereo<signal_t>>& cut; ///< Component under test.
@@ -53,7 +54,7 @@ struct ComponentTest {
    *
    * @param cut Component to be tested.
    */
-  ComponentTest(Component<Stereo<signal_t>>& cut) : cut(cut) { nTests++; }
+  ComponentTest(Component<Stereo<signal_t>>& cut) : cut(cut) { nComponents++; }
 
   /**
    * @brief Runs test for component.
@@ -73,6 +74,8 @@ struct ComponentTest {
       std::string yFilePath   = "",
       std::string expFilePath = "") {
     std::cout << "Running test " + testName + "." << std::endl;
+    this->nTests++;
+    this->cut.update();
     if (!std::filesystem::exists(xFilePath)) {
       std::cout << "Input file not found. Aborting test." << std::endl;
       return false;
@@ -105,7 +108,7 @@ struct ComponentTest {
       if (e.size() != y.size()) {
         std::cout
             << "Expected result has different length that result. Aborting."
-            << std::endl;
+            << " e: " << e.size() << ", y: " << y.size() << std::endl;
         return false;
       }
       for (size_t i = 0; i < x.size(); i++) {

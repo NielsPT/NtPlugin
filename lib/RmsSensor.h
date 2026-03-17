@@ -65,6 +65,11 @@ struct RmsSensor : public Component<signal_t> {
    * @return The current RMS value
    */
   virtual signal_t process(signal_t x) noexcept override {
+    this->processDelayLine(x);
+    return this->getRms();
+  }
+
+  void processDelayLine(signal_t x) noexcept {
     auto x2 = x * x;
     if (x2 != x2) { x2 = signal_t(0.0); }
     this->sampleAccum += x2 - this->samleDLine[this->sampleIdx];
@@ -75,7 +80,6 @@ struct RmsSensor : public Component<signal_t> {
       this->msDLine[this->msIdx] = sampleAccum;
       if (++this->msIdx >= this->msDLineLen) { this->msIdx = 0; }
     }
-    return this->getRms();
   }
 
   /**
@@ -123,7 +127,6 @@ struct RmsSensor : public Component<signal_t> {
   signal_t getRms() const noexcept {
     signal_t y = gcem::sqrt(signal_t(2.0) * this->msAccum
         / signal_t(this->sampleDLineLen * this->msDLineLen));
-
     if (y != y) { y = signal_t(0.0); }
     return y;
   }

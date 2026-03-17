@@ -150,20 +150,21 @@ struct PeakHoldSensor : public PeakSensor<signal_t> {
    * @return signal_t Sensor output.
    */
   virtual signal_t process(signal_t x) noexcept override {
-    auto _x      = this->_peakSensor(this->_alpha, this->_state, x);
-    auto readIdx = this->_dl[this->_idx] - _nHold;
-    readIdx      = (readIdx < 0 ? readIdx + delayLineLength : readIdx);
+    auto _x = this->_peakSensor(this->_alpha, this->_state, x);
+
     this->_dl[this->_idx++] = _x;
-    if (_x > this->_xMax) {
-      this->_holdCnt = _nHold;
+    if (this->_idx >= delayLineLength) { this->_idx = 0; }
+    if (_x >= this->_xMax) {
+      this->_holdCnt = 0;
       this->_xMax    = _x;
-      return _x;
+    } else if (this->_holdCnt < this->_nHold) {
+      this->_holdCnt++;
+    } else {
+      auto readIdx = this->_idx - _nHold - 1;
+      if (readIdx < 0) { readIdx += delayLineLength; }
+      this->_xMax = this->_dl[readIdx];
     }
-    if (this->_holdCnt > 0) {
-      this->_holdCnt--;
-      return _xMax;
-    }
-    return this->_dl[readIdx];
+    return this->_xMax;
   }
 
   /**
@@ -171,7 +172,7 @@ struct PeakHoldSensor : public PeakSensor<signal_t> {
    *
    */
   virtual void update() noexcept override {
-    this->_nHold = this->tHold_ms * this->fs;
+    this->_nHold = this->tHold_ms * this->fs / 1000;
     this->_nHold =
         (this->_nHold >= delayLineLength ? delayLineLength - 1 : this->_nHold);
     this->PeakSensor<signal_t>::update();
