@@ -1,7 +1,7 @@
 # Output dirs
 **/CMakeBuild
 **/build/**
-in
+# in
 out
 artefacts
 artifacts
