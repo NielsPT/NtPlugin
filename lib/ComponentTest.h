@@ -32,21 +32,37 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
+#define QUOTE(str) #str
+#define EXPAND_AND_QUOTE(str) QUOTE(str)
+#define ADD_TEST(component)                                                    \
+  NtFx::ComponentTest<float>::allTests.push_back(                              \
+      new NtFx::ComponentTest<float>(component));                              \
+  NtFx::ComponentTest<float>::allTestNames.push_back(                          \
+      EXPAND_AND_QUOTE(component));
+
 namespace NtFx {
+const static std::vector<std::string> xBaseNames {
+  "impulse", "syncSweep", "dynamicSine"
+};
+
 /**
- * @brief Processes a vector of test data with audio component and compares to
- * expected results. Total number of tests and number of succesful test are
- * stored as statics in order to make statistics.
+ * @brief Processes a vector of test data with audio component and compares
+ * to expected results. Total number of tests and number of succesful test
+ * are stored as statics in order to make statistics.
  *
  */
 template <typename signal_t>
 struct ComponentTest {
   static int nComponents;
-  static int nTests;                ///< Total tests run.
-  static int nSuccessful;           ///< Number of successful tests.
+  static int nTests;      ///< Total tests run.
+  static int nSuccessful; ///< Number of successful tests.
+  static std::vector<ComponentTest<signal_t>*> allTests;
+  static std::vector<std::string> allTestNames;
+
   Component<Stereo<signal_t>>& cut; ///< Component under test.
 
   /**
@@ -72,19 +88,20 @@ struct ComponentTest {
   bool run(std::string testName,
       std::string xFilePath,
       std::string yFilePath   = "",
-      std::string expFilePath = "") {
+      std::string expFilePath = "",
+      float fs                = 48.0e3f) {
     std::cout << "Running test " + testName + "." << std::endl;
     this->nTests++;
-    this->cut.update();
+    this->cut.reset(fs);
     if (!std::filesystem::exists(xFilePath)) {
       std::cout << "Input file not found. Aborting test." << std::endl;
       return false;
     }
     if (yFilePath.empty()) {
-      yFilePath = "test/out/" + testName + "_result.txt";
+      yFilePath = "testWrapper/out/" + testName + "_result.txt";
     }
     if (expFilePath.empty()) {
-      expFilePath = "test/in/" + testName + "_expected.txt";
+      expFilePath = "testWrapper/in/" + testName + "_expected.txt";
     }
     bool expFileExists = std::filesystem::exists(expFilePath);
     bool success       = true;
@@ -104,7 +121,16 @@ struct ComponentTest {
     if (expFileExists) {
       std::vector<Stereo<signal_t>> e;
       std::fstream eFile(expFilePath);
-      while (eFile >> l >> r) { e.push_back({ l, r }); }
+      std::string line;
+      while (std::getline(eFile, line)) {
+        std::istringstream iss(line);
+        float l, r;
+        if (iss >> l >> r) {
+          e.push_back({ l, r });
+        } else {
+          e.push_back({ 0, 0 });
+        }
+      }
       if (e.size() != y.size()) {
         std::cout
             << "Expected result has different length that result. Aborting."
@@ -123,6 +149,22 @@ struct ComponentTest {
     return success;
   }
 
+  static bool runAllTests() {
+    auto n = allTests.size();
+    if (n != allTestNames.size()) {
+      std::cout << "Test name look up mismatch." << std::endl;
+      return false;
+    }
+    bool success = true;
+    for (auto& baseName : xBaseNames) {
+      for (size_t i = 0; i < n; i++) {
+        success &= allTests[i]->run(allTestNames[i] + "_" + baseName,
+            "testWrapper/in/" + baseName + ".txt");
+      }
+    }
+    return success;
+  }
+
   /**
    * @brief Get and print the results of all tests.
    *
@@ -130,7 +172,8 @@ struct ComponentTest {
    * @return false If any test failed. Missing expected vector is a failure.
    */
   static bool getResults() {
-    std::cout << nSuccessful << "/" << nTests << " test succeeded. ("
+    std::cout << "Ran a total of " << nTests << " test on " << nComponents
+              << " components. " << nSuccessful << " succeeded. ("
               << 100.0 * double(nSuccessful) / double(nTests) << "%)."
               << std::endl;
     return nSuccessful == nTests;
