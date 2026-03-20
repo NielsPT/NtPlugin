@@ -19,6 +19,7 @@ results.
 
 import os
 import subprocess as sp
+import sys
 import numpy as np
 from matplotlib import pyplot as p
 
@@ -86,14 +87,15 @@ def generateTestVectors(t: float, fs: float):
         storeStereoTestVector(impulse, outputPath + "impulse.txt")
     steppedSineL = generateSteppedSine(fs, t, 10e3, 2, 0.25, 1)
     steppedSineR = generateSteppedSine(fs, t, 10e3, 2, 1, 0.25)
-    dynamicSine = np.array([steppedSineL, steppedSineR])
-    if not os.path.exists(outputPath + "dynamicSine.txt"):
-        storeStereoTestVector(dynamicSine, outputPath + "dynamicSine.txt")
+    dynamic = np.array([steppedSineL, steppedSineR])
+    if not os.path.exists(outputPath + "dynamic.txt"):
+        storeStereoTestVector(dynamic, outputPath + "dynamic.txt")
     _syncSweep = generateSyncSweep()
-    syncSweep = np.concatenate((_syncSweep, _syncSweep))
+    syncSweep = np.array([_syncSweep, _syncSweep])
+    print(f"{syncSweep.shape=}")
     if not os.path.exists(outputPath + "syncSweep.txt"):
         storeStereoTestVector(syncSweep, outputPath + "syncSweep.txt")
-    return (impulse, syncSweep, dynamicSine)
+    return (impulse, syncSweep, dynamic)
 
 
 def plotImpulse(
@@ -217,6 +219,8 @@ def plotTestResults(fs):
                 print(f"Bad filename: {file}")
                 continue
             exceptedFound += [info[0]]
+    # legends = ["expected left", "expected right", "result left", "reslut right"]
+    legends = ["expected", "result"]
     for file in resultFiles:
         info = file.split("_")
         if len(info) != 3:
@@ -242,18 +246,18 @@ def plotTestResults(fs):
                 result,
                 fs,
                 "testWrapper/out/" + info[0] + "_frequency.png",
-                ["expected", "result"],
+                legends,
             )
         elif info[1] == "syncSweep":
             pass
             # print("'syncSweep' not implemented.")
             # TODO: Sync sweep analysis
-        elif info[1] == "dynamicSine":
+        elif info[1] == "dynamic":
             plotDynamic(
                 result,
                 fs,
                 "testWrapper/out/" + info[0] + "_dynamic.png",
-                ["expected", "result"],
+                legends,
             )
         else:
             print(f"Bad input name: {info[1]}")
@@ -284,9 +288,35 @@ def runTestProg() -> int:
     return res.returncode
 
 
+def acceptLatestResult(components: list[str]):
+    print(f"Accepting results {components}.")
+    files = os.listdir("testWrapper/out")
+    filesToCopy: list[str] = []
+    for file in files:
+        if file.endswith("_result.txt"):
+            info = file.split("_")
+            if len(info) != 3:
+                print(f"Bad filename: {file}")
+                continue
+            if info[0] in components:
+                filesToCopy += [file]
+    for file in filesToCopy:
+        storeFile = file.replace("result", "expected")
+        print(f"Storing {file} as {storeFile}.")
+        with open("testWrapper/out/" + file, "r", encoding="utf8") as x:
+            with open("testWrapper/in/" + storeFile, "w", encoding="utf8") as y:
+                y.write(x.read())
+
+
+def clean():
+    os.removedirs("testWrapper/out")
+
+
 def run():
     fs = 48e3
     t = 0.1
+    os.makedirs("testWrapper/in", exist_ok=True)
+    os.makedirs("testWrapper/out", exist_ok=True)
     generateTestVectors(t, fs)
     if not buildTestProg():
         return
@@ -296,4 +326,4 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    sys.exit(run())

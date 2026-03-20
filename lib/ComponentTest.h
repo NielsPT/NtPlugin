@@ -39,6 +39,7 @@
 
 #define QUOTE(str) #str
 #define EXPAND_AND_QUOTE(str) QUOTE(str)
+// TODO: Check if test name is already in use or contains an '_'.
 #define ADD_TEST(component)                                                    \
   NtFx::ComponentTest<float>::allTests.push_back(                              \
       new NtFx::ComponentTest<float>(component));                              \
@@ -47,7 +48,7 @@
 
 namespace NtFx {
 const static std::vector<std::string> xBaseNames {
-  "impulse", "syncSweep", "dynamicSine"
+  "impulse", "syncSweep", "dynamic"
 };
 
 /**
