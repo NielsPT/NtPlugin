@@ -17,10 +17,10 @@ Genarates test vectors for unittest of NTplugin components and analyzes and plot
 results.
 """
 
-import numpy as np
-from matplotlib import pyplot as p
 import os
 import subprocess as sp
+import numpy as np
+from matplotlib import pyplot as p
 
 
 def generateImpulse(n: int) -> np.ndarray:
@@ -110,7 +110,7 @@ def plotImpulse(
     plotFrequencyDomain(
         xPhase,
         fs,
-        filename.replace(".png", "_phase.png"),
+        filename.replace("_frequency.png", "_phase.png"),
         legends,
         [-np.pi, np.pi],
         "Phase / radians",
@@ -187,7 +187,10 @@ def plotDynamic(
     p.clf()
 
 
-def readResult(path: str) -> np.ndarray:
+def readResult(path: str) -> np.ndarray | None:
+    if not os.path.exists(path):
+        print(f"Bad path: {path}")
+        return None
     with open(path, "r", encoding="utf8") as f:
         lines = f.readlines()
     y = np.zeros([2, len(lines)])
@@ -198,34 +201,59 @@ def readResult(path: str) -> np.ndarray:
     return y
 
 
-def analyzeTestResults(impulse, syncSweep, steppedSine, fs):
-
+def plotTestResults(fs):
+    print("Plotting results")
+    inFiles = os.listdir("testWrapper/in")
     outFiles = os.listdir("testWrapper/out")
     resultFiles: list[str] = []
     for file in outFiles:
         if file.endswith("_result.txt"):
             resultFiles += [file]
+    exceptedFound: list[str] = []
+    for file in inFiles:
+        if file.endswith("_expected.txt"):
+            info = file.split("_")
+            if len(info) != 3:
+                print(f"Bad filename: {file}")
+                continue
+            exceptedFound += [info[0]]
     for file in resultFiles:
         info = file.split("_")
         if len(info) != 3:
             print(f"Bad filename: {file}")
             continue
-        print(f"Analyzing component '{info[0]}', test '{info[1]}'.")
+        # print(f"Analyzing component '{info[0]}', test '{info[1]}'.")
         result = readResult("testWrapper/out/" + file)
+        if result is None:
+            continue
+        if info[0] in exceptedFound:
+            excepted = readResult(
+                "testWrapper/in/"
+                + info[0]
+                + "_"
+                + info[1]
+                + "_"
+                + "expected.txt"
+            )
+            if excepted is not None:
+                np.concatenate((excepted, result))
         if info[1] == "impulse":
             plotImpulse(
-                np.concatenate((impulse, result)),
+                result,
                 fs,
                 "testWrapper/out/" + info[0] + "_frequency.png",
+                ["expected", "result"],
             )
         elif info[1] == "syncSweep":
-            print("'syncSweep' not implemented.")
+            pass
+            # print("'syncSweep' not implemented.")
             # TODO: Sync sweep analysis
         elif info[1] == "dynamicSine":
             plotDynamic(
-                np.concatenate((steppedSine, result)),
+                result,
                 fs,
                 "testWrapper/out/" + info[0] + "_dynamic.png",
+                ["expected", "result"],
             )
         else:
             print(f"Bad input name: {info[1]}")
@@ -236,7 +264,7 @@ def buildTestProg():
     res = sp.run(
         [
             "clang++",
-            "testWrapper/test.cpp",
+            "testWrapper/ComponentTest.cpp",
             "-o",
             "testWrapper/out/main",
             f"-I{os.path.abspath(os.getcwd())}",
@@ -251,18 +279,20 @@ def buildTestProg():
     return True
 
 
-def runTestProg():
-    sp.run(["./testWrapper/out/main"], check=False)
+def runTestProg() -> int:
+    res = sp.run(["./testWrapper/out/main"], check=False)
+    return res.returncode
 
 
 def run():
     fs = 48e3
     t = 0.1
-    impulse, syncSweep, steppedSine = generateTestVectors(t, fs)
+    generateTestVectors(t, fs)
     if not buildTestProg():
         return
-    runTestProg()
-    analyzeTestResults(impulse, syncSweep, steppedSine, fs)
+    returncode = runTestProg()
+    plotTestResults(fs)
+    return returncode
 
 
 if __name__ == "__main__":

@@ -33,6 +33,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <stdlib.h>
 #include <string>
 #include <vector>
 
@@ -144,7 +145,13 @@ struct ComponentTest {
     }
     std::ofstream yFile(yFilePath);
     for (auto _y : y) { yFile << _y.l << " " << _y.r << std::endl; }
-    std::cout << testName + (success ? " passed." : " failed.") << std::endl;
+    if (success) {
+      std::cout << "\033[32m";
+    } else {
+      std::cout << "\033[31m";
+    }
+    std::cout << testName + (success ? " passed." : " failed.") << "\033[0m"
+              << std::endl;
     if (success) { nSuccessful++; }
     return success;
   }
@@ -172,10 +179,15 @@ struct ComponentTest {
    * @return false If any test failed. Missing expected vector is a failure.
    */
   static bool getResults() {
+    if (nSuccessful == nTests) {
+      std::cout << "\033[32m";
+    } else {
+      std::cout << "\033[31m";
+    }
     std::cout << "Ran a total of " << nTests << " test on " << nComponents
               << " components. " << nSuccessful << " succeeded. ("
               << 100.0 * double(nSuccessful) / double(nTests) << "%)."
-              << std::endl;
+              << "\033[0m" << std::endl;
     return nSuccessful == nTests;
   }
 };
