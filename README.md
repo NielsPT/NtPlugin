@@ -48,8 +48,7 @@ background.
 ### Install needed software
 
 - Install [git](https://git-scm.com/install).
-- Install [Cmake](https://cmake.org/download). The brew-version does not work,
-  so if you're on Mac, download it from the website.
+- Install [Cmake](https://cmake.org/download).
 - Install [Visual Studio](https://visualstudio.microsoft.com/downloads/)
   (Windows) or [XCode](https://developer.apple.com/xcode/) (Mac) or the
   [JUCE dependecies](https://github.com/juce-framework/JUCE/blob/master/docs/Linux%20Dependencies.md)

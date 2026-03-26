@@ -116,6 +116,21 @@ def generateTestVectors(t: float, fs: float):
     return (impulse, linearSweep, syncSweep, dynamic)
 
 
+def findAllTests() -> list[str]:
+    paths = []
+    allFiles = os.listdir(f"{FILE_DIR}/../test")
+    for file in allFiles:
+        if file.endswith("_test.cpp"):
+            paths += ["test/" + file]
+    return paths
+
+
+def idxToLineStyle(i: int) -> str:
+    if (i // 2) % 2:
+        return ":"
+    return "-"
+
+
 def plotImpulse(
     x: np.ndarray,
     fs: float,
@@ -167,20 +182,8 @@ def plotFrequencyDomain(
     try:
         n = x.shape[1]
         fAx = np.linspace(0, fs - fs / n, n)
-        lineStyle = "-"
         for i, v in enumerate(x):
-            # TODO: DRY
-            lineWidth = 1
-            if i > 1:
-                lineStyle = "--"
-            if i > 3:
-                lineStyle = "-"
-                lineWidth = 1.5
-            if i > 5:
-                lineStyle = "--"
-            if i > 7:
-                lineStyle = ":"
-            p.semilogx(fAx, v, linestyle=lineStyle, linewidth=lineWidth)
+            p.semilogx(fAx, v, linestyle=idxToLineStyle(i))
     except IndexError:
         n = x.shape[0]
         fAx = np.linspace(0, fs - fs / n, n)
@@ -219,17 +222,7 @@ def plotDynamic(
         tAx = np.array(range(nSamples)) / fs
         lineStyle = "-"
         for i, v in enumerate(xDb):
-            lineWidth = 1.7
-            if i > 1:
-                lineStyle = "--"
-            if i > 3:
-                lineStyle = "-"
-                lineWidth = 1.2
-            if i > 5:
-                lineStyle = "--"
-            if i > 7:
-                lineStyle = ":"
-            p.plot(tAx, v, linestyle=lineStyle, linewidth=lineWidth)
+            p.plot(tAx, v, linestyle=idxToLineStyle(i))
     except IndexError:
         nSamples = xDb.shape[0]
         tAx = np.array(range(nSamples)) / fs
@@ -249,6 +242,24 @@ def plotDynamic(
     p.clf()
 
 
+def plotSweeps(
+    results: dict[str, list[np.ndarray]],
+    legends: dict[str, list[str]],
+    componentName: str,
+    fs: float,
+    testName: str,
+):
+    for i, sweep in enumerate(results[testName]):
+        plotSpectrum(
+            sweep,
+            fs,
+            f"{FILE_DIR}/img/{componentName}{SEPARATOR}"
+            + f"{legends[testName][i*2].split(" ")[0]}{SEPARATOR}"
+            + testName
+            + ".png",
+        )
+
+
 def readResult(path: str) -> np.ndarray | None:
     if not os.path.exists(path):
         print(f"Bad path: {path}")
@@ -263,8 +274,7 @@ def readResult(path: str) -> np.ndarray | None:
     return y
 
 
-def plotTestResults(componentName: str, fs):
-    # TODO: plot multiple tests of the same component in one image.
+def readAndPlotTestResults(componentName: str, fs: float):
     print("Plotting results")
     inFiles = os.listdir(f"{FILE_DIR}/in")
     outFiles = os.listdir(f"{FILE_DIR}/out")
@@ -281,43 +291,35 @@ def plotTestResults(componentName: str, fs):
                 continue
             exceptedFiles += [info[0]]
 
-    (
-        impPlots,
-        linSwPlots,
-        syncSwPlots,
-        dynPlots,
-        impLegends,
-        linSwLegends,
-        syncSwLegends,
-        dynLegends,
-    ) = parseFiles(resultFiles, exceptedFiles)
+    results, legends = parseFiles(resultFiles, exceptedFiles)
+    plotResults(results, legends, componentName, fs)
+
+
+def plotResults(
+    results: dict[str, list[np.ndarray]],
+    legends: dict[str, list[str]],
+    componentName: str,
+    fs: float,
+):
     os.makedirs(f"{FILE_DIR}/img", exist_ok=True)
-    if impPlots:
+    if "impulse" in results and results["impulse"]:
         plotImpulse(
-            np.concatenate(impPlots),
+            np.concatenate(results["impulse"]),
             fs,
             f"{FILE_DIR}/img/{componentName}{SEPARATOR}frequency.png",
-            impLegends,
+            legends["impulse"],
         )
-    if linSwPlots:
-        plotSpectrum(
-            np.concatenate(linSwPlots),
-            fs,
-            f"{FILE_DIR}/img/{componentName}{SEPARATOR}linearSweep.png",
-        )
-    if syncSwPlots:
-        plotSpectrum(
-            np.concatenate(syncSwPlots),
-            fs,
-            f"{FILE_DIR}/img/{componentName}{SEPARATOR}syncSweep.png",
-        )
-    if dynPlots:
+    if "linearSweep" in results and results["linearSweep"]:
+        plotSweeps(results, legends, componentName, fs, "linearSweep")
+    if "syncSweep" in results and results["syncSweep"]:
+        plotSweeps(results, legends, componentName, fs, "syncSweep")
+    if "dynamic" in results and results["dynamic"]:
         for i in range(3):
             plotDynamic(
-                np.concatenate(dynPlots),
+                np.concatenate(results["dynamic"]),
                 fs,
                 f"{FILE_DIR}/img/{componentName}{SEPARATOR}dynamic{SEPARATOR}{i}.png",
-                dynLegends,
+                legends["dynamic"],
                 i,
             )
 
@@ -326,14 +328,18 @@ def parseFiles(
     files: list[str],
     exceptedFiles: list[str],
 ):
-    impPlots = []
-    linSwPlots = []
-    syncSwPlots = []
-    dynPlots = []
-    impLegends = []
-    linSwLegends = []
-    syncSwLegends = []
-    dynLegends = []
+    results_dict = {
+        "impulse": [],
+        "linearSweep": [],
+        "syncSweep": [],
+        "dynamic": [],
+    }
+    legends_dict = {
+        "impulse": [],
+        "linearSweep": [],
+        "syncSweep": [],
+        "dynamic": [],
+    }
     legends = ["result left", "result right"]
     for file in files:
         info = file.split(SEPARATOR)
@@ -365,30 +371,20 @@ def parseFiles(
         else:
             result = [result]
         legends = [info[0] + " " + legend for legend in legends]
+        # TODO: loop
         if info[1] == "impulse":
-            impPlots += result
-            impLegends += legends
+            results_dict["impulse"] += result
+            legends_dict["impulse"] += legends
         elif info[1] == "linearSweep":
-            linSwPlots += result
-            linSwLegends += legends
+            results_dict["linearSweep"] += result
+            legends_dict["linearSweep"] += legends
         elif info[1] == "syncSweep":
-            syncSwPlots += result
-            syncSwLegends += legends
+            results_dict["syncSweep"] += result
+            legends_dict["syncSweep"] += legends
         elif info[1] == "dynamic":
-            dynPlots += result
-            dynLegends += legends
-        else:
-            print(f"Bad input name: {info[1]}")
-    return (
-        impPlots,
-        linSwPlots,
-        syncSwPlots,
-        dynPlots,
-        impLegends,
-        linSwLegends,
-        syncSwLegends,
-        dynLegends,
-    )
+            results_dict["dynamic"] += result
+            legends_dict["dynamic"] += legends
+    return results_dict, legends_dict
 
 
 def buildTestProg(cppPath: str):
@@ -444,6 +440,18 @@ def clean():
     return 0
 
 
+def runTests(path: str, fs: float) -> bool:
+    clean()
+    if not buildTestProg(path):
+        return False
+    returncode = runTestProg()
+    readAndPlotTestResults(
+        os.path.basename(path).replace("_test", "").replace(".cpp", ""),
+        fs,
+    )
+    return returncode == 0
+
+
 def run():
     parser = argparse.ArgumentParser(
         description="Runs test on NtFx Components."
@@ -451,10 +459,10 @@ def run():
     subparsers = parser.add_subparsers(dest="task")
     runParser = subparsers.add_parser("run")
     runParser.add_argument(
-        "file",
-        nargs=1,
+        "files",
+        nargs="*",
         type=str,
-        help="Cpp-file to run.",
+        help="Cpp-files to run.",
     )
     # runParser.add_argument(
     #     "--tests",
@@ -498,17 +506,13 @@ def run():
     if args["task"] == "generate":
         return generateTestVectors(t, fs) is None
     elif args["task"] == "run":
-        clean()
-        if not buildTestProg(args["file"][0]):
-            return 1
-        returncode = runTestProg()
-        plotTestResults(
-            os.path.basename(args["file"][0])
-            .replace("_test", "")
-            .replace(".cpp", ""),
-            fs,
-        )
-        return returncode
+        success = True
+        paths = args["files"]
+        if not paths or paths == ["all"]:
+            paths = findAllTests()
+        for file in paths:
+            success &= runTests(file, fs)
+        return success
     elif args["task"] == "clean":
         return clean()
     elif args["task"] == "approve":

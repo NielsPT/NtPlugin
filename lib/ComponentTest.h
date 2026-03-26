@@ -41,14 +41,11 @@
 #define QUOTE(str) #str
 #define EXPAND_AND_QUOTE(str) QUOTE(str)
 // TODO: Copy the component somewhere.
-// TODO: Extra arg for when running the same subtest for multiple components.
-// Plot them together based on component.
 // TODO: This suck. It's a list of strings in the class, but it's a string in
 // the macro.
-// TODO: It's not a subtest. It's a stimulus, a test input vector.
-#define ADD_TEST(component, subtest)                                           \
+#define ADD_TEST(component, testsToPerform)                                    \
   NtFx::ComponentTest<float>::addTest(                                         \
-      component, EXPAND_AND_QUOTE(component), { subtest })
+      component, EXPAND_AND_QUOTE(component), { testsToPerform })
 
 #define NTFX_TEST_BEGIN                                                        \
   namespace NtFx {                                                             \
@@ -80,8 +77,7 @@ constexpr char SEPARATOR = '.';
  */
 template <typename signal_t>
 struct ComponentTest {
-  // TODO: Settings for which tests to run. A bunch of bools?
-  static int nComponents;
+  static int nComponents; ///< Number of components tested.
   static int nTests;      ///< Total tests run.
   static int nSuccessful; ///< Number of successful tests.
   static std::vector<std::unique_ptr<ComponentTest<signal_t>>> allTests;
@@ -89,7 +85,8 @@ struct ComponentTest {
 
   Component<Stereo<signal_t>>& cut; ///< Component under test.
 
-  std::vector<std::string> activeSubtests = acceptedSubtests;
+  std::vector<std::string> activeTests =
+      acceptedSubtests; ///< List of names of tests to run.
   /**
    * @brief Construct a new Component Test object.
    *
@@ -104,11 +101,11 @@ struct ComponentTest {
       if (std::find(acceptedSubtests.begin(), acceptedSubtests.end(), subtest)
           == acceptedSubtests.end()) {
         std::cout << "Subtest '" << subtest << "' not accepted.";
-        this->activeSubtests.clear();
+        this->activeTests.clear();
         return;
       }
     }
-    this->activeSubtests = subtests;
+    this->activeTests = subtests;
   }
 
   static bool addTest(Component<Stereo<signal_t>>& component,
@@ -140,44 +137,35 @@ struct ComponentTest {
    * @return true If test succeeds.
    * @return false If test fails.
    */
-  bool run(std::string component,
-      std::string subtest,
-      std::string yFilePath   = "",
-      std::string expFilePath = "",
-      float fs                = 48.0e3f) {
-    if (std::find(
-            this->activeSubtests.begin(), this->activeSubtests.end(), subtest)
-        == this->activeSubtests.end()) {
+  bool run(std::string component, std::string subtest, float fs = 48.0e3f) {
+    if (std::find(this->activeTests.begin(), this->activeTests.end(), subtest)
+        == this->activeTests.end()) {
       return true;
     }
     this->nTests++;
-    auto testAndSubtest = component + SEPARATOR + subtest;
-    auto xFilePath      = "testWrapper/in/" + subtest + ".txt";
+    auto testName = component + SEPARATOR + subtest;
+    auto xPath    = "testWrapper/in/" + subtest + ".txt";
 
-    if (!std::filesystem::exists(xFilePath)) {
-      std::cout << "Input file '" << xFilePath << "'not found. Aborting test."
+    if (!std::filesystem::exists(xPath)) {
+      std::cout << "Input file '" << xPath << "'not found. Aborting test."
                 << std::endl;
       return false;
     }
-    if (yFilePath.empty()) {
-      yFilePath =
-          "testWrapper/out/" + testAndSubtest + SEPARATOR + "result.txt";
-    }
-    if (expFilePath.empty()) {
-      expFilePath =
-          "testWrapper/in/" + testAndSubtest + SEPARATOR + "expected.txt";
-    }
-    bool expFileExists = std::filesystem::exists(expFilePath);
+    auto yPath   = "testWrapper/out/" + testName + SEPARATOR + "result.txt";
+    auto expPath = "testWrapper/in/" + testName + SEPARATOR + "expected.txt";
+    bool expFileExists = std::filesystem::exists(expPath);
     bool success       = true;
     if (!expFileExists) {
-      std::cout << "File with expected results not found at path '"
-              + expFilePath + "'. Skipping comparison."
+      std::cout << "File with expected results not found at path '" + expPath
+              + "'. Skipping comparison."
                 << std::endl;
+      // TODO: What to do when the test failed to run. It's neither succeeded
+      // nor failed.
       success = false;
     }
     this->cut.reset(fs);
     std::vector<Stereo<signal_t>> x;
-    std::fstream xFile(xFilePath);
+    std::fstream xFile(xPath);
     signal_t l, r;
     while (xFile >> l >> r) { x.push_back({ l, r }); }
     std::vector<Stereo<signal_t>> y;
@@ -185,7 +173,7 @@ struct ComponentTest {
     signal_t acceptedDiff = 0.00001;
     if (expFileExists) {
       std::vector<Stereo<signal_t>> e;
-      std::fstream eFile(expFilePath);
+      std::fstream eFile(expPath);
       std::string line;
       while (std::getline(eFile, line)) {
         std::istringstream iss(line);
@@ -207,7 +195,7 @@ struct ComponentTest {
         if (diff > acceptedDiff) { success = false; }
       }
     }
-    std::ofstream yFile(yFilePath);
+    std::ofstream yFile(yPath);
     for (auto _y : y) { yFile << _y.l << " " << _y.r << std::endl; }
     if (success) {
       std::cout << "\033[32m";
