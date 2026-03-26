@@ -19,13 +19,28 @@
 
 #pragma once
 
+#include "lib/Component.h"
 #include "lib/Stereo.h"
 #include <array>
 
 namespace NtFx {
+template <typename signal_t>
+class SoftClip3 : public Component<Stereo<signal_t>> {
+  virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+    return softClip3rdStereo(x);
+  }
+};
+
+template <typename signal_t>
+class SoftClip5 : public Component<Stereo<signal_t>> {
+  virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+    return softClip5thStereo(x);
+  }
+};
 
 /**
- * @brief Calculates coefficients for symmetrical soft clipper at compile time.
+ * @brief Calculates coefficients for symmetrical soft clipper
+ * at compile time.
  *
  * @tparam signal_t Audio signal type.
  * @tparam N. Determines order. Order = 2 * N + 1.

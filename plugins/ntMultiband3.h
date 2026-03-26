@@ -141,7 +141,7 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
       { .name = "OUT", .addRms = true, .hasScale = true, .decay_s = 0.75 },
     };
     for (int i = Bands::n - 1; i >= 0; i--) {
-      this->meters.push_back({ this->BandNames[i], .invert = true });
+      this->meters.push_back({ .name = this->BandNames[i], .invert = true });
     }
     this->meters[Bands::n - 1 + 2].hasScale = true;
     this->uiSpec.meterHeight_dots           = 25;

@@ -5,6 +5,7 @@
 out
 artefacts
 artifacts
+testWrapper/img
 
 # Prerequisites
 *.d

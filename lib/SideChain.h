@@ -47,6 +47,7 @@ struct ScSettings {
   signal_t tRel_ms   = signal_t(100);  ///< Release time in milliseconds
   signal_t tRms_ms   = signal_t(80);   ///< RMS time constant in milliseconds
   signal_t tPeak_ms  = signal_t(20.0); ///< Peak time constant in milliseconds
+  bool linkEnable    = false;
 };
 
 /**
@@ -82,10 +83,12 @@ struct PeakSideChainDb : public Component<Stereo<signal_t>> {
   virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
     auto ySens = this->peakSensor.process(x);
     ensureFinite(this->stateFilter);
-    return {
-      this->_gainComputer_db(ySens.l, this->stateFilter.l),
-      this->_gainComputer_db(ySens.r, this->stateFilter.r),
-    };
+    auto y = Stereo<signal_t>({
+        this->_gainComputer_db(ySens.l, this->stateFilter.l),
+        this->_gainComputer_db(ySens.r, this->stateFilter.r),
+    });
+    if (this->settings.linkEnable) { y = y.absMin(); }
+    return y;
   }
 
   /**

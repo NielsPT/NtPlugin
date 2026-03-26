@@ -1,0 +1,19 @@
+#include "lib/ComponentTest.h"
+#include "lib/SideChain.h"
+
+NTFX_TEST_BEGIN
+
+int main() {
+  auto peakSettings0      = NtFx::ScSettings<float>();
+  peakSettings0.ratio_db  = 3;
+  peakSettings0.knee_db   = 0;
+  peakSettings0.thresh_db = -6;
+  peakSettings0.tRel_ms   = 20;
+  auto peakDbSc           = NtFx::PeakSideChainDb<float>(peakSettings0);
+  ADD_TEST(peakDbSc, "dynamic");
+  auto peakSettings1       = peakSettings0;
+  peakSettings1.linkEnable = true;
+  auto peakDbScLink        = NtFx::PeakSideChainDb<float>(peakSettings1);
+  ADD_TEST(peakDbScLink, "dynamic");
+  return NtFx::ComponentTest<float>::runAllTests();
+}
