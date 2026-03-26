@@ -7,8 +7,8 @@ NTFX_TEST_BEGIN
 
 int main() {
   auto softClip3 = NtFx::SoftClip3<float>();
-  ADD_TEST(softClip3, "linearSweep");
+  NTFX_ADD_SINGLE_TEST(softClip3, "linearSweep");
   auto softClip5 = NtFx::SoftClip5<float>();
-  ADD_TEST(softClip5, "linearSweep");
+  NTFX_ADD_SINGLE_TEST(softClip5, "linearSweep");
   return NtFx::ComponentTest<float>::runAllTests();
 }

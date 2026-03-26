@@ -29,6 +29,7 @@
 
 #include "lib/Component.h"
 #include "lib/Stereo.h"
+// #include <boost/core/demangle.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -43,9 +44,14 @@
 // TODO: Copy the component somewhere.
 // TODO: This suck. It's a list of strings in the class, but it's a string in
 // the macro.
-#define ADD_TEST(component, testsToPerform)                                    \
+#define NTFX_ADD_SINGLE_TEST(object, stimulus)                                 \
   NtFx::ComponentTest<float>::addTest(                                         \
-      component, EXPAND_AND_QUOTE(component), { testsToPerform })
+      object, EXPAND_AND_QUOTE(object), { stimulus })
+
+#define NTFX_ADD_ALL_TESTS(component)                                          \
+  NtFx::ComponentTest<float>::addTest(object, EXPAND_AND_QUOTE(object), { })
+
+#define NTFX_RUN_ALL_TESTS() NtFx::ComponentTest<float>::runAllTests();
 
 #define NTFX_TEST_BEGIN                                                        \
   namespace NtFx {                                                             \
@@ -63,7 +69,7 @@
   }
 
 namespace NtFx {
-static const std::vector<std::string> acceptedSubtests {
+static const std::vector<std::string> STIMULI_NAMES {
   "impulse", "syncSweep", "linearSweep", "dynamic"
 };
 
@@ -85,66 +91,53 @@ struct ComponentTest {
 
   Component<Stereo<signal_t>>& cut; ///< Component under test.
 
-  std::vector<std::string> activeTests =
-      acceptedSubtests; ///< List of names of tests to run.
-  /**
-   * @brief Construct a new Component Test object.
-   *
-   * @param cut Component to be tested.
-   */
+  std::vector<std::string> activeStimuli =
+      STIMULI_NAMES; ///< List of names of tests to run.
+
+  // TODO: dox
   ComponentTest(
-      Component<Stereo<signal_t>>& cut, std::vector<std::string> subtests = { })
+      Component<Stereo<signal_t>>& cut, std::vector<std::string> stimuli = { })
       : cut(cut) {
     nComponents++;
-    if (subtests.empty()) { return; }
-    for (auto& subtest : subtests) {
-      if (std::find(acceptedSubtests.begin(), acceptedSubtests.end(), subtest)
-          == acceptedSubtests.end()) {
-        std::cout << "Subtest '" << subtest << "' not accepted.";
-        this->activeTests.clear();
+    if (stimuli.empty()) { return; }
+    for (auto& x : stimuli) {
+      if (std::find(STIMULI_NAMES.begin(), STIMULI_NAMES.end(), x)
+          == STIMULI_NAMES.end()) {
+        std::cout << "Stimuli name '" << x << "' not accepted.";
+        this->activeStimuli.clear();
         return;
       }
     }
-    this->activeTests = subtests;
+    this->activeStimuli = stimuli;
   }
 
-  static bool addTest(Component<Stereo<signal_t>>& component,
-      std::string componentName,
-      std::vector<std::string> testsToPerform = { }) {
-    if (std::find(allTestNames.begin(), allTestNames.end(), componentName)
+  static bool addTest(Component<Stereo<signal_t>>& componentObj,
+      std::string objectName,
+      std::vector<std::string> stimuliToUse = { }) {
+    if (std::find(allTestNames.begin(), allTestNames.end(), objectName)
         != allTestNames.end()) {
-      std::cout << "Test '" << componentName << "' already registered."
+      std::cout << "Test '" << objectName << "' already registered."
                 << std::endl;
       return false;
     }
-    NtFx::ComponentTest<float>::allTestNames.push_back(componentName);
+    // std::string real_name = boost::core::demangle(typeid(component).name());
+    NtFx::ComponentTest<float>::allTestNames.push_back(objectName);
     NtFx::ComponentTest<float>::allTests.push_back(
         std::make_unique<NtFx::ComponentTest<float>>(
-            component, testsToPerform));
+            componentObj, stimuliToUse));
     return true;
   }
 
-  /**
-   * @brief Runs test for component.
-   *
-   * @param testName Name of test.
-   * @param xFilePath Input file.
-   * @param yFilePath Output file. If not given, [testName]_result.txt will be
-   * used.
-   * @param expFilePath Input file containing expected output. If not given,
-   * [testName]_expected.txt will be used. If file is missing, the test will run
-   * but always failed.
-   * @return true If test succeeds.
-   * @return false If test fails.
-   */
-  bool run(std::string component, std::string subtest, float fs = 48.0e3f) {
-    if (std::find(this->activeTests.begin(), this->activeTests.end(), subtest)
-        == this->activeTests.end()) {
+  // TODO: dox
+  bool run(std::string component, std::string stimulus, float fs = 48.0e3f) {
+    if (std::find(
+            this->activeStimuli.begin(), this->activeStimuli.end(), stimulus)
+        == this->activeStimuli.end()) {
       return true;
     }
     this->nTests++;
-    auto testName = component + SEPARATOR + subtest;
-    auto xPath    = "testWrapper/in/" + subtest + ".txt";
+    auto testName = component + SEPARATOR + stimulus;
+    auto xPath    = "testWrapper/in/" + stimulus + ".txt";
 
     if (!std::filesystem::exists(xPath)) {
       std::cout << "Input file '" << xPath << "'not found. Aborting test."
@@ -202,7 +195,8 @@ struct ComponentTest {
     } else {
       std::cout << "\033[31m";
     }
-    std::cout << "Test '" << subtest << "' for component '" << component << "'";
+    std::cout << "Test '" << stimulus << "' for component '" << component
+              << "'";
     std::cout << (success ? " passed." : " failed.") << "\033[0m" << std::endl;
     if (success) { nSuccessful++; }
     return success;
@@ -214,9 +208,9 @@ struct ComponentTest {
       std::cout << "Test name look up mismatch." << std::endl;
       return false;
     }
-    for (auto& subtest : acceptedSubtests) {
+    for (auto& stimulus : STIMULI_NAMES) {
       for (size_t i = 0; i < n; i++) {
-        allTests[i]->run(allTestNames[i], subtest);
+        allTests[i]->run(allTestNames[i], stimulus);
       }
     }
     return !NtFx::ComponentTest<float>::getResults();
@@ -234,8 +228,9 @@ struct ComponentTest {
     } else {
       std::cout << "\033[31m";
     }
+    // TODO: Count components.
     std::cout << "Ran a total of " << nTests << " test on " << nComponents
-              << " components. " << nSuccessful << " succeeded. ("
+              << " objects. " << nSuccessful << " succeeded. ("
               << 100.0 * double(nSuccessful) / double(nTests) << "%)."
               << "\033[0m" << std::endl;
     return nSuccessful == nTests;

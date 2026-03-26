@@ -206,6 +206,76 @@ platform-agnostic code, targeting more platforms in the future is possible. If
 anyone wishes to colaborate, adding a wrapper for eg. ESP32 or an ADI device
 would be an option for a project.
 
+## Testing your plugin
+
+The `testWrapper` can be used to test plugins. The individual tests are stored
+in `test` and are inidvidual C++ programs. A Python script named `test.py` is
+used to run the tests. It will generate test input files, build the test
+program, run it and plot the results. Plots are placed in `testWrapper/img`. If
+the results are accepted, the script can approve them so that the test will
+succeed on next run. Type `python testWrapper/test.py -h` for more information.
+
+### Setting it up
+
+First, we need the normal python envirement stuff:
+
+```sh
+python3 -m venv .venv
+. ./.venv/bin/activate
+pip install -r testWrapper/requirements.txt
+```
+
+Now run the existing tests:
+
+```sh
+python testWrapper/test.py run
+```
+
+This should run all existing tests, which should all succeed. `testWrapper/img`
+should now contain a number of plots.
+
+### Add your own test
+
+In order to test a plugin you must create a file named `[plugin name]_test.cpp`,
+include `lib/ComponentTest.h` and implement a main function, where you
+instantiate you plugin, make some settings, and add the object to the test
+system using `NTFX_ADD_SINGLE_TEST` or `NTFX_ADD_ALL_TESTS`. Then you retrun
+`runAllTests()`. Example:
+
+```c++
+#include "lib/ComponentTest.cpp"
+NTFX_TEST_BEGIN // Macro to instantiate statics.
+
+int main() { // Make a main function.
+  [plugin name]<float> plug; // Instantiate plugin.
+  plug.[some variable] = 2; // Make setting you wanna test.
+  NTFX_ADD_ALL_TESTS(plug); // Add test to testWrapper framework.
+  return NTFX_RUN_ALL_TESTS(); // Run all test tests.
+}
+```
+
+Save as `test/[plugin name]_test.cpp` and run
+
+```sh
+python testWrapper/test.py run [plugin name]
+```
+
+Alternativly, the path of the cpp file can be used as argument.
+
+This should generate plots of frequency and phase response, spectrogram and
+dynamic response using a stimulus of a 10 kHz sine stepping between -12 dB and 0
+dB level. Both left and right channels are displayed in all plots to make
+differences or interactions visible. If the plots are good and the plugin is
+seen as passing test, the results are approved with the command:
+
+```sh
+python testWrapper/test.py approve [test object names]
+```
+
+Note that the argument is not the name of the class, but the name of the object
+instance in the test program. This is so some tests can be approved, while
+others may not.
+
 ## The NTfx library
 
 The `lib` directory contains a library with a number of audio components, that

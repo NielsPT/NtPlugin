@@ -9,14 +9,14 @@ int main() {
   auto firstOrderHpf =
       NtFx::FirstOrder::StereoFilter<float, NtFx::FirstOrder::Shape::hpf>();
   firstOrderHpf.setFc(1e3);
-  ADD_TEST(firstOrderHpf, "impulse");
+  NTFX_ADD_SINGLE_TEST(firstOrderHpf, "impulse");
   auto firstOrderLpf =
       NtFx::FirstOrder::StereoFilter<float, NtFx::FirstOrder::Shape::lpf>();
   firstOrderLpf.setFc(1e3);
-  ADD_TEST(firstOrderLpf, "impulse");
+  NTFX_ADD_SINGLE_TEST(firstOrderLpf, "impulse");
   auto firstOrderLpfWithZero =
       NtFx::FirstOrder::StereoFilter<float, NtFx::FirstOrder::Shape::lpfZero>();
   firstOrderLpfWithZero.setFc(1e3);
-  ADD_TEST(firstOrderLpfWithZero, "impulse");
+  NTFX_ADD_SINGLE_TEST(firstOrderLpfWithZero, "impulse");
   return NtFx::ComponentTest<float>::runAllTests();
 }
