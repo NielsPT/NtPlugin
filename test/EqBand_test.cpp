@@ -11,20 +11,20 @@ int main() {
   bqBell.settings.gain_db = 12;
   bqBell.settings.fc_hz   = 4e3;
   bqBell.settings.q       = 2;
-  NTFX_ADD_SINGLE_TEST(bqBell, "impulse");
+  ADD_TEST(bqBell, "impulse");
   auto bqHfp           = NtFx::Biquad::EqBand<float>();
   bqHfp.settings.shape = NtFx::Biquad::Shape::hpf;
-  NTFX_ADD_SINGLE_TEST(bqHfp, "impulse");
+  ADD_TEST(bqHfp, "impulse");
   auto bqLpf           = NtFx::Biquad::EqBand<float>();
   bqLpf.settings.shape = NtFx::Biquad::Shape::lpf;
-  NTFX_ADD_SINGLE_TEST(bqLpf, "impulse");
+  ADD_TEST(bqLpf, "impulse");
   auto bqLoShelf             = NtFx::Biquad::EqBand<float>();
   bqLoShelf.settings.shape   = NtFx::Biquad::Shape::loShelf;
   bqLoShelf.settings.gain_db = 12;
-  NTFX_ADD_SINGLE_TEST(bqLoShelf, "impulse");
+  ADD_TEST(bqLoShelf, "impulse");
   auto bqHiShelf             = NtFx::Biquad::EqBand<float>();
   bqHiShelf.settings.shape   = NtFx::Biquad::Shape::hiShelf;
   bqHiShelf.settings.gain_db = 12;
-  NTFX_ADD_SINGLE_TEST(bqHiShelf, "impulse");
+  ADD_TEST(bqHiShelf, "impulse");
   return NtFx::ComponentTest<float>::runAllTests();
 }
