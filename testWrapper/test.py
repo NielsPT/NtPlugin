@@ -116,6 +116,34 @@ def generateTestVectors(t: float, fs: float):
     return (impulse, linearSweep, syncSweep, dynamic)
 
 
+def buildTestProg(cppPath: str):
+    print("Building test program.")
+    os.makedirs(f"{FILE_DIR}/out", exist_ok=True)
+    res = sp.run(
+        [
+            "clang++",
+            cppPath,
+            "-o",
+            f"{FILE_DIR}/out/main",
+            f"-I{os.path.abspath(FILE_DIR)}/..",
+            f"-I{os.path.abspath(FILE_DIR)}/../lib/gcem/include",
+            "-I/opt/homebrew/include",
+            "--std=c++20",
+        ],
+        check=False,
+    )
+    if res.returncode:
+        print(f"Build failed: {res.stdout}, {res.stderr}")
+        return False
+    return True
+
+
+def runTestProg() -> int:
+    print("Running test program.")
+    res = sp.run([f"{FILE_DIR}/../testWrapper/out/main"], check=False)
+    return res.returncode
+
+
 def findAllTests() -> list[str]:
     paths = []
     allFiles = os.listdir(f"{FILE_DIR}/../test")
@@ -167,6 +195,10 @@ def plotSpectrum(
     p.grid(True)
     p.xlabel("Time / s")
     p.ylabel("Frequency / Hz")
+    p.title(
+        os.path.basename(filename).replace(".png", "").replace(SEPARATOR, " ")
+        + " spectrum"
+    )
     p.savefig(filename, dpi=300, bbox_inches="tight")
     p.clf()
 
@@ -205,6 +237,10 @@ def plotFrequencyDomain(
     p.ylabel("Amplitude / dB")
     if ylabel:
         p.ylabel(ylabel)
+    p.title(
+        os.path.basename(filename).replace(".png", "").replace(SEPARATOR, " ")
+        + " response"
+    )
     p.savefig(filename, dpi=300, bbox_inches="tight")
     p.clf()
 
@@ -237,6 +273,10 @@ def plotDynamic(
     p.grid(True)
     p.xlabel("Time / s")
     p.ylabel("Amplitude / dB")
+    p.title(
+        os.path.basename(filename).replace(".png", "").replace(SEPARATOR, " ")
+        + " response"
+    )
     p.savefig(filename, dpi=300, bbox_inches="tight")
     p.clf()
 
@@ -259,69 +299,6 @@ def plotSweeps(
         )
 
 
-def readResult(path: str) -> np.ndarray | None:
-    if not os.path.exists(path):
-        print(f"Bad path: {path}")
-        return None
-    with open(path, "r", encoding="utf8") as f:
-        lines = f.readlines()
-    y = np.zeros([2, len(lines)])
-    for i, line in enumerate(lines):
-        vs = line.split(" ")
-        y[0, i] = vs[0]
-        y[1, i] = vs[1]
-    return y
-
-
-def readAndPlotTestResults(testFileName: str, fs: float):
-    print(f"Plotting results for '{testFileName}'")
-    inFiles = os.listdir(f"{FILE_DIR}/in")
-    outFiles = os.listdir(f"{FILE_DIR}/out")
-    resultFiles: list[str] = []
-    for file in outFiles:
-        if file.endswith(f"{SEPARATOR}result.txt"):
-            resultFiles += [file]
-    expectedFiles: list[str] = []
-    for file in inFiles:
-        if file.endswith(f"{SEPARATOR}expected.txt"):
-            info = file.split(SEPARATOR)
-            if len(info) != 5:
-                print(f"Bad filename: {file}")
-                continue
-            expectedFiles += [info[0] + SEPARATOR + info[1]]
-    results, legends = parseFiles(resultFiles, expectedFiles)
-    plotResults(results, legends, testFileName, fs)
-
-
-def plotResults(
-    results: dict[str, list[np.ndarray]],
-    legends: dict[str, list[str]],
-    componentName: str,
-    fs: float,
-):
-    os.makedirs(f"{FILE_DIR}/img", exist_ok=True)
-    if "impulse" in results and results["impulse"]:
-        plotImpulse(
-            np.concatenate(results["impulse"]),
-            fs,
-            f"{FILE_DIR}/img/{componentName}{SEPARATOR}frequency.png",
-            legends["impulse"],
-        )
-    if "linearSweep" in results and results["linearSweep"]:
-        plotSweeps(results, legends, componentName, fs, "linearSweep")
-    if "syncSweep" in results and results["syncSweep"]:
-        plotSweeps(results, legends, componentName, fs, "syncSweep")
-    if "dynamic" in results and results["dynamic"]:
-        for i in range(3):
-            plotDynamic(
-                np.concatenate(results["dynamic"]),
-                fs,
-                f"{FILE_DIR}/img/{componentName}{SEPARATOR}dynamic{SEPARATOR}{i}.png",
-                legends["dynamic"],
-                i,
-            )
-
-
 def parseFiles(
     files: list[str],
     exceptedFiles: list[str],
@@ -342,7 +319,7 @@ def parseFiles(
     for file in files:
         info = file.split(SEPARATOR)
         if len(info) != 5:
-            print(f"Bad filename: {file}")
+            print(f"Bad filename: '{file}'.")
             continue
         # print(f"Analyzing component '{info[0]}', test '{info[1]}'.")
         result = readResult(f"{FILE_DIR}/out/" + file)
@@ -382,32 +359,69 @@ def parseFiles(
     return results_dict, legends_dict
 
 
-def buildTestProg(cppPath: str):
-    print("Building test program.")
-    os.makedirs(f"{FILE_DIR}/out", exist_ok=True)
-    res = sp.run(
-        [
-            "clang++",
-            cppPath,
-            "-o",
-            f"{FILE_DIR}/out/main",
-            f"-I{os.path.abspath(FILE_DIR)}/..",
-            f"-I{os.path.abspath(FILE_DIR)}/../lib/gcem/include",
-            "-I/opt/homebrew/include",
-            "--std=c++20",
-        ],
-        check=False,
-    )
-    if res.returncode:
-        print(f"Build failed: {res.stdout}, {res.stderr}")
-        return False
-    return True
+def readResult(path: str) -> np.ndarray | None:
+    if not os.path.exists(path):
+        print(f"Bad path: {path}")
+        return None
+    with open(path, "r", encoding="utf8") as f:
+        lines = f.readlines()
+    y = np.zeros([2, len(lines)])
+    for i, line in enumerate(lines):
+        vs = line.split(" ")
+        y[0, i] = vs[0]
+        y[1, i] = vs[1]
+    return y
 
 
-def runTestProg() -> int:
-    print("Running test program.")
-    res = sp.run([f"{FILE_DIR}/../testWrapper/out/main"], check=False)
-    return res.returncode
+def readAndPlotTestResults(testFileName: str, fs: float):
+    print(f"Plotting results for '{testFileName}'")
+    resultFiles: list[str] = []
+    outFiles = os.listdir(f"{FILE_DIR}/out")
+    for file in outFiles:
+        if file.startswith(testFileName) and file.endswith(
+            f"{SEPARATOR}result.txt"
+        ):
+            resultFiles += [file]
+    expectedFiles: list[str] = []
+    inFiles = os.listdir(f"{FILE_DIR}/in")
+    for file in inFiles:
+        if file.endswith(f"{SEPARATOR}expected.txt"):
+            info = file.split(SEPARATOR)
+            if len(info) != 5:
+                print(f"Bad filename: {file}")
+                continue
+            expectedFiles += [info[0] + SEPARATOR + info[1]]
+    results, legends = parseFiles(resultFiles, expectedFiles)
+    plotResults(results, legends, testFileName, fs)
+
+
+def plotResults(
+    results: dict[str, list[np.ndarray]],
+    legends: dict[str, list[str]],
+    testFileName: str,
+    fs: float,
+):
+    os.makedirs(f"{FILE_DIR}/img", exist_ok=True)
+    if "impulse" in results and results["impulse"]:
+        plotImpulse(
+            np.concatenate(results["impulse"]),
+            fs,
+            f"{FILE_DIR}/img/{testFileName}{SEPARATOR}frequency.png",
+            legends["impulse"],
+        )
+    if "linearSweep" in results and results["linearSweep"]:
+        plotSweeps(results, legends, testFileName, fs, "linearSweep")
+    if "syncSweep" in results and results["syncSweep"]:
+        plotSweeps(results, legends, testFileName, fs, "syncSweep")
+    if "dynamic" in results and results["dynamic"]:
+        for i in range(3):
+            plotDynamic(
+                np.concatenate(results["dynamic"]),
+                fs,
+                f"{FILE_DIR}/img/{testFileName}{SEPARATOR}dynamic{SEPARATOR}{i}.png",
+                legends["dynamic"],
+                i,
+            )
 
 
 def acceptLatestResult(objects: list[str]):
@@ -437,7 +451,6 @@ def clean():
 
 
 def runTests(path: str, fs: float) -> bool:
-    clean()
     if not buildTestProg(path):
         return False
     returncode = runTestProg()
