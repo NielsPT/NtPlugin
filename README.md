@@ -241,7 +241,7 @@ should now contain a number of plots.
 In order to test a plugin you must create a file named `[plugin name]_test.cpp`,
 include `lib/ComponentTest.h` and implement a main function, where you
 instantiate you plugin, make some settings, and add the object to the test class
-using `ADD_TEST`. Then you retrun `runAllTests()`. Example:
+using `NTFX_ADD_TEST`. Then you retrun `runAllTests()`. Example:
 
 ```c++
 #include "lib/ComponentTest.h"
@@ -251,14 +251,14 @@ NTFX_TEST_BEGIN // Macro to instantiate statics.
 int main() { // Make a main function.
   [plugin name]<float> plug; // Instantiate plugin.
   plug.[some variable] = 2; // Make setting you wanna test.
-  ADD_TEST(plug, "impulse") // Add test to testWrapper framework.
+  NTFX_ADD_TEST(plug, "impulse") // Add test to testWrapper framework.
   return NtFx::ComponentTest<float>::runAllTests(); // Run all test tests.
 }
 ```
 
-`ADD_TEST` takes a string argument that selects the stimulus to test against.
-The options are `"impulse"`, `"syncSweep"`, `"linearSweep"` and `"dynamic"`.
-Different plots are made based on the selected stimulus.
+`NTFX_ADD_TEST` takes a string argument that selects the stimulus to test
+against. The options are `"impulse"`, `"syncSweep"`, `"linearSweep"` and
+`"dynamic"`. Different plots are made based on the selected stimulus.
 
 Save as `test/[plugin name]_test.cpp` and run
 

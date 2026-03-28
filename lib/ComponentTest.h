@@ -39,50 +39,7 @@
 #include <string>
 #include <vector>
 
-// https://stackoverflow.com/questions/15884793/how-to-get-the-name-or-file-and-line-of-caller-method
-// #include <source_location>
-// #include <string_view>
-// template <typename T>
-// consteval auto _func_name() {
-//   const auto& loc = std::source_location::current();
-//   return loc.function_name();
-// }
-
-// template <typename T>
-// consteval std::string_view _type_of_impl() {
-//   constexpr std::string_view functionName = _func_name<T>();
-//   // since func_name_ is 'consteval auto func_name() [with T = ...]'
-//   // we can simply get the subrange
-//   // because the position after the equal will never change since
-//   // the same function name is used
-
-//   // another notice: these magic numbers will not work on MSVC or GCC
-//   // TODO: Make this work on all platforms.
-//   return { functionName.begin() + 23, functionName.end() - 3 };
-// }
-
-// template <typename T>
-// constexpr auto type_of(T&& arg) {
-//   return _type_of_impl<decltype(arg)>();
-// }
-
-// template <typename T>
-// constexpr auto type_of() {
-//   return _type_of_impl<T>();
-// }
-
-// template <typename T>
-// constexpr auto componentNameOf(T&& arg) {
-//   auto componentName          = type_of(arg);
-//   auto n                      = componentName.length();
-//   auto _end                   = componentName.find("<float");
-//   auto nameWithSpace          = componentName.substr(0, _end);
-//   auto _begin                 = nameWithSpace.rfind("::") + 2;
-//   auto componentNameDemangled = nameWithSpace.substr(_begin, n);
-//   return std::string(componentNameDemangled);
-// }
-
-constexpr auto testFileBaseName(std::string fileName) {
+consteval auto testFileBaseName(std::string_view fileName) {
   auto _begin        = fileName.find("/") + 1;
   auto n             = fileName.length();
   auto baseName      = fileName.substr(_begin, n);
@@ -93,35 +50,59 @@ constexpr auto testFileBaseName(std::string fileName) {
   return baseNameNoExt;
 }
 
-#define QUOTE(str) #str
-#define EXPAND_AND_QUOTE(str) QUOTE(str)
+#define _NTFX_QUOTE(str) #str
+#define _NTFX_EXPAND_AND_QUOTE(str) _NTFX_QUOTE(str)
 
-#define _ADD_TEST_IMPL(object, stimuli)                                        \
+#define _NTFX_ADD_TEST_IMPL(object, stimuli)                                   \
   NtFx::ComponentTest<float>::addTest(object,                                  \
-      EXPAND_AND_QUOTE(object),                                                \
-      testFileBaseName(__FILE__),                                              \
+      _NTFX_EXPAND_AND_QUOTE(object),                                          \
+      std::string(testFileBaseName(__FILE__)),                                 \
       { stimuli })
-// object, EXPAND_AND_QUOTE(object), componentNameOf(object), { stimuli })
 
-// TODO: Copy the component somewhere.
-#define ADD_TEST(object, stimuli) _ADD_TEST_IMPL(object, stimuli)
+/**
+ * @brief Adds a new test to ComponentTest.
+ *
+ * @param object Object derived from Component class that need to be tested.
+ * Note that the object is NOT copied and must stay in scope until the test has
+ * run.
+ */
+#define NTFX_ADD_TEST(object, stimuli) _NTFX_ADD_TEST_IMPL(object, stimuli)
 
-#define NTFX_TEST_BEGIN                                                        \
-  namespace NtFx {                                                             \
-    template <>                                                                \
-    int NtFx::ComponentTest<float>::nTests = 0;                                \
-    template <>                                                                \
-    int NtFx::ComponentTest<float>::nSuccessful = 0;                           \
-    template <>                                                                \
-    int NtFx::ComponentTest<float>::nComponents = 0;                           \
-    template <>                                                                \
-    std::vector<std::unique_ptr<NtFx::ComponentTest<float>>>                   \
-        NtFx::ComponentTest<float>::objects { };                               \
-    template <>                                                                \
-    std::vector<std::string> NtFx::ComponentTest<float>::objectNames { };      \
-    template <>                                                                \
-    std::vector<std::string> NtFx::ComponentTest<float>::testFilesNames { };   \
-  }
+/**
+ * @brief Add this to the beginning of you test suite to instantiate the needed
+ * statics of ComponentTest. Sucks, I know, but that's what C++ demands.
+ *
+ */
+#ifndef _NTFX_TEST_STARTED
+  #define NTFX_TEST_BEGIN                                                      \
+    namespace NtFx {                                                           \
+      template <>                                                              \
+      int NtFx::ComponentTest<float>::nTestFiles = 0;                          \
+      template <>                                                              \
+      int NtFx::ComponentTest<float>::nTests = 0;                              \
+      template <>                                                              \
+      int NtFx::ComponentTest<float>::nSuccessful = 0;                         \
+      template <>                                                              \
+      int NtFx::ComponentTest<float>::nObjects = 0;                            \
+      template <>                                                              \
+      std::vector<std::unique_ptr<NtFx::ComponentTest<float>>>                 \
+          NtFx::ComponentTest<float>::objects { };                             \
+      template <>                                                              \
+      std::vector<std::string> NtFx::ComponentTest<float>::objectNames { };    \
+      template <>                                                              \
+      std::vector<std::string> NtFx::ComponentTest<float>::testFilesNames { }; \
+    }
+  #define _NTFX_TEST_STARTED
+#else
+  #define NTFX_TEST_BEGIN
+#endif
+
+// TODO: Replace 'main' with something else when multiple files are in one test
+// run. But what? __FILE__ won't cut it, it has the full path.
+// Alternatively, we could store a CSV with the resuls and read that from Pyton
+// once all the tests are done. It's not as efficient, but it'll work.
+#define _NTFX_TEST_IMPL() int main()
+#define NTFX_TEST() _NTFX_TEST_IMPL()
 
 namespace NtFx {
 static const std::vector<std::string> STIMULI_NAMES {
@@ -138,7 +119,10 @@ constexpr char SEPARATOR = '.';
  */
 template <typename signal_t>
 struct ComponentTest {
-  static int nComponents; ///< Number of components tested.
+  // TODO: Instead of using statics, add another class which encapsulates all
+  // the ComponentTest objects.
+  static int nTestFiles;  ///< Total number of test files.
+  static int nObjects;    ///< Number of components tested.
   static int nTests;      ///< Total tests run.
   static int nSuccessful; ///< Number of successful tests.
   static std::vector<std::unique_ptr<ComponentTest<signal_t>>> objects;
@@ -154,12 +138,12 @@ struct ComponentTest {
   ComponentTest(
       Component<Stereo<signal_t>>& cut, std::vector<std::string> stimuli = { })
       : cut(cut) {
-    nComponents++;
+    nObjects++;
     if (stimuli.empty()) { return; }
-    for (auto& x : stimuli) {
-      if (std::find(STIMULI_NAMES.begin(), STIMULI_NAMES.end(), x)
+    for (auto& stimulus : stimuli) {
+      if (std::find(STIMULI_NAMES.begin(), STIMULI_NAMES.end(), stimulus)
           == STIMULI_NAMES.end()) {
-        std::cout << "Stimuli name '" << x << "' not accepted.";
+        std::cout << "Stimuli name '" << stimulus << "' not accepted.";
         this->activeStimuli.clear();
         return;
       }
@@ -173,9 +157,13 @@ struct ComponentTest {
       std::vector<std::string> stimuliToUse = { }) {
     if (std::find(objectNames.begin(), objectNames.end(), objectName)
         != objectNames.end()) {
-      std::cout << "Test '" << objectName << "' already registered."
+      std::cout << "Test objet '" << objectName << "' already registered."
                 << std::endl;
       return false;
+    }
+    if (std::find(testFilesNames.begin(), testFilesNames.end(), fileBaseName)
+        == testFilesNames.end()) {
+      nTestFiles++;
     }
     NtFx::ComponentTest<float>::objectNames.push_back(objectName);
     NtFx::ComponentTest<float>::objects.push_back(
@@ -264,6 +252,7 @@ struct ComponentTest {
     return success;
   }
 
+  // TODO: dox
   static int runAllTests() {
     auto n = objects.size();
     if (n != objectNames.size()) {
@@ -290,10 +279,10 @@ struct ComponentTest {
     } else {
       std::cout << "\033[31m";
     }
-    // TODO: Count components.
-    std::cout << "Ran a total of " << nTests << " test on " << nComponents
-              << " objects. " << nSuccessful << " succeeded. ("
-              << 100.0 * double(nSuccessful) / double(nTests) << "%)."
+    std::cout << "Ran a total of " << nTests << " test on " << nObjects
+              << " objects from " << nTestFiles << " files. " << nSuccessful
+              << " succeeded. (" << 100.0 * double(nSuccessful) / double(nTests)
+              << "%)."
               << "\033[0m" << std::endl;
     return nSuccessful == nTests;
   }

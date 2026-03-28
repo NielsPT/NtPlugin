@@ -117,7 +117,6 @@ def generateTestVectors(t: float, fs: float):
 
 
 def buildTestProg(cppPath: str):
-    print("Building test program.")
     os.makedirs(f"{FILE_DIR}/out", exist_ok=True)
     res = sp.run(
         [
@@ -139,7 +138,6 @@ def buildTestProg(cppPath: str):
 
 
 def runTestProg() -> int:
-    print("Running test program.")
     res = sp.run([f"{FILE_DIR}/../testWrapper/out/main"], check=False)
     return res.returncode
 
@@ -284,17 +282,17 @@ def plotDynamic(
 def plotSweeps(
     results: dict[str, list[np.ndarray]],
     legends: dict[str, list[str]],
-    componentName: str,
+    testFileName: str,
     fs: float,
-    testName: str,
+    objectName: str,
 ):
-    for i, sweep in enumerate(results[testName]):
+    for i, sweep in enumerate(results[objectName]):
         plotSpectrum(
             sweep,
             fs,
-            f"{FILE_DIR}/img/{componentName}{SEPARATOR}"
-            + f"{legends[testName][i*2].split(" ")[0]}{SEPARATOR}"
-            + testName
+            f"{FILE_DIR}/img/{testFileName}{SEPARATOR}"
+            + f"{legends[objectName][i*2].split(" ")[0]}{SEPARATOR}"
+            + objectName
             + ".png",
         )
 
@@ -321,7 +319,6 @@ def parseFiles(
         if len(info) != 5:
             print(f"Bad filename: '{file}'.")
             continue
-        # print(f"Analyzing component '{info[0]}', test '{info[1]}'.")
         result = readResult(f"{FILE_DIR}/out/" + file)
         if result is None:
             print(f"'{file}' not found.")
@@ -374,7 +371,6 @@ def readResult(path: str) -> np.ndarray | None:
 
 
 def readAndPlotTestResults(testFileName: str, fs: float):
-    print(f"Plotting results for '{testFileName}'")
     resultFiles: list[str] = []
     outFiles = os.listdir(f"{FILE_DIR}/out")
     for file in outFiles:
@@ -425,7 +421,6 @@ def plotResults(
 
 
 def acceptLatestResult(objects: list[str]):
-    print(f"Accepting results {objects}.")
     files = os.listdir(f"{FILE_DIR}/out")
     filesToCopy: list[str] = []
     for file in files:
@@ -451,20 +446,21 @@ def clean():
 
 
 def runTests(path: str, fs: float) -> bool:
+    testFileName = (
+        os.path.basename(path).replace("_test", "").replace(".cpp", "")
+    )
+    print(f"Testing '{testFileName}'")
     if not buildTestProg(path):
         return False
     returncode = runTestProg()
-    readAndPlotTestResults(
-        os.path.basename(path).replace("_test", "").replace(".cpp", ""),
-        fs,
-    )
+    readAndPlotTestResults(testFileName, fs)
     return returncode == 0
 
 
 def run():
     parser = argparse.ArgumentParser(
-        description="Runs test on NtFx Components. Usage: 'test.py run "
-        "[component name(s)]"
+        description="Runs test on NTfx Components. Usage: 'test.py run "
+        "[test file name(s)]'. '_test.cpp' can be omitted."
     )
     subparsers = parser.add_subparsers(dest="task")
     runParser = subparsers.add_parser(
@@ -478,11 +474,6 @@ def run():
         help="Cpp-files to run. If 'all' or nothing, dir 'test' will be searched"
         " for files ending with '_test.cpp' and those will be used.",
     )
-    # runParser.add_argument(
-    #     "--tests",
-    #     choices=["impulse", "syncSweep", "linearSweep", "dynamic"],
-    #     help="Select specific test inputs to process with component.",
-    # )
     generateParser = subparsers.add_parser(
         "generate", help="Generate needed input files."
     )
@@ -493,11 +484,11 @@ def run():
         "approve", help="Set selected results in output dir as new expected."
     )
     approveParser.add_argument(
-        "components",
+        "objects",
         nargs="*",
         default=["all"],
-        help="Components to accept results for. 'all' for all previously tested "
-        "components.",
+        help="Objects to accept results for. 'all' for all previously tested "
+        "objects.",
     )
     parser.add_argument(
         "--fs",
@@ -530,14 +521,15 @@ def run():
                     file = f"{file}_test"
                 file = f"test/{file}.cpp"
             success &= runTests(file, fs)
+            print()
         return not success
     elif args["task"] == "clean":
         return clean()
     elif args["task"] == "approve":
-        components = args["components"]
-        if "all" in components:
+        objects = args["objects"]
+        if "all" in objects:
             # TODO: Make this list from files found in 'test', 'in' or 'out'.
-            components = [
+            objects = [
                 "bell",
                 "hfp",
                 "hiShelf",
@@ -552,7 +544,7 @@ def run():
                 "softClip3",
                 "softClip5",
             ]
-        acceptLatestResult(components)
+        acceptLatestResult(objects)
 
 
 if __name__ == "__main__":

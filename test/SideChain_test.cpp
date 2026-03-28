@@ -10,10 +10,10 @@ int main() {
   peakSettings0.thresh_db = -6;
   peakSettings0.tRel_ms   = 20;
   auto peakDbSc           = NtFx::PeakSideChainDb<float>(peakSettings0);
-  ADD_TEST(peakDbSc, "dynamic");
+  NTFX_ADD_TEST(peakDbSc, "dynamic");
   auto peakSettings1       = peakSettings0;
   peakSettings1.linkEnable = true;
   auto peakDbScLink        = NtFx::PeakSideChainDb<float>(peakSettings1);
-  ADD_TEST(peakDbScLink, "dynamic");
+  NTFX_ADD_TEST(peakDbScLink, "dynamic");
   return NtFx::ComponentTest<float>::runAllTests();
 }
