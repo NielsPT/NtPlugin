@@ -27,7 +27,10 @@ from matplotlib import pyplot as p
 from scipy import signal as s
 
 # TODO: Make the files comma separated.
+# TODO: CSV files.
 SEPARATOR = "."
+EXPECTED_DIR = "in"
+TMP_DIR = "out"
 
 FILE_DIR = os.path.dirname(__file__)
 
@@ -99,7 +102,7 @@ def storeStereoTestVector(x: np.ndarray, filename: str):
 
 def generateTestVectors(t: float, fs: float):
     n = int(t * fs)
-    outputPath = f"{FILE_DIR}/in/"
+    outputPath = f"{FILE_DIR}/{EXPECTED_DIR}/"
     _impulse = generateImpulse(n)
     impulse = np.vstack((_impulse, _impulse))
     storeStereoTestVector(impulse, outputPath + "impulse.txt")
@@ -117,17 +120,18 @@ def generateTestVectors(t: float, fs: float):
 
 
 def buildTestProg(cppPath: str):
-    os.makedirs(f"{FILE_DIR}/out", exist_ok=True)
+    os.makedirs(f"{FILE_DIR}/{TMP_DIR}", exist_ok=True)
     res = sp.run(
         [
             "clang++",
             cppPath,
             "-o",
-            f"{FILE_DIR}/out/main",
+            f"{FILE_DIR}/{TMP_DIR}/main",
             f"-I{os.path.abspath(FILE_DIR)}/..",
             f"-I{os.path.abspath(FILE_DIR)}/../lib/gcem/include",
             "-I/opt/homebrew/include",
             "--std=c++20",
+            "-DNTFX_FS=48e3f",
         ],
         check=False,
     )
@@ -138,7 +142,13 @@ def buildTestProg(cppPath: str):
 
 
 def runTestProg() -> int:
-    res = sp.run([f"{FILE_DIR}/../testWrapper/out/main"], check=False)
+    # TODO: PWD
+    res = sp.run(
+        [f"{FILE_DIR}/../testWrapper/{TMP_DIR}/main"],
+        check=False,
+        # capture_output=True,
+    )
+    # print(f"{res.stdout.decode()}")
     return res.returncode
 
 
@@ -319,14 +329,14 @@ def parseFiles(
         if len(info) != 5:
             print(f"Bad filename: '{file}'.")
             continue
-        result = readResult(f"{FILE_DIR}/out/" + file)
+        result = readResult(f"{FILE_DIR}/{TMP_DIR}/" + file)
         if result is None:
             print(f"'{file}' not found.")
             continue
         legends = ["result left", "result right"]
         if info[0] + SEPARATOR + info[1] in exceptedFiles:
             excepted = readResult(
-                f"{FILE_DIR}/in/{file.replace("result", "expected")}"
+                f"{FILE_DIR}/{EXPECTED_DIR}/{file.replace("result", "expected")}"
             )
             if excepted is not None:
                 legends = [
@@ -341,18 +351,21 @@ def parseFiles(
         legends = [info[1] + " " + legend for legend in legends]
         # TODO: loop
         # TODO: 2? magic number. How long did that take to find? Come on.
-        if info[2] == "impulse":
-            results_dict["impulse"] += result
-            legends_dict["impulse"] += legends
-        elif info[2] == "linearSweep":
-            results_dict["linearSweep"] += result
-            legends_dict["linearSweep"] += legends
-        elif info[2] == "syncSweep":
-            results_dict["syncSweep"] += result
-            legends_dict["syncSweep"] += legends
-        elif info[2] == "dynamic":
-            results_dict["dynamic"] += result
-            legends_dict["dynamic"] += legends
+        try:
+            if info[2] == "impulse":
+                results_dict["impulse"] += result
+                legends_dict["impulse"] += legends
+            elif info[2] == "linearSweep":
+                results_dict["linearSweep"] += result
+                legends_dict["linearSweep"] += legends
+            elif info[2] == "syncSweep":
+                results_dict["syncSweep"] += result
+                legends_dict["syncSweep"] += legends
+            elif info[2] == "dynamic":
+                results_dict["dynamic"] += result
+                legends_dict["dynamic"] += legends
+        except ValueError as e:
+            print(f"Unexpected result file found: {e}")
     return results_dict, legends_dict
 
 
@@ -372,14 +385,14 @@ def readResult(path: str) -> np.ndarray | None:
 
 def readAndPlotTestResults(testFileName: str, fs: float):
     resultFiles: list[str] = []
-    outFiles = os.listdir(f"{FILE_DIR}/out")
+    outFiles = os.listdir(f"{FILE_DIR}/{TMP_DIR}")
     for file in outFiles:
         if file.startswith(testFileName) and file.endswith(
             f"{SEPARATOR}result.txt"
         ):
             resultFiles += [file]
     expectedFiles: list[str] = []
-    inFiles = os.listdir(f"{FILE_DIR}/in")
+    inFiles = os.listdir(f"{FILE_DIR}/{EXPECTED_DIR}")
     for file in inFiles:
         if file.endswith(f"{SEPARATOR}expected.txt"):
             info = file.split(SEPARATOR)
@@ -420,8 +433,8 @@ def plotResults(
             )
 
 
-def acceptLatestResult(objects: list[str]):
-    files = os.listdir(f"{FILE_DIR}/out")
+def acceptLatestResult(objects: list[str]) -> bool:
+    files = os.listdir(f"{FILE_DIR}/{TMP_DIR}")
     filesToCopy: list[str] = []
     for file in files:
         if file.endswith(f"{SEPARATOR}result.txt"):
@@ -431,18 +444,24 @@ def acceptLatestResult(objects: list[str]):
                 continue
             if info[1] in objects:
                 filesToCopy += [file]
+    if not filesToCopy:
+        return False
     for file in filesToCopy:
         storeFile = file.replace("result", "expected")
-        print(f"Storing {file} as {storeFile}.")
-        with open(f"{FILE_DIR}/out/" + file, "r", encoding="utf8") as x:
-            with open(f"{FILE_DIR}/in/" + storeFile, "w", encoding="utf8") as y:
+        # print(f"Storing {file} as {storeFile}.")
+        with open(f"{FILE_DIR}/{TMP_DIR}/" + file, "r", encoding="utf8") as x:
+            with open(
+                f"{FILE_DIR}/{EXPECTED_DIR}/" + storeFile, "w", encoding="utf8"
+            ) as y:
                 y.write(x.read())
+    print(f"Copied {len(filesToCopy)} files with expected results to `in`.")
+    return True
 
 
-def clean():
-    shutil.rmtree(f"{FILE_DIR}/out")
-    # os.removedirs(f"{testWrapperDir}/out")
-    return 0
+def clean() -> bool:
+    shutil.rmtree(f"{FILE_DIR}/{TMP_DIR}")
+    # os.removedirs(f"{testWrapperDir}/{TMP_DIR}")
+    return True
 
 
 def runTests(path: str, fs: float) -> bool:
@@ -457,7 +476,36 @@ def runTests(path: str, fs: float) -> bool:
     return returncode == 0
 
 
-def run():
+def readAggregateResults() -> dict[str, int]:
+    results = {}
+    with open(f"{FILE_DIR}/{TMP_DIR}/results.txt", encoding="utf8") as f:
+        for line in f.readlines():
+            vals = line.split(",")
+            if len(vals) != 4:
+                print("Bad line in results.")
+                continue
+            if vals[0] in results:
+                print(f"Multiple results for '{vals[0]}'. Using latest.")
+            results[vals[0]] = {
+                "nTests": vals[1],
+                "nObjects": vals[2],
+                "nSuccessful": vals[3],
+            }
+    sums = {
+        "nFiles": 0,
+        "nTests": 0,
+        "nObjects": 0,
+        "nSuccessful": 0,
+    }
+    for file in results.values():
+        assert isinstance(file, dict)
+        sums["nFiles"] += 1
+        for test, val in file.items():
+            sums[test] += int(val)
+    return sums
+
+
+def run() -> bool:
     parser = argparse.ArgumentParser(
         description="Runs test on NTfx Components. Usage: 'test.py run "
         "[test file name(s)]'. '_test.cpp' can be omitted."
@@ -506,14 +554,15 @@ def run():
     args = parser.parse_args().__dict__
     fs = args["fs"]
     t = args["duration"]
-    os.makedirs(f"{FILE_DIR}/in", exist_ok=True)
-    os.makedirs(f"{FILE_DIR}/out", exist_ok=True)
+    os.makedirs(f"{FILE_DIR}/{EXPECTED_DIR}", exist_ok=True)
+    os.makedirs(f"{FILE_DIR}/{TMP_DIR}", exist_ok=True)
     if args["task"] == "generate":
-        return generateTestVectors(t, fs) is None
-    elif args["task"] == "run":
+        return generateTestVectors(t, fs) is not None
+    if args["task"] == "run":
         success = True
         files = args["files"]
         if not files or files == ["all"]:
+            clean()
             files = findAllTests()
         for file in files:
             if not file.endswith(".cpp"):
@@ -522,30 +571,49 @@ def run():
                 file = f"test/{file}.cpp"
             success &= runTests(file, fs)
             print()
-        return not success
-    elif args["task"] == "clean":
+        results = readAggregateResults()
+        print(
+            f"Ran {results["nTests"]} tests on {results["nObjects"]} objects "
+            f"in {results["nFiles"]} test files. "
+            f"{results["nSuccessful"]} succeeded. "
+            f"({100.0 * results["nSuccessful"] /  results["nTests"]} %)"
+        )
+        if success:
+            print("\033[32m", end="")
+            st = "PASSED"
+        else:
+            print("\033[31m", end="")
+            st = "FAILED"
+        print(f"TESTS {st}")
+        print("\033[0m", end="")
+        return success
+    if args["task"] == "clean":
         return clean()
-    elif args["task"] == "approve":
+    if args["task"] == "approve":
         objects = args["objects"]
         if "all" in objects:
             # TODO: Make this list from files found in 'test', 'in' or 'out'.
             objects = [
-                "bell",
-                "hfp",
-                "hiShelf",
-                "lpf",
-                "lowShelf",
+                "bqBell",
+                "bqHfp",
+                "bqHiShelf",
+                "bqLpf",
+                "bqLoShelf",
                 "firstOrderHpf",
                 "firstOrderLpf",
                 "firstOrderLpfWithZero",
                 "peakSensor",
                 "peakHoldSensor",
+                "peakDbSc",
+                "peakDbScLink",
                 "rmsSensor",
                 "softClip3",
                 "softClip5",
             ]
-        acceptLatestResult(objects)
+        return acceptLatestResult(objects)
+    print(f"Unknown command: '{args['task']}'.")
+    return False
 
 
 if __name__ == "__main__":
-    sys.exit(run())
+    sys.exit(not run())

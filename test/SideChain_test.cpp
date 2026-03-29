@@ -3,7 +3,7 @@
 
 NTFX_TEST_BEGIN
 
-int main() {
+NTFX_TEST() {
   auto peakSettings0      = NtFx::ScSettings<float>();
   peakSettings0.ratio_db  = 3;
   peakSettings0.knee_db   = 0;

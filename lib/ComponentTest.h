@@ -68,30 +68,30 @@ consteval auto testFileBaseName(std::string_view fileName) {
  */
 #define NTFX_ADD_TEST(object, stimuli) _NTFX_ADD_TEST_IMPL(object, stimuli)
 
-/**
- * @brief Add this to the beginning of you test suite to instantiate the needed
- * statics of ComponentTest. Sucks, I know, but that's what C++ demands.
- *
- */
+#define _NTFX_TEST_BEGIN_IMPL                                                  \
+  namespace NtFx {                                                             \
+    template <typename T>                                                      \
+    int NtFx::ComponentTest<T>::nTests = 0;                                    \
+    template <typename T>                                                      \
+    int NtFx::ComponentTest<T>::nSuccessful = 0;                               \
+    template <typename T>                                                      \
+    int NtFx::ComponentTest<T>::nObjects = 0;                                  \
+    template <typename T>                                                      \
+    std::vector<std::unique_ptr<NtFx::ComponentTest<T>>>                       \
+        NtFx::ComponentTest<T>::tests { };                                     \
+    template <typename T>                                                      \
+    std::string NtFx::ComponentTest<T>::testFile { std::string(                \
+        testFileBaseName(__FILE__)) };                                         \
+  }
+
 #ifndef _NTFX_TEST_STARTED
-  #define NTFX_TEST_BEGIN                                                      \
-    namespace NtFx {                                                           \
-      template <>                                                              \
-      int NtFx::ComponentTest<float>::nTestFiles = 0;                          \
-      template <>                                                              \
-      int NtFx::ComponentTest<float>::nTests = 0;                              \
-      template <>                                                              \
-      int NtFx::ComponentTest<float>::nSuccessful = 0;                         \
-      template <>                                                              \
-      int NtFx::ComponentTest<float>::nObjects = 0;                            \
-      template <>                                                              \
-      std::vector<std::unique_ptr<NtFx::ComponentTest<float>>>                 \
-          NtFx::ComponentTest<float>::objects { };                             \
-      template <>                                                              \
-      std::vector<std::string> NtFx::ComponentTest<float>::objectNames { };    \
-      template <>                                                              \
-      std::vector<std::string> NtFx::ComponentTest<float>::testFilesNames { }; \
-    }
+  /**
+   * @brief Add this to the beginning of you test suite to instantiate the
+   * needed statics of ComponentTest. Sucks, I know, but that's what C++
+   * demands.
+   *
+   */
+  #define NTFX_TEST_BEGIN _NTFX_TEST_BEGIN_IMPL
   #define _NTFX_TEST_STARTED
 #else
   #define NTFX_TEST_BEGIN
@@ -121,23 +121,27 @@ template <typename signal_t>
 struct ComponentTest {
   // TODO: Instead of using statics, add another class which encapsulates all
   // the ComponentTest objects.
-  static int nTestFiles;  ///< Total number of test files.
   static int nObjects;    ///< Number of components tested.
   static int nTests;      ///< Total tests run.
   static int nSuccessful; ///< Number of successful tests.
-  static std::vector<std::unique_ptr<ComponentTest<signal_t>>> objects;
-  static std::vector<std::string> objectNames;
-  static std::vector<std::string> testFilesNames;
+  static std::vector<std::unique_ptr<ComponentTest<signal_t>>> tests;
 
+  // // List of all objectnames to
+  // static std::vector<std::string> objectNames;
+  // TODO: Each object should have it's own testFileName.
+  // static std::vector<std::string> testFilesNames;
+
+  static std::string testFile;
+  const std::string objName;
   Component<Stereo<signal_t>>& cut; ///< Component under test.
-
   std::vector<std::string> activeStimuli =
       STIMULI_NAMES; ///< List of names of tests to run.
 
   // TODO: dox
-  ComponentTest(
-      Component<Stereo<signal_t>>& cut, std::vector<std::string> stimuli = { })
-      : cut(cut) {
+  ComponentTest(std::string objName,
+      Component<Stereo<signal_t>>& cut,
+      std::vector<std::string> stimuli = { })
+      : objName(objName), cut(cut) {
     nObjects++;
     if (stimuli.empty()) { return; }
     for (auto& stimulus : stimuli) {
@@ -151,118 +155,62 @@ struct ComponentTest {
     this->activeStimuli = stimuli;
   }
 
-  static bool addTest(Component<Stereo<signal_t>>& componentObj,
-      std::string objectName,
-      std::string fileBaseName,
-      std::vector<std::string> stimuliToUse = { }) {
-    if (std::find(objectNames.begin(), objectNames.end(), objectName)
-        != objectNames.end()) {
-      std::cout << "Test objet '" << objectName << "' already registered."
-                << std::endl;
-      return false;
-    }
-    if (std::find(testFilesNames.begin(), testFilesNames.end(), fileBaseName)
-        == testFilesNames.end()) {
-      nTestFiles++;
-    }
-    NtFx::ComponentTest<float>::objectNames.push_back(objectName);
-    NtFx::ComponentTest<float>::objects.push_back(
-        std::make_unique<NtFx::ComponentTest<float>>(
-            componentObj, stimuliToUse));
-    NtFx::ComponentTest<float>::testFilesNames.push_back(fileBaseName);
-    return true;
-  }
-
   // TODO: dox
-  bool run(std::string object,
-      std::string testFile,
-      std::string stimulus,
-      float fs = 48.0e3f) {
-    if (std::find(
-            this->activeStimuli.begin(), this->activeStimuli.end(), stimulus)
-        == this->activeStimuli.end()) {
-      return true;
-    }
-    this->nTests++;
-    auto testName = object + SEPARATOR + stimulus;
-    auto xPath    = "testWrapper/in/" + stimulus + ".txt";
-
-    if (!std::filesystem::exists(xPath)) {
-      std::cout << "Input file '" << xPath << "'not found. Aborting test."
-                << std::endl;
-      return false;
-    }
-    auto yPath = "testWrapper/out/" + testFile + SEPARATOR + testName
-        + SEPARATOR + "result.txt";
-    auto expPath = "testWrapper/in/" + testFile + SEPARATOR + testName
-        + SEPARATOR + "expected.txt";
-    bool expFileExists = std::filesystem::exists(expPath);
-    bool success       = true;
-    if (!expFileExists) {
-      std::cout << "File with expected results not found at path '" + expPath
-              + "'. Skipping comparison."
-                << std::endl;
-      // TODO: What to do when the test failed to run. It's neither succeeded
-      // nor failed.
-      success = false;
-    }
-    this->cut.reset(fs);
-    std::vector<Stereo<signal_t>> x;
-    std::fstream xFile(xPath);
-    signal_t l, r;
-    while (xFile >> l >> r) { x.push_back({ l, r }); }
+  bool run(std::string stimulus) {
+    if (!this->stimulusIsActive(stimulus)) { return true; }
+    nTests++;
+    auto x = this->readInput(stimulus);
     std::vector<Stereo<signal_t>> y;
+    this->cut.reset(NTFX_FS);
     for (auto _x : x) { y.push_back(cut.process(_x)); }
-    signal_t acceptedDiff = 0.00001;
-    if (expFileExists) {
-      std::vector<Stereo<signal_t>> e;
-      std::fstream eFile(expPath);
-      std::string line;
-      while (std::getline(eFile, line)) {
-        std::istringstream iss(line);
-        float l, r;
-        if (iss >> l >> r) {
-          e.push_back({ l, r });
-        } else {
-          e.push_back({ 0, 0 });
-        }
-      }
-      if (e.size() != y.size()) {
-        std::cout
-            << "Expected result has different length that result. Aborting."
-            << " e: " << e.size() << ", y: " << y.size() << std::endl;
-        return false;
-      }
-      for (size_t i = 0; i < x.size(); i++) {
-        auto diff = gcem::abs(y[i] - e[i]);
-        if (diff > acceptedDiff) { success = false; }
-      }
-    }
+    const auto yPath = "testWrapper/out/" + testFile + SEPARATOR + this->objName
+        + SEPARATOR + stimulus + SEPARATOR + "result.txt";
     std::ofstream yFile(yPath);
+    auto success = this->compareExpected(stimulus, y);
+    // TODO: Comma
     for (auto _y : y) { yFile << _y.l << " " << _y.r << std::endl; }
     if (success) {
       std::cout << "\033[32m";
     } else {
       std::cout << "\033[31m";
     }
-    std::cout << "Test '" << stimulus << "' for object '" << object
-              << "' of component '" << testFile << "'";
+    std::cout << "Test '" << stimulus << "' for object '" << this->objName
+              << "' in file '" << testFile << "'";
     std::cout << (success ? " passed." : " failed.") << "\033[0m" << std::endl;
     if (success) { nSuccessful++; }
     return success;
   }
 
+  std::vector<Stereo<signal_t>> readInput(std::string stimulus) {
+    auto xPath = "testWrapper/in/" + stimulus + ".txt";
+    if (!std::filesystem::exists(xPath)) {
+      std::cout << "Input file '" << xPath << "'not found. Aborting test."
+                << std::endl;
+      return { };
+    }
+    std::fstream xFile(xPath);
+    std::vector<Stereo<signal_t>> x;
+    signal_t l, r;
+    // TODO: comma
+    while (xFile >> l >> r) { x.push_back({ l, r }); }
+    return x;
+  }
+
+  static bool addTest(Component<Stereo<signal_t>>& componentObj,
+      std::string objectName,
+      std::string fileBaseName,
+      std::vector<std::string> stimuliToUse = { }) {
+    NtFx::ComponentTest<float>::tests.push_back(
+        std::make_unique<NtFx::ComponentTest<float>>(
+            objectName, componentObj, stimuliToUse));
+    return true;
+  }
+
   // TODO: dox
   static int runAllTests() {
-    auto n = objects.size();
-    if (n != objectNames.size()) {
-      std::cout << "Test name look up mismatch." << std::endl;
-      return false;
-    }
+    auto n = tests.size();
     for (auto& stimulus : STIMULI_NAMES) {
-      for (size_t i = 0; i < n; i++) {
-        objects[i]->run(objectNames[i], testFilesNames[i], stimulus);
-      }
+      for (size_t i = 0; i < n; i++) { tests[i]->run(stimulus); }
     }
     return !NtFx::ComponentTest<float>::getResults();
   }
@@ -280,11 +228,64 @@ struct ComponentTest {
       std::cout << "\033[31m";
     }
     std::cout << "Ran a total of " << nTests << " test on " << nObjects
-              << " objects from " << nTestFiles << " files. " << nSuccessful
-              << " succeeded. (" << 100.0 * double(nSuccessful) / double(nTests)
-              << "%)."
+              << " objects. " << nSuccessful << " succeeded. ("
+              << 100.0 * double(nSuccessful) / double(nTests) << "%)."
               << "\033[0m" << std::endl;
+    auto f = std::ofstream("testWrapper/out/results.txt", std::ios_base::app);
+    f << testFile << "," << nTests << "," << nObjects << "," << nSuccessful
+      << std::endl;
     return nSuccessful == nTests;
+  }
+
+  bool stimulusIsActive(std::string stimulus) {
+    if (std::find(
+            this->activeStimuli.begin(), this->activeStimuli.end(), stimulus)
+        == this->activeStimuli.end()) {
+      return false;
+    }
+    return true;
+  }
+
+  std::vector<Stereo<signal_t>> readExpected(std::string stimulus) {
+    auto expPath = "testWrapper/in/" + testFile + SEPARATOR + this->objName
+        + SEPARATOR + stimulus + SEPARATOR + "expected.txt";
+    bool expFileExists = std::filesystem::exists(expPath);
+    if (!expFileExists) {
+      std::cout << "File with expected results not found at path '" + expPath
+              + "'. Skipping comparison."
+                << std::endl;
+      return { };
+    }
+    std::vector<Stereo<signal_t>> e;
+    std::fstream eFile(expPath);
+    std::string line;
+    while (std::getline(eFile, line)) {
+      std::istringstream iss(line);
+      float l, r;
+      if (iss >> l >> r) {
+        e.push_back({ l, r });
+      } else {
+        e.push_back({ 0, 0 });
+      }
+    }
+    return e;
+  }
+
+  bool compareExpected(
+      std::string stimulus, const std::vector<Stereo<signal_t>>& y) {
+    auto e = this->readExpected(stimulus);
+    if (e.size() != y.size()) {
+      std::cout << "Expected result has different length that result. Aborting."
+                << " e: " << e.size() << ", y: " << y.size() << std::endl;
+      return false;
+    }
+    signal_t acceptedDiff = 0.00001;
+    bool success          = true;
+    for (size_t i = 0; i < y.size(); i++) {
+      auto diff = gcem::abs(y[i] - e[i]);
+      if (diff > acceptedDiff) { success = false; }
+    }
+    return success;
   }
 };
 }

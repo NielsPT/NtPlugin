@@ -5,7 +5,7 @@
 
 NTFX_TEST_BEGIN
 
-int main() {
+NTFX_TEST() {
   auto peakSensor = NtFx::PeakSensorStereo<float>();
   peakSensor.setT_ms(20);
   NTFX_ADD_TEST(peakSensor, "dynamic");

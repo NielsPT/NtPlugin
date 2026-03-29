@@ -5,7 +5,7 @@
 
 NTFX_TEST_BEGIN
 
-int main() {
+NTFX_TEST() {
   auto firstOrderHpf =
       NtFx::FirstOrder::StereoFilter<float, NtFx::FirstOrder::Shape::hpf>();
   firstOrderHpf.setFc(1e3);
