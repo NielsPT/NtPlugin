@@ -168,7 +168,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
 
     this->meters = {
       { .name = "IN", .addRms = true },
-      { .name = "OUT", .addRms = true, .hasScale = true },
+      { .name = "OUT", .hasScale = true, .addRms = true },
       { .name = "GR", .invert = true, .hasScale = true },
     };
     this->hpf.settings.fc_hz   = 20;

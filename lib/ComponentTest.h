@@ -104,6 +104,8 @@ consteval auto testFileBaseName(std::string_view fileName) {
 #define _NTFX_TEST_IMPL() int main()
 #define NTFX_TEST() _NTFX_TEST_IMPL()
 
+#define NTFX_RUN_TESTS() NtFx::ComponentTest<float>::runAllTests()
+
 namespace NtFx {
 static const std::vector<std::string> STIMULI_NAMES {
   "impulse", "syncSweep", "linearSweep", "dynamic"

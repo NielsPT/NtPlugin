@@ -445,6 +445,7 @@ def acceptLatestResult(objects: list[str]) -> bool:
             if info[1] in objects:
                 filesToCopy += [file]
     if not filesToCopy:
+        print("No result files found.")
         return False
     for file in filesToCopy:
         storeFile = file.replace("result", "expected")
@@ -559,10 +560,10 @@ def run() -> bool:
     if args["task"] == "generate":
         return generateTestVectors(t, fs) is not None
     if args["task"] == "run":
+        clean()
         success = True
         files = args["files"]
         if not files or files == ["all"]:
-            clean()
             files = findAllTests()
         for file in files:
             if not file.endswith(".cpp"):
