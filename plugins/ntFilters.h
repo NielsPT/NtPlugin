@@ -90,7 +90,7 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
     };
     this->meters = {
       { .name = "IN", .addRms = true },
-      { .name = "OUT", .addRms = true, .hasScale = true },
+      { .name = "OUT", .hasScale = true, .addRms = true },
     };
     this->updateDefaults();
   }
