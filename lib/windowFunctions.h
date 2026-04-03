@@ -414,7 +414,7 @@ inline static void czt(std::complex<T>* z,
     }
   }
   fft_radix2(zz, fft_size);
-  std::complex<T> w2[fft_size];
+  auto w2 = new std::complex<T>[fft_size];
   for (size_t k = 0; k < fft_size; ++k) {
     if (k < n + m - 1) {
       const int kshift = k - (n - 1);
@@ -442,6 +442,7 @@ inline static void czt(std::complex<T>* z,
     ztrans[k] = w3 * zz[n - 1 + k];
   }
   delete[] zz;
+  delete[] w2;
 }
 
 template <typename T>
