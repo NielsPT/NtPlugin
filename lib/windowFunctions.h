@@ -477,11 +477,12 @@ template <typename T>
 inline static std::vector<std::complex<T>> fft(
     const std::vector<T> x, bool invert = false) {
   auto n = x.size();
-  std::complex<T> z[n];
+  auto z = new std::complex<T>[n];
   for (size_t i = 0; i < n; i++) { z[i] = x[i]; }
   fft(z, n, invert);
   std::vector<std::complex<T>> y;
   for (size_t i = 0; i < n; i++) { y.push_back(z[i]); }
+  delete[] z;
   return y;
 }
 
