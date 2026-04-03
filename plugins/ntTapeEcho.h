@@ -139,7 +139,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       { &this->doGlide, "Glide" },
       { &this->bypass, "Bypass" },
     };
-    this->meters             = { { "IN" }, { "OUT", .hasScale = true } };
+    this->meters = { { "IN" }, { .name = "OUT", .hasScale = true } };
     this->lpf.settings.shape = NtFx::Biquad::Shape::lpf;
     this->hpf.settings.shape = NtFx::Biquad::Shape::hpf;
     this->lpf.settings.fc_hz = 20e3;
