@@ -89,8 +89,8 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
       { &this->enableLpf, "LPF_on" },
     };
     this->meters = {
-      { "IN", .addRms = true },
-      { "OUT", .addRms = true, .hasScale = true },
+      { .name = "IN", .addRms = true },
+      { .name = "OUT", .hasScale = true, .addRms = true },
     };
     this->updateDefaults();
   }

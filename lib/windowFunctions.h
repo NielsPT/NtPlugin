@@ -355,7 +355,7 @@ template <typename T>
 inline static void fft_radix2(std::complex<T>* z, size_t size) noexcept {
   size_t num_subffts = size / 2;
   size_t size_subfft = 2;
-  std::complex<T> ww[size / 2];
+  auto ww            = new std::complex<T>[size / 2];
 
   for (size_t i = 0; i < size / 2; ++i) {
     ww[i] = std::exp(static_cast<T>(-2.0) * static_cast<T>(GCEM_PI)
@@ -390,6 +390,7 @@ inline static void fft_radix2(std::complex<T>* z, size_t size) noexcept {
     num_subffts /= 2;
     size_subfft *= 2;
   }
+  delete[] ww;
 }
 
 template <typename T>
@@ -401,7 +402,7 @@ inline static void czt(std::complex<T>* z,
     std::complex<T> a) noexcept {
   size_t fft_size = 1;
   while (fft_size < n + m - 1) { fft_size *= 2; }
-  std::complex<T> zz[fft_size];
+  auto zz = new std::complex<T>[fft_size];
   for (size_t k = 0; k < fft_size; ++k) {
     if (k < n) {
       auto w1 =
@@ -413,7 +414,7 @@ inline static void czt(std::complex<T>* z,
     }
   }
   fft_radix2(zz, fft_size);
-  std::complex<T> w2[fft_size];
+  auto w2 = new std::complex<T>[fft_size];
   for (size_t k = 0; k < fft_size; ++k) {
     if (k < n + m - 1) {
       const int kshift = k - (n - 1);
@@ -440,6 +441,8 @@ inline static void czt(std::complex<T>* z,
         std::pow(w, static_cast<std::complex<T>>(0.5) * static_cast<T>(k * k));
     ztrans[k] = w3 * zz[n - 1 + k];
   }
+  delete[] zz;
+  delete[] w2;
 }
 
 template <typename T>
@@ -477,11 +480,12 @@ template <typename T>
 inline static std::vector<std::complex<T>> fft(
     const std::vector<T> x, bool invert = false) {
   auto n = x.size();
-  std::complex<T> z[n];
+  auto z = new std::complex<T>[n];
   for (size_t i = 0; i < n; i++) { z[i] = x[i]; }
   fft(z, n, invert);
   std::vector<std::complex<T>> y;
   for (size_t i = 0; i < n; i++) { y.push_back(z[i]); }
+  delete[] z;
   return y;
 }
 

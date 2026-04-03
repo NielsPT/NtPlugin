@@ -139,7 +139,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       { &this->doGlide, "Glide" },
       { &this->bypass, "Bypass" },
     };
-    this->meters             = { { "IN" }, { "OUT", .hasScale = true } };
+    this->meters = { { "IN" }, { .name = "OUT", .hasScale = true } };
     this->lpf.settings.shape = NtFx::Biquad::Shape::lpf;
     this->hpf.settings.shape = NtFx::Biquad::Shape::hpf;
     this->lpf.settings.fc_hz = 20e3;
@@ -167,17 +167,17 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       auto modSawL = NtFx::saw(this->thetaMod.pr * this->timeCounter);
       auto modSawR = NtFx::saw(
           this->thetaMod.pr * this->timeCounter + this->thetaModPhase.pr);
-      nModL = std::round(modSawL * this->nDelay.pr * this->modDepth.pr)
+      nModL = gcem::round(modSawL * this->nDelay.pr * this->modDepth.pr)
           + this->nDelay.pr;
-      nModR = std::round(modSawR * this->nDelay.pr * this->modDepth.pr)
+      nModR = gcem::round(modSawR * this->nDelay.pr * this->modDepth.pr)
           + this->nDelay.pr + this->nOffset.pr;
       this->timeCounter++;
     }
 
     // TODO: DelayLine class.
-    int iLoadL = this->iStore - std::round(nModL);
+    int iLoadL = this->iStore - gcem::round(nModL);
     if (iLoadL < 0) { iLoadL += delayLineLength; }
-    int iLoadR = this->iStore - std::round(nModR);
+    int iLoadR = this->iStore - gcem::round(nModR);
     if (iLoadR < 0) { iLoadR += delayLineLength; }
     NtFx::Stereo<signal_t> yDelay = {
       this->delayLine[iLoadL].l,
@@ -206,7 +206,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
   virtual void update() noexcept override {
     this->hpf.update();
     this->lpf.update();
-    this->nOffset.ui  = std::round(this->tOffset / 1000 * this->fs);
+    this->nOffset.ui  = gcem::round(this->tOffset / 1000 * this->fs);
     this->aClip_lin   = NtFx::invDb(this->clipG_db);
     this->mix_lin     = this->mix_percent / 100;
     this->fb_lin      = this->fb_percent / 100;
@@ -262,6 +262,6 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       this->primaryKnobs[0].isActive = true;
     }
     this->uiNeedsUpdate = true;
-    this->nDelay.ui     = std::round(this->tGui * this->fs);
+    this->nDelay.ui     = gcem::round(this->tGui * this->fs);
   }
 };
