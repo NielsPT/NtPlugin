@@ -355,7 +355,7 @@ template <typename T>
 inline static void fft_radix2(std::complex<T>* z, size_t size) noexcept {
   size_t num_subffts = size / 2;
   size_t size_subfft = 2;
-  std::complex<T> ww[size / 2];
+  auto ww            = new std::complex<T>[size / 2];
 
   for (size_t i = 0; i < size / 2; ++i) {
     ww[i] = std::exp(static_cast<T>(-2.0) * static_cast<T>(GCEM_PI)
@@ -390,6 +390,7 @@ inline static void fft_radix2(std::complex<T>* z, size_t size) noexcept {
     num_subffts /= 2;
     size_subfft *= 2;
   }
+  delete[] ww;
 }
 
 template <typename T>
