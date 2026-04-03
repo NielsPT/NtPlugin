@@ -402,7 +402,7 @@ inline static void czt(std::complex<T>* z,
     std::complex<T> a) noexcept {
   size_t fft_size = 1;
   while (fft_size < n + m - 1) { fft_size *= 2; }
-  std::complex<T> zz[fft_size];
+  auto zz = new std::complex<T>[fft_size];
   for (size_t k = 0; k < fft_size; ++k) {
     if (k < n) {
       auto w1 =
@@ -441,6 +441,7 @@ inline static void czt(std::complex<T>* z,
         std::pow(w, static_cast<std::complex<T>>(0.5) * static_cast<T>(k * k));
     ztrans[k] = w3 * zz[n - 1 + k];
   }
+  delete[] zz;
 }
 
 template <typename T>
