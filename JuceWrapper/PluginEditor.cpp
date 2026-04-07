@@ -49,7 +49,7 @@ NtPluginAudioProcessorEditor::NtPluginAudioProcessorEditor(
   for (auto& g : this->proc.plug.toggleSets) { this->initToggleGroup(g); }
   for (auto& d : this->proc.plug.dropdowns) { this->initDropDown(d); }
   for (auto& d : this->proc.plug.radioButtons) { this->initRadioButton(d); }
-  for (auto& d : this->proc.titleBarSpec.dropDowns) {
+  for (auto& d : this->proc.titleBarSpec.dropdowns) {
     this->initDropDown(d, true);
   }
 
@@ -309,13 +309,13 @@ void NtPluginAudioProcessorEditor::updateTitleBar(juce::Rectangle<int>& area) {
       area.removeFromTop(this->proc.plug.uiSpec.titleBarHeight * this->uiScale);
   this->grayAreas.push_back(titleBarArea);
   titleBarArea.reduce(pad, pad);
-  for (int i = 0; i < this->proc.titleBarSpec.dropDowns.size(); i++) {
+  for (int i = 0; i < this->proc.titleBarSpec.dropdowns.size(); i++) {
     auto font       = juce::FontOptions(this->proc.plug.uiSpec.defaultFontSize
         * this->uiScale * this->titleBarScale);
     auto labelWidth = (juce::TextLayout::getStringWidth(juce::AttributedString(
-                          this->proc.titleBarSpec.dropDowns[i].name)))
+                          this->proc.titleBarSpec.dropdowns[i].name)))
         * this->uiScale;
-    auto options           = this->proc.titleBarSpec.dropDowns[i].options;
+    auto options           = this->proc.titleBarSpec.dropdowns[i].options;
     float minDropDownWidth = 0;
     for (auto option : options) {
       auto w = juce::TextLayout::getStringWidth(juce::AttributedString(option));
@@ -401,6 +401,9 @@ void NtPluginAudioProcessorEditor::updateBottomRow(juce::Rectangle<int>& area) {
         juce::Colour(this->proc.plug.uiSpec.foregroundColour));
     this->allDropDowns[i]->setColour(juce::ComboBox::ColourIds::arrowColourId,
         juce::Colour(this->proc.plug.uiSpec.foregroundColour));
+    this->allDropDowns[i]->setColour(
+        juce::ComboBox::ColourIds::backgroundColourId,
+        juce::Colour(this->proc.plug.uiSpec.backgroundColour));
     this->allDropDownLabels[i]->setBounds(labelArea);
     this->allDropDownLabels[i]->setFont(juce::FontOptions(
         this->proc.plug.uiSpec.defaultFontSize * this->uiScale));

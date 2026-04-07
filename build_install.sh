@@ -56,7 +56,7 @@ while IFS= read -r header_file; do
   # Step 1: Run cmake with the plugin name and captured output
   echo "Running cmake for $plugin_name..."
   cmake_output=$(cmake -B "$BUILD_DIR" -S "$JUCE_WRAPPER_DIR" -DNTFX_PLUGIN="$plugin_name" \
-    ${plugin_id:+"-DNTFX_ID=$plugin_id"} --fresh 2>&1)
+    ${plugin_id:+"-DNTFX_ID=$plugin_id"} 2>&1)
   echo $cmake_output
 
   # Extract the plugin ID from cmake output if we didn't reuse one
