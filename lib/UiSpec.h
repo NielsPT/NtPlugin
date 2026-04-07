@@ -115,14 +115,14 @@ typedef OptionsSpec RadioButtonSetSpec;
  *
  */
 struct TitleBarSpec {
-  std::vector<DropDownSpec> dropDowns {
+  std::vector<DropDownSpec> dropdowns {
     {
         nullptr,
         "UI_Scale",
         { "50%", "75%", "100%", "125%", "150%", "175%", "200%" },
         2,
     },
-    { nullptr, "Theme", { "Light", "Dark" }, 0 },
+    { nullptr, "Theme", { "Light", "Dark" }, 1 },
     {
         nullptr,
         "Oversampling",
