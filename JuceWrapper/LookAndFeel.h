@@ -39,6 +39,7 @@ namespace NtFx {
 struct KnobLookAndFeel : public juce::LookAndFeel_V4 {
   float fontSize = 1;
   float uiScale  = 1;
+  // TODO: Use Juce' colour system instead. This is inconsistent.
   uint32_t backgroundColour { 0xFFD3D3D3 };
   uint32_t foregroundColour { 0xFF000000 };
 
@@ -53,7 +54,7 @@ struct KnobLookAndFeel : public juce::LookAndFeel_V4 {
       float sliderPos,
       const float rotaryStartAngle,
       const float rotaryEndAngle,
-      juce::Slider&) override {
+      juce::Slider& slider) override {
     auto centreX = x + width / 2.0f;
     auto centreY = y + height / 2.0f;
     auto angle =
@@ -63,14 +64,16 @@ struct KnobLookAndFeel : public juce::LookAndFeel_V4 {
     knobPath.addPolygon({ 0, 0 }, 8, outerRadius);
     knobPath.applyTransform(
         juce::AffineTransform::rotation(angle).translated(centreX, centreY));
-    g.setColour(juce::Colour(this->foregroundColour));
+    auto color = this->foregroundColour;
+    if (!slider.isEnabled()) { color &= 0x5FFFFFFF; }
+    g.setColour(juce::Colour(color));
     g.strokePath(knobPath, juce::PathStrokeType(2 * this->uiScale));
     g.setColour(juce::Colour(this->backgroundColour));
     g.fillPath(knobPath);
     auto pointerLength    = outerRadius * 0.5;
     auto pointerThickness = 4.0;
     juce::Path pointerPath;
-    g.setColour(juce::Colour(this->foregroundColour));
+    g.setColour(juce::Colour(color));
     pointerPath.addRectangle(-pointerThickness * 0.5f,
         -outerRadius,
         pointerThickness,

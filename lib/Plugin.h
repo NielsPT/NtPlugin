@@ -29,11 +29,6 @@
 #include <type_traits>
 #include <vector>
 
-#ifndef NTFX_PLUGIN
-  #error NTFX_PLUGIN is not defined. Please add '-DNTFX_PLUGIN=[your plugin \
-  name]' to cmake configure.
-#endif
-
 namespace NtFx {
 
 /**

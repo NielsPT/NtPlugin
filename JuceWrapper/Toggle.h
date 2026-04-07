@@ -38,14 +38,15 @@ namespace NtFx {
 class Toggle : public juce::TextButton {
 public:
   //==============================================================================
-  Toggle(const juce::String& buttonName = {}) : juce::TextButton(buttonName) { }
+  Toggle(const juce::String& buttonName = { })
+      : juce::TextButton(buttonName) { }
 
   float fontSize { 10 };
   uint32_t colour { 0xFFFFFFFF };
 
   //==============================================================================
-  /** Override to paint the button exactly as you want. */
-  void paintButton(juce::Graphics& g,
+  void paintButton(
+      juce::Graphics& g, ///< Override to paint the button exactly as you want.
       const bool isMouseOver,
       const bool isMouseDown) override {
     auto h            = this->getHeight();

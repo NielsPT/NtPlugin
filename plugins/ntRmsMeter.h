@@ -52,8 +52,7 @@ struct ntRmsMeter : NtFx::NtPlugin<signal_t> {
   virtual NtFx::Stereo<signal_t> process(
       NtFx::Stereo<signal_t> x) noexcept override {
     this->template updatePeakLevel<Peak>(x);
-    msSensor.process(x);
-    this->template updatePeakLevel<RMS>(msSensor.getRms());
+    this->template updatePeakLevel<RMS>(msSensor.process(x));
     return x;
   }
 

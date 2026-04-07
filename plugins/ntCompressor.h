@@ -49,7 +49,6 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   // bool hey;
   // bool feedbackEnable = false;
   bool scListenEnable = false;
-  bool linkEnable     = false;
   bool clip           = true;
   bool bypassEnable   = false;
 
@@ -145,7 +144,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
       // { .p_val = &this->rmsEnable, .name = "RMS" },
       // { .p_val = &this->feedbackEnable, .name = "Feedback" },
       // { .p_val = &this->hey, .name = "Hey" },
-      { .p_val = &this->linkEnable, .name = "Link" },
+      { .p_val = &this->scSettings.linkEnable, .name = "Link" },
       { .p_val = &this->scListenEnable, .name = "SC_Listen" },
       { .p_val = &this->clip, .name = "Softclip" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
@@ -168,8 +167,8 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     });
 
     this->meters = {
-      { "IN", .addRms = true },
-      { "OUT", .addRms = true, .hasScale = true },
+      { .name = "IN", .addRms = true },
+      { .name = "OUT", .hasScale = true, .addRms = true },
       { .name = "GR", .invert = true, .hasScale = true },
     };
     this->hpf.settings.fc_hz   = 20;
@@ -211,7 +210,6 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
         gr = peakScDb.process(xSc);
       }
     }
-    if (this->linkEnable) { gr = gr.absMin(); }
     this->template updatePeakLevel<2, true>(gr);
     NtFx::ensureFinite(gr, signal_t(1.0));
     NtFx::Stereo<signal_t> yComp = x * gr;

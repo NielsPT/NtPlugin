@@ -28,6 +28,18 @@ BUILD_DIR="build"                       # Build directory
 ARTIFACTS_DIR="artifacts"               # Directory to store final artifacts
 JUCE_WRAPPER_DIR="JuceWrapper"          # Path to JuceWrapper directory
 ID_FILE="$ARTIFACTS_DIR/plugin_ids.txt" # File to store plugin IDs
+TEST_SCRIPT_DIR="testWrapper"
+TEST_DIR="test"
+
+
+if [ ! -d .venv ]; then
+  python -m venv .venv;
+  . ./.venv/bin/activate;
+  pip install -r requirements.txt;
+else
+  . ./.venv/bin/activate;
+fi
+python ./${TEST_SCRIPT_DIR}/test.py run all || exit 1
 
 # Create artifacts directory if it doesn't exist
 mkdir -p "$ARTIFACTS_DIR"
@@ -56,7 +68,7 @@ while IFS= read -r header_file; do
   # Step 1: Run cmake with the plugin name and captured output
   echo "Running cmake for $plugin_name..."
   cmake_output=$(cmake -B "$BUILD_DIR" -S "$JUCE_WRAPPER_DIR" -DNTFX_PLUGIN="$plugin_name" \
-    ${plugin_id:+"-DNTFX_ID=$plugin_id"} --fresh 2>&1)
+    ${plugin_id:+"-DNTFX_ID=$plugin_id"} 2>&1)
   echo $cmake_output
 
   # Extract the plugin ID from cmake output if we didn't reuse one

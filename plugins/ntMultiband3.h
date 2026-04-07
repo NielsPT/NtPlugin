@@ -16,6 +16,11 @@
  *
  * You are free to download, build and use this code for commercial
  * purposes. Just don't resell it or a build of it, modified or otherwise.
+ **/
+
+/**
+ * @brief A 3-band multiband compressor with first order crossovers. Uses a
+ * linear domain, peak sensing sidechain for each band.
  *
  **/
 
@@ -40,6 +45,7 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
   bool linkEnable { false };
   bool feedbackEnable { false };
   bool bypass { false };
+  // bool noise { false };
 
   std::array<bool, Bands::n> solos   = { false, false, false };
   std::array<bool, Bands::n> mutesUi = { false, false, false };
@@ -114,10 +120,11 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
       { &this->linkEnable, "Link" },
       { &this->feedbackEnable, "Feedback" },
       { &this->bypass, "Bypass" },
+      // { &this->noise, "Noise" },
     };
     this->toggleSets = {
-      { "Solo", {} },
-      { "Mute", {} },
+      { "Solo", { } },
+      { "Mute", { } },
     };
     for (size_t i = 0; i < Bands::n; i++) {
       this->toggleSets[0].toggles.push_back({
@@ -130,11 +137,11 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
       });
     }
     this->meters = {
-      { .name = "IN", .addRms = true, .decay_s = 0.75 },
-      { .name = "OUT", .addRms = true, .hasScale = true, .decay_s = 0.75 },
+      { .name = "IN", .decay_s = 0.75, .addRms = true },
+      { .name = "OUT", .hasScale = true, .decay_s = 0.75, .addRms = true },
     };
     for (int i = Bands::n - 1; i >= 0; i--) {
-      this->meters.push_back({ this->BandNames[i], .invert = true });
+      this->meters.push_back({ .name = this->BandNames[i], .invert = true });
     }
     this->meters[Bands::n - 1 + 2].hasScale = true;
     this->uiSpec.meterHeight_dots           = 25;
@@ -172,6 +179,7 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
     this->template updatePeakLevel<2, true>(gr[Bands::lo]);
     this->template updatePeakLevel<3, true>(gr[Bands::mid]);
     this->template updatePeakLevel<4, true>(gr[Bands::hi]);
+    // if (this->noise) { return NtFx::rand<signal_t>(); }s
     return y;
   }
 
@@ -189,13 +197,7 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
       this->makeup_lin[i] = NtFx::invDb(makeup_db[i]);
       this->sc[i].update();
     }
-    for (size_t i = 0; i < Bands::n; i++) { this->mutes[i] = this->mutesUi[i]; }
-    for (size_t i = 0; i < Bands::n; i++) {
-      if (!this->solos[i]) { continue; }
-      for (size_t j = 0; j < Bands::n; j++) {
-        if (i != j && !this->solos[j]) { this->mutes[j] = true; }
-      }
-    }
+    this->_updateMutes();
   }
 
   void reset(float fs) noexcept override {
@@ -206,5 +208,15 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
     this->loFlt.reset(this->fs);
     for (size_t i = 0; i < Bands::n; i++) { this->sc[i].reset(this->fs); }
     this->update();
+  }
+
+  void _updateMutes() {
+    for (size_t i = 0; i < Bands::n; i++) { this->mutes[i] = this->mutesUi[i]; }
+    for (size_t i = 0; i < Bands::n; i++) {
+      if (!this->solos[i]) { continue; }
+      for (size_t j = 0; j < Bands::n; j++) {
+        if (i != j && !this->solos[j]) { this->mutes[j] = true; }
+      }
+    }
   }
 };

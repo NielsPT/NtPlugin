@@ -42,24 +42,18 @@ template <typename signal_t,
     int maxT_ms           = 1000,
     int maxSampleDLineLen = 192 * 8>
 struct RmsSensor : public Component<signal_t> {
-  /** @brief Flag to reset accumulators */
-  bool resetAccums = false;
-  /** @brief Current time window in milliseconds */
-  int msDLineLen = maxT_ms;
-  /** @brief Current length of the sample delay line */
-  int sampleDLineLen = maxSampleDLineLen;
-  /** @brief Sample delay line for storing recent signal values */
-  std::array<signal_t, maxSampleDLineLen> samleDLine;
-  /** @brief Millisecond delay line for storing accumulated sample values */
-  std::array<signal_t, maxT_ms> msDLine;
-  /** @brief Accumulator for current sample values */
-  signal_t sampleAccum;
-  /** @brief Accumulator for millisecond-level values */
-  signal_t msAccum;
-  /** @brief Current index in the sample delay line */
-  int sampleIdx;
-  /** @brief Current index in the millisecond delay line */
-  int msIdx;
+  bool resetAccums = false;   ///< Flag to reset accumulators
+  int msDLineLen   = maxT_ms; ///< Current time window in milliseconds
+  int sampleDLineLen =
+      maxSampleDLineLen; ///< Current length of the sample delay line
+  std::array<signal_t, maxSampleDLineLen>
+      samleDLine; ///< Sample delay line for storing recent signal values
+  std::array<signal_t, maxT_ms> msDLine; ///< Millisecond delay line for
+                                         ///< storing accumulated sample values
+  signal_t sampleAccum; ///< Accumulator for current sample values
+  signal_t msAccum;     ///< Accumulator for millisecond-level values
+  int sampleIdx;        ///< Current index in the sample delay line
+  int msIdx;            ///< Current index in the millisecond delay line
 
   /**
    * @brief Process the input signal and update RMS calculation
@@ -71,6 +65,11 @@ struct RmsSensor : public Component<signal_t> {
    * @return The current RMS value
    */
   virtual signal_t process(signal_t x) noexcept override {
+    this->processDelayLine(x);
+    return this->getRms();
+  }
+
+  void processDelayLine(signal_t x) noexcept {
     auto x2 = x * x;
     if (x2 != x2) { x2 = signal_t(0.0); }
     this->sampleAccum += x2 - this->samleDLine[this->sampleIdx];
@@ -81,7 +80,6 @@ struct RmsSensor : public Component<signal_t> {
       this->msDLine[this->msIdx] = sampleAccum;
       if (++this->msIdx >= this->msDLineLen) { this->msIdx = 0; }
     }
-    return this->getRms();
   }
 
   /**
@@ -129,7 +127,6 @@ struct RmsSensor : public Component<signal_t> {
   signal_t getRms() const noexcept {
     signal_t y = gcem::sqrt(signal_t(2.0) * this->msAccum
         / signal_t(this->sampleDLineLen * this->msDLineLen));
-
     if (y != y) { y = signal_t(0.0); }
     return y;
   }

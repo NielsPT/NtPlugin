@@ -242,7 +242,7 @@ NtPluginAudioProcessor::createParameterLayout() {
   this->createParameters<float>(this->plug.secondaryKnobs, parameters, i);
   this->createParameters<bool>(this->plug.toggles, parameters, i);
   this->createParameters<int>(this->plug.dropdowns, parameters, i);
-  this->createParameters<int>(this->titleBarSpec.dropDowns, parameters, i);
+  this->createParameters<int>(this->titleBarSpec.dropdowns, parameters, i);
   // TODO: Look at this. Please DRY!
   std::vector<NtFx::ToggleSpec> vTmpToggles;
   for (auto& r : this->plug.radioButtons) {

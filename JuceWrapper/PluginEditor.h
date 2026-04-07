@@ -41,6 +41,11 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 #include <memory>
 
+#ifndef NTFX_PLUGIN
+  #error NTFX_PLUGIN is not defined. Please add '-DNTFX_PLUGIN=[your plugin \
+  name]' to cmake configure.
+#endif
+
 struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
                                       private juce::Timer,
                                       private juce::Slider::Listener,

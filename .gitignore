@@ -1,9 +1,11 @@
 # Output dirs
 **/CMakeBuild
 **/build/**
-test
+# in
+out
 artefacts
 artifacts
+testWrapper/img
 
 # Prerequisites
 *.d

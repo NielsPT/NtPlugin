@@ -5,3 +5,4 @@
 *.md diff merge text
 *.yml diff merge text
 *.h diff merge text
+*.cpp diff merge text

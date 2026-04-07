@@ -138,6 +138,7 @@ namespace Biquad {
       this->fs      = fs;
       this->l.state = { { 0, 0 }, { 0, 0 } };
       this->r.state = { { 0, 0 }, { 0, 0 } };
+      this->update();
     }
   };
 
