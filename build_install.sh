@@ -28,6 +28,18 @@ BUILD_DIR="build"                       # Build directory
 ARTIFACTS_DIR="artifacts"               # Directory to store final artifacts
 JUCE_WRAPPER_DIR="JuceWrapper"          # Path to JuceWrapper directory
 ID_FILE="$ARTIFACTS_DIR/plugin_ids.txt" # File to store plugin IDs
+TEST_SCRIPT_DIR="testWrapper"
+TEST_DIR="test"
+
+
+if [ ! -d .venv ]; then
+  python -m venv .venv;
+  . ./.venv/bin/activate;
+  pip install -r requirements.txt;
+else
+  . ./.venv/bin/activate;
+fi
+python ./${TEST_SCRIPT_DIR}/test.py run all || exit 1
 
 # Create artifacts directory if it doesn't exist
 mkdir -p "$ARTIFACTS_DIR"
