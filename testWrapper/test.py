@@ -131,14 +131,14 @@ def buildTestProg(cppPath: str):
         args = [
             "cl.exe",
             "/I",
-            f"{os.path.abspath(FILE_DIR)}\\..\\",
+            f"{os.path.abspath(FILE_DIR)}{os.sep}..{os.sep}",
             "/I",
-            f"{os.path.abspath(FILE_DIR)}\\..\\lib\\gcem\\include",
+            f"{os.path.abspath(FILE_DIR)}{os.sep}..{os.sep}lib{os.sep}gcem{os.sep}include",
             "/std:c++20",
             "/DNTFX_FS=48e3f",
             cppPath,
             "/Fe",
-            f"{FILE_DIR}\\{TMP_DIR}\\main.exe",
+            f"{FILE_DIR}{os.sep}{TMP_DIR}{os.sep}main.exe",
         ]
     res = sp.run(
         args,
