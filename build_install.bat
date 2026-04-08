@@ -46,7 +46,7 @@ pip install -r %TEST_SCRIPT_DIR%\requirements.txt
 
 :: Run tests
 echo [SETUP] Running unit tests...
-"%PYTHON_EXECUTABLE%" ..\%TEST_SCRIPT_DIR%\test.py run all
+"%PYTHON_EXECUTABLE%" %TEST_SCRIPT_DIR%\test.py run all
 IF ERRORLEVEL 1 (
     echo.
     echo ERROR: Unit tests failed. Aborting build process.

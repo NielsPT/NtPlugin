@@ -22,6 +22,7 @@ import subprocess as sp
 import sys
 import argparse
 import shutil
+import platform
 import numpy as np
 from matplotlib import pyplot as p
 from scipy import signal as s
@@ -114,18 +115,37 @@ def generateTestVectors(t: float, fs: float):
 
 def buildTestProg(cppPath: str):
     os.makedirs(f"{FILE_DIR}/{TMP_DIR}", exist_ok=True)
-    res = sp.run(
-        [
-            "g++",
+    args = ["g++"]
+    if platform.system() == "macOS":
+        args = ["clang++"]
+    args += [
+        cppPath,
+        "-o",
+        f"{FILE_DIR}/{TMP_DIR}/main",
+        f"-I{os.path.abspath(FILE_DIR)}/..",
+        f"-I{os.path.abspath(FILE_DIR)}/../lib/gcem/include",
+        "--std=c++20",
+        "-DNTFX_FS=48e3f",
+    ]
+    if platform.system() == "Windows":
+        args = [
+            "cl.exe",
             cppPath,
-            "-o",
-            f"{FILE_DIR}/{TMP_DIR}/main",
-            f"-I{os.path.abspath(FILE_DIR)}/..",
-            f"-I{os.path.abspath(FILE_DIR)}/../lib/gcem/include",
-            "-I/opt/homebrew/include",
-            "--std=c++20",
-            "-DNTFX_FS=48e3f",
-        ],
+            "/Fe",
+            f"{FILE_DIR}/{TMP_DIR}/main.exe",
+            "/I",
+            os.path.abspath(FILE_DIR) + os.sep + ".." + os.sep,
+            "/I",
+            os.path.abspath(FILE_DIR)
+            + os.sep
+            + ".."
+            + os.sep
+            + "lib/gcem/include",
+            "/std:c++20",
+            "/DNTFX_FS=48e3f",
+        ]
+    res = sp.run(
+        args,
         check=False,
     )
     if res.returncode:
