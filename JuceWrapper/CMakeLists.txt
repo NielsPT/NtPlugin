@@ -196,12 +196,6 @@ target_include_directories(${NTFX_PLUGIN} PRIVATE .. ../lib/gcem/include)
 add_subdirectory(external/pluginval)
 add_subdirectory(tests)
 
-# Verify 
-# add_custom_target(verify_pluginval
-#     COMMAND $<TARGET_FILE:pluginval> --help | grep "JUCE v${JUCE_VERSION}"
-#     DEPENDS pluginval
-#     COMMENT "Verify pluginval built with JUCE ${JUCE_VERSION}")
-
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
 # into your build tree. This should be included with `#include "JuceHeader.h"`. The include path for
 # this header will be automatically added to the target. The main function of the JuceHeader is to
