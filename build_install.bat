@@ -92,7 +92,7 @@ for /r "%PLUGINS_DIR%" %%f in (*.h) do (
     echo Artefact dir: !plugin_artefacts_dir!
     pause
 
-    if exist "%plugin_artefacts_dir%" (
+    if exist "!plugin_artefacts_dir!" (
         :: Step 4: Copy the entire plugin artifacts directory to the final location
         echo Copying artifacts for !plugin_name!...
         xcopy "%plugin_artefacts_dir%" "%ARTIFACTS_DIR%" /E /I /Y
@@ -101,7 +101,7 @@ for /r "%PLUGINS_DIR%" %%f in (*.h) do (
         echo Finished processing !plugin_name!
         echo ---------------------------------
     ) else (
-        echo Warning: Could not find artifacts directory for '!plugin_name!' at path '%plugin_artefacts_dir%'.
+        echo Warning: Could not find artifacts directory for '!plugin_name!' at path '!plugin_artefacts_dir!'.
     )
 )
 
