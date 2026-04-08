@@ -97,10 +97,6 @@ consteval auto testFileBaseName(std::string_view fileName) {
   #define NTFX_TEST_BEGIN
 #endif
 
-// TODO: Replace 'main' with something else when multiple files are in one test
-// run. But what? __FILE__ won't cut it, it has the full path.
-// Alternatively, we could store a CSV with the resuls and read that from Pyton
-// once all the tests are done. It's not as efficient, but it'll work.
 #define _NTFX_TEST_IMPL() int main()
 #define NTFX_TEST() _NTFX_TEST_IMPL()
 
@@ -163,7 +159,6 @@ struct ComponentTest {
         + SEPARATOR + stimulus + SEPARATOR + "result.txt";
     std::ofstream yFile(yPath);
     auto success = this->compareExpected(stimulus, y);
-    // TODO: Comma
     for (auto _y : y) { yFile << _y.l << " " << _y.r << std::endl; }
     if (success) {
       std::cout << "\033[32m";
@@ -187,7 +182,6 @@ struct ComponentTest {
     std::fstream xFile(xPath);
     std::vector<Stereo<signal_t>> x;
     signal_t l, r;
-    // TODO: comma
     while (xFile >> l >> r) { x.push_back({ l, r }); }
     return x;
   }
@@ -275,7 +269,7 @@ struct ComponentTest {
                 << " e: " << e.size() << ", y: " << y.size() << std::endl;
       return false;
     }
-    signal_t acceptedDiff = 0.0001;
+    signal_t acceptedDiff = 0.00001;
     bool success          = true;
     for (size_t i = 0; i < y.size(); i++) {
       auto diff = gcem::abs(y[i] - e[i]);

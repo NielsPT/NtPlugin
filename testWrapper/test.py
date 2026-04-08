@@ -26,12 +26,10 @@ import numpy as np
 from matplotlib import pyplot as p
 from scipy import signal as s
 
-# TODO: Make the files comma separated.
-# TODO: CSV files.
 SEPARATOR = "."
 EXPECTED_DIR = "in"
 TMP_DIR = "out"
-
+STIMULI = ["impulse", "linearSweep", "syncSweep", "dynamic"]
 FILE_DIR = os.path.dirname(__file__)
 
 
@@ -78,12 +76,7 @@ def generateSyncSweep(
 def generateLinearSweep(fs: float, t: float) -> np.ndarray:
     n = int(fs * t)
     tAx = np.arange(n) * t / n
-    return s.chirp(
-        tAx,
-        20,
-        t,
-        20e3,
-    )
+    return s.chirp(tAx, 20, t, 20e3)
 
 
 def storeMonoTestVectorAsStereo(x: np.ndarray, filename: str):
@@ -346,23 +339,12 @@ def parseFiles(
         else:
             result = [result]
         legends = [info[1] + " " + legend for legend in legends]
-        # TODO: loop
-        # TODO: 2? magic number. How long did that take to find? Come on.
-        try:
-            if info[2] == "impulse":
-                results_dict["impulse"] += result
-                legends_dict["impulse"] += legends
-            elif info[2] == "linearSweep":
-                results_dict["linearSweep"] += result
-                legends_dict["linearSweep"] += legends
-            elif info[2] == "syncSweep":
-                results_dict["syncSweep"] += result
-                legends_dict["syncSweep"] += legends
-            elif info[2] == "dynamic":
-                results_dict["dynamic"] += result
-                legends_dict["dynamic"] += legends
-        except ValueError as e:
-            print(f"Unexpected result file found: {e}")
+        stimulus = info[2]
+        if stimulus not in STIMULI:
+            print(f"Unknown stimulus: {stimulus}")
+            continue
+        results_dict[stimulus] += result
+        legends_dict[stimulus] += legends
     return results_dict, legends_dict
 
 

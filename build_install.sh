@@ -32,7 +32,7 @@ TEST_SCRIPT_DIR="testWrapper"
 TEST_DIR="test"
 
 # TODO: Support all operating systems.
-if [[ "$(uname)" == "Darwin" ]]; then
+if [[ "$(uname)" == "Darwin" || "$(uname)" == "Linux" ]]; then
   if [ ! -d .venv ]; then
     python3 -m venv .venv;
     . ./.venv/bin/activate;
