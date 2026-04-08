@@ -59,10 +59,10 @@ for /r "%PLUGINS_DIR%" %%f in (*.h) do (
     :: Step 1: Run cmake with the plugin name and captured output
     if not "!plugin_id!"=="" (
         echo Running cmake for !plugin_name! using existing ID !plugin_id! ...
-        cmake -B "%BUILD_DIR%" -S "%JUCE_WRAPPER_DIR%" -DNTFX_PLUGIN=!plugin_name! -DNTFX_ID=!plugin_id! -A x64 --fresh 2> cmake_output.txt
+        cmake -B "%BUILD_DIR%" -S "%JUCE_WRAPPER_DIR%" -DNTFX_PLUGIN=!plugin_name! -DNTFX_ID=!plugin_id! -A x64 --fresh 1&2> cmake_output.txt
     ) else (
         echo Running cmake for !plugin_name! without ID...
-        cmake -B "%BUILD_DIR%" -S "%JUCE_WRAPPER_DIR%" -DNTFX_PLUGIN=!plugin_name! -A x64 --fresh 2> cmake_output.txt
+        cmake -B "%BUILD_DIR%" -S "%JUCE_WRAPPER_DIR%" -DNTFX_PLUGIN=!plugin_name! -A x64 --fresh 1&2> cmake_output.txt
     )
     set /p cmake_output=<cmake_output.txt
 
