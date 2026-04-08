@@ -1,4 +1,4 @@
-:: @echo off
+@echo off
 :: Copyright (C) 2026 Niels Thøgersen, NTlyd
 ::
 :: This program is free software: you can redistribute it and/or modify it under
@@ -90,7 +90,6 @@ for /r "%PLUGINS_DIR%" %%f in (*.h) do (
     :: Step 3: Find the plugin-specific artifacts directory
     set "plugin_artefacts_dir=%~f1%BUILD_DIR%\!plugin_name!_artefacts"
     echo Artefact dir: !plugin_artefacts_dir!
-    pause
 
     if exist "!plugin_artefacts_dir!" (
         :: Step 4: Copy the entire plugin artifacts directory to the final location
