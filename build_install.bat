@@ -31,7 +31,7 @@ for /r "%PLUGINS_DIR%" %%f in (*.h) do (
     :: Check if we have a stored ID for this plugin
     for %%i in (!ID_MAP!) do (
         if "%%i"=="!plugin_name!" (
-            set "plugin_id=%%j"
+            set "plugin_id=%%i"
         )
     )
 
