@@ -130,14 +130,12 @@ def buildTestProg(cppPath: str):
     if platform.system() == "Windows":
         args = [
             "cl.exe",
-            "/I",
-            f"{os.path.abspath(FILE_DIR)}{os.sep}..{os.sep}",
-            "/I",
-            f"{os.path.abspath(FILE_DIR)}{os.sep}..{os.sep}lib{os.sep}gcem{os.sep}include",
-            "/std:c++20",
-            "/DNTFX_FS=48e3f",
             cppPath,
             f"/Fe{FILE_DIR}{os.sep}{TMP_DIR}{os.sep}main.exe",
+            f"/I{os.path.abspath(FILE_DIR)}{os.sep}..{os.sep}",
+            f"/I{os.path.abspath(FILE_DIR)}{os.sep}..{os.sep}lib{os.sep}gcem{os.sep}include",
+            "/std:c++20",
+            "/DNTFX_FS=48e3f",
         ]
     res = sp.run(
         args,
