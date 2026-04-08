@@ -30,6 +30,7 @@
 #include "lib/Component.h"
 #include "lib/Stereo.h"
 // #include <boost/core/demangle.hpp>
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -127,12 +128,6 @@ struct ComponentTest {
   static int nTests;      ///< Total tests run.
   static int nSuccessful; ///< Number of successful tests.
   static std::vector<std::unique_ptr<ComponentTest<signal_t>>> tests;
-
-  // // List of all objectnames to
-  // static std::vector<std::string> objectNames;
-  // TODO: Each object should have it's own testFileName.
-  // static std::vector<std::string> testFilesNames;
-
   static std::string testFile;
   const std::string objName;
   Component<Stereo<signal_t>>& cut; ///< Component under test.

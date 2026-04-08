@@ -123,7 +123,7 @@ def buildTestProg(cppPath: str):
     os.makedirs(f"{FILE_DIR}/{TMP_DIR}", exist_ok=True)
     res = sp.run(
         [
-            "clang++",
+            "g++",
             cppPath,
             "-o",
             f"{FILE_DIR}/{TMP_DIR}/main",
@@ -142,13 +142,10 @@ def buildTestProg(cppPath: str):
 
 
 def runTestProg() -> int:
-    # TODO: PWD
     res = sp.run(
         [f"{FILE_DIR}/../testWrapper/{TMP_DIR}/main"],
         check=False,
-        # capture_output=True,
     )
-    # print(f"{res.stdout.decode()}")
     return res.returncode
 
 
