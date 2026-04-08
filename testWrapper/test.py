@@ -137,8 +137,7 @@ def buildTestProg(cppPath: str):
             "/std:c++20",
             "/DNTFX_FS=48e3f",
             cppPath,
-            "/Fe",
-            f"{FILE_DIR}{os.sep}{TMP_DIR}{os.sep}main.exe",
+            f"/Fe{FILE_DIR}{os.sep}{TMP_DIR}{os.sep}main.exe",
         ]
     res = sp.run(
         args,
