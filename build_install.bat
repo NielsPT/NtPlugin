@@ -58,16 +58,20 @@ for /r "%PLUGINS_DIR%" %%f in (*.h) do (
 
     :: Step 1: Run cmake with the plugin name and captured output
     echo Running cmake for !plugin_name!...
-    cmake -B "%BUILD_DIR%" -S "%JUCE_WRAPPER_DIR%" -DNTFX_PLUGIN=!plugin_name! %plugin_id:-DNTFX_ID=% 2> cmake_output.txt
+    if not "!plugin_id!"=="" (
+        cmake -B "%BUILD_DIR%" -S "%JUCE_WRAPPER_DIR%" -DNTFX_PLUGIN=!plugin_name! -DNTFX_ID=!plugin_id! 2> cmake_output.txt
+    ) else (
+        cmake -B "%BUILD_DIR%" -S "%JUCE_WRAPPER_DIR%" -DNTFX_PLUGIN=!plugin_name! 2> cmake_output.txt
+    )
     set /p cmake_output=<cmake_output.txt
 
     :: Extract the plugin ID from cmake output if we didn't reuse one
-    if not defined plugin_id (
+    if "!plugin_id!"=="" (
         for /f "tokens=5 delims= " %%i in ('findstr "Generated new plugin id:" cmake_output.txt') do (
             set "plugin_id=%%i"
             echo Found new plugin ID: !plugin_id!
         )
-        if not defined plugin_id (
+        if "!plugin_id!"=="" (
             echo Warning: Could not find plugin ID for !plugin_name!
         )
     )
