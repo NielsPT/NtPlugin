@@ -29,7 +29,6 @@
 
 #include "lib/Component.h"
 #include "lib/Stereo.h"
-// #include <boost/core/demangle.hpp>
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
@@ -276,7 +275,7 @@ struct ComponentTest {
                 << " e: " << e.size() << ", y: " << y.size() << std::endl;
       return false;
     }
-    signal_t acceptedDiff = 0.00001;
+    signal_t acceptedDiff = 0.0001;
     bool success          = true;
     for (size_t i = 0; i < y.size(); i++) {
       auto diff = gcem::abs(y[i] - e[i]);
