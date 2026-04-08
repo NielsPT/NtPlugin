@@ -130,13 +130,13 @@ def buildTestProg(cppPath: str):
     if platform.system() == "Windows":
         args = [
             "cl.exe",
-            cppPath,
             "/I",
             f"{os.path.abspath(FILE_DIR)}\\..\\",
             "/I",
             f"{os.path.abspath(FILE_DIR)}\\..\\lib\\gcem\\include",
             "/std:c++20",
             "/DNTFX_FS=48e3f",
+            cppPath,
             "/Fe",
             f"{FILE_DIR}\\{TMP_DIR}\\main.exe",
         ]
