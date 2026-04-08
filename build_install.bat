@@ -90,11 +90,10 @@ for /r "%PLUGINS_DIR%" %%f in (*.h) do (
     :: Step 3: Find the plugin-specific artifacts directory
     set "plugin_artefacts_dir=%BUILD_DIR%\!plugin_name!_artefacts"
     echo Artefact dir: !plugin_artefacts_dir!
-    pause
 
     if exist "!plugin_artefacts_dir!" (
         :: Step 4: Copy the entire plugin artifacts directory to the final location
-        echo Copying artifacts for !plugin_name!...
+        echo Copying artifacts for !plugin_name! from %plugin_artefacts_dir% to %ARTIFACTS_DIR%...
         xcopy "%plugin_artefacts_dir%" "%ARTIFACTS_DIR%" /E /I /Y
         xcopy "%plugin_artefacts_dir%\VST3\Release\VST3\%plugin_name%.vst3" "%VST3_INSTALL_DIR%\%plugin_name%.vst3" /E /I /Y
 
