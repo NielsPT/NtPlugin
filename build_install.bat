@@ -29,19 +29,11 @@ set JUCE_WRAPPER_DIR=JuceWrapper
 set ID_FILE=%ARTIFACTS_DIR%\plugin_ids.txt
 set TEST_SCRIPT_DIR=testWrapper
 set TEST_DIR=test
-set VST3_INSTALL_DIR=%LOCALAPPDATA%\Programs\Common\VST3
-
-@REM :: Check if running as administrator
-@REM net session >nul 2>&1
-@REM if %errorLevel% neq 0 (
-@REM     echo This script needs to be run as Administrator to install VST3 plugins.
-@REM     echo Please right-click and select "Run as administrator".
-@REM     pause
-@REM     exit /b
-@REM )
+set VST3_INSTALL_DIR=%ARTIFACTS_DIR%\VST3
 
 :: Create artifacts directory if it doesn't exist
 if not exist "%ARTIFACTS_DIR%" mkdir "%ARTIFACTS_DIR%"
+if not exist "%VST3_INSTALL_DIR%" mkdir "%VST3_INSTALL_DIR%"
 
 :: Initialize ID map from existing file if it exists
 setlocal enabledelayedexpansion
@@ -97,6 +89,7 @@ for /r "%PLUGINS_DIR%" %%f in (*.h) do (
         :: Step 4: Copy the entire plugin artifacts directory to the final location
         echo Copying artifacts for !plugin_name!...
         xcopy "%plugin_artefacts_dir%" "%ARTIFACTS_DIR%" /E /I /Y
+        xcopy "%plugin_artefacts_dir%/VST3/Release/VST3/%plugin_name%.vst3" "%VST3_INSTALL_DIR%/%plugin_name%.vst3"
 
         echo Finished processing !plugin_name!
         echo ---------------------------------
@@ -108,29 +101,6 @@ for /r "%PLUGINS_DIR%" %%f in (*.h) do (
 echo All plugins processed.
 echo Artifacts are in %ARTIFACTS_DIR%
 echo Plugin IDs are stored in %ID_FILE%
-
-:: Ask for permission to install artifacts
-set /p install=Do you want to install the VST3 plugins? (y/n):
-if /i "%install%"=="y" (
-    echo Installing VST3 plugins to %VST3_INSTALL_DIR%...
-    if not exist "%VST3_INSTALL_DIR%" mkdir "%VST3_INSTALL_DIR%"
-
-    :: Install each plugin
-    for /r "%ARTIFACTS_DIR%" %%d in (*_artefacts\VST3) do (
-        set "plugin_name=%%~nd"
-        set "plugin_name=!plugin_name:~0,-8!"  :: Remove "_artefacts" from name
-
-        if exist "%%d\!plugin_name!.vst3" (
-            echo Installing !plugin_name!.vst3...
-            xcopy "%%d\!plugin_name!.vst3" "%VST3_INSTALL_DIR%" /Y
-        ) else (
-            echo Warning: Could not find !plugin_name!.vst3 in %%d
-        )
-    )
-
-    echo VST3 plugins installed successfully to %VST3_INSTALL_DIR%
-) else (
-    echo Installation cancelled.
-)
+echo Add %VST3_INSTALL_DIR% to you DAW search path in order to use the plugins.
 
 endlocal
