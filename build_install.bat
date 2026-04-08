@@ -1,4 +1,4 @@
-@echo off
+:: @echo off
 :: Copyright (C) 2026 Niels Thøgersen, NTlyd
 ::
 :: This program is free software: you can redistribute it and/or modify it under
@@ -47,7 +47,7 @@ if exist "%ID_FILE%" (
 for /r "%PLUGINS_DIR%" %%f in (*.h) do (
     :: Extract plugin name (filename without .h)
     set "plugin_name=%%~nf"
-    echo Processing plugin: !plugin_name!, id: !plugin_ids[%plugin_name%]!
+    echo Processing plugin: !plugin_name!
 
     :: Check if we have a stored ID for this plugin
     set "plugin_id="
