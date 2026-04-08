@@ -9,17 +9,19 @@ set "BUILD_DIR=%SCRIPT_DIR%\build"
 set "ARTIFACTS_DIR=%SCRIPT_DIR%\artifacts"
 set "JUCE_WRAPPER_DIR=%SCRIPT_DIR%\JuceWrapper"
 set "ID_FILE=%ARTIFACTS_DIR%\plugin_ids.txt"
-set "VST3_INSTALL_DIR=%ARTIFACTS_DIR%\VST3"
+set "VST3_INSTALL_DIR=%LOCALAPPDATA%\Programs\Common\VST3"
 
 :: Create directories if they don't exist
 if not exist "%ARTIFACTS_DIR%" mkdir "%ARTIFACTS_DIR%"
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 
-:: Load existing plugin IDs
-set "ID_MAP="
+:: Load existing plugin IDs into an array
+set "ID_COUNT=0"
 if exist "%ID_FILE%" (
     for /f "tokens=1,2 delims=: " %%a in ('type "%ID_FILE%"') do (
-        set "ID_MAP=!ID_MAP!%%a=%%b "
+        set "PLUGIN_NAME_!ID_COUNT!=%%a"
+        set "PLUGIN_ID_!ID_COUNT!=%%b"
+        set /a "ID_COUNT+=1"
     )
 )
 
@@ -27,11 +29,13 @@ if exist "%ID_FILE%" (
 for /r "%PLUGINS_DIR%" %%f in (*.h) do (
     set "plugin_name=%%~nf"
     set "plugin_id="
+    set "found=0"
 
     :: Check if we have a stored ID for this plugin
-    for %%i in (!ID_MAP!) do (
-        if "%%i"=="!plugin_name!" (
-            set "plugin_id=%%i"
+    for /l %%i in (0,1,%ID_COUNT%) do (
+        if "!PLUGIN_NAME_%%i!"=="!plugin_name!" (
+            set "plugin_id=!PLUGIN_ID_%%i!"
+            set "found=1"
         )
     )
 
@@ -45,11 +49,14 @@ for /r "%PLUGINS_DIR%" %%f in (*.h) do (
     )
 
     :: Extract new plugin ID if not previously stored
-    if "!plugin_id!"=="" (
+    if "!found!"=="0" (
         for /f "tokens=5 delims= " %%i in ('findstr "Generated new plugin id:" cmake_output.txt') do (
             set "plugin_id=%%i"
             echo Found new plugin ID: !plugin_id!
             echo !plugin_name!: !plugin_id!>>"%ID_FILE%"
+            set "PLUGIN_NAME_!ID_COUNT!=!plugin_name!"
+            set "PLUGIN_ID_!ID_COUNT!=!plugin_id!"
+            set /a "ID_COUNT+=1"
         )
     )
 
@@ -72,24 +79,120 @@ echo All plugins processed.
 echo Artifacts are in %ARTIFACTS_DIR%
 echo Plugin IDs are stored in %ID_FILE%
 
+:: Installation prompt
+set /p install=Do you want to install the VST3 plugins? (y/n):
+if /i "%install%"=="y" (
+    if not exist "%VST3_INSTALL_DIR%" mkdir "%VST3_INSTALL_DIR%"
 
-if not exist "%VST3_INSTALL_DIR%" mkdir "%VST3_INSTALL_DIR%"
+    for /r "%ARTIFACTS_DIR%" %%d in (*_artefacts\VST3) do (
+        set "plugin_name=%%~nd"
+        set "plugin_name=!plugin_name:~0,-8!"
+        set "vst3_file=%%d\!plugin_name!.vst3"
 
-for /r "%ARTIFACTS_DIR%" %%d in (*_artefacts\release\VST3) do (
-    set "plugin_name=%%~nd"
-    set "plugin_name=!plugin_name:~0,-8!"
-    set "vst3_file=%%d\!plugin_name!.vst3"
-
-    if exist "!vst3_file!" (
-        echo Installing !plugin_name!.vst3 to %VST3_INSTALL_DIR%
-        copy "!vst3_file!" "%VST3_INSTALL_DIR%" /Y
-    ) else (
-        echo Warning: Could not find !plugin_name!.vst3
+        if exist "!vst3_file!" (
+            echo Installing !plugin_name!.vst3 to %VST3_INSTALL_DIR%
+            copy "!vst3_file!" "%VST3_INSTALL_DIR%" /Y
+        ) else (
+            echo Warning: Could not find !plugin_name!.vst3
+        )
     )
+    echo Installation complete.
 )
-echo Installation complete.
-
 endlocal
+
+
+@REM @echo off
+@REM setlocal enabledelayedexpansion
+
+@REM :: Configuration
+@REM set "SCRIPT_DIR=%~dp0"
+@REM set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
+@REM set "PLUGINS_DIR=%SCRIPT_DIR%\plugins"
+@REM set "BUILD_DIR=%SCRIPT_DIR%\build"
+@REM set "ARTIFACTS_DIR=%SCRIPT_DIR%\artifacts"
+@REM set "JUCE_WRAPPER_DIR=%SCRIPT_DIR%\JuceWrapper"
+@REM set "ID_FILE=%ARTIFACTS_DIR%\plugin_ids.txt"
+@REM set "VST3_INSTALL_DIR=%ARTIFACTS_DIR%\VST3"
+
+@REM :: Create directories if they don't exist
+@REM if not exist "%ARTIFACTS_DIR%" mkdir "%ARTIFACTS_DIR%"
+@REM if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
+
+@REM :: Load existing plugin IDs
+@REM set "ID_MAP="
+@REM if exist "%ID_FILE%" (
+@REM     for /f "tokens=1,2 delims=: " %%a in ('type "%ID_FILE%"') do (
+@REM         set "ID_MAP=!ID_MAP!%%a=%%b "
+@REM     )
+@REM )
+
+@REM :: Process each plugin
+@REM for /r "%PLUGINS_DIR%" %%f in (*.h) do (
+@REM     set "plugin_name=%%~nf"
+@REM     set "plugin_id="
+
+@REM     :: Check if we have a stored ID for this plugin
+@REM     for %%i in (!ID_MAP!) do (
+@REM         if "%%i"=="!plugin_name!" (
+@REM             set "plugin_id=%%j"
+@REM         )
+@REM     )
+
+@REM     echo Processing plugin: !plugin_name! with ID: !plugin_id!
+
+@REM     :: Run cmake
+@REM     if "!plugin_id!"=="" (
+@REM         cmake -B "%BUILD_DIR%" -S "%JUCE_WRAPPER_DIR%" -DNTFX_PLUGIN=!plugin_name! 2> cmake_output.txt
+@REM     ) else (
+@REM         cmake -B "%BUILD_DIR%" -S "%JUCE_WRAPPER_DIR%" -DNTFX_PLUGIN=!plugin_name! -DNTFX_ID=!plugin_id! 2> cmake_output.txt
+@REM     )
+
+@REM     :: Extract new plugin ID if not previously stored
+@REM     if "!plugin_id!"=="" (
+@REM         for /f "tokens=5 delims= " %%i in ('findstr "Generated new plugin id:" cmake_output.txt') do (
+@REM             set "plugin_id=%%i"
+@REM             echo Found new plugin ID: !plugin_id!
+@REM             echo !plugin_name!: !plugin_id!>>"%ID_FILE%"
+@REM         )
+@REM     )
+
+@REM     :: Build the project
+@REM     cmake --build "%BUILD_DIR%" --config Release
+
+@REM     :: Copy artifacts
+@REM     set "source=%BUILD_DIR%\!plugin_name!_artefacts"
+@REM     set "dest=%ARTIFACTS_DIR%\!plugin_name!_artefacts"
+
+@REM     if exist "!source!" (
+@REM         echo Copying artifacts from !source! to !dest!
+@REM         xcopy "!source!" "!dest!" /E /I /Y /Q
+@REM     ) else (
+@REM         echo Warning: Could not find artifacts directory for !plugin_name!
+@REM     )
+@REM )
+
+@REM echo All plugins processed.
+@REM echo Artifacts are in %ARTIFACTS_DIR%
+@REM echo Plugin IDs are stored in %ID_FILE%
+
+
+@REM if not exist "%VST3_INSTALL_DIR%" mkdir "%VST3_INSTALL_DIR%"
+
+@REM for /r "%ARTIFACTS_DIR%" %%d in (*_artefacts\release\VST3) do (
+@REM     set "plugin_name=%%~nd"
+@REM     set "plugin_name=!plugin_name:~0,-8!"
+@REM     set "vst3_file=%%d\!plugin_name!.vst3"
+
+@REM     if exist "!vst3_file!" (
+@REM         echo Installing !plugin_name!.vst3 to %VST3_INSTALL_DIR%
+@REM         copy "!vst3_file!" "%VST3_INSTALL_DIR%" /Y
+@REM     ) else (
+@REM         echo Warning: Could not find !plugin_name!.vst3
+@REM     )
+@REM )
+@REM echo Installation complete.
+
+@REM endlocal
 
 @REM @echo off
 @REM :: Copyright (C) 2026 Niels Thøgersen, NTlyd
