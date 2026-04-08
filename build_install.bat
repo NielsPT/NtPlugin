@@ -89,12 +89,12 @@ for /r "%PLUGINS_DIR%" %%f in (*.h) do (
         :: Step 4: Copy the entire plugin artifacts directory to the final location
         echo Copying artifacts for !plugin_name!...
         xcopy "%plugin_artefacts_dir%" "%ARTIFACTS_DIR%" /E /I /Y
-        xcopy "%plugin_artefacts_dir%/VST3/Release/VST3/%plugin_name%.vst3" "%VST3_INSTALL_DIR%/%plugin_name%.vst3"
+        xcopy "%plugin_artefacts_dir%/VST3/Release/VST3/%plugin_name%.vst3" "%VST3_INSTALL_DIR%/%plugin_name%.vst3" /E /I /Y
 
         echo Finished processing !plugin_name!
         echo ---------------------------------
     ) else (
-        echo Warning: Could not find artifacts directory for !plugin_name!
+        echo Warning: Could not find artifacts directory for '!plugin_name!' at path '%plugin_artefacts_dir%'.
     )
 )
 
