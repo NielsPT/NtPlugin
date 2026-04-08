@@ -31,14 +31,14 @@ set TEST_SCRIPT_DIR=testWrapper
 set TEST_DIR=test
 set VST3_INSTALL_DIR=%LOCALAPPDATA%\Programs\Common\VST3
 
-:: Check if running as administrator
-net session >nul 2>&1
-if %errorLevel% neq 0 (
-    echo This script needs to be run as Administrator to install VST3 plugins.
-    echo Please right-click and select "Run as administrator".
-    pause
-    exit /b
-)
+@REM :: Check if running as administrator
+@REM net session >nul 2>&1
+@REM if %errorLevel% neq 0 (
+@REM     echo This script needs to be run as Administrator to install VST3 plugins.
+@REM     echo Please right-click and select "Run as administrator".
+@REM     pause
+@REM     exit /b
+@REM )
 
 :: Create artifacts directory if it doesn't exist
 if not exist "%ARTIFACTS_DIR%" mkdir "%ARTIFACTS_DIR%"
