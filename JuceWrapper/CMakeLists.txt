@@ -193,9 +193,6 @@ target_link_libraries(${NTFX_PLUGIN}
 
 target_include_directories(${NTFX_PLUGIN} PRIVATE .. ../lib/gcem/include)
 
-add_subdirectory(external/pluginval)
-add_subdirectory(tests)
-
 # Verify 
 # add_custom_target(verify_pluginval
 #     COMMAND $<TARGET_FILE:pluginval> --help | grep "JUCE v${JUCE_VERSION}"
