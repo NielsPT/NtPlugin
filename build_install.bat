@@ -42,7 +42,7 @@ CALL "%VENV_DIR%\Scripts\activate.bat"
 
 :: Install requirements
 echo [SETUP] Installing Python dependencies from requirements.txt...
-pip install -r requirements.txt
+pip install -r %TEST_SCRIPT_DIR%\requirements.txt
 
 :: Run tests
 echo [SETUP] Running unit tests...
