@@ -88,7 +88,7 @@ for /r "%PLUGINS_DIR%" %%f in (*.h) do (
     cmake --build "%BUILD_DIR%" --config Release
 
     :: Step 3: Find the plugin-specific artifacts directory
-    set "plugin_artefacts_dir=%BUILD_DIR%\!plugin_name!_artefacts"
+    set "plugin_artefacts_dir=%~f1%BUILD_DIR%\!plugin_name!_artefacts"
     echo Artefact dir: !plugin_artefacts_dir!
     pause
 
@@ -96,7 +96,7 @@ for /r "%PLUGINS_DIR%" %%f in (*.h) do (
         :: Step 4: Copy the entire plugin artifacts directory to the final location
         echo Copying artifacts for !plugin_name!...
         xcopy "%plugin_artefacts_dir%" "%ARTIFACTS_DIR%" /E /I /Y
-        xcopy "%plugin_artefacts_dir%/VST3/Release/VST3/%plugin_name%.vst3" "%VST3_INSTALL_DIR%/%plugin_name%.vst3" /E /I /Y
+        xcopy "%plugin_artefacts_dir%/VST3/Release/VST3/%plugin_name%.vst3" "%~f1%VST3_INSTALL_DIR%/%plugin_name%.vst3" /E /I /Y
 
         echo Finished processing !plugin_name!
         echo ---------------------------------
