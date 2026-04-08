@@ -68,7 +68,7 @@ for /r "%PLUGINS_DIR%" %%f in (*.h) do (
 
     :: Extract the plugin ID from cmake output if we didn't reuse one
     if "!plugin_id!"=="" (
-        for /f "tokens=5 delims= " %%i in ('findstr "Generated new plugin id:" cmake_output.txt') do (
+        for /f "tokens=6 delims= " %%i in ('findstr "Generated new plugin id:" cmake_output.txt') do (
             set "plugin_id=%%i"
             echo Found new plugin ID: !plugin_id!
         )
