@@ -30,6 +30,7 @@
 #include "lib/Component.h"
 #include "lib/Stereo.h"
 // #include <boost/core/demangle.hpp>
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
