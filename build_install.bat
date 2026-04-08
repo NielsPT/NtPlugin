@@ -101,6 +101,6 @@ for /r "%PLUGINS_DIR%" %%f in (*.h) do (
 echo All plugins processed.
 echo Artifacts are in %ARTIFACTS_DIR%
 echo Plugin IDs are stored in %ID_FILE%
-echo Add %~f1%VST3_INSTALL_DIR% to you DAW search path in order to use the plugins.
+echo Add '%~f1%VST3_INSTALL_DIR%' to you DAW search path or copy the content to your favorite VST3 pligin location in order to use the plugins.
 
 endlocal
