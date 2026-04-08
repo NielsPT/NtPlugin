@@ -26,6 +26,7 @@
 #include "Toggle.h"
 #include "lib/UiSpec.h"
 
+#include <cstddef>
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_audio_formats/juce_audio_formats.h>
@@ -40,6 +41,8 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_gui_extra/juce_gui_extra.h>
 #include <memory>
+#include <string>
+#include <vector>
 
 #ifndef NTFX_PLUGIN
   #error NTFX_PLUGIN is not defined. Please add '-DNTFX_PLUGIN=[your plugin \
@@ -97,6 +100,7 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   float unscaledWindowHeight = 0;
   float uiScale              = 1;
   float titleBarScale        = 0.7;
+  float pad                  = 10;
   bool isInitialized         = false;
 
   juce::Label pluginNameLabel;
@@ -109,8 +113,8 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   void updateUi();
   void updateTitleBar(juce::Rectangle<int>& area);
   void updateMeters(juce::Rectangle<int>& area);
-  void updateRightSideArea(juce::Rectangle<int>& area);
-  void updateBottomRow(juce::Rectangle<int>& area);
+  void placeSmallTogglesArea(juce::Rectangle<int>& area);
+  void placeBottomRow(juce::Rectangle<int>& area);
   void updateSecondaryKnobs(juce::Rectangle<int>& area);
   void updatePrimaryKnobs(juce::Rectangle<int>& area);
   void initPrimaryKnob(NtFx::KnobSpec<float>& p_spec);
@@ -122,7 +126,9 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   void _initToggle(NtFx::Toggle* p_toggle, NtFx::ToggleSpec& spec);
   void initToggleGroup(NtFx::ToggleSetSpec& spec);
   void initDropDown(NtFx::DropDownSpec& p_spec, bool addToTitleBar = false);
-  void initRadioButton(NtFx::RadioButtonSetSpec& p_spec);
+  void initRadioButton(NtFx::RadioButtonSetSpec& spec);
+  template <typename T, typename spec_t>
+  std::unique_ptr<T> makeSmallToggleSet(spec_t& spec);
   void updateColours();
   void updateUiScale();
   void updateOversampling();
@@ -135,5 +141,13 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
       float colWidth,
       float rowHeight,
       float pad);
+  std::unique_ptr<juce::Label> makeLabel(const std::string name);
+  void placeDropdowns(juce::Rectangle<int>& area, size_t columnWidth);
+  void placeToggles(juce::Rectangle<int>& area, size_t columnWidth);
+  template <typename T>
+  void placeSmallToggles(juce::Rectangle<int>& area,
+      int size,
+      std::vector<std::unique_ptr<juce::Label>>& labels,
+      std::vector<std::unique_ptr<T>>& toggles);
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtPluginAudioProcessorEditor)
 };

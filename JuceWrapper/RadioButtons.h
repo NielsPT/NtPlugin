@@ -95,12 +95,13 @@ struct ToggleSet : public ToggleSetBase {
 struct RadioButtonSet : public ToggleSetBase {
   RadioButtonSetSpec& spec;
   int val;
-  RadioButtonSet(RadioButtonSetSpec& spec, UiSpec& uiSpec, int id)
+  static int id;
+  RadioButtonSet(RadioButtonSetSpec& spec, UiSpec& uiSpec)
       : spec(spec), ToggleSetBase(uiSpec), val(spec._defaultVal) {
     for (size_t i = 0; i < spec.options.size(); i++) {
       auto option   = spec.options[i];
       auto p_toggle = this->makeToggle(option);
-      p_toggle->setRadioGroupId(id);
+      p_toggle->setRadioGroupId(id++);
       p_toggle->onClick = [this, i]() {
         this->val = i;
         this->sendChangeMessage();
