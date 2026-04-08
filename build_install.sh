@@ -31,17 +31,15 @@ ID_FILE="$ARTIFACTS_DIR/plugin_ids.txt" # File to store plugin IDs
 TEST_SCRIPT_DIR="testWrapper"
 TEST_DIR="test"
 
-# TODO: Support all operating systems.
-if [[ "$(uname)" == "Darwin" || "$(uname)" == "Linux" ]]; then
-  if [ ! -d .venv ]; then
-    python3 -m venv .venv;
-    . ./.venv/bin/activate;
-    pip install -r requirements.txt;
-  else
-    . ./.venv/bin/activate;
-  fi
-  python ./${TEST_SCRIPT_DIR}/test.py run all || exit 1
+if [ ! -d .venv ]; then
+  python3 -m venv .venv;
+  . ./.venv/bin/activate;
+  pip install -r ${TEST_SCRIPT_DIR}/requirements.txt;
+else
+  . ./.venv/bin/activate;
 fi
+python ./${TEST_SCRIPT_DIR}/test.py run all || exit 1
+
 
 # Create artifacts directory if it doesn't exist
 mkdir -p "$ARTIFACTS_DIR"

@@ -588,7 +588,7 @@ void NtPluginAudioProcessorEditor::comboBoxChanged(juce::ComboBox* p_box) {
 
 void NtPluginAudioProcessorEditor::updateUiScale() {
   auto p_box    = this->titleBarDropDowns[e_uiScale].get();
-  this->uiScale = 0.5 + 0.25 * (p_box->getSelectedId());
+  this->uiScale = 0.5 + 0.25 * (p_box->getSelectedId() - 1);
   this->setSize(this->proc.plug.uiSpec.defaultWindowWidth * this->uiScale,
       this->unscaledWindowHeight * this->uiScale);
 }
