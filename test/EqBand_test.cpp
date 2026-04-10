@@ -26,5 +26,5 @@ NTFX_TEST() {
   bqHiShelf.settings.shape   = NtFx::Biquad::Shape::hiShelf;
   bqHiShelf.settings.gain_db = 12;
   NTFX_ADD_TEST(bqHiShelf, "impulse");
-  return NtFx::ComponentTest<float>::runAllTests();
+  return NTFX_RUN_TESTS();
 }
