@@ -15,5 +15,5 @@ NTFX_TEST() {
   peakSettings1.linkEnable = true;
   auto peakDbScLink        = NtFx::PeakSideChainDb<float>(peakSettings1);
   NTFX_ADD_TEST(peakDbScLink, "dynamic");
-  return NtFx::ComponentTest<float>::runAllTests();
+  return NTFX_RUN_TESTS();
 }

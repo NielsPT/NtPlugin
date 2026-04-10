@@ -10,5 +10,5 @@ NTFX_TEST() {
   NTFX_ADD_TEST(softClip3, "linearSweep");
   auto softClip5 = NtFx::SoftClip5<float>();
   NTFX_ADD_TEST(softClip5, "linearSweep");
-  return NtFx::ComponentTest<float>::runAllTests();
+  return NTFX_RUN_TESTS();
 }

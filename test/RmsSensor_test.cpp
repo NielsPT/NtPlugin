@@ -9,5 +9,5 @@ NTFX_TEST() {
   auto rmsSensor = NtFx::RmsSensorStereo<float>();
   rmsSensor.setT_ms(10);
   NTFX_ADD_TEST(rmsSensor, "dynamic");
-  return NtFx::ComponentTest<float>::runAllTests();
+  return NTFX_RUN_TESTS();
 }

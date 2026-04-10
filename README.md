@@ -252,7 +252,7 @@ int main() { // Make a main function.
   [plugin name]<float> plug; // Instantiate plugin.
   plug.[some variable] = 2; // Make setting you wanna test.
   NTFX_ADD_TEST(plug, "impulse") // Add test to testWrapper framework.
-  return NtFx::ComponentTest<float>::runAllTests(); // Run all test tests.
+  return NTFX_RUN_TESTS(); // Run all test tests.
 }
 ```
 

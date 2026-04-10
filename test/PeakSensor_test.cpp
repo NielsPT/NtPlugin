@@ -13,5 +13,5 @@ NTFX_TEST() {
   peakHoldSensor.setT_ms(20);
   peakHoldSensor.setTHold_ms(1);
   NTFX_ADD_TEST(peakHoldSensor, "dynamic");
-  return NtFx::ComponentTest<float>::runAllTests();
+  return NTFX_RUN_TESTS();
 }
