@@ -286,26 +286,33 @@ others may not.
 
 ### Test with Pluginval
 
-If you want to use pluginval you will need to do the following: 
+If you want to use pluginval you will need to do the following:
 
-1. Make sure that set your cmake configuration to either Debug or Release. 
-2. That you set your preferred test strictness ind the file `JuceWrapper/tests/CMakeLists.txt`
+1. Make sure that set your cmake configuration to either Debug or Release.
+2. That you set your preferred test strictness ind the file
+   `JuceWrapper/tests/CMakeLists.txt`
 
-The difference in strictness levels can be read inside the folder `external/pluginval/README.md`, but by default it is set to 10, which will test everything on the plugin for both AU and VST. You are able to add another test in `JuceWrapper/tests/CMakeLists.txt`, if you were to make a plugin as Standalone. 
+The difference in strictness levels can be read inside the folder
+`JuceWrapper/pluginval/README.md`, but by default it is set to 10, which will
+test everything on the plugin for both AU and VST. You are able to add another
+test in `JuceWrapper/tests/CMakeLists.txt`, if you were to make a plugin as
+Standalone.
 
 Once you have set the cmake configuration to Debug in VSC, and called:
+
 ```sh
 cmake --build build
 ```
 
-You can then do the following commands to call the pluginval test in order to validate your plugins: 
+You can then do the following commands to call the pluginval test in order to
+validate your plugins:
 
 ```sh
-cd build
-ctest
+build/ctest
 ```
 
-After calling `ctest` it will then start the validation of your plugin, and this will then prompt in the terminal: 
+After calling `ctest` it will then start the validation of your plugin, and this
+will then prompt in the terminal:
 
 ```sh
     Start 1: ValidatePluginAU
