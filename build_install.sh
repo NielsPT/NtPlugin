@@ -89,7 +89,7 @@ while IFS= read -r header_file; do
 
   # Step 2: Build the project
   echo "Building $plugin_name..."
-  cmake --build "$BUILD_DIR" --config release
+  cmake --build "$BUILD_DIR" --config release -j$(nproc --all)
 
   # Step 3: Find the plugin-specific artifacts directory
   plugin_artefacts_dir="$BUILD_DIR/${plugin_name}_artefacts"
