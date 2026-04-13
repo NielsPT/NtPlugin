@@ -308,7 +308,8 @@ You can then do the following commands to call the pluginval test in order to
 validate your plugins:
 
 ```sh
-build/ctest
+cd build
+ctest
 ```
 
 After calling `ctest` it will then start the validation of your plugin, and this
