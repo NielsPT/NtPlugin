@@ -35,8 +35,8 @@ struct ntRmsMeter : NtFx::NtPlugin<signal_t> {
 
   ntRmsMeter() {
     this->meters = {
-      { "Peak", .minVal_db = -50, .addRms = true },
-      { "RMS", .hasScale = true, .minVal_db = -50 },
+      { .name = "Peak", .minVal_db = -50, .addRms = true },
+      { .name = "RMS", .minVal_db = -50, .hasScale = true },
     };
     this->primaryKnobs = {
       { &this->decay_s, "Decay", " s", 0, 1 },

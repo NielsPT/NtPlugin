@@ -18,5 +18,5 @@ NTFX_TEST() {
       NtFx::FirstOrder::StereoFilter<float, NtFx::FirstOrder::Shape::lpfZero>();
   firstOrderLpfWithZero.setFc(1e3);
   NTFX_ADD_TEST(firstOrderLpfWithZero, { "impulse" });
-  return NtFx::ComponentTest<float>::runAllTests();
+  return NTFX_RUN_TESTS();
 }

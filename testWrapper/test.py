@@ -22,16 +22,15 @@ import subprocess as sp
 import sys
 import argparse
 import shutil
+import platform
 import numpy as np
 from matplotlib import pyplot as p
 from scipy import signal as s
 
-# TODO: Make the files comma separated.
-# TODO: CSV files.
 SEPARATOR = "."
 EXPECTED_DIR = "in"
 TMP_DIR = "out"
-
+STIMULI = ["impulse", "linearSweep", "syncSweep", "dynamic"]
 FILE_DIR = os.path.dirname(__file__)
 
 
@@ -78,12 +77,7 @@ def generateSyncSweep(
 def generateLinearSweep(fs: float, t: float) -> np.ndarray:
     n = int(fs * t)
     tAx = np.arange(n) * t / n
-    return s.chirp(
-        tAx,
-        20,
-        t,
-        20e3,
-    )
+    return s.chirp(tAx, 20, t, 20e3)
 
 
 def storeMonoTestVectorAsStereo(x: np.ndarray, filename: str):
@@ -121,18 +115,30 @@ def generateTestVectors(t: float, fs: float):
 
 def buildTestProg(cppPath: str):
     os.makedirs(f"{FILE_DIR}/{TMP_DIR}", exist_ok=True)
-    res = sp.run(
-        [
-            "clang++",
+    args = ["g++"]
+    if platform.system() == "macOS":
+        args = ["clang++"]
+    args += [
+        cppPath,
+        "-o",
+        f"{FILE_DIR}/{TMP_DIR}/main",
+        f"-I{os.path.abspath(FILE_DIR)}/..",
+        f"-I{os.path.abspath(FILE_DIR)}/../lib/gcem/include",
+        "--std=c++20",
+        "-DNTFX_FS=48e3f",
+    ]
+    if platform.system() == "Windows":
+        args = [
+            "cl.exe",
             cppPath,
-            "-o",
-            f"{FILE_DIR}/{TMP_DIR}/main",
-            f"-I{os.path.abspath(FILE_DIR)}/..",
-            f"-I{os.path.abspath(FILE_DIR)}/../lib/gcem/include",
-            "-I/opt/homebrew/include",
-            "--std=c++20",
-            "-DNTFX_FS=48e3f",
-        ],
+            f"/Fe{FILE_DIR}{os.sep}{TMP_DIR}{os.sep}main.exe",
+            f"/I{os.path.abspath(FILE_DIR)}{os.sep}..{os.sep}",
+            f"/I{os.path.abspath(FILE_DIR)}{os.sep}..{os.sep}lib{os.sep}gcem{os.sep}include",
+            "/std:c++20",
+            "/DNTFX_FS=48e3f",
+        ]
+    res = sp.run(
+        args,
         check=False,
     )
     if res.returncode:
@@ -142,22 +148,19 @@ def buildTestProg(cppPath: str):
 
 
 def runTestProg() -> int:
-    # TODO: PWD
     res = sp.run(
-        [f"{FILE_DIR}/../testWrapper/{TMP_DIR}/main"],
+        [f"{FILE_DIR}/{TMP_DIR}/main"],
         check=False,
-        # capture_output=True,
     )
-    # print(f"{res.stdout.decode()}")
     return res.returncode
 
 
 def findAllTests() -> list[str]:
     paths = []
-    allFiles = os.listdir(f"{FILE_DIR}/../test")
+    allFiles = os.listdir(f"{FILE_DIR}/tests")
     for file in allFiles:
         if file.endswith("_test.cpp"):
-            paths += ["test/" + file]
+            paths += [f"{FILE_DIR}/tests/" + file]
     return paths
 
 
@@ -349,23 +352,12 @@ def parseFiles(
         else:
             result = [result]
         legends = [info[1] + " " + legend for legend in legends]
-        # TODO: loop
-        # TODO: 2? magic number. How long did that take to find? Come on.
-        try:
-            if info[2] == "impulse":
-                results_dict["impulse"] += result
-                legends_dict["impulse"] += legends
-            elif info[2] == "linearSweep":
-                results_dict["linearSweep"] += result
-                legends_dict["linearSweep"] += legends
-            elif info[2] == "syncSweep":
-                results_dict["syncSweep"] += result
-                legends_dict["syncSweep"] += legends
-            elif info[2] == "dynamic":
-                results_dict["dynamic"] += result
-                legends_dict["dynamic"] += legends
-        except ValueError as e:
-            print(f"Unexpected result file found: {e}")
+        stimulus = info[2]
+        if stimulus not in STIMULI:
+            print(f"Unknown stimulus: {stimulus}")
+            continue
+        results_dict[stimulus] += result
+        legends_dict[stimulus] += legends
     return results_dict, legends_dict
 
 
@@ -461,7 +453,6 @@ def acceptLatestResult(objects: list[str]) -> bool:
 
 def clean() -> bool:
     shutil.rmtree(f"{FILE_DIR}/{TMP_DIR}")
-    # os.removedirs(f"{testWrapperDir}/{TMP_DIR}")
     return True
 
 
@@ -569,7 +560,7 @@ def run() -> bool:
             if not file.endswith(".cpp"):
                 if not file.endswith("_test"):
                     file = f"{file}_test"
-                file = f"test/{file}.cpp"
+                file = f"{FILE_DIR}/tests/{file}.cpp"
             success &= runTests(file, fs)
             print()
         results = readAggregateResults()

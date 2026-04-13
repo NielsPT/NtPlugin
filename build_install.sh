@@ -31,15 +31,15 @@ ID_FILE="$ARTIFACTS_DIR/plugin_ids.txt" # File to store plugin IDs
 TEST_SCRIPT_DIR="testWrapper"
 TEST_DIR="test"
 
-
 if [ ! -d .venv ]; then
-  python -m venv .venv;
+  python3 -m venv .venv;
   . ./.venv/bin/activate;
-  pip install -r requirements.txt;
+  pip install -r ${TEST_SCRIPT_DIR}/requirements.txt;
 else
   . ./.venv/bin/activate;
 fi
 python ./${TEST_SCRIPT_DIR}/test.py run all || exit 1
+
 
 # Create artifacts directory if it doesn't exist
 mkdir -p "$ARTIFACTS_DIR"
@@ -89,7 +89,7 @@ while IFS= read -r header_file; do
 
   # Step 2: Build the project
   echo "Building $plugin_name..."
-  cmake --build "$BUILD_DIR" --config release
+  cmake --build "$BUILD_DIR" --config release -j$(nproc --all)
 
   # Step 3: Find the plugin-specific artifacts directory
   plugin_artefacts_dir="$BUILD_DIR/${plugin_name}_artefacts"

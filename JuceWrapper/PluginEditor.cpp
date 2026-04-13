@@ -31,12 +31,14 @@
 #include "lib/UiSpec.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <utility>
 
 // TODO: Major refactor. There are SO many repitions in this file.
 enum TitleBarDropDowns { e_uiScale, e_theme, e_oversampling };
+int NtFx::RadioButtonSet::id { 0 };
 
 NtPluginAudioProcessorEditor::NtPluginAudioProcessorEditor(
     NtPluginAudioProcessor& p)
@@ -110,17 +112,11 @@ void NtPluginAudioProcessorEditor::initDropDown(
     p_box->addItem(option, i + 1);
   }
   p_box->setLookAndFeel(&this->dropDownLookAndFeel);
-  p_box->setSelectedItemIndex(2, juce::NotificationType::dontSendNotification);
   p_box->setName(spec.name);
   p_box->addListener(this);
+  p_box->setSelectedItemIndex(2, juce::NotificationType::dontSendNotification);
   this->addAndMakeVisible(*p_box);
-  auto p_label = std::make_unique<juce::Label>(spec.name);
-  p_box->setColour(juce::Label::ColourIds::textColourId, juce::Colours::white);
-  p_label->setJustificationType(juce::Justification::right);
-  std::string name = spec.name;
-  std::replace(name.begin(), name.end(), '_', ' ');
-  p_label->setText(name, juce::NotificationType::dontSendNotification);
-  this->addAndMakeVisible(*p_label);
+  auto p_label = this->makeLabel(spec.name);
   this->allDropDownAttachments.emplace_back(
       new juce::AudioProcessorValueTreeState::ComboBoxAttachment(
           this->proc.paramLayout, spec.name, *p_box));
@@ -139,64 +135,50 @@ void NtPluginAudioProcessorEditor::initDropDown(
 
 void NtPluginAudioProcessorEditor::initRadioButton(
     NtFx::RadioButtonSetSpec& spec) {
-  int id { 0 };
-  auto p_box = std::make_unique<NtFx::RadioButtonSet>(
-      spec, this->proc.plug.uiSpec, id++);
-  p_box->setTitle(spec.name);
-  p_box->setName(spec.name);
-  p_box->addChangeListener(this);
-  this->addAndMakeVisible(*p_box);
-  // TODO: makeLabel method.
-  auto p_label = std::make_unique<juce::Label>(spec.name);
-  p_box->setColour(juce::Label::ColourIds::textColourId, juce::Colours::white);
-  p_label->setJustificationType(juce::Justification::centred);
-  std::string name = spec.name;
-  std::replace(name.begin(), name.end(), '_', ' ');
-  p_label->setText(name, juce::NotificationType::dontSendNotification);
-  this->addAndMakeVisible(*p_label);
+  auto group = this->makeSmallToggleSet<NtFx::RadioButtonSet>(spec);
   for (size_t i = 0; i < spec.options.size(); i++) {
     this->allToggleAttachments.emplace_back(
         new juce::AudioProcessorValueTreeState::ButtonAttachment(
             this->proc.paramLayout,
             NtFx::makeTmpToggle(spec.name, spec.options[i], "radioButton").name,
-            *p_box->toggles[i].get()));
+            *group->toggles[i].get()));
   }
-  this->allRadioButtons.push_back(std::move(p_box));
+  this->allRadioButtons.push_back(std::move(group));
+  auto p_label = this->makeLabel(spec.name);
   this->allRadioButtonLabels.push_back(std::move(p_label));
 }
 
-// TODO: this is almost the same code as initRadioButton. DRY! Refactor, please.
 void NtPluginAudioProcessorEditor::initToggleGroup(NtFx::ToggleSetSpec& spec) {
-  auto p_group =
-      std::make_unique<NtFx::ToggleSet>(spec, this->proc.plug.uiSpec);
-  p_group->setTitle(spec.name);
-  p_group->setName(spec.name);
-  p_group->addChangeListener(this);
-  this->addAndMakeVisible(*p_group);
-  auto p_label = std::make_unique<juce::Label>(spec.name);
-  p_group->setColour(
-      juce::Label::ColourIds::textColourId, juce::Colours::white);
-  p_label->setJustificationType(juce::Justification::centred);
-  std::string name = spec.name;
-  std::replace(name.begin(), name.end(), '_', ' ');
-  p_label->setText(name, juce::NotificationType::dontSendNotification);
-  this->addAndMakeVisible(*p_label);
+  auto group = this->makeSmallToggleSet<NtFx::ToggleSet>(spec);
   for (size_t i = 0; i < spec.toggles.size(); i++) {
     this->allToggleAttachments.emplace_back(
         new juce::AudioProcessorValueTreeState::ButtonAttachment(
             this->proc.paramLayout,
             NtFx::makeTmpToggle(spec.name, spec.toggles[i].name, "toggleGroup")
                 .name,
-            *p_group->toggles[i].get()));
+            *group->toggles[i].get()));
   }
-  this->allToggleSets.push_back(std::move(p_group));
+  this->allToggleSets.push_back(std::move(group));
+  auto p_label = this->makeLabel(spec.name);
   this->allToggleSetLabels.push_back(std::move(p_label));
+}
+
+template <typename T, typename spec_t>
+std::unique_ptr<T> NtPluginAudioProcessorEditor::makeSmallToggleSet(
+    spec_t& spec) {
+  auto group = std::make_unique<T>(spec, this->proc.plug.uiSpec);
+  group->setTitle(spec.name);
+  group->setName(spec.name);
+  group->addChangeListener(this);
+  group->setColour(juce::Label::ColourIds::textColourId, juce::Colours::white);
+  this->addAndMakeVisible(*group);
+  return std::move(group);
 }
 
 void NtPluginAudioProcessorEditor::initPrimaryKnob(
     NtFx::KnobSpec<float>& spec) {
   auto p_knob  = std::make_unique<juce::Slider>(spec.name);
-  auto p_label = std::make_unique<juce::Label>(spec.name);
+  auto p_label = this->makeLabel(spec.name);
   this->_initKnob(spec, p_knob, p_label);
   this->allPrimaryKnobs.push_back(std::move(p_knob));
   this->allPrimaryKnobLabels.push_back(std::move(p_label));
@@ -206,7 +188,7 @@ void NtPluginAudioProcessorEditor::initSecondaryKnob(
     NtFx::KnobSpec<float>& spec) {
   std::string name = spec.name;
   auto p_knob      = std::make_unique<juce::Slider>(name);
-  auto p_label     = std::make_unique<juce::Label>(name);
+  auto p_label     = this->makeLabel(spec.name);
   this->_initKnob(spec, p_knob, p_label);
   this->allSecondaryKnobs.push_back(std::move(p_knob));
   this->allSecondaryKnobLabels.push_back(std::move(p_label));
@@ -217,15 +199,12 @@ void NtPluginAudioProcessorEditor::_initKnob(NtFx::KnobSpec<float>& spec,
     std::unique_ptr<juce::Label>& p_label) {
   if (!spec.p_val) { return; }
   p_slider->setLookAndFeel(&this->knobLookAndFeel);
-  p_label->setJustificationType(juce::Justification::centred);
   std::string name(spec.name);
   std::replace(name.begin(), name.end(), '_', ' ');
-  p_label->setText(name, juce::NotificationType::dontSendNotification);
   p_slider->setTextValueSuffix(spec.suffix);
   p_slider->setSliderStyle(juce::Slider::SliderStyle::Rotary);
   p_slider->addListener(this);
   this->addAndMakeVisible(p_slider.get());
-  this->addAndMakeVisible(p_label.get());
   this->allKnobAttachments.emplace_back(
       new juce::AudioProcessorValueTreeState::SliderAttachment(
           this->proc.paramLayout, spec.name, *p_slider));
@@ -284,17 +263,17 @@ void NtPluginAudioProcessorEditor::updateUi() {
 
   auto area = this->getLocalBounds();
   if (this->proc.plug.uiSpec.includeTitleBar) { this->updateTitleBar(area); }
-  auto pad = 10 * this->uiScale;
-  area.reduce(pad, pad);
+  this->pad = 10 * this->uiScale;
+  area.reduce(this->pad, this->pad);
   if (this->proc.plug.uiSpec.includeMeters
       && this->proc.plug.meters.size() != 0) {
     this->updateMeters(area);
   }
   if (this->proc.plug.radioButtons.size()
       || this->proc.plug.toggleSets.size()) {
-    this->updateRightSideArea(area);
+    this->placeSmallTogglesArea(area);
   }
-  if (this->proc.plug.toggles.size()) { this->updateBottomRow(area); }
+  if (this->proc.plug.toggles.size()) { this->placeBottomRow(area); }
   if (this->proc.plug.uiSpec.includeSecondaryKnobs
       && this->proc.plug.secondaryKnobs.size()) {
     this->updateSecondaryKnobs(area);
@@ -347,55 +326,60 @@ void NtPluginAudioProcessorEditor::updateMeters(juce::Rectangle<int>& area) {
   this->borderedAreas.push_back(meterArea);
 }
 
-void NtPluginAudioProcessorEditor::updateRightSideArea(
+void NtPluginAudioProcessorEditor::placeSmallTogglesArea(
     juce::Rectangle<int>& area) {
-  auto rightSideArea = area.removeFromRight(
+  auto _area = area.removeFromRight(
       this->proc.plug.uiSpec.radioButtonAreaWidth * this->uiScale);
-  this->borderedAreas.push_back(rightSideArea);
+  this->borderedAreas.push_back(_area);
   float pad = 7 * this->uiScale;
-  rightSideArea.removeFromLeft(pad);
-  for (size_t i = 0; i < this->proc.plug.radioButtons.size(); i++) {
-    this->allRadioButtonLabels[i]->setFont(juce::FontOptions(
+  _area.removeFromLeft(pad);
+  this->placeSmallToggles(_area,
+      this->proc.plug.radioButtons.size(),
+      this->allRadioButtonLabels,
+      this->allRadioButtons);
+  this->placeSmallToggles(_area,
+      this->proc.plug.toggleSets.size(),
+      this->allToggleSetLabels,
+      this->allToggleSets);
+}
+
+template <typename T>
+void NtPluginAudioProcessorEditor::placeSmallToggles(juce::Rectangle<int>& area,
+    int size,
+    std::vector<std::unique_ptr<juce::Label>>& labels,
+    std::vector<std::unique_ptr<T>>& toggles) {
+  for (size_t i = 0; i < size; i++) {
+    labels[i]->setFont(juce::FontOptions(
         this->proc.plug.uiSpec.defaultFontSize * this->uiScale));
-    rightSideArea.removeFromTop(pad);
-    this->allRadioButtonLabels[i]->setBounds(rightSideArea.removeFromTop(
-        this->proc.plug.uiSpec.labelHeight * this->uiScale));
-    this->allRadioButtons[i]->uiScale = this->uiScale;
-    this->allRadioButtons[i]->updateUi();
-    this->allRadioButtons[i]->setBounds(
-        rightSideArea.removeFromTop(this->allRadioButtons[i]->toggles.size()
-            * this->proc.plug.uiSpec.radioButtonHeight * this->uiScale));
-  }
-  // TODO: DRY
-  for (size_t i = 0; i < this->proc.plug.toggleSets.size(); i++) {
-    this->allToggleSetLabels[i]->setFont(juce::FontOptions(
-        this->proc.plug.uiSpec.defaultFontSize * this->uiScale));
-    rightSideArea.removeFromTop(pad);
-    this->allToggleSetLabels[i]->setBounds(rightSideArea.removeFromTop(
-        this->proc.plug.uiSpec.labelHeight * this->uiScale));
-    this->allToggleSets[i]->uiScale = this->uiScale;
-    this->allToggleSets[i]->updateUi();
-    this->allToggleSets[i]->setBounds(
-        rightSideArea.removeFromTop(this->allToggleSets[i]->toggles.size()
-            * this->proc.plug.uiSpec.radioButtonHeight * this->uiScale));
+    area.removeFromTop(pad);
+    labels[i]->setBounds(
+        area.removeFromTop(this->proc.plug.uiSpec.labelHeight * this->uiScale));
+    toggles[i]->uiScale = this->uiScale;
+    toggles[i]->updateUi();
+    toggles[i]->setBounds(area.removeFromTop(toggles[i]->toggles.size()
+        * this->proc.plug.uiSpec.radioButtonHeight * this->uiScale));
   }
 }
 
-void NtPluginAudioProcessorEditor::updateBottomRow(juce::Rectangle<int>& area) {
-  // TODO: wrap to next row if too many.
+void NtPluginAudioProcessorEditor::placeBottomRow(juce::Rectangle<int>& area) {
   auto bottomRowArea = area.removeFromBottom(
       this->proc.plug.uiSpec.toggleHeight * this->uiScale);
-  auto pad = 10 * this->uiScale;
   this->borderedAreas.push_back(bottomRowArea);
   auto nToggles    = this->proc.plug.toggles.size();
   auto nDropdowns  = this->proc.plug.dropdowns.size();
   auto nElements   = nToggles + nDropdowns * 2;
   auto columnWidth = bottomRowArea.getWidth() / nElements;
-  for (size_t i = 0; i < nDropdowns; i++) {
-    auto dropdownArea = bottomRowArea.removeFromLeft(columnWidth * 2);
+  this->placeDropdowns(bottomRowArea, columnWidth);
+  this->placeToggles(bottomRowArea, columnWidth);
+}
+
+void NtPluginAudioProcessorEditor::placeDropdowns(
+    juce::Rectangle<int>& area, size_t columnWidth) {
+  for (size_t i = 0; i < this->proc.plug.dropdowns.size(); i++) {
+    auto dropdownArea = area.removeFromLeft(columnWidth * 2);
     auto labelArea    = dropdownArea.removeFromLeft(columnWidth);
-    dropdownArea.reduce(pad, pad);
-    labelArea.reduce(pad, pad);
+    dropdownArea.reduce(this->pad, this->pad);
+    labelArea.reduce(this->pad, this->pad);
     this->allDropDowns[i]->setBounds(dropdownArea);
     this->allDropDowns[i]->setColour(juce::ComboBox::ColourIds::textColourId,
         juce::Colour(this->proc.plug.uiSpec.foregroundColour));
@@ -408,9 +392,12 @@ void NtPluginAudioProcessorEditor::updateBottomRow(juce::Rectangle<int>& area) {
     this->allDropDownLabels[i]->setFont(juce::FontOptions(
         this->proc.plug.uiSpec.defaultFontSize * this->uiScale));
   }
-  for (size_t i = 0; i < nToggles; i++) {
-    auto toggleArea = bottomRowArea.removeFromLeft(columnWidth);
-    toggleArea.reduce(pad, pad);
+}
+void NtPluginAudioProcessorEditor::placeToggles(
+    juce::Rectangle<int>& area, size_t columnWidth) {
+  for (size_t i = 0; i < this->proc.plug.toggles.size(); i++) {
+    auto toggleArea = area.removeFromLeft(columnWidth);
+    toggleArea.reduce(this->pad, this->pad);
     this->allToggles[i]->setBounds(toggleArea);
     this->allToggles[i]->fontSize =
         this->proc.plug.uiSpec.defaultFontSize * this->uiScale;
@@ -420,12 +407,10 @@ void NtPluginAudioProcessorEditor::updateBottomRow(juce::Rectangle<int>& area) {
 
 void NtPluginAudioProcessorEditor::updateSecondaryKnobs(
     juce::Rectangle<int>& area) {
-  // TODO: wrap to next row if too many.
-  auto pad                = 10 * this->uiScale;
   auto secondaryKnobsArea = area.removeFromBottom(
       this->proc.plug.uiSpec.secondaryKnobHeight * this->uiScale);
   this->borderedAreas.push_back(secondaryKnobsArea);
-  secondaryKnobsArea.reduce(pad, pad);
+  secondaryKnobsArea.reduce(this->pad, this->pad);
   for (size_t i = 0; i < this->proc.plug.secondaryKnobs.size(); i++) {
     auto knobArea = secondaryKnobsArea.removeFromLeft(
         this->proc.plug.uiSpec.secondaryKnobWidth * this->uiScale);
@@ -458,8 +443,6 @@ void NtPluginAudioProcessorEditor::updatePrimaryKnobs(
   size_t iKnob     = 0;
   auto columnWidth = knobsArea.getWidth() / nColumns;
   auto rowHeight   = knobsArea.getHeight() / nRows;
-  // TODO: We're multiplying by uiScale a milion places. Can it be more
-  // abstract?
   if (rowHeight > this->proc.plug.uiSpec.knobHeight * this->uiScale) {
     rowHeight = this->proc.plug.uiSpec.knobHeight * this->uiScale;
   }
@@ -600,32 +583,8 @@ void NtPluginAudioProcessorEditor::comboBoxChanged(juce::ComboBox* p_box) {
 }
 
 void NtPluginAudioProcessorEditor::updateUiScale() {
-  auto p_box = this->titleBarDropDowns[e_uiScale].get();
-  switch (p_box->getSelectedId()) {
-  case 1:
-    this->uiScale = 0.5;
-    break;
-  case 2:
-    this->uiScale = 0.75;
-    break;
-  case 3:
-    this->uiScale = 1.0;
-    break;
-  case 4:
-    this->uiScale = 1.25;
-    break;
-  case 5:
-    this->uiScale = 1.5;
-    break;
-  case 6:
-    this->uiScale = 1.75;
-    break;
-  case 7:
-    this->uiScale = 2.0;
-    break;
-  default:
-    return;
-  }
+  auto p_box    = this->titleBarDropDowns[e_uiScale].get();
+  this->uiScale = 0.5 + 0.25 * (p_box->getSelectedId() - 1);
   this->setSize(this->proc.plug.uiSpec.defaultWindowWidth * this->uiScale,
       this->unscaledWindowHeight * this->uiScale);
 }
@@ -685,4 +644,15 @@ void NtPluginAudioProcessorEditor::calcSliderRowsCols(
   }
   nRows    = bestRows;
   nColumns = bestColumns;
+}
+
+std::unique_ptr<juce::Label> NtPluginAudioProcessorEditor::makeLabel(
+    const std::string name) {
+  auto _name   = name;
+  auto p_label = std::make_unique<juce::Label>(_name);
+  std::replace(_name.begin(), _name.end(), '_', ' ');
+  p_label->setText(_name, juce::NotificationType::dontSendNotification);
+  p_label->setJustificationType(juce::Justification::centred);
+  this->addAndMakeVisible(*p_label);
+  return std::move(p_label);
 }

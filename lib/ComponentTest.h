@@ -29,7 +29,8 @@
 
 #include "lib/Component.h"
 #include "lib/Stereo.h"
-// #include <boost/core/demangle.hpp>
+#include <algorithm>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -37,10 +38,13 @@
 #include <sstream>
 #include <stdlib.h>
 #include <string>
+#include <sys/attr.h>
+#include <unordered_map>
 #include <vector>
 
 consteval auto testFileBaseName(std::string_view fileName) {
-  auto _begin        = fileName.find("/") + 1;
+  auto _begin =
+      fileName.find("tests/") + std::char_traits<char>::length("tests/");
   auto n             = fileName.length();
   auto baseName      = fileName.substr(_begin, n);
   auto _end          = baseName.find(".cpp");
@@ -54,10 +58,7 @@ consteval auto testFileBaseName(std::string_view fileName) {
 #define _NTFX_EXPAND_AND_QUOTE(str) _NTFX_QUOTE(str)
 
 #define _NTFX_ADD_TEST_IMPL(object, stimuli)                                   \
-  NtFx::ComponentTest<float>::addTest(object,                                  \
-      _NTFX_EXPAND_AND_QUOTE(object),                                          \
-      std::string(testFileBaseName(__FILE__)),                                 \
-      { stimuli })
+  componentTestSet.addTest(object, _NTFX_EXPAND_AND_QUOTE(object), { stimuli })
 
 /**
  * @brief Adds a new test to ComponentTest.
@@ -69,20 +70,8 @@ consteval auto testFileBaseName(std::string_view fileName) {
 #define NTFX_ADD_TEST(object, stimuli) _NTFX_ADD_TEST_IMPL(object, stimuli)
 
 #define _NTFX_TEST_BEGIN_IMPL                                                  \
-  namespace NtFx {                                                             \
-    template <typename T>                                                      \
-    int NtFx::ComponentTest<T>::nTests = 0;                                    \
-    template <typename T>                                                      \
-    int NtFx::ComponentTest<T>::nSuccessful = 0;                               \
-    template <typename T>                                                      \
-    int NtFx::ComponentTest<T>::nObjects = 0;                                  \
-    template <typename T>                                                      \
-    std::vector<std::unique_ptr<NtFx::ComponentTest<T>>>                       \
-        NtFx::ComponentTest<T>::tests { };                                     \
-    template <typename T>                                                      \
-    std::string NtFx::ComponentTest<T>::testFile { std::string(                \
-        testFileBaseName(__FILE__)) };                                         \
-  }
+  auto componentTestSet =                                                      \
+      NtFx::ComponentTestSet<float>(std::string(testFileBaseName(__FILE__)));
 
 #ifndef _NTFX_TEST_STARTED
   /**
@@ -97,14 +86,10 @@ consteval auto testFileBaseName(std::string_view fileName) {
   #define NTFX_TEST_BEGIN
 #endif
 
-// TODO: Replace 'main' with something else when multiple files are in one test
-// run. But what? __FILE__ won't cut it, it has the full path.
-// Alternatively, we could store a CSV with the resuls and read that from Pyton
-// once all the tests are done. It's not as efficient, but it'll work.
 #define _NTFX_TEST_IMPL() int main()
 #define NTFX_TEST() _NTFX_TEST_IMPL()
 
-#define NTFX_RUN_TESTS() NtFx::ComponentTest<float>::runAllTests()
+#define NTFX_RUN_TESTS() componentTestSet.runAllTests()
 
 namespace NtFx {
 static const std::vector<std::string> STIMULI_NAMES {
@@ -121,30 +106,18 @@ constexpr char SEPARATOR = '.';
  */
 template <typename signal_t>
 struct ComponentTest {
-  // TODO: Instead of using statics, add another class which encapsulates all
-  // the ComponentTest objects.
-  static int nObjects;    ///< Number of components tested.
-  static int nTests;      ///< Total tests run.
-  static int nSuccessful; ///< Number of successful tests.
-  static std::vector<std::unique_ptr<ComponentTest<signal_t>>> tests;
-
-  // // List of all objectnames to
-  // static std::vector<std::string> objectNames;
-  // TODO: Each object should have it's own testFileName.
-  // static std::vector<std::string> testFilesNames;
-
-  static std::string testFile;
+  const std::string testSetName;
   const std::string objName;
   Component<Stereo<signal_t>>& cut; ///< Component under test.
   std::vector<std::string> activeStimuli =
       STIMULI_NAMES; ///< List of names of tests to run.
 
   // TODO: dox
-  ComponentTest(std::string objName,
+  ComponentTest(const std::string testSetName,
+      std::string objName,
       Component<Stereo<signal_t>>& cut,
       std::vector<std::string> stimuli = { })
-      : objName(objName), cut(cut) {
-    nObjects++;
+      : testSetName(testSetName), objName(objName), cut(cut) {
     if (stimuli.empty()) { return; }
     for (auto& stimulus : stimuli) {
       if (std::find(STIMULI_NAMES.begin(), STIMULI_NAMES.end(), stimulus)
@@ -160,26 +133,23 @@ struct ComponentTest {
   // TODO: dox
   bool run(std::string stimulus) {
     if (!this->stimulusIsActive(stimulus)) { return true; }
-    nTests++;
     auto x = this->readInput(stimulus);
     std::vector<Stereo<signal_t>> y;
     this->cut.reset(NTFX_FS);
     for (auto _x : x) { y.push_back(cut.process(_x)); }
-    const auto yPath = "testWrapper/out/" + testFile + SEPARATOR + this->objName
-        + SEPARATOR + stimulus + SEPARATOR + "result.txt";
+    const auto yPath = "testWrapper/out/" + testSetName + SEPARATOR
+        + this->objName + SEPARATOR + stimulus + SEPARATOR + "result.txt";
     std::ofstream yFile(yPath);
-    auto success = this->compareExpected(stimulus, y);
-    // TODO: Comma
     for (auto _y : y) { yFile << _y.l << " " << _y.r << std::endl; }
+    auto success = this->compareExpected(stimulus, y);
     if (success) {
       std::cout << "\033[32m";
     } else {
       std::cout << "\033[31m";
     }
     std::cout << "Test '" << stimulus << "' for object '" << this->objName
-              << "' in file '" << testFile << "'";
+              << "' in file '" << testSetName << "'";
     std::cout << (success ? " passed." : " failed.") << "\033[0m" << std::endl;
-    if (success) { nSuccessful++; }
     return success;
   }
 
@@ -193,50 +163,8 @@ struct ComponentTest {
     std::fstream xFile(xPath);
     std::vector<Stereo<signal_t>> x;
     signal_t l, r;
-    // TODO: comma
     while (xFile >> l >> r) { x.push_back({ l, r }); }
     return x;
-  }
-
-  static bool addTest(Component<Stereo<signal_t>>& componentObj,
-      std::string objectName,
-      std::string fileBaseName,
-      std::vector<std::string> stimuliToUse = { }) {
-    NtFx::ComponentTest<float>::tests.push_back(
-        std::make_unique<NtFx::ComponentTest<float>>(
-            objectName, componentObj, stimuliToUse));
-    return true;
-  }
-
-  // TODO: dox
-  static int runAllTests() {
-    auto n = tests.size();
-    for (auto& stimulus : STIMULI_NAMES) {
-      for (size_t i = 0; i < n; i++) { tests[i]->run(stimulus); }
-    }
-    return !NtFx::ComponentTest<float>::getResults();
-  }
-
-  /**
-   * @brief Get and print the results of all tests.
-   *
-   * @return true If all tests passed.
-   * @return false If any test failed. Missing expected vector is a failure.
-   */
-  static bool getResults() {
-    if (nSuccessful == nTests) {
-      std::cout << "\033[32m";
-    } else {
-      std::cout << "\033[31m";
-    }
-    std::cout << "Ran a total of " << nTests << " test on " << nObjects
-              << " objects. " << nSuccessful << " succeeded. ("
-              << 100.0 * double(nSuccessful) / double(nTests) << "%)."
-              << "\033[0m" << std::endl;
-    auto f = std::ofstream("testWrapper/out/results.txt", std::ios_base::app);
-    f << testFile << "," << nTests << "," << nObjects << "," << nSuccessful
-      << std::endl;
-    return nSuccessful == nTests;
   }
 
   bool stimulusIsActive(std::string stimulus) {
@@ -249,7 +177,7 @@ struct ComponentTest {
   }
 
   std::vector<Stereo<signal_t>> readExpected(std::string stimulus) {
-    auto expPath = "testWrapper/in/" + testFile + SEPARATOR + this->objName
+    auto expPath = "testWrapper/in/" + testSetName + SEPARATOR + this->objName
         + SEPARATOR + stimulus + SEPARATOR + "expected.txt";
     bool expFileExists = std::filesystem::exists(expPath);
     if (!expFileExists) {
@@ -282,12 +210,87 @@ struct ComponentTest {
       return false;
     }
     signal_t acceptedDiff = 0.00001;
-    bool success          = true;
     for (size_t i = 0; i < y.size(); i++) {
       auto diff = gcem::abs(y[i] - e[i]);
-      if (diff > acceptedDiff) { success = false; }
+      if (diff > acceptedDiff) {
+        std::cout << this->testSetName << "." << this->objName << "."
+                  << stimulus << ":" << "output: {" << y[i].l << ", " << y[i].r
+                  << "}, expected: {" << e[i].l << ", " << e[i].r
+                  << "}, at index: " << i << std::endl;
+        return false;
+      }
     }
-    return success;
+    return true;
+  }
+};
+
+template <typename signal_t>
+struct ComponentTestSet {
+  int nTests;      ///< Total tests run.
+  int nSuccessful; ///< Number of successful tests.
+  std::vector<std::unique_ptr<ComponentTest<signal_t>>> tests;
+  std::string name;
+
+  ComponentTestSet(std::string name) : name(name) { }
+
+  /**
+   * @brief Get and print the results of all tests.
+   *
+   * @return true If all tests passed.
+   * @return false If any test failed. Missing expected vector is a failure.
+   */
+  bool getResults() {
+    if (nSuccessful == nTests) {
+      std::cout << "\033[32m";
+    } else {
+      std::cout << "\033[31m";
+    }
+    std::cout << "Ran a total of " << nTests << " test on "
+              << this->tests.size() << " objects. " << nSuccessful
+              << " succeeded. ("
+              << 100.0 * double(this->nSuccessful) / double(this->nTests)
+              << "%)."
+              << "\033[0m" << std::endl;
+    auto f = std::ofstream("testWrapper/out/results.txt", std::ios_base::app);
+    f << this->name << "," << this->nTests << "," << this->tests.size() << ","
+      << this->nSuccessful << std::endl;
+    return nSuccessful == nTests;
+  }
+
+  bool addTest(Component<Stereo<signal_t>>& componentObj,
+      std::string objName,
+      std::vector<std::string> stimuli) {
+    this->tests.push_back(std::make_unique<NtFx::ComponentTest<float>>(
+        this->name, objName, componentObj, stimuli));
+    return true;
+  }
+
+  // TODO: dox
+  int runAllTests() {
+    bool success = true;
+    for (auto& stimulus : STIMULI_NAMES) {
+      for (size_t i = 0; i < tests.size(); i++) {
+        this->nTests++;
+        success &= tests[i]->run(stimulus);
+        if (success) { this->nSuccessful++; }
+      }
+    }
+    return !this->getResults();
+  }
+};
+
+// TODO: This is a bad idea. Where do we add tests?
+template <typename signal_t>
+struct ComponentTestMaster {
+  std::unordered_map<std::string, std::unique_ptr<ComponentTestSet<signal_t>>>
+      allSets;
+  void addSet(std::string name, NtFx::ComponentTestSet<float>& set) {
+    this->allSets.insert({ name, set });
+  }
+  int runAllTestSets() {
+    int res = 0;
+    for (auto& set : this->allSets) { res |= set.second->runAllTests(); }
+    return res;
   }
 };
 }
