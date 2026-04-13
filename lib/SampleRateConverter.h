@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "Plugin.h"
+#include NTFX_PLUGIN_FILE
 #include "Stereo.h"
 #include "lib/windowFunctions.h"
 #include <algorithm>
@@ -125,7 +125,7 @@ namespace Src {
     /**
      * @brief Reference to the plugin
      */
-    NtPlugin<signal_t>& plug;
+    NTFX_PLUGIN<signal_t>& plug;
     /**
      * @brief State of the sample rate converter
      */
@@ -147,7 +147,7 @@ namespace Src {
      * @brief Constructor
      * @param plug Reference to the plugin
      */
-    SampleRateConverter(NtPlugin<signal_t>& plug) : plug(plug) { }
+    SampleRateConverter(NTFX_PLUGIN<signal_t>& plug) : plug(plug) { }
 
     /**
      * @brief Process audio samples through the sample rate converter

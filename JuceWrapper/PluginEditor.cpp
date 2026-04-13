@@ -362,7 +362,6 @@ void NtPluginAudioProcessorEditor::placeSmallToggles(juce::Rectangle<int>& area,
 }
 
 void NtPluginAudioProcessorEditor::placeBottomRow(juce::Rectangle<int>& area) {
-  // TODO: wrap to next row if too many.
   auto bottomRowArea = area.removeFromBottom(
       this->proc.plug.uiSpec.toggleHeight * this->uiScale);
   this->borderedAreas.push_back(bottomRowArea);
@@ -408,7 +407,6 @@ void NtPluginAudioProcessorEditor::placeToggles(
 
 void NtPluginAudioProcessorEditor::updateSecondaryKnobs(
     juce::Rectangle<int>& area) {
-  // TODO: wrap to next row if too many.
   auto secondaryKnobsArea = area.removeFromBottom(
       this->proc.plug.uiSpec.secondaryKnobHeight * this->uiScale);
   this->borderedAreas.push_back(secondaryKnobsArea);
@@ -445,8 +443,6 @@ void NtPluginAudioProcessorEditor::updatePrimaryKnobs(
   size_t iKnob     = 0;
   auto columnWidth = knobsArea.getWidth() / nColumns;
   auto rowHeight   = knobsArea.getHeight() / nRows;
-  // TODO: We're multiplying by uiScale a milion places. Can it be more
-  // abstract?
   if (rowHeight > this->proc.plug.uiSpec.knobHeight * this->uiScale) {
     rowHeight = this->proc.plug.uiSpec.knobHeight * this->uiScale;
   }
