@@ -30,6 +30,7 @@
 #include "lib/Component.h"
 #include "lib/Stereo.h"
 #include <algorithm>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -37,11 +38,13 @@
 #include <sstream>
 #include <stdlib.h>
 #include <string>
+#include <sys/attr.h>
 #include <unordered_map>
 #include <vector>
 
 consteval auto testFileBaseName(std::string_view fileName) {
-  auto _begin        = fileName.find("/") + 1;
+  auto _begin =
+      fileName.find("tests/") + std::char_traits<char>::length("tests/");
   auto n             = fileName.length();
   auto baseName      = fileName.substr(_begin, n);
   auto _end          = baseName.find(".cpp");
@@ -207,12 +210,17 @@ struct ComponentTest {
       return false;
     }
     signal_t acceptedDiff = 0.00001;
-    bool success          = true;
     for (size_t i = 0; i < y.size(); i++) {
       auto diff = gcem::abs(y[i] - e[i]);
-      if (diff > acceptedDiff) { success = false; }
+      if (diff > acceptedDiff) {
+        std::cout << this->testSetName << "." << this->objName << "."
+                  << stimulus << ":" << "output: {" << y[i].l << ", " << y[i].r
+                  << "}, expected: {" << e[i].l << ", " << e[i].r
+                  << "}, at index: " << i << std::endl;
+        return false;
+      }
     }
-    return success;
+    return true;
   }
 };
 

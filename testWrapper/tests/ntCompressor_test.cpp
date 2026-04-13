@@ -28,6 +28,6 @@ NTFX_TEST() {
   NTFX_ADD_TEST(compressor_lin_fb, "linearSweep");
   NTFX_ADD_TEST(compressor_dB_fb, "linearSweep");
 
-  return return NTFX_RUN_TESTS();
+  return NTFX_RUN_TESTS();
   ;
 }

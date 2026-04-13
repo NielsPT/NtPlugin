@@ -149,7 +149,7 @@ def buildTestProg(cppPath: str):
 
 def runTestProg() -> int:
     res = sp.run(
-        [f"{FILE_DIR}/../testWrapper/{TMP_DIR}/main"],
+        [f"{FILE_DIR}/{TMP_DIR}/main"],
         check=False,
     )
     return res.returncode
@@ -157,10 +157,10 @@ def runTestProg() -> int:
 
 def findAllTests() -> list[str]:
     paths = []
-    allFiles = os.listdir(f"{FILE_DIR}/../test")
+    allFiles = os.listdir(f"{FILE_DIR}/tests")
     for file in allFiles:
         if file.endswith("_test.cpp"):
-            paths += ["test/" + file]
+            paths += [f"{FILE_DIR}/tests/" + file]
     return paths
 
 
@@ -453,7 +453,6 @@ def acceptLatestResult(objects: list[str]) -> bool:
 
 def clean() -> bool:
     shutil.rmtree(f"{FILE_DIR}/{TMP_DIR}")
-    # os.removedirs(f"{testWrapperDir}/{TMP_DIR}")
     return True
 
 
@@ -561,7 +560,7 @@ def run() -> bool:
             if not file.endswith(".cpp"):
                 if not file.endswith("_test"):
                     file = f"{file}_test"
-                file = f"test/{file}.cpp"
+                file = f"{FILE_DIR}/tests/{file}.cpp"
             success &= runTests(file, fs)
             print()
         results = readAggregateResults()
