@@ -55,7 +55,9 @@ background.
   (Linux). This includes adding the tools to PATH, which is mostly automatic on
   Mac and Linux. The new _PowerShell for VS_ Windows app also includes them.
 - Git clone with `--recurse-submodules` flag. This will add the JUCE framework
-  to the download.
+to the download.
+<!-- TODO: Linux dep: libstdc++-static, ladspa-devel. Maybe write them all up here?
+But what about all the distros? -->
 
 ### Try it out
 
@@ -308,8 +310,7 @@ You can then do the following commands to call the pluginval test in order to
 validate your plugins:
 
 ```sh
-cd build
-ctest
+ctest --test-dir build
 ```
 
 After calling `ctest` it will then start the validation of your plugin, and this

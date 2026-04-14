@@ -108,7 +108,7 @@ FOR /R "%PLUGINS_DIR%" %%F IN (*.h) DO (
     :: Step 1: Run cmake
     echo Running cmake for !plugin_name!...
     
-    SET "cmake_args=cmake -B "!BUILD_DIR!" -S "!JUCE_WRAPPER_DIR!" -DNTFX_PLUGIN=!plugin_name!"
+    SET "cmake_args=cmake -B %BUILD_DIR% -S %JUCE_WRAPPER_DIR% -DNTFX_PLUGIN=%plugin_name%"
     
     IF DEFINED plugin_id (
         SET "cmake_args=%cmake_args% -DNTFX_ID=!plugin_id!"
