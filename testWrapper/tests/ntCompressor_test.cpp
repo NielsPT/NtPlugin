@@ -4,20 +4,20 @@
 NTFX_TEST_BEGIN
 
 NTFX_TEST() {
-  auto compressor_dB                     = ntCompressor<float>();
+  auto compressor_dB                     = ntCompressor<double>();
   compressor_dB.scSettings.thresh_db     = -20;
   compressor_dB.linEnable                = false;
   compressor_dB.clip                     = false;
-  auto compressor_lin                    = ntCompressor<float>();
+  auto compressor_lin                    = ntCompressor<double>();
   compressor_lin.scSettings.thresh_db    = -20;
   compressor_lin.linEnable               = true;
   compressor_lin.clip                    = false;
-  auto compressor_lin_fb                 = ntCompressor<float>();
+  auto compressor_lin_fb                 = ntCompressor<double>();
   compressor_lin_fb.scSettings.thresh_db = -20;
   compressor_lin_fb.linEnable            = true;
   compressor_lin_fb.scMode               = 1;
   compressor_lin_fb.clip                 = false;
-  auto compressor_dB_fb                  = ntCompressor<float>();
+  auto compressor_dB_fb                  = ntCompressor<double>();
   compressor_dB_fb.scSettings.thresh_db  = -20;
   compressor_dB_fb.linEnable             = false;
   compressor_dB_fb.scMode                = 1;

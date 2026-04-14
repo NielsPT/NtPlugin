@@ -70,7 +70,7 @@ consteval auto testFileBaseName(std::string_view fileName) {
 
 #define _NTFX_TEST_BEGIN_IMPL                                                  \
   auto componentTestSet =                                                      \
-      NtFx::ComponentTestSet<float>(std::string(testFileBaseName(__FILE__)));
+      NtFx::ComponentTestSet<double>(std::string(testFileBaseName(__FILE__)));
 
 #ifndef _NTFX_TEST_STARTED
   /**
@@ -140,7 +140,7 @@ struct ComponentTest {
         + this->objName + SEPARATOR + stimulus + SEPARATOR + "result.txt";
     std::ofstream yFile(yPath);
     yFile << std::fixed << std::setprecision(16);
-    for (auto _y : y) { yFile << _y.l << " " << _y.r << std::endl; }
+    for (auto _y : y) { yFile << _y.l << " " << _y.r << "\n"; }
     auto success = this->compareExpected(stimulus, y);
     if (success) {
       std::cout << "\033[32m";
@@ -149,7 +149,7 @@ struct ComponentTest {
     }
     std::cout << "Test '" << stimulus << "' for object '" << this->objName
               << "' in file '" << testSetName << "'";
-    std::cout << (success ? " passed." : " failed.") << "\033[0m" << std::endl;
+    std::cout << (success ? " passed." : " failed.") << "\033[0m" << "\n";
     return success;
   }
 
@@ -157,7 +157,7 @@ struct ComponentTest {
     auto xPath = "testWrapper/in/" + stimulus + ".txt";
     if (!std::filesystem::exists(xPath)) {
       std::cout << "Input file '" << xPath << "'not found. Aborting test."
-                << std::endl;
+                << "\n";
       return { };
     }
     std::fstream xFile(xPath);
@@ -183,7 +183,7 @@ struct ComponentTest {
     if (!expFileExists) {
       std::cout << "File with expected results not found at path '" + expPath
               + "'. Skipping comparison."
-                << std::endl;
+                << "\n";
       return { };
     }
     std::vector<Stereo<signal_t>> e;
@@ -206,7 +206,7 @@ struct ComponentTest {
     auto e = this->readExpected(stimulus);
     if (e.size() != y.size()) {
       std::cout << "Expected result has different length that result. Aborting."
-                << " e: " << e.size() << ", y: " << y.size() << std::endl;
+                << " e: " << e.size() << ", y: " << y.size() << "\n";
       return false;
     }
     signal_t acceptedDiff = 0.0001;
@@ -217,7 +217,7 @@ struct ComponentTest {
                   << stimulus << ":" << "output: {" << y[i].l << ", " << y[i].r
                   << "}, expected: {" << e[i].l << ", " << e[i].r
                   << "}, at index: " << i << ". Diff: {" << diff.l << ", "
-                  << diff.r << "}." << std::endl;
+                  << diff.r << "}." << "\n";
         return false;
       }
     }
@@ -251,17 +251,17 @@ struct ComponentTestSet {
               << " succeeded. ("
               << 100.0 * double(this->nSuccessful) / double(this->nTests)
               << "%)."
-              << "\033[0m" << std::endl;
+              << "\033[0m" << "\n";
     auto f = std::ofstream("testWrapper/out/results.txt", std::ios_base::app);
     f << this->name << "," << this->nTests << "," << this->tests.size() << ","
-      << this->nSuccessful << std::endl;
+      << this->nSuccessful << "\n";
     return nSuccessful == nTests;
   }
 
   bool addTest(Component<Stereo<signal_t>>& componentObj,
       std::string objName,
       std::vector<std::string> stimuli) {
-    this->tests.push_back(std::make_unique<NtFx::ComponentTest<float>>(
+    this->tests.push_back(std::make_unique<NtFx::ComponentTest<double>>(
         this->name, objName, componentObj, stimuli));
     return true;
   }
