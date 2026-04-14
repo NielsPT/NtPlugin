@@ -38,8 +38,6 @@
 #include <sstream>
 #include <stdlib.h>
 #include <string>
-#include <sys/attr.h>
-#include <unordered_map>
 #include <vector>
 
 consteval auto testFileBaseName(std::string_view fileName) {
@@ -276,21 +274,6 @@ struct ComponentTestSet {
       }
     }
     return !this->getResults();
-  }
-};
-
-// TODO: This is a bad idea. Where do we add tests?
-template <typename signal_t>
-struct ComponentTestMaster {
-  std::unordered_map<std::string, std::unique_ptr<ComponentTestSet<signal_t>>>
-      allSets;
-  void addSet(std::string name, NtFx::ComponentTestSet<float>& set) {
-    this->allSets.insert({ name, set });
-  }
-  int runAllTestSets() {
-    int res = 0;
-    for (auto& set : this->allSets) { res |= set.second->runAllTests(); }
-    return res;
   }
 };
 }
