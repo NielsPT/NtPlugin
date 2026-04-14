@@ -42,7 +42,7 @@ if [[ $# -gt 0 ]] && [[ "$1" == "-t" ]]; then
   else
     . ./.venv/bin/activate;
   fi
-  python ./${TEST_SCRIPT_DIR}/test.py run all || return 1
+  python ./${TEST_SCRIPT_DIR}/test.py run all || exit 1
 fi
 
 # Create artifacts directory if it doesn't exist
@@ -74,6 +74,7 @@ while IFS= read -r header_file; do
   cmake_output=$(cmake -B "$BUILD_DIR" -S "$JUCE_WRAPPER_DIR" -DNTFX_PLUGIN="$plugin_name" \
     ${plugin_id:+"-DNTFX_ID=$plugin_id"} -DCMAKE_BUILD_TYPE=Release 2>&1)
   echo $cmake_output
+  if [ $? -ne 0 ]; then echo "Exit code: $? Aborting"; exit 1; fi
 
   # Extract the plugin ID from cmake output if we didn't reuse one
   if [ -z "$plugin_id" ]; then
@@ -93,14 +94,14 @@ while IFS= read -r header_file; do
 
   # Build the project
   echo "Building $plugin_name..."
-  cmake --build "$BUILD_DIR" -j$(nproc --all)
+  cmake --build "$BUILD_DIR" -j$(nproc --all) || exit 1
 
   if [[ $# -gt 0 ]] && [[ "$1" == "-t" ]]; then
     # A short sleep to make sure the plugin exists before validation.
     sleep 0.1
   
     # Test the plugin with pluginval
-    ctest --test-dir "$BUILD_DIR" || return 1
+    ctest --test-dir "$BUILD_DIR" || exit 1
   fi
 
   # Find the plugin-specific artifacts directory
