@@ -33,6 +33,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -138,6 +139,7 @@ struct ComponentTest {
     const auto yPath = "testWrapper/out/" + testSetName + SEPARATOR
         + this->objName + SEPARATOR + stimulus + SEPARATOR + "result.txt";
     std::ofstream yFile(yPath);
+    yFile << std::fixed << std::setprecision(16);
     for (auto _y : y) { yFile << _y.l << " " << _y.r << std::endl; }
     auto success = this->compareExpected(stimulus, y);
     if (success) {

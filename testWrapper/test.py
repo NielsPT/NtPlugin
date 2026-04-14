@@ -91,7 +91,7 @@ def storeStereoTestVector(x: np.ndarray, filename: str):
         xL = x[0, :]
         xR = x[1, :]
         for i, _ in enumerate(xL):
-            f.write(str(xL[i]) + " " + str(xR[i]) + "\n")
+            f.write(f"{xL[i]:.16f} {xR[i]:.16f}\n")
 
 
 def generateTestVectors(t: float, fs: float):
