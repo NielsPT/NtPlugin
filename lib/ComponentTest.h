@@ -97,6 +97,9 @@ static const std::vector<std::string> STIMULI_NAMES {
 
 constexpr char SEPARATOR = '.';
 
+template <typename signal_t>
+struct ComponentTestSet;
+
 /**
  * @brief Processes a vector of test data with audio component and compares
  * to expected results. Total number of tests and number of succesful test
@@ -105,18 +108,18 @@ constexpr char SEPARATOR = '.';
  */
 template <typename signal_t>
 struct ComponentTest {
-  const std::string testSetName;
+  ComponentTestSet<signal_t>& owner;
   const std::string objName;
   Component<Stereo<signal_t>>& cut; ///< Component under test.
   std::vector<std::string> activeStimuli =
       STIMULI_NAMES; ///< List of names of tests to run.
 
   // TODO: dox
-  ComponentTest(const std::string testSetName,
+  ComponentTest(ComponentTestSet<signal_t>& owner,
       std::string objName,
       Component<Stereo<signal_t>>& cut,
       std::vector<std::string> stimuli = { })
-      : testSetName(testSetName), objName(objName), cut(cut) {
+      : owner(owner), objName(objName), cut(cut) {
     if (stimuli.empty()) { return; }
     for (auto& stimulus : stimuli) {
       if (std::find(STIMULI_NAMES.begin(), STIMULI_NAMES.end(), stimulus)
@@ -132,11 +135,12 @@ struct ComponentTest {
   // TODO: dox
   bool run(std::string stimulus) {
     if (!this->stimulusIsActive(stimulus)) { return true; }
+    this->owner.nTests++;
     auto x = this->readInput(stimulus);
     std::vector<Stereo<signal_t>> y;
     this->cut.reset(NTFX_FS);
     for (auto _x : x) { y.push_back(cut.process(_x)); }
-    const auto yPath = "testWrapper/out/" + testSetName + SEPARATOR
+    const auto yPath = "testWrapper/out/" + this->owner.name + SEPARATOR
         + this->objName + SEPARATOR + stimulus + SEPARATOR + "result.txt";
     std::ofstream yFile(yPath);
     yFile << std::fixed << std::setprecision(16);
@@ -144,11 +148,12 @@ struct ComponentTest {
     auto success = this->compareExpected(stimulus, y);
     if (success) {
       std::cout << "\033[32m";
+      this->owner.nSuccessful++;
     } else {
       std::cout << "\033[31m";
     }
     std::cout << "Test '" << stimulus << "' for object '" << this->objName
-              << "' in file '" << testSetName << "'";
+              << "' in file '" << this->owner.name << "'";
     std::cout << (success ? " passed." : " failed.") << "\033[0m" << "\n";
     return success;
   }
@@ -177,8 +182,8 @@ struct ComponentTest {
   }
 
   std::vector<Stereo<signal_t>> readExpected(std::string stimulus) {
-    auto expPath = "testWrapper/in/" + testSetName + SEPARATOR + this->objName
-        + SEPARATOR + stimulus + SEPARATOR + "expected.txt";
+    auto expPath = "testWrapper/in/" + this->owner.name + SEPARATOR
+        + this->objName + SEPARATOR + stimulus + SEPARATOR + "expected.txt";
     bool expFileExists = std::filesystem::exists(expPath);
     if (!expFileExists) {
       std::cout << "File with expected results not found at path '" + expPath
@@ -213,8 +218,8 @@ struct ComponentTest {
     for (size_t i = 0; i < y.size(); i++) {
       auto diff = gcem::abs(y[i] - e[i]);
       if (diff > acceptedDiff) {
-        std::cout << this->testSetName << "." << this->objName << "."
-                  << stimulus << ":" << "output: {" << y[i].l << ", " << y[i].r
+        std::cout << this->owner.name << "." << this->objName << "." << stimulus
+                  << ":" << " output: {" << y[i].l << ", " << y[i].r
                   << "}, expected: {" << e[i].l << ", " << e[i].r
                   << "}, at index: " << i << ". Diff: {" << diff.l << ", "
                   << diff.r << "}." << "\n";
@@ -241,13 +246,13 @@ struct ComponentTestSet {
    * @return false If any test failed. Missing expected vector is a failure.
    */
   bool getResults() {
-    if (nSuccessful == nTests) {
+    if (nSuccessful == this->nTests) {
       std::cout << "\033[32m";
     } else {
       std::cout << "\033[31m";
     }
-    std::cout << "Ran a total of " << nTests << " test on "
-              << this->tests.size() << " objects. " << nSuccessful
+    std::cout << "Ran a total of " << this->nTests << " test on "
+              << this->tests.size() << " objects. " << this->nSuccessful
               << " succeeded. ("
               << 100.0 * double(this->nSuccessful) / double(this->nTests)
               << "%)."
@@ -262,19 +267,14 @@ struct ComponentTestSet {
       std::string objName,
       std::vector<std::string> stimuli) {
     this->tests.push_back(std::make_unique<NtFx::ComponentTest<double>>(
-        this->name, objName, componentObj, stimuli));
+        *this, objName, componentObj, stimuli));
     return true;
   }
 
   // TODO: dox
   int runAllTests() {
-    bool success = true;
     for (auto& stimulus : STIMULI_NAMES) {
-      for (size_t i = 0; i < tests.size(); i++) {
-        this->nTests++;
-        success &= tests[i]->run(stimulus);
-        if (success) { this->nSuccessful++; }
-      }
+      for (size_t i = 0; i < tests.size(); i++) { tests[i]->run(stimulus); }
     }
     return !this->getResults();
   }

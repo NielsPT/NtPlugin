@@ -538,7 +538,7 @@ def run() -> bool:
         default=48e3,
         help="Sample rate to test at.",
     )
-    parser.add_argument(
+    generateParser.add_argument(
         "--duration",
         "-t",
         type=float,
@@ -547,10 +547,10 @@ def run() -> bool:
     )
     args = parser.parse_args().__dict__
     fs = args["fs"]
-    t = args["duration"]
     os.makedirs(f"{FILE_DIR}/{EXPECTED_DIR}", exist_ok=True)
     os.makedirs(f"{FILE_DIR}/{TMP_DIR}", exist_ok=True)
     if args["task"] == "generate":
+        t = args["duration"]
         return generateTestVectors(t, fs) is not None
     if args["task"] == "run":
         clean()

@@ -87,7 +87,10 @@ struct PeakSideChainDb : public Component<Stereo<signal_t>> {
         this->_gainComputer_db(ySens.l, this->stateFilter.l),
         this->_gainComputer_db(ySens.r, this->stateFilter.r),
     });
-    if (this->settings.linkEnable) { y = y.absMin(); }
+    if (this->settings.linkEnable) {
+      auto _y = y.absMin();
+      return { _y, _y };
+    }
     return y;
   }
 

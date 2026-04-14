@@ -74,6 +74,13 @@ struct PeakSensor : public Component<signal_t> {
     this->_alpha = gcem::exp(-2200.0 / (this->tPeak_ms * this->fs));
   }
 
+  virtual void reset(float fs) noexcept override {
+    this->fs     = fs;
+    this->_alpha = 0;
+    this->_state = 0;
+    this->update();
+  }
+
   /**
    * @brief Static method to apply the peak sensor algorithm.
    *

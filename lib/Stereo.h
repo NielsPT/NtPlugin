@@ -40,6 +40,11 @@ struct Stereo {
     this->r = x.r;
     return *this;
   }
+  Stereo<signal_t>& operator=(const signal_t& x) noexcept {
+    this->l = x;
+    this->r = x;
+    return *this;
+  }
   bool operator==(const Stereo<signal_t>& x) const noexcept {
     return (this->l == x.l) && (this->r == x.r);
   }
