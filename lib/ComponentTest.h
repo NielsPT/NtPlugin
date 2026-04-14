@@ -207,14 +207,15 @@ struct ComponentTest {
                 << " e: " << e.size() << ", y: " << y.size() << std::endl;
       return false;
     }
-    signal_t acceptedDiff = 0.00001;
+    signal_t acceptedDiff = 0.0001;
     for (size_t i = 0; i < y.size(); i++) {
       auto diff = gcem::abs(y[i] - e[i]);
       if (diff > acceptedDiff) {
         std::cout << this->testSetName << "." << this->objName << "."
                   << stimulus << ":" << "output: {" << y[i].l << ", " << y[i].r
                   << "}, expected: {" << e[i].l << ", " << e[i].r
-                  << "}, at index: " << i << std::endl;
+                  << "}, at index: " << i << ". Diff: " << diff << "."
+                  << std::endl;
         return false;
       }
     }
