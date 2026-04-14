@@ -214,8 +214,8 @@ struct ComponentTest {
         std::cout << this->testSetName << "." << this->objName << "."
                   << stimulus << ":" << "output: {" << y[i].l << ", " << y[i].r
                   << "}, expected: {" << e[i].l << ", " << e[i].r
-                  << "}, at index: " << i << ". Diff: " << diff << "."
-                  << std::endl;
+                  << "}, at index: " << i << ". Diff: {" << diff.l << ", "
+                  << diff.r << "}." << std::endl;
         return false;
       }
     }
