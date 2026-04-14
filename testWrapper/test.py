@@ -137,7 +137,7 @@ def buildTestProg(cppPath: str):
             f"/I{os.path.abspath(FILE_DIR)}{os.sep}..{os.sep}lib{os.sep}gcem{os.sep}include",
             "/std:c++20",
             "/DNTFX_FS=48e3f",
-            "/O0",
+            "/EHsc",
         ]
     res = sp.run(
         args,

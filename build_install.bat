@@ -18,41 +18,50 @@ echo This script will build all plugins in the 'plugins' directory
 echo in release mode and install them on the system if possible.
 echo.
 
-:: =========================================================================
-:: Setup Python Virtual Environment and Run Tests
-:: =========================================================================
-SET "VENV_DIR=.venv"
-
-IF NOT EXIST "%VENV_DIR%" (
-    echo [SETUP] Creating Python virtual environment...
-    python -m venv "%VENV_DIR%"
+FOR /F "tokens=*" %%C IN ('powershell -NoProfile -Command "(Get-CimInstance Win32_Processor | Measure-Object -Property NumberOfLogicalProcessors -Sum).Sum"') DO (
+    SET "CoreCount=%%C"
 )
 
-:: Activate virtual environment using full path (required for reliable scripting)
-SET "PYTHON_EXECUTABLE=%VENV_DIR%\Scripts\python.exe"
+echo Total Logical CPU Cores: %CoreCount%
 
-IF NOT EXIST "%PYTHON_EXECUTABLE%" (
-    echo ERROR: Could not find the Python executable at %PYTHON_EXECUTABLE%
-    echo Please ensure Python and the venv creation was successful.
-    goto :end
+if "%~1"=="-t" (
+  :: =========================================================================
+  :: Setup Python Virtual Environment and Run Tests
+  :: =========================================================================
+  SET "VENV_DIR=.venv"
+  
+  IF NOT EXIST "%VENV_DIR%" (
+      echo [SETUP] Creating Python virtual environment...
+      python -m venv "%VENV_DIR%"
+  )
+  
+  :: Activate virtual environment using full path (required for reliable scripting)
+  SET "PYTHON_EXECUTABLE=%VENV_DIR%\Scripts\python.exe"
+  
+  IF NOT EXIST "%PYTHON_EXECUTABLE%" (
+      echo ERROR: Could not find the Python executable at %PYTHON_EXECUTABLE%
+      echo Please ensure Python and the venv creation was successful.
+      goto :end
+  )
+  
+  :: Activate the environment (best practice for invoking scripts)
+  CALL "%VENV_DIR%\Scripts\activate.bat"
+  
+  :: Install requirements
+  echo [SETUP] Installing Python dependencies from requirements.txt...
+  pip install -r %TEST_SCRIPT_DIR%\requirements.txt
+  
+  :: Run tests
+  echo [SETUP] Running unit tests...
+  "%PYTHON_EXECUTABLE%" %TEST_SCRIPT_DIR%\test.py run all
+  IF ERRORLEVEL 1 (
+      echo.
+      echo ERROR: Unit tests failed. Aborting build process.
+      goto :end
+  )
+  echo [SETUP] Tests completed successfully.
 )
 
-:: Activate the environment (best practice for invoking scripts)
-CALL "%VENV_DIR%\Scripts\activate.bat"
-
-:: Install requirements
-echo [SETUP] Installing Python dependencies from requirements.txt...
-pip install -r %TEST_SCRIPT_DIR%\requirements.txt
-
-:: Run tests
-echo [SETUP] Running unit tests...
-"%PYTHON_EXECUTABLE%" %TEST_SCRIPT_DIR%\test.py run all
-IF ERRORLEVEL 1 (
-    echo.
-    echo ERROR: Unit tests failed. Aborting build process.
-    goto :end
-)
-echo [SETUP] Tests completed successfully.
 
 :: =========================================================================
 :: Main Build Logic
@@ -108,21 +117,20 @@ FOR /R "%PLUGINS_DIR%" %%F IN (*.h) DO (
     :: Step 1: Run cmake
     echo Running cmake for !plugin_name!...
     
-    SET "cmake_args=cmake -B %BUILD_DIR% -S %JUCE_WRAPPER_DIR% -DNTFX_PLUGIN=%plugin_name%"
+    SET "cmake_args=cmake -B %BUILD_DIR% -S %JUCE_WRAPPER_DIR% -DNTFX_PLUGIN=!plugin_name!"
     
     IF DEFINED plugin_id (
         SET "cmake_args=%cmake_args% -DNTFX_ID=!plugin_id!"
     )
 
-    :: Execute cmake and capture output
-    CALL %cmake_args%
-    SET "cmake_output=%ERRORLEVEL%"  :: Note: Capturing output reliably is extremely difficult in Batch
-    
-    :: --- Simplified ID Extraction (Assuming the grep pattern holds) ---
+    CALL %cmake_args%>%BUILD_DIR%\tmp.txt
     SET "new_plugin_id="
-    FOR /F "tokens=5 delims=' ' " %%I IN ('echo !cmake_output! ^| findstr /i "Generated new plugin id: [^ ]*";') DO (
+    echo findstr "Generated new plugin id: [^ ]*" %BUILD_DIR%\tmp.txt
+    FOR /F "tokens=5 delims=' ' " %%I IN ( findstr "Generated new plugin id: [^ ]*" %BUILD_DIR%\tmp.txt ) DO (
         SET "new_plugin_id=%%I"
     )
+    del %BUILD_DIR%\tmp.txt
+    echo new_plugin_id: !new_plugin_id!
     
     IF NOT DEFINED plugin_id (
         IF DEFINED new_plugin_id (
@@ -145,7 +153,7 @@ FOR /R "%PLUGINS_DIR%" %%F IN (*.h) DO (
 
     :: Step 2: Build the project
     echo Building !plugin_name!...
-    cmake --build "!BUILD_DIR!" --config release
+    cmake --build "!BUILD_DIR!" --config release -j%CoreCount%
 
     :: Step 3 & 4: Copy artifacts
     SET "plugin_artefacts_dir=!BUILD_DIR!\!plugin_name!_artefacts"
