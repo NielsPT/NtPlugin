@@ -1,6 +1,6 @@
 # TODO: tests for Windows.
 
-if(CMAKE_SYSTEM_NAME NOT STREQUAL "Windows")
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
   if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     add_test(
       NAME ValidatePluginAU
