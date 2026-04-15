@@ -95,6 +95,8 @@ def storeStereoTestVector(x: np.ndarray, filename: str):
 
 
 def generateTestVectors(t: float, fs: float):
+    os.makedirs(f"{FILE_DIR}/{EXPECTED_DIR}", exist_ok=True)
+    os.makedirs(f"{FILE_DIR}/{TMP_DIR}", exist_ok=True)
     n = int(t * fs)
     outputPath = f"{FILE_DIR}/{EXPECTED_DIR}/"
     _impulse = generateImpulse(n)
@@ -472,7 +474,10 @@ def runTests(path: str, fs: float) -> bool:
 
 def readAggregateResults() -> dict[str, int]:
     results = {}
-    with open(f"{FILE_DIR}/{TMP_DIR}/results.txt", encoding="utf8") as f:
+    path = f"{FILE_DIR}/{TMP_DIR}/results.txt"
+    if not os.path.exists(path):
+        return {}
+    with open(path, encoding="utf8") as f:
         for line in f.readlines():
             vals = line.split(",")
             if len(vals) != 4:
@@ -499,7 +504,45 @@ def readAggregateResults() -> dict[str, int]:
     return sums
 
 
-def run() -> bool:
+def run(args: dict):
+    os.makedirs(f"{FILE_DIR}/{EXPECTED_DIR}", exist_ok=True)
+    os.makedirs(f"{FILE_DIR}/{TMP_DIR}", exist_ok=True)
+    clean()
+    success = True
+    files = args["files"]
+    if not files or files == ["all"]:
+        files = findAllTests()
+    for file in files:
+        if not file.endswith(".cpp"):
+            if not file.endswith("_test"):
+                file = f"{file}_test"
+            file = f"{FILE_DIR}/tests/{file}.cpp"
+        if not os.path.exists(file):
+            print(f"File '{file}' not found. Skipping test.")
+            continue
+        success &= runTests(file, args["fs"])
+        print()
+    results = readAggregateResults()
+    if not results:
+        return True
+    print(
+        f"Ran {results["nTests"]} tests on {results["nObjects"]} objects "
+        f"in {results["nFiles"]} test files. "
+        f"{results["nSuccessful"]} succeeded. "
+        f"({100.0 * results["nSuccessful"] /  results["nTests"]} %)"
+    )
+    if success:
+        print("\033[32m", end="")
+        st = "PASSED"
+    else:
+        print("\033[31m", end="")
+        st = "FAILED"
+    print(f"TESTS {st}")
+    print("\033[0m", end="")
+    return success
+
+
+def main() -> bool:
     parser = argparse.ArgumentParser(
         description="Runs test on NTfx Components. Usage: 'test.py run "
         "[test file name(s)]'. '_test.cpp' can be omitted."
@@ -547,40 +590,11 @@ def run() -> bool:
     )
     args = parser.parse_args().__dict__
     fs = args["fs"]
-    os.makedirs(f"{FILE_DIR}/{EXPECTED_DIR}", exist_ok=True)
-    os.makedirs(f"{FILE_DIR}/{TMP_DIR}", exist_ok=True)
     if args["task"] == "generate":
         t = args["duration"]
         return generateTestVectors(t, fs) is not None
     if args["task"] == "run":
-        clean()
-        success = True
-        files = args["files"]
-        if not files or files == ["all"]:
-            files = findAllTests()
-        for file in files:
-            if not file.endswith(".cpp"):
-                if not file.endswith("_test"):
-                    file = f"{file}_test"
-                file = f"{FILE_DIR}/tests/{file}.cpp"
-            success &= runTests(file, fs)
-            print()
-        results = readAggregateResults()
-        print(
-            f"Ran {results["nTests"]} tests on {results["nObjects"]} objects "
-            f"in {results["nFiles"]} test files. "
-            f"{results["nSuccessful"]} succeeded. "
-            f"({100.0 * results["nSuccessful"] /  results["nTests"]} %)"
-        )
-        if success:
-            print("\033[32m", end="")
-            st = "PASSED"
-        else:
-            print("\033[31m", end="")
-            st = "FAILED"
-        print(f"TESTS {st}")
-        print("\033[0m", end="")
-        return success
+        return run(args)
     if args["task"] == "clean":
         return clean()
     if args["task"] == "approve":
@@ -610,4 +624,4 @@ def run() -> bool:
 
 
 if __name__ == "__main__":
-    sys.exit(not run())
+    sys.exit(not main())

@@ -1,5 +1,3 @@
-# TODO: tests for Windows.
-
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   add_test(
     NAME ValidatePluginAU
@@ -8,9 +6,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     --validate
     $<TARGET_BUNDLE_DIR:${NTFX_PLUGIN}_AU>
   )
-endif()
 
-if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
   add_test(
     NAME ValidatePluginVST3
     COMMAND pluginval
@@ -18,6 +14,12 @@ if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
     --validate
     $<TARGET_BUNDLE_DIR:${NTFX_PLUGIN}_VST3>
   )
+else()
+  add_test(
+    NAME ValidatePluginVST3Linux
+    COMMAND pluginval
+    --strictness-level 10
+    --validate
+    ../../build/${NTFX_PLUGIN}_artefacts/Release/VST3/${NTFX_PLUGIN}.vst3
+  )
 endif()
-
-

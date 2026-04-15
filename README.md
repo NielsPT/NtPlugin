@@ -56,8 +56,13 @@ background.
   Mac and Linux. The new _PowerShell for VS_ Windows app also includes them.
 - Git clone with `--recurse-submodules` flag. This will add the JUCE framework
 to the download.
-<!-- TODO: Linux dep: libstdc++-static, ladspa-devel. Maybe write them all up here?
-But what about all the distros? -->
+<!-- TODO: Linux dep:
+libstdc++-static
+ladspa-devel
+webkit2gtk4.0-devel.aarch64
+gtk3-devel
+jack-audio-connection-kit-devel.aarch64
+Maybe write them all up here? But what about all the distros? -->
 
 ### Try it out
 

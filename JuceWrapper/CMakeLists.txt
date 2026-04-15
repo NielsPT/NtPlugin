@@ -193,8 +193,11 @@ target_link_libraries(${NTFX_PLUGIN}
 
 target_include_directories(${NTFX_PLUGIN} PRIVATE .. ../lib/gcem/include)
 
-add_subdirectory(pluginval)
-add_subdirectory(tests)
+# TODO: Figure out how to make pluginval work on Windows.
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
+  add_subdirectory(pluginval)
+  add_subdirectory(tests)
+endif()
 
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
 # into your build tree. This should be included with `#include "JuceHeader.h"`. The include path for
