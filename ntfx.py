@@ -15,6 +15,10 @@ ID_FILE = f"{ARTIFACTS_DIR}/plugin_ids.txt"  # File to store plugin IDs
 TEST_SCRIPT_DIR = "testWrapper"
 TEST_DIR = "test"
 
+ID = 0
+VST3_CAT = 1
+AAX_CAT = 2
+
 
 def readPluginIds() -> dict[str, str]:
     if not os.path.exists(ID_FILE):
@@ -24,9 +28,9 @@ def readPluginIds() -> dict[str, str]:
         lines = f.readlines()
         for line in lines:
             kv = line.split(":")
-            if len(kv) != 2:
+            if len(kv) < 2:
                 continue
-            pluginIds[kv[0]] = kv[1].strip()
+            pluginIds[kv[0]] = kv[1:]
     return pluginIds
 
 
@@ -51,8 +55,15 @@ def configure(plugin: str, pluginIds: dict[str, str]) -> bool:
         "-DCMAKE_BUILD_TYPE=Release",
     ]
     if plugin in pluginIds:
-        args += [f"-DNTFX_ID={pluginIds[plugin]}"]
-        print(f"Reusing existing plugin id for {plugin}: {pluginIds[plugin]}.")
+        info = pluginIds[plugin]
+        args += [f"-DNTFX_ID={info[ID].strip()}"]
+        print(f"Reusing existing plugin id for {plugin}: {info[ID].strip()}.")
+        if len(info) > 2:
+            args += [f"-DNTFX_VST3_CATEGORY={info[VST3_CAT].strip()}"]
+            print(f"Reusing VST3 category: {info[VST3_CAT].strip()}.")
+        if len(info) > 3:
+            args += [f"-DNTFX_AAX_CATEGORY={info[AAX_CAT].strip()}"]
+            print(f"Reusing AAX category: {info[AAX_CAT].strip()}.")
     print(f"Running cmake for plugin {plugin}.")
     res = subprocess.run(
         args, check=False, capture_output=True, env=os.environ.copy()
@@ -167,7 +178,7 @@ def run() -> bool:
         "--test",
         "-t",
         action="store_true",
-        help="Apply tests before and after build.",
+        help="Apply uint tests before and validation after build.",
     )
     args = parser.parse_args().__dict__
     if args["task"] == "build":

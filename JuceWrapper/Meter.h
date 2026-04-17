@@ -70,11 +70,11 @@ struct MonoMeter : public juce::Component {
   float holdVal_db       = 0;
   int iHoldDot           = 0;
 
-  PeakSensor<float> peakSensor;
+  PeakHoldSensor<float> peakSensor;
 
   MonoMeter(MeterSpec& meterSpec, UiSpec& uiSpec)
       : meterSpec(meterSpec), uiSpec(uiSpec), nDots(uiSpec.meterHeight_dots) {
-    this->updateRelease(48000, 250);
+    this->updateRelease(48000, 250, 100);
     this->refresh();
     this->isInitialized = true;
   };
@@ -139,7 +139,7 @@ struct MonoMeter : public juce::Component {
     }
   }
 
-  void resized() override { repaint(); }
+  void resized() override { this->repaint(); }
 
   void refresh(float xPeak, float xRms) {
     this->peakVal_lin = xPeak;
@@ -186,8 +186,9 @@ struct MonoMeter : public juce::Component {
     if (repaint) { this->repaint(); }
   }
 
-  void updateRelease(float fs, float t_ms) {
+  void updateRelease(float fs, float t_ms, float tHold_ms = 100) {
     this->peakSensor.tPeak_ms = t_ms;
+    this->peakSensor.tHold_ms = tHold_ms;
     this->peakSensor.reset(fs);
     this->nHold_frames =
         this->meterSpec.hold_s * this->uiSpec.meterRefreshRate_hz;

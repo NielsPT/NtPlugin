@@ -101,6 +101,9 @@ if(WIN32)
   message(STATUS "Windows platform. Skipping install.")
 endif()
 
+# set(NTFX_AAX_CATEGORY Effect)
+# set(NTFX_VST3_CATEGORY Fx)
+
 # TODO: Icon
 juce_add_plugin(${NTFX_PLUGIN}
   # VERSION ...                               # Set this if the plugin version is different to the project version
@@ -117,7 +120,26 @@ juce_add_plugin(${NTFX_PLUGIN}
   PLUGIN_CODE ${NTFX_PLUGIN_CODE} # A unique four-character plugin id with exactly one upper-case character
   # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
   FORMATS ${NTFX_FORMATS} # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
-  PRODUCT_NAME ${NTFX_PLUGIN}) # The name of the final executable, which can differ from the target name
+  PRODUCT_NAME ${NTFX_PLUGIN} # The name of the final executable, which can differ from the target name
+  AU_MAIN_TYPE kAudioUnitType_Effect
+  AAX_CATEGORY ${NTFX_AAX_CATEGORY}
+  VST3_CATEGORIES ${NTFX_VST3_CATEGORY}
+)
+# AU_MAIN_TYPE Should be one of: kAudioUnitType_Effect, kAudioUnitType_FormatConverter, kAudioUnitType_Generator, 
+# kAudioUnitType_MIDIProcessor, kAudioUnitType_Mixer, kAudioUnitType_MusicDevice, kAudioUnitType_MusicEffect, 
+# kAudioUnitType_OfflineEffect, kAudioUnitType_Output, kAudioUnitType_Panner
+# AAX_CATEGORY Should be one or more of: None, EQ, Dynamics, PitchShift, Reverb, Delay, Modulation, Harmonic, 
+# NoiseReduction, Dither, SoundField, HWGenerators, SWGenerators, WrappedPlugin, Effect, and MIDIEffect. 
+# You may also add the prefix AAX_ePlugInCategory_. Defaults to MIDIEffect when IS_MIDI_EFFECT is TRUE, 
+# SWGenerators when IS_SYNTH is TRUE, otherwise None.
+# VST3_CATEGORIES Should be one or more, separated by spaces, of the following: Fx, Instrument, Analyzer, 
+# Delay, Distortion, Drum, Dynamics, EQ, External, Filter, Generator, Mastering, Modulation, Mono, Network, 
+# NoOfflineProcess, OnlyOfflineProcess, OnlyRT, Pitch Shift, Restoration, Reverb, Sampler, Spatial, Stereo, 
+# Surround, Synth, Tools, Up-Downmix. Defaults to Instrument Synth if IS_SYNTH is TRUE. Otherwise defaults to Fx.
+
+# AU_MAIN_TYPE kAudioUnitType_Effect
+# VST3_CATEGORIES EQ
+# AAX_CATEGORY AAX_ePlugInCategory_EQ
 
 # ---- patch for Windows ARM ------------------------------------------------
 if(WIN32 AND CMAKE_GENERATOR_PLATFORM STREQUAL "ARM64")
