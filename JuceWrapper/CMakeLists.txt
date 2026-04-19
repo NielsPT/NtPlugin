@@ -101,8 +101,12 @@ if(WIN32)
   message(STATUS "Windows platform. Skipping install.")
 endif()
 
-# set(NTFX_AAX_CATEGORY Effect)
-# set(NTFX_VST3_CATEGORY Fx)
+if(NOT DEFINED NTFX_AAX_CATEGORY)
+  set(NTFX_AAX_CATEGORY Effect)
+endif()
+if(NOT DEFINED NTFX_VST3_CATEGORY)
+  set(NTFX_VST3_CATEGORY Fx)
+endif()
 
 # TODO: Icon
 juce_add_plugin(${NTFX_PLUGIN}

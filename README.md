@@ -55,14 +55,56 @@ background.
   (Linux). This includes adding the tools to PATH, which is mostly automatic on
   Mac and Linux. The new _PowerShell for VS_ Windows app also includes them.
 - Git clone with `--recurse-submodules` flag. This will add the JUCE framework
-to the download.
-<!-- TODO: Linux dep:
-libstdc++-static
-ladspa-devel
-webkit2gtk4.0-devel.aarch64
-gtk3-devel
-jack-audio-connection-kit-devel.aarch64
-Maybe write them all up here? But what about all the distros? -->
+  to the download.
+
+#### Linux dependencies
+
+Ubuntu:
+
+```sh
+sudo apt update
+sudo apt install -y \
+    libasound2-dev \
+    libjack-jackd2-dev \
+    ladspa-sdk \
+    libcurl4-openssl-dev  \
+    libfreetype-dev \
+    libfontconfig1-dev \
+    libx11-dev \
+    libxcomposite-dev \
+    libxcursor-dev \
+    libxinerama-dev \
+    libxext-dev \
+    libxrandr-dev \
+    libxrender-dev \
+    libwebkit2gtk-4.1-dev \
+    libglu1-mesa-dev \
+    mesa-common-dev \
+    cmake \
+    python3.12-venv
+```
+
+Fedora:
+
+```sh
+sudo dnf update
+sudo dnf install \
+    alsa-lib-devel \
+    jack-audio-connection-kit-devel.aarch64 \
+    libcurl-devel \
+    freetype-devel \
+    libX11-devel \
+    libXcomposite-devel \
+    libXcursor-devel \
+    libXinerama-devel \
+    freeglut-devel \
+    gnutils-devel \
+    libstdc++-static \
+    ladspa-devel \
+    webkit2gtk4.0-devel.aarch64 \
+    gtk3-devel \
+    mesa-libGL-devel
+```
 
 ### Try it out
 
@@ -80,8 +122,12 @@ plugin.
 
 If you just want to install the included plugins, this can be done from source.
 The included `build_install.sh` script will do this for Mac and Linux once the
-[needed software](#install-needed-software) is installed. On Windows? You made
-your choice, you live with consequences.
+[needed software](#install-needed-software) is installed. `build_install.bat` is
+available for build on Windows. At the time of writing, it does not install
+anything because of Windows security features. The easiest way to use the
+plugins after this build is to add `[repo dir]\artifacts\VST3` to you DAW's
+plugin search path. Alternatively, you can copy and paste the contents of that
+folder to your plugin install folder.
 
 ## Usage
 
@@ -121,11 +167,11 @@ As with all code projects, there are secrets to know.
 
 - If you want to make AXX plugins for Pro Tools, you need to get the AAX SDK
   from avid and put it in the JuceWrapper directory.
-- Since Cmake for Mac doesn't have hashing support, plugin IDs are selected at
-  random. This means that when ever Cmake is reconfigured, it's a new plugin and
-  you'll need to reinsert it in the DAW. If you need the plugin to have the same
-  ID after reconfiguration, you can add it manually by adding
-  `-DNTFX_ID=[Original ID]` to the configure command.
+- Plugin IDs are selected at random. This means that when ever Cmake is
+  reconfigured, it's a new plugin and you'll need to reinsert the plugin in the
+  host/DAW. If you need the plugin to have the same ID after reconfiguration,
+  you can add it manually by adding `-DNTFX_ID=[Original ID]` to the configure
+  command.
 - On windows, the system won't be able to install outputs, so the easiest way to
   test your plugin is to add
   `/path/to/repo/build/[your plugin]\_artefacts/Debug/VST3` to the list of VST
@@ -215,8 +261,6 @@ would be an option for a project.
 
 ## Testing your plugin
 
-NOTE: This is Mac only so far.
-
 The `testWrapper` can be used to test plugins. The individual tests are stored
 in `test` and are inidvidual C++ programs. A Python script named `test.py` is
 used to run the tests. It will generate test input files, build the test
@@ -231,7 +275,7 @@ First, we need the normal python envirement stuff:
 ```sh
 python3 -m venv .venv
 . ./.venv/bin/activate
-pip install -r testWrapper/requirements.txt
+pip install -r requirements.txt
 ```
 
 Now run the existing tests:
@@ -273,7 +317,7 @@ Save as `test/[plugin name]_test.cpp` and run
 python testWrapper/test.py run [plugin name]
 ```
 
-Alternativly, the path of the cpp file can be used as argument.
+Alternativly, the path of the test cpp file can be used as argument.
 
 This should generate plots of frequency and phase response (`"impulse"`),
 spectrogram (`"linearSweep"`) and dynamic response using a stimulus of a 10 kHz
