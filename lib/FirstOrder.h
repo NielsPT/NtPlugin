@@ -1,5 +1,10 @@
-/*
- * Copyright (C) 2026 Niels Thøgersen, NTlyd
+/**
+ * @file FirstOrder.h
+ * @author Niels Thøgersen (niels.thoegersen@gmail.com)
+ * @brief First order high- and low pass filters.
+ * @version 0.1
+ *
+ * @copyright Copyright (c) 2026
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License as published by the Free
@@ -13,13 +18,20 @@
  *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
- **/
+ *
+ */
+
 #include "lib/Component.h"
 #include "lib/Stereo.h"
 #include <math.h>
 
 namespace NtFx {
 namespace FirstOrder {
+  /**
+   * @brief Filter shape for first order filters. 'none' denoted bypass and
+   * 'lpfZero' has a zero added at Nyquist.
+   *
+   */
   enum class Shape {
     none,
     lpf,
@@ -27,12 +39,19 @@ namespace FirstOrder {
     hpf,
   };
 
+  /**
+   * @brief A single channel first order filter.
+   *
+   * @tparam signal_t Audio datatype.
+   * @tparam shape Type of filter.
+   */
   template <typename signal_t, Shape shape>
   struct Filter : public Component<signal_t> {
     signal_t fc_hz = 1000;
     signal_t _a    = 0;
     signal_t _yn1  = 0;
     signal_t _xn1  = 0;
+
     virtual signal_t process(signal_t x) noexcept override {
       signal_t y;
       if constexpr (shape == Shape::none) {
@@ -67,6 +86,12 @@ namespace FirstOrder {
     }
   };
 
+  /**
+   * @brief Stereo pair of first order filters.
+   *
+   * @tparam signal_t Audio datatype.
+   * @tparam shape Filter shape.
+   */
   template <typename signal_t, Shape shape>
   struct StereoFilter : public Component<Stereo<signal_t>> {
     Filter<signal_t, shape> l;

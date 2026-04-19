@@ -1,5 +1,14 @@
-/*
- * Copyright (C) 2026 Niels Thøgersen, NTlyd
+#pragma once
+
+/**
+ * @file RmsSensor.h
+ * @author Niels Thøgersen (niels.thoegersen@gmail.com)
+ * @brief RMS sensor for audio. Accumulates in multiple stages, with a one
+ * milliseond accumulator followed by a user controllable accumulator. This
+ * means that the output has a real world sample rate of 1 kHz.
+ * @version 0.1
+ *
+ * @copyright Copyright (c) 2026
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License as published by the Free
@@ -13,9 +22,7 @@
  *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
- **/
-
-#pragma once
+ */
 
 #include "Component.h"
 #include "Stereo.h"
@@ -69,17 +76,24 @@ struct RmsSensor : public Component<signal_t> {
     return this->getRms();
   }
 
+  /**
+   * @brief Processes accumulators and update delay lines without calculating
+   * result. To be called each sample if 'process' is not used. This way, you
+   * can update accumulators in the processing thread while calculating rms
+   * values somewhere else.
+   *
+   * @param x Inout signal to calculate RMS level for.
+   */
   void processDelayLine(signal_t x) noexcept {
     auto x2 = x * x;
     if (x2 != x2) { x2 = signal_t(0.0); }
     this->sampleAccum += x2 - this->samleDLine[this->sampleIdx];
     this->samleDLine[this->sampleIdx] = x2;
-    if (++this->sampleIdx >= this->sampleDLineLen) {
-      this->sampleIdx = 0;
-      this->msAccum += sampleAccum - this->msDLine[this->msIdx];
-      this->msDLine[this->msIdx] = sampleAccum;
-      if (++this->msIdx >= this->msDLineLen) { this->msIdx = 0; }
-    }
+    if (++this->sampleIdx < this->sampleDLineLen) { return; }
+    this->sampleIdx = 0;
+    this->msAccum += sampleAccum - this->msDLine[this->msIdx];
+    this->msDLine[this->msIdx] = sampleAccum;
+    if (++this->msIdx >= this->msDLineLen) { this->msIdx = 0; }
   }
 
   /**

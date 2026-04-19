@@ -1,4 +1,13 @@
-/*
+#pragma once
+
+/**
+ * @file UiSpec.h
+ * @author Niels Thøgersen (niels.thoegersen@gmail.com)
+ * @brief Specification for plugin UI.
+ * @version 0.1
+ *
+ * @copyright Copyright (c) 2026
+ *
  * Copyright (C) 2026 Niels Thøgersen, NTlyd
  *
  * This program is free software: you can redistribute it and/or modify it under
@@ -13,9 +22,7 @@
  *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
- **/
-
-#pragma once
+ */
 
 #include "gcem.hpp"
 #include <cstdint>

@@ -1,5 +1,13 @@
-/*
- * Copyright (C) 2026 Niels Thøgersen, NTlyd
+#pragma once
+
+/**
+ * @file windowFunctions.h
+ * @author Niels Thøgersen (niels.thoegersen@gmail.com)
+ * @brief Various usefull math functions. Mainly concerning FIR fitlers.
+ * This code is modified from https://github.com/sidneycadot/WindowFunctions.git
+ * @version 0.1
+ *
+ * @copyright Copyright (c) 2026
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License as published by the Free
@@ -13,11 +21,8 @@
  *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
- *
- * This code is modified from https://github.com/sidneycadot/WindowFunctions.git
- **/
+ */
 
-#pragma once
 #include "gcem.hpp"
 #include <cassert>
 #include <cmath>
@@ -26,9 +31,64 @@
 
 namespace NtFx {
 
+/**
+ * @brief Generalized cosine window.
+ *
+ * Many window functions described in signal processing literature
+ * can be written as linear combinations of cosines over the window length.
+ *
+ * Let 'x' be values going from 0 for the first element, and 2*pi for the last
+ * element.
+ *
+ * The window can then be written as:
+ *
+ * w = c0 * cos(0 * x) + c1 * cos(1 * x) + c2 * cos(2 * x) + c3 * cos(3 * x) +
+ * ...
+ *
+ * (Note that the first term simplifies to just the constant value c0.)
+ *
+ * Examples of cosine windows implemented in Matlab:
+ *
+ *                              c0          c1           c2           c3 c4
+ * -----------------------------------------------------------------------------
+ * rectangular window          1.0
+ * hann window                 0.5         -0.5
+ * hamming window              0.54        -0.46
+ * blackman window             0.42        -0.5         0.08
+ * blackman-harris window      0.35875     -0.48829     0.14128      -0.01168
+ * nuttall window              0.3635819   -0.4891775   0.1365995    -0.0106411
+ * flattop window              0.21557895  -0.41663158  0.277263158 -0.083578947
+ * 0.006947368
+ *
+ * The "flattop" coefficients given above follow Matlab's "flattopwin"
+ * implementation. The signal processing literature in fact describes many
+ * different 'flattop' windows.
+ *
+ * Note 1 : Octave defines the flattopwin coefficients differently, see
+ * implementation below.
+ *
+ *          The coefficient values used correspond to:
+ *
+ *          [0.21550795224343777, -0.4159303478298349, 0.2780052583940347,
+ * -0.08361708547045386, 0.006939356062238697]
+ *
+ * Note 2 : Octave defines the nuttallwin coefficients differently, see
+ * implementation below:
+ *
+ *          The coefficient values used are:
+ *
+ *          [0.355768, -0.487396, 0.144232, -0.012604]
+ *
+ * @tparam T
+ * @param n Length of window.
+ * @param coeffs Coefficients for coefficient calculation.
+ * @param nCoeffs Number of coefficients.
+ * @param sflag Makes the window symmetrical.
+ * @return std::vector<T> Window.
+ */
 template <typename T>
-inline static std::vector<T> cosine_window(
-    size_t n, const T* coeff, size_t ncoeff, bool sflag) {
+inline static std::vector<T> cosineWindow(
+    size_t n, const T* coeffs, size_t nCoeffs, bool sflag) {
   std::vector<T> w;
   if (n == 1) {
     w.push_back(1.0);
@@ -36,8 +96,8 @@ inline static std::vector<T> cosine_window(
     const size_t wlength = sflag ? (n - 1) : n;
     for (size_t i = 0; i < n; ++i) {
       T wi = 0.0;
-      for (size_t j = 0; j < ncoeff; ++j) {
-        wi += coeff[j] * cos(i * j * 2.0 * GCEM_PI / wlength);
+      for (size_t j = 0; j < nCoeffs; ++j) {
+        wi += coeffs[j] * cos(i * j * 2.0 * GCEM_PI / wlength);
       }
       w.push_back(wi);
     }
@@ -55,39 +115,39 @@ inline static std::vector<T> rectwin(size_t n) noexcept {
 template <typename T>
 inline static std::vector<T> hanning(size_t n, bool sflag = false) noexcept {
   const T coeff[2] = { 0.5, -0.5 };
-  return cosine_window<T>(n, coeff, sizeof(coeff) / sizeof(T), sflag);
+  return cosineWindow<T>(n, coeff, sizeof(coeff) / sizeof(T), sflag);
 }
 
 template <typename T>
 inline static std::vector<T> hamming(size_t n, bool sflag = false) noexcept {
   const T coeff[2] = { 0.54, -0.46 };
-  return cosine_window<T>(n, coeff, sizeof(coeff) / sizeof(T), sflag);
+  return cosineWindow<T>(n, coeff, sizeof(coeff) / sizeof(T), sflag);
 }
 
 template <typename T>
 inline static std::vector<T> blackman(size_t n, bool sflag = false) noexcept {
   const T coeff[3] = { 0.42, -0.5, 0.08 };
-  return cosine_window<T>(n, coeff, sizeof(coeff) / sizeof(T), sflag);
+  return cosineWindow<T>(n, coeff, sizeof(coeff) / sizeof(T), sflag);
 }
 
 template <typename T>
 inline static std::vector<T> blackmanharris(
     size_t n, bool sflag = false) noexcept {
   const T coeff[4] = { 0.35875, -0.48829, 0.14128, -0.01168 };
-  return cosine_window<T>(n, coeff, sizeof(coeff) / sizeof(T), sflag);
+  return cosineWindow<T>(n, coeff, sizeof(coeff) / sizeof(T), sflag);
 }
 
 template <typename T>
 inline static std::vector<T> nuttallwin(size_t n, bool sflag = false) noexcept {
   const T coeff[4] = { 0.3635819, -0.4891775, 0.1365995, -0.0106411 };
-  return cosine_window<T>(n, coeff, sizeof(coeff) / sizeof(T), sflag);
+  return cosineWindow<T>(n, coeff, sizeof(coeff) / sizeof(T), sflag);
 }
 
 template <typename T>
 inline static std::vector<T> nuttallwin_octave(
     size_t n, bool sflag = false) noexcept {
   const T coeff[4] = { 0.355768, -0.487396, 0.144232, -0.012604 };
-  return cosine_window<T>(n, coeff, sizeof(coeff) / sizeof(T), sflag);
+  return cosineWindow<T>(n, coeff, sizeof(coeff) / sizeof(T), sflag);
 }
 
 template <typename T>
@@ -96,7 +156,7 @@ inline static std::vector<T> flattopwin(size_t n, bool sflag = false) noexcept {
     0.21557895, -0.41663158, 0.277263158, -0.083578947, 0.006947368
   };
 
-  return cosine_window<T>(n, coeff, sizeof(coeff) / sizeof(T), sflag);
+  return cosineWindow<T>(n, coeff, sizeof(coeff) / sizeof(T), sflag);
 }
 
 template <typename T>
@@ -109,7 +169,7 @@ inline static std::vector<T> flattopwin_octave(
     -0.388 / 4.6402,
     0.0322 / 4.6402 };
 
-  return cosine_window<T>(n, coeff, sizeof(coeff) / sizeof(T), sflag);
+  return cosineWindow<T>(n, coeff, sizeof(coeff) / sizeof(T), sflag);
 }
 
 template <typename T>

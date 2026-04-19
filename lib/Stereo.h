@@ -1,5 +1,12 @@
-/*
- * Copyright (C) 2026 Niels Thøgersen, NTlyd
+#pragma once
+
+/**
+ * @file Stereo.h
+ * @author Niels Thøgersen (niels.thoegersen@gmail.com)
+ * @brief A data type for stereo signals.
+ * @version 0.1
+ *
+ * @copyright Copyright (c) 2026
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License as published by the Free
@@ -13,9 +20,7 @@
  *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
- **/
-
-#pragma once
+ */
 
 #include "gcem.hpp"
 #include "gcem_incl/abs.hpp"
@@ -25,6 +30,15 @@
 
 namespace NtFx {
 
+/**
+ * @brief Wraps two values as a stereo signal.This allows us to do DSP math on
+ * both channels at the same time. The class overloads all the normal math
+ * functions. Please note that comparison operators are different for stereo
+ * signals and that a < b not necessarily equals b > a since '<' compares the
+ * minimum values while '>' compares maximums.
+ *
+ * @tparam signal_t Audio datatype.
+ */
 template <typename signal_t>
 struct Stereo {
   signal_t l { 0 };
@@ -93,19 +107,43 @@ struct Stereo {
     this->r = this->r + x.r;
     return *this;
   }
+  Stereo<signal_t> operator-() const { return { -this->l, -this->r }; }
+
+  /**
+   * @brief Square left and right channels and take the average.
+   *
+   * @return signal_t Result.
+   */
   signal_t avgSquared() const noexcept {
     return (this->l * this->l + this->r * this->r) * 0.5f;
   }
+
+  /**
+   * @brief Returns the larges of left and right disregarding sign.
+   *
+   * @return signal_t
+   */
   signal_t absMax() const noexcept {
     return gcem::abs(this->l) > gcem::abs(this->r) ? this->l : this->r;
   }
+
+  /**
+   * @brief Returns the smallest of left and right disregarding sign.
+   *
+   * @return signal_t
+   */
   signal_t absMin() const noexcept {
     return gcem::abs(this->l) < gcem::abs(this->r) ? this->l : this->r;
   }
+
+  /**
+   * @brief Returns the abs of both channels.
+   *
+   * @return Stereo<signal_t>
+   */
   Stereo<signal_t> abs() const noexcept {
     return { gcem::abs(this->l), gcem::abs(this->r) };
   }
-  Stereo<signal_t> operator-() const { return { -this->l, -this->r }; }
 };
 template <typename signal_t>
 static inline Stereo<signal_t> operator+(
@@ -197,6 +235,14 @@ static inline Stereo<signal_t> operator*(
     const size_t x, const Stereo<signal_t>& y) noexcept {
   return { (y.l * signal_t(x)), (y.r * signal_t(x)) };
 }
+
+/**
+ * @brief Sets 'x' to 0 if it is not a finite number.
+ *
+ * @tparam signal_t Audio datatype.
+ * @param x Value to validate.
+ * @param def Value to set 'x' to in case it's not a finite number.
+ */
 template <typename signal_t>
 static inline void ensureFinite(
     Stereo<signal_t>& x, signal_t def = signal_t(0)) noexcept {

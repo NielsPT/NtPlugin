@@ -1,5 +1,13 @@
-/*
- * Copyright (C) 2026 Niels Thøgersen, NTlyd
+#pragma once
+
+/**
+ * @file Component.h
+ * @author Niels Thøgersen (niels.thoegersen@gmail.com)
+ * @brief Base class for Audio components. Defines the general interface of the
+ * NTplugin framework.
+ * @version 0.1
+ *
+ * @copyright Copyright (c) 2026
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License as published by the Free
@@ -16,9 +24,7 @@
  *
  * You are free to download, build and use this code for commercial
  * purposes. Just don't resell it or a build of it, modified or otherwise.
- **/
-
-#pragma once
+ */
 
 #include "lib/Stereo.h"
 
@@ -73,7 +79,6 @@ struct Component {
  */
 template <typename signal_t, typename component_t>
 struct StereoComponent : public Component<Stereo<signal_t>> {
-  // TODO: constraint component_t to Component base class.
   component_t l;
   component_t r;
 

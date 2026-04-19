@@ -1,5 +1,13 @@
-/*
- * Copyright (C) 2026 Niels Thøgersen, NTlyd
+#pragma once
+
+/**
+ * @file PeakSensor.h
+ * @author Niels Thøgersen (niels.thoegersen@gmail.com)
+ * @brief Peak sensor component for audio processing.
+ * Detect and tracks the peak amplitude of an audio signal. The peak
+ * @version 0.1
+ *
+ * @copyright Copyright (c) 2026
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License as published by the Free
@@ -13,17 +21,6 @@
  *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
- **/
-
-#pragma once
-/**
- * @file PeakSensor.h
- * @brief Peak sensor component for audio processing.
- *
- * This file contains the implementation of a peak sensor component, which is
- * used to detect and track the peak amplitude of an audio signal. The peak
- * sensor can be used in various audio effects, such as compressors, limiters,
- * and more.
  */
 
 #include "gcem.hpp"

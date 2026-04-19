@@ -1,5 +1,20 @@
-/*
- * Copyright (C) 2026 Niels Thøgersen, NTlyd
+#pragma once
+
+/**
+ * @file ComponentTest.h
+ * @author Niels Thøgersen (niels.thoegersen@gmail.com)
+ * @brief Test of audio components.
+ * @details  A unit test framework for NtPlugin library components and plugins.
+ * Works in conjunction with 'testWrapper/test.py', which builds and runs the
+ * tests. Tests are specified in 'testWrapper/tests' in the form of cpp files
+ * named after the Component to test appended '_test.cpp'. Inputs are stored in
+ * 'testWrapper/in' and results are stored in 'testWrapper/out'. 'in' is under
+ * git source control since it contains expected test vectors along with
+ * stimuli. Input and output files must contain two columns of floating point
+ * numbers.
+ * @version 0.1
+ *
+ * @copyright Copyright (c) 2026
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License as published by the Free
@@ -16,16 +31,8 @@
  *
  * You are free to download, build and use this code for commercial
  * purposes. Just don't resell it or a build of it, modified or otherwise.
- **/
-
-/**
- * @brief Test of audio components.
- *
- * Input and output files must contain two columns of floating point numbers.
  *
  */
-
-#pragma once
 
 #include "lib/Component.h"
 #include "lib/Stereo.h"
@@ -88,6 +95,10 @@ consteval auto testFileBaseName(std::string_view fileName) {
 #define _NTFX_TEST_IMPL() int main()
 #define NTFX_TEST() _NTFX_TEST_IMPL()
 
+/**
+ * @brief Runs all tests added to test set.
+ *
+ */
 #define NTFX_RUN_TESTS() componentTestSet.runAllTests()
 
 namespace NtFx {
@@ -114,7 +125,16 @@ struct ComponentTest {
   std::vector<std::string> activeStimuli =
       STIMULI_NAMES; ///< List of names of tests to run.
 
-  // TODO: dox
+  /**
+   * @brief Construct a new Component Test object
+   *
+   * @param owner Test set this test belongs to.
+   * @param objName A name for the current object under test.
+   * @param cut Reference to the object under test.
+   * @param stimuli Vector of strings naming stimuli to test object against.
+   * Accepted values are defined in STIMULI_NAMES. Defaults to an empty vector,
+   * selecting all knows stimuli as defined in STIMULI_NAMES.
+   */
   ComponentTest(ComponentTestSet<signal_t>& owner,
       std::string objName,
       Component<Stereo<signal_t>>& cut,
@@ -132,11 +152,18 @@ struct ComponentTest {
     this->activeStimuli = stimuli;
   }
 
-  // TODO: dox
+  /**
+   * @brief Processes the object under test with 'stimulus', writes out results
+   * to a file and compares to expected results if found.
+   *
+   * @param stimulus Name of stimulus to process with object under test.
+   * @return true
+   * @return false
+   */
   bool run(std::string stimulus) {
-    if (!this->stimulusIsActive(stimulus)) { return true; }
+    if (!this->_stimulusIsActive(stimulus)) { return true; }
     this->owner.nTests++;
-    auto x = this->readInput(stimulus);
+    auto x = this->_readInput(stimulus);
     std::vector<Stereo<signal_t>> y;
     this->cut.reset(NTFX_FS);
     for (auto _x : x) { y.push_back(cut.process(_x)); }
@@ -145,7 +172,7 @@ struct ComponentTest {
     std::ofstream yFile(yPath);
     yFile << std::fixed << std::setprecision(16);
     for (auto _y : y) { yFile << _y.l << " " << _y.r << "\n"; }
-    auto success = this->compareExpected(stimulus, y);
+    auto success = this->_compareExpected(stimulus, y);
     if (success) {
       std::cout << "\033[32m";
       this->owner.nSuccessful++;
@@ -158,7 +185,7 @@ struct ComponentTest {
     return success;
   }
 
-  std::vector<Stereo<signal_t>> readInput(std::string stimulus) {
+  std::vector<Stereo<signal_t>> _readInput(std::string stimulus) {
     auto xPath = "testWrapper/in/" + stimulus + ".txt";
     if (!std::filesystem::exists(xPath)) {
       std::cout << "Input file '" << xPath << "'not found. Aborting test."
@@ -172,7 +199,7 @@ struct ComponentTest {
     return x;
   }
 
-  bool stimulusIsActive(std::string stimulus) {
+  bool _stimulusIsActive(std::string stimulus) {
     if (std::find(
             this->activeStimuli.begin(), this->activeStimuli.end(), stimulus)
         == this->activeStimuli.end()) {
@@ -181,7 +208,7 @@ struct ComponentTest {
     return true;
   }
 
-  std::vector<Stereo<signal_t>> readExpected(std::string stimulus) {
+  std::vector<Stereo<signal_t>> _readExpected(std::string stimulus) {
     auto expPath = "testWrapper/in/" + this->owner.name + SEPARATOR
         + this->objName + SEPARATOR + stimulus + SEPARATOR + "expected.txt";
     bool expFileExists = std::filesystem::exists(expPath);
@@ -206,9 +233,9 @@ struct ComponentTest {
     return e;
   }
 
-  bool compareExpected(
+  bool _compareExpected(
       std::string stimulus, const std::vector<Stereo<signal_t>>& y) {
-    auto e = this->readExpected(stimulus);
+    auto e = this->_readExpected(stimulus);
     if (e.size() != y.size()) {
       std::cout << "Expected result has different length that result. Aborting."
                 << " e: " << e.size() << ", y: " << y.size() << "\n";
@@ -230,6 +257,12 @@ struct ComponentTest {
   }
 };
 
+/**
+ * @brief Set of a number of tests. Represents a full test file and this a test
+ * of a Component in the library or an NtPlugin.
+ *
+ * @tparam signal_t Audio datatype
+ */
 template <typename signal_t>
 struct ComponentTestSet {
   int nTests;      ///< Total tests run.
@@ -237,6 +270,11 @@ struct ComponentTestSet {
   std::vector<std::unique_ptr<ComponentTest<signal_t>>> tests;
   std::string name;
 
+  /**
+   * @brief Construct a new Component Test Set object
+   *
+   * @param name Name of component under test.
+   */
   ComponentTestSet(std::string name) : name(name) { }
 
   /**
@@ -263,6 +301,15 @@ struct ComponentTestSet {
     return nSuccessful == nTests;
   }
 
+  /**
+   * @brief Adds a new test to set.
+   *
+   * @param componentObj Reference to object under test.
+   * @param objName Name of object under test.
+   * @param stimuli Vector of stimuli to test against.
+   * @return true if tests pass.
+   * @return false if tests fail.
+   */
   bool addTest(Component<Stereo<signal_t>>& componentObj,
       std::string objName,
       std::vector<std::string> stimuli) {
@@ -271,7 +318,11 @@ struct ComponentTestSet {
     return true;
   }
 
-  // TODO: dox
+  /**
+   * @brief Runs all tests added to test set.
+   *
+   * @return int 0 on success, 1 on failure.
+   */
   int runAllTests() {
     for (auto& stimulus : STIMULI_NAMES) {
       for (size_t i = 0; i < tests.size(); i++) { tests[i]->run(stimulus); }

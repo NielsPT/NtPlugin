@@ -22,22 +22,37 @@
 
 namespace NtFx {
 
-// TODO: How does this not work?
-// template <typename T>
-// static inline constexpr T factorial(T n) {
-//   return gcem::tgamma(n + 1);
-// }
-
+/**
+ * @brief Converts from linear to dB domain.
+ *
+ * @tparam signal_t Datatype.
+ * @param x Value in linear domain.
+ * @return signal_t Value in dB domain.
+ */
 template <typename signal_t>
 static inline signal_t db(signal_t x) noexcept {
   return signal_t(20.0) * gcem::log10(gcem::abs(x));
 }
 
+/**
+ * @brief Converts from dB to linear domain.
+ *
+ * @tparam signal_t Datatype.
+ * @param x Value in dB domain.
+ * @return signal_t Value in linear domain.
+ */
 template <typename signal_t>
 static inline signal_t invDb(signal_t x) noexcept {
   return gcem::pow(signal_t(10.0), x * signal_t(0.05));
 }
 
+/**
+ * @brief Sets input to 'def' if not a finite number.
+ *
+ * @tparam signal_t Datatype.
+ * @param x Value to validate.
+ * @param def Default value to use if 'x' is not valid.
+ */
 template <typename signal_t>
 static inline void ensureFinite(
     signal_t& x, signal_t def = signal_t(0)) noexcept {
@@ -49,54 +64,23 @@ static inline void ensureFinite(
   }
 }
 
-// constexpr int rmsDelayLineLength = 16384;
-// template <typename signal_t>
-// struct RmsSensorState {
-//   std::array<signal_t, rmsDelayLineLength> delayLine;
-//   signal_t accum = signal_t(0.0);
-//   int i          = 0;
-//   void reset() noexcept {
-//     std::fill(delayLine.begin(), delayLine.end(), signal_t(0.0));
-//     accum = signal_t(0.0);
-//   }
-// };
-
-// template <typename signal_t>
-// static inline signal_t rmsSensor(
-//     RmsSensorState<signal_t>* p_state, size_t nRms, signal_t x) noexcept {
-//   if (nRms > rmsDelayLineLength) { return signal_t(0.0); }
-//   signal_t _x = x * x;
-//   if (_x != _x) { _x = signal_t(0.0); }
-//   p_state->accum += _x - p_state->delayLine[p_state->i];
-//   p_state->delayLine[p_state->i] = _x;
-//   p_state->i++;
-//   if (p_state->i >= nRms) { p_state->i = 0; }
-//   signal_t y = gcem::sqrt(2.0 * p_state->accum / nRms);
-//   if (y != y) { y = signal_t(0.0); }
-//   return y;
-// }
-
-// template <typename signal_t>
-// static inline signal_t peakSensor(
-//     signal_t alpha, signal_t& p_state, signal_t x) {
-//   auto xAbs            = gcem::abs(x);
-//   signal_t sensRelease = alpha * p_state + (1 - alpha) * xAbs;
-//   signal_t ySens       = gcem::max(xAbs, sensRelease);
-//   ensureFinite(ySens);
-//   p_state = ySens;
-//   return ySens;
-// }
-
 template <typename T>
 static inline std::vector<T> zeros(size_t n) {
   return std::vector<T>(n, 0.0);
 }
 
+/**
+ * @brief Saw wave generator.
+ *
+ * @tparam T Datatype.
+ * @param x Input in radians. Same as input for 'sin' function.
+ * @return T Output.
+ */
 template <typename T>
 static inline T saw(T x) {
   const T alpha = 2 / GCEM_PI;
 
-  T x_ = gcem::fmod(x, static_cast<T>(2.0) * GCEM_PI);
+  T x_ = gcem::fmod(x, T(2.0) * GCEM_PI);
   x_   = (x_ < 0 ? x_ + 2 * GCEM_PI : x_);
   T y;
   if (x_ < 0.5 * GCEM_PI) {
@@ -118,7 +102,7 @@ static inline T saw(T x) {
  *
  * @return unsigned long
  */
-static inline unsigned long KISS() noexcept {
+static inline unsigned long _KISS() noexcept {
   static unsigned long x = 123456789, y = 362436000, z = 521288629, c = 7654321;
   unsigned long long t;
   x = 69069 * x + 12345;
@@ -130,8 +114,14 @@ static inline unsigned long KISS() noexcept {
   return x + y + (z = t);
 }
 
+/**
+ * @brief Returns a pseudorandom number in the range -1:1.
+ *
+ * @tparam T Datatype to return.
+ * @return T Pseudorandom number.
+ */
 template <typename T>
 static inline T rand() noexcept {
-  return (KISS() - LONG_MAX) / static_cast<T>(LONG_MAX);
+  return (_KISS() - LONG_MAX) / static_cast<T>(LONG_MAX);
 }
 }
