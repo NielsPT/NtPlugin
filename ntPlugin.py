@@ -15,6 +15,7 @@ JUCE_WRAPPER_DIR = "JuceWrapper"  # Path to JuceWrapper directory
 ID_FILE = f"{ARTIFACTS_DIR}/plugin_ids.txt"  # File to store plugin IDs
 TEST_SCRIPT_DIR = "testWrapper"
 TEST_DIR = "test"
+FILE_DIR = os.path.dirname(__file__)
 
 ID = 0
 VST3_CAT = 1
@@ -190,7 +191,50 @@ def process(
     return True
 
 
-def run() -> bool:
+def newPlugin(name: str):
+    st = f"""#pragma once
+
+#include "lib/Plugin.h"
+#include "lib/Stereo.h"
+
+template <typename signal_t>
+struct {name} : NtFx::NtPlugin<signal_t> {{
+  // TODO: Create some variables.
+
+  {name}() {{
+    this->primaryKnobs = {{
+      // TODO: Create some knobs.
+    }};
+    this->updateDefaults();
+  }}
+
+  NtFx::Stereo<signal_t> process(NtFx::Stereo<signal_t> x) noexcept override {{
+    // TODO: processing.
+    return x;
+  }}
+
+  void update() noexcept override {{
+    // TODO: Update coeffs.
+  }}
+
+  void reset(float fs) noexcept override {{
+    this->fs = fs;
+    // TODO: Allocate and reset.
+    this->update();
+  }}
+}};
+"""
+    path = f"{FILE_DIR}/plugins/{name}.h"
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(st)
+    try:
+        subprocess.run(["code", path], check=False)
+    except FileNotFoundError:
+        pass
+    return True
+
+
+def main() -> bool:
     parser = argparse.ArgumentParser(
         description="Builds and tests all plugins."
     )
@@ -221,12 +265,24 @@ def run() -> bool:
         help="Set the category you wish the plugin to be shown under in the "
         "host plugin list.",
     )
+    subParsers.add_parser(
+        "test",
+        help="Runs unit tests.",
+        parents=[test.make_test_subparser()],
+        add_help=False,
+    )
+    newParser = subParsers.add_parser("new", help="Create a new plugin.")
+    newParser.add_argument("name", help="Name of plugin.")
     args = parser.parse_args().__dict__
     if args["task"] == "build":
         return process(args["plugins"], args["test"], args["category"])
+    if args["task"] == "test":
+        return test.main(args)
+    if args["task"] == "new":
+        return newPlugin(args["name"])
     print(f"Unknown command: {args["task"]}")
     return False
 
 
 if __name__ == "__main__":
-    sys.exit(not run())
+    sys.exit(not main())

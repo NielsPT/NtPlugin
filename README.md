@@ -216,7 +216,9 @@ Cmake.
 - Now, you can hit cmd-shift-p and type `Cmake: Configure` followed by hitting
   F5 and the debugger should start.
 
-##
+## NtPlugin CLI
+
+In order to automate a number of general
 
 ## Collaborations
 
@@ -231,11 +233,11 @@ would be an option for a project.
 ## Testing your plugin
 
 The `testWrapper` can be used to test plugins. The individual tests are stored
-in `test` and are inidvidual C++ programs. A Python script named `test.py` is
-used to run the tests. It will generate test input files, build the test
-program, run it and plot the results. Plots are placed in `testWrapper/img`. If
-the results are accepted, the script can approve them so that the test will
-succeed on next run. Type `python testWrapper/test.py -h` for more information.
+in `testWrapper/tests` and are inidvidual C++ programs. A Python script is used
+to run the tests. It will generate test input files, build the test program, run
+it and plot the results. Plots are placed in `testWrapper/img`. If the results
+are accepted, the script can approve them so that the test will succeed on next
+run. Type `python ntPlugin.py test -h` for more information.
 
 ### Setting it up
 

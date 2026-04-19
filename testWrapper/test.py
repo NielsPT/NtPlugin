@@ -542,12 +542,12 @@ def run(args: dict):
     return success
 
 
-def main() -> bool:
+def make_test_subparser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Runs test on NTfx Components. Usage: 'test.py run "
         "[test file name(s)]'. '_test.cpp' can be omitted."
     )
-    subparsers = parser.add_subparsers(dest="task")
+    subparsers = parser.add_subparsers(dest="test_task")
     runParser = subparsers.add_parser(
         "run",
         help="Run tests. A list of names can be added to select specific tests.",
@@ -588,16 +588,19 @@ def main() -> bool:
         default=0.1,
         help="Duration of test in seconds. Defaults to 0.1",
     )
-    args = parser.parse_args().__dict__
+    return parser
+
+
+def main(args: dict) -> bool:
     fs = args["fs"]
-    if args["task"] == "generate":
+    if args["test_task"] == "generate":
         t = args["duration"]
         return generateTestVectors(t, fs) is not None
-    if args["task"] == "run":
+    if args["test_task"] == "run":
         return run(args)
-    if args["task"] == "clean":
+    if args["test_task"] == "clean":
         return clean()
-    if args["task"] == "approve":
+    if args["test_task"] == "approve":
         objects = args["objects"]
         if "all" in objects:
             # TODO: Make this list from files found in 'test', 'in' or 'out'.
@@ -624,4 +627,4 @@ def main() -> bool:
 
 
 if __name__ == "__main__":
-    sys.exit(not main())
+    sys.exit(not main(make_test_subparser().parse_args().__dict__))
