@@ -1,3 +1,21 @@
+"""
+@file ntPlugin.py
+@author Niels Thøgersen (niels.thoegersen@gmail.com)
+@brief Top level CLI for working with the NTplugin framework.
+@version 0.1
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+details.
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+"""
+
 import sys
 import os
 import argparse
@@ -192,25 +210,30 @@ def process(
 
 
 def newPlugin(name: str):
-    st = f"""#pragma once
+    template = f"""#pragma once
 
 #include "lib/Plugin.h"
 #include "lib/Stereo.h"
 
 template <typename signal_t>
 struct {name} : NtFx::NtPlugin<signal_t> {{
+  bool bypassEnable {{ false }};
   // TODO: Create some variables.
 
   {name}() {{
     this->primaryKnobs = {{
       // TODO: Create some knobs.
     }};
+    this->toggles = {{
+      {{ .p_val = &this->bypassEnable, .name = "Bypass" }},
+    }};
     this->updateDefaults();
   }}
 
   NtFx::Stereo<signal_t> process(NtFx::Stereo<signal_t> x) noexcept override {{
+    if (this->bypassEnable) {{ return x; }}
     // TODO: processing.
-    return x;
+    return 0;
   }}
 
   void update() noexcept override {{
@@ -225,13 +248,44 @@ struct {name} : NtFx::NtPlugin<signal_t> {{
 }};
 """
     path = f"{FILE_DIR}/plugins/{name}.h"
+    if os.path.exists(path):
+        print(f"'{path}' already exists.")
+        return False
     with open(path, "w", encoding="utf-8") as f:
-        f.write(st)
+        f.write(template)
+    _openInVscode(path)
+    return True
+
+
+def newPluginTest(name: str):
+    template = f"""#include "lib/ComponentTest.h"
+#include "plugins/{name}.h"
+
+NTFX_TEST_BEGIN
+
+NTFX_TEST() {{
+  auto bypass = {name}<double>();
+  bypass.bypassEnable = true;
+  NTFX_ADD_TEST(bypass, "impulse");
+  // TODO: Add more tests.
+  return NTFX_RUN_TESTS();
+}}
+"""
+    path = f"{FILE_DIR}/testWrapper/tests/{name}_test.cpp"
+    if os.path.exists(path):
+        print(f"'{path}' already exists.")
+        return False
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(template)
+    _openInVscode(path)
+    return True
+
+
+def _openInVscode(path: str) -> None:
     try:
         subprocess.run(["code", path], check=False)
     except FileNotFoundError:
         pass
-    return True
 
 
 def main() -> bool:
@@ -273,12 +327,20 @@ def main() -> bool:
     )
     newParser = subParsers.add_parser("new", help="Create a new plugin.")
     newParser.add_argument("name", help="Name of plugin.")
+    newParser.add_argument(
+        "--test",
+        "-t",
+        action="store_true",
+        help="Add test file to 'testWrapper/tests'.",
+    )
     args = parser.parse_args().__dict__
     if args["task"] == "build":
         return process(args["plugins"], args["test"], args["category"])
     if args["task"] == "test":
         return test.main(args)
     if args["task"] == "new":
+        if "test" in args and args["test"]:
+            newPluginTest(args["name"])
         return newPlugin(args["name"])
     print(f"Unknown command: {args["task"]}")
     return False
