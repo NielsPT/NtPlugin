@@ -3,6 +3,7 @@ import os
 import argparse
 import subprocess
 import re
+import time
 import shutil
 from multiprocessing import cpu_count
 from testWrapper import test
@@ -18,6 +19,20 @@ TEST_DIR = "test"
 ID = 0
 VST3_CAT = 1
 AAX_CAT = 2
+
+# Keys are AAX format, values are VST3 format.
+CATEGORY_MAP = {
+    "Effect": "Fx",
+    "EQ": "EQ",
+    "Dynamics": "Dynamics",
+    "Reverb": "Reverb",
+    "Delay": "Delay",
+    "PitchShift": "Pitch Shift",
+    "Modulation": "Modulation",
+    "Harmonic": "Distortion",
+    "NioseReduction": "Restoration",
+    "SoundField": "Spacial",
+}
 
 
 def readPluginIds() -> dict[str, str]:
@@ -43,7 +58,11 @@ def readPlugins() -> list[str]:
     return plugins
 
 
-def configure(plugin: str, pluginIds: dict[str, str]) -> bool:
+def configure(
+    plugin: str,
+    pluginIds: dict[str, str],
+    category: str,
+) -> bool:
     if os.path.exists("build/CMakeCache.txt"):
         os.remove("build/CMakeCache.txt")
     args = [
@@ -55,16 +74,20 @@ def configure(plugin: str, pluginIds: dict[str, str]) -> bool:
         f"-DNTFX_PLUGIN={plugin}",
         "-DCMAKE_BUILD_TYPE=Release",
     ]
+    if category:
+        args += [f"-DNTFX_AAX_CATEGORY={category}"]
+        args += [f"-DNTFX_VST3_CATEGORY={CATEGORY_MAP[category]}"]
     if plugin in pluginIds:
         info = pluginIds[plugin]
         args += [f"-DNTFX_ID={info[ID].strip()}"]
         print(f"Reusing existing plugin id for {plugin}: {info[ID].strip()}.")
-        if len(info) > 2:
+        if not category and len(info) > 2:
             args += [f"-DNTFX_VST3_CATEGORY={info[VST3_CAT].strip()}"]
             print(f"Reusing VST3 category: {info[VST3_CAT].strip()}.")
-        if len(info) > 3:
+        if not category and len(info) > 3:
             args += [f"-DNTFX_AAX_CATEGORY={info[AAX_CAT].strip()}"]
             print(f"Reusing AAX category: {info[AAX_CAT].strip()}.")
+
     print(f"Running cmake for plugin {plugin}.")
     res = subprocess.run(
         args, check=False, capture_output=True, env=os.environ.copy()
@@ -77,11 +100,11 @@ def configure(plugin: str, pluginIds: dict[str, str]) -> bool:
         print("\033[0m", end="")
         return False
     if plugin not in pluginIds:
-        addNewPluginId(plugin, cmakeOut)
+        addNewPluginId(plugin, cmakeOut, category)
     return True
 
 
-def addNewPluginId(plugin, cmakeOut):
+def addNewPluginId(plugin: str, cmakeOut: str, category: str):
     m = re.search("-- Generated new plugin id: ([^ ]*)\n", cmakeOut)
     if not m:
         print("Failed to get new plugin ID from cmake output.")
@@ -91,7 +114,10 @@ def addNewPluginId(plugin, cmakeOut):
         return False
     os.makedirs(ARTIFACTS_DIR, exist_ok=True)
     with open(ID_FILE, "a", encoding="utf-8") as f:
-        f.write(f"{plugin}: {newPluginId}")
+        st = f"{plugin}:{newPluginId}"
+        if category:
+            st += f":{CATEGORY_MAP[category]}:{category}"
+        f.write(st)
     return True
 
 
@@ -125,7 +151,7 @@ def storeArtifacts(plugin) -> bool:
         print(f"Storing target {target} for plugin {plugin}.")
         if sys.platform == "win32" and target == "VST3":
             print(
-                f"Add {os.path.abspath(outDir)} to you host/DAW plugin path "
+                f"Add '{os.path.abspath(outDir)}' to you host/DAW plugin path "
                 "or copy content to your plugin folder in order to use plugins."
             )
     return True
@@ -136,7 +162,11 @@ def runAuVal():
     return not bool(res.returncode)
 
 
-def process(plugins: list[str], preformTests: bool) -> bool:
+def process(
+    plugins: list[str],
+    preformTests: bool,
+    category: str,
+) -> bool:
     if preformTests:
         if not test.run({"files": plugins, "fs": 48e3}):
             return False
@@ -144,11 +174,12 @@ def process(plugins: list[str], preformTests: bool) -> bool:
     if not plugins or plugins == ["all"]:
         plugins = readPlugins()
     for plugin in plugins:
-        if not configure(plugin, pluginIds):
+        if not configure(plugin, pluginIds, category):
             return False
         if not build():
             return False
         if preformTests:
+            time.sleep(0.5)
             if not runCtest():
                 return False
             if sys.platform == "darwin":
@@ -181,9 +212,18 @@ def run() -> bool:
         action="store_true",
         help="Apply uint tests before and validation after build.",
     )
+    buildParser.add_argument(
+        "--category",
+        "-c",
+        type=str,
+        default="",
+        choices=CATEGORY_MAP.keys(),
+        help="Set the category you wish the plugin to be shown under in the "
+        "host plugin list.",
+    )
     args = parser.parse_args().__dict__
     if args["task"] == "build":
-        return process(args["plugins"], args["test"])
+        return process(args["plugins"], args["test"], args["category"])
     print(f"Unknown command: {args["task"]}")
     return False
 

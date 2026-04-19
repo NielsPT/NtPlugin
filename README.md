@@ -216,6 +216,8 @@ Cmake.
 - Now, you can hit cmd-shift-p and type `Cmake: Configure` followed by hitting
   F5 and the debugger should start.
 
+##
+
 ## Collaborations
 
 Collaborators are most welcome. Feel free to make bug reports, feature requests

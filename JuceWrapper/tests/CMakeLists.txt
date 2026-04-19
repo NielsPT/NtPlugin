@@ -20,6 +20,6 @@ else()
     COMMAND pluginval
     --strictness-level 10
     --validate
-    ../../build/${NTFX_PLUGIN}_artefacts/Release/VST3/${NTFX_PLUGIN}.vst3
+    ../../build/${NTFX_PLUGIN}_artefacts/${CMAKE_BUILD_TYPE}/VST3/${NTFX_PLUGIN}.vst3
   )
 endif()
