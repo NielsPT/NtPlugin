@@ -29,4 +29,4 @@ if [ ! -d .venv ]; then
 else
   . ./.venv/bin/activate;
 fi
-python ./ntfx.py build all $* || exit 1
+python ./ntPlugin.py build $* || exit 1

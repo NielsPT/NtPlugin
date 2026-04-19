@@ -51,59 +51,26 @@ background.
 - Install [Cmake](https://cmake.org/download).
 - Install [Visual Studio](https://visualstudio.microsoft.com/downloads/)
   (Windows) or [XCode](https://developer.apple.com/xcode/) (Mac) or the
-  [JUCE dependecies](https://github.com/juce-framework/JUCE/blob/master/docs/Linux%20Dependencies.md)
-  (Linux). This includes adding the tools to PATH, which is mostly automatic on
-  Mac and Linux. The new _PowerShell for VS_ Windows app also includes them.
+  [Linux dependecies](#linux-dependencies) (Linux).
 - Git clone with `--recurse-submodules` flag. This will add the JUCE framework
-  to the download.
+  to the download along with other libraries.
 
 #### Linux dependencies
 
-Ubuntu:
+Run the following command to install dependencies on Linux.
+
+##### Ubuntu
 
 ```sh
 sudo apt update
-sudo apt install -y \
-    libasound2-dev \
-    libjack-jackd2-dev \
-    ladspa-sdk \
-    libcurl4-openssl-dev  \
-    libfreetype-dev \
-    libfontconfig1-dev \
-    libx11-dev \
-    libxcomposite-dev \
-    libxcursor-dev \
-    libxinerama-dev \
-    libxext-dev \
-    libxrandr-dev \
-    libxrender-dev \
-    libwebkit2gtk-4.1-dev \
-    libglu1-mesa-dev \
-    mesa-common-dev \
-    cmake \
-    python3.12-venv
+sudo apt install -y git cmake libasound2-dev libjack-jackd2-dev ladspa-sdk libcurl4-openssl-dev  libfreetype-dev libfontconfig1-dev libx11-dev libxcomposite-dev libxcursor-dev libxinerama-dev libxext-dev libxrandr-dev libxrender-dev libwebkit2gtk-4.1-dev libglu1-mesa-dev mesa-common-dev python3.12-venv
 ```
 
-Fedora:
+##### Fedora
 
 ```sh
 sudo dnf update
-sudo dnf install \
-    alsa-lib-devel \
-    jack-audio-connection-kit-devel.aarch64 \
-    libcurl-devel \
-    freetype-devel \
-    libX11-devel \
-    libXcomposite-devel \
-    libXcursor-devel \
-    libXinerama-devel \
-    freeglut-devel \
-    gnutils-devel \
-    libstdc++-static \
-    ladspa-devel \
-    webkit2gtk4.0-devel.aarch64 \
-    gtk3-devel \
-    mesa-libGL-devel
+sudo dnf install -y g++ git cmake alsa-lib-devel jack-audio-connection-kit-devel.aarch64 libcurl-devel freetype-devel libX11-devel libXcomposite-devel libXcursor-devel libXinerama-devel freeglut-devel gnutils-devel libstdc++-static ladspa-devel webkit2gtk4.0-devel.aarch64 gtk3-devel mesa-libGL-devel
 ```
 
 ### Try it out
@@ -150,7 +117,7 @@ folder to your plugin install folder.
 - Use the following commands to configure and build your project:
 
 ```sh
-cmake -B build -S JuceWrapper -DNTFX_PLUGIN=[name of your plugin] --fresh
+cmake -B build -S JuceWrapper -DNTFX_PLUGIN=[name of your plugin]
 cmake --build build
 ```
 

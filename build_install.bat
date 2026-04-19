@@ -31,5 +31,5 @@ IF NOT EXIST "%VENV_DIR%" (
 ) else (
   CALL "%VENV_DIR%\Scripts\activate.bat"
 )
-python ntfx.py build all %*
+python ntPlugin.py build %*
 endlocal
