@@ -218,7 +218,14 @@ Cmake.
 
 ## NtPlugin CLI
 
-In order to automate a number of general
+In order to automate a number of general workflows, a CLI tool name
+`ntPlugin.py` is available. This will build all available plugins, run tests and
+create new plugins. Results of this program are stored in `artifacts`, separate
+from `build` so that the build dir can be cleaned out without deleting any
+artifacts. Files in `artifacts` are sorted according to plugin type and a text
+file named `plugin_ids.txt` contains the ID and category of each plugin so that
+those persist across builds. This is the tool that `build_install.sh/bat` uses
+under the hood. Type `python ntPlugin.py -h` for more info.
 
 ## Collaborations
 
