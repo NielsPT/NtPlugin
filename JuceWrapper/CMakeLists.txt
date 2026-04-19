@@ -125,9 +125,9 @@ juce_add_plugin(${NTFX_PLUGIN}
   # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
   FORMATS ${NTFX_FORMATS} # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
   PRODUCT_NAME ${NTFX_PLUGIN} # The name of the final executable, which can differ from the target name
-  # AU_MAIN_TYPE kAudioUnitType_Effect
-  # AAX_CATEGORY ${NTFX_AAX_CATEGORY}
-  # VST3_CATEGORIES ${NTFX_VST3_CATEGORY}
+  AU_MAIN_TYPE kAudioUnitType_Effect
+  AAX_CATEGORY ${NTFX_AAX_CATEGORY}
+  VST3_CATEGORIES ${NTFX_VST3_CATEGORY}
 )
 # AU_MAIN_TYPE Should be one of: kAudioUnitType_Effect, kAudioUnitType_FormatConverter, kAudioUnitType_Generator, 
 # kAudioUnitType_MIDIProcessor, kAudioUnitType_Mixer, kAudioUnitType_MusicDevice, kAudioUnitType_MusicEffect, 

@@ -44,7 +44,8 @@ def readPlugins() -> list[str]:
 
 
 def configure(plugin: str, pluginIds: dict[str, str]) -> bool:
-    os.remove("build/CMakeCache.txt")
+    if os.path.exists("build/CMakeCache.txt"):
+        os.remove("build/CMakeCache.txt")
     args = [
         "cmake",
         "-B",
