@@ -26,11 +26,11 @@ import shutil
 from multiprocessing import cpu_count
 from testWrapper import test
 
-PLUGINS_DIR = "plugins"  # Directory containing plugin .h files
-BUILD_DIR = "build"  # Build directory
-ARTIFACTS_DIR = "artifacts"  # Directory to store final artifacts
-JUCE_WRAPPER_DIR = "JuceWrapper"  # Path to JuceWrapper directory
-ID_FILE = f"{ARTIFACTS_DIR}/plugin_ids.txt"  # File to store plugin IDs
+PLUGINS_DIR = "plugins"
+BUILD_DIR = "build"
+ARTIFACTS_DIR = "artifacts"
+JUCE_WRAPPER_DIR = "JuceWrapper"
+ID_FILE = f"{ARTIFACTS_DIR}/plugin_ids.txt"
 TEST_SCRIPT_DIR = "testWrapper"
 TEST_DIR = "test"
 FILE_DIR = os.path.dirname(__file__)
@@ -39,8 +39,12 @@ ID = 0
 VST3_CAT = 1
 AAX_CAT = 2
 
-# Keys are AAX format, values are VST3 format.
 CATEGORY_MAP = {
+    """
+    Maps from AAX format categories to VST3 format. AU doesn't make sense since 
+    the only applicable fromat there in 'Effect'.
+    Keys are AAX format, values are VST3 format.
+    """
     "Effect": "Fx",
     "EQ": "EQ",
     "Dynamics": "Dynamics",
@@ -54,7 +58,12 @@ CATEGORY_MAP = {
 }
 
 
-def readPluginIds() -> dict[str, str]:
+def readPluginIds() -> dict[str, list[str]]:
+    """
+    Reads cached plugin ids along with categories from file and returns as a
+    dict with plugin name as keys and list of strings as values. Order of values
+    is ID, VST3 category, AAX category.
+    """
     if not os.path.exists(ID_FILE):
         return {}
     pluginIds = {}
@@ -69,6 +78,9 @@ def readPluginIds() -> dict[str, str]:
 
 
 def readPlugins() -> list[str]:
+    """
+    Returns a list of all plugins found in folder 'plugins'.
+    """
     files = os.listdir(PLUGINS_DIR)
     plugins: list[str] = []
     for file in files:
@@ -79,9 +91,20 @@ def readPlugins() -> list[str]:
 
 def configure(
     plugin: str,
-    pluginIds: dict[str, str],
-    category: str,
+    pluginIds: dict[str, list[str]],
+    category: str = "",
 ) -> bool:
+    """
+    Configures Cmake for build
+
+    Args:
+        plugin (str): Name of plugin to build.
+        pluginIds (dict[str, list[str]]): Information about plugins. See 'readPluginIds' for more.
+        category (str): AAX format category for plugin. Overrides categories in 'pluginIds' if set.
+
+    Returns:
+        bool: True on success.
+    """
     if os.path.exists("build/CMakeCache.txt"):
         os.remove("build/CMakeCache.txt")
     args = [
@@ -123,7 +146,18 @@ def configure(
     return True
 
 
-def addNewPluginId(plugin: str, cmakeOut: str, category: str):
+def addNewPluginId(plugin: str, cmakeOut: str, category: str = "") -> bool:
+    """
+    Adds a new plugin ID along with AAX and VST3 categories to plugin ID file.
+
+    Args:
+        plugin (str): Name of plugin.
+        cmakeOut (str): Stdout from Cmake configure command. Used to deduce plugin ID.
+        category (str): Category to add to record in ID file in AAX format.
+
+    Returns:
+        bool: True on success.
+    """
     m = re.search("-- Generated new plugin id: ([^ ]*)\n", cmakeOut)
     if not m:
         print("Failed to get new plugin ID from cmake output.")
@@ -140,7 +174,13 @@ def addNewPluginId(plugin: str, cmakeOut: str, category: str):
     return True
 
 
-def build():
+def build() -> bool:
+    """
+    Builds plugin.
+
+    Returns:
+        bool: True on success.
+    """
     print("Building")
     args = ["cmake", "--build", BUILD_DIR, f"-j{cpu_count()}"]
     res = subprocess.run(args, check=False)
@@ -150,12 +190,28 @@ def build():
 
 
 def runCtest() -> bool:
+    """
+    Runs Ctest.
+
+    Returns:
+        bool: True on success.
+    """
     args = ["ctest", "--test-dir", BUILD_DIR]
     res = subprocess.run(args, check=False)
     return not bool(res.returncode)
 
 
-def storeArtifacts(plugin) -> bool:
+def storeArtifacts(plugin: str) -> bool:
+    """
+    Stores output from build to 'artifacts' folder. Sorts according to plugin
+    type, that is 'AAX', 'VST3', 'AU' and 'Standalone'.
+
+    Args:
+        plugin (str): Name of plugin to find and store artifacts for.
+
+    Returns:
+        bool: True on success.
+    """
     art = f"{BUILD_DIR}{os.sep}{plugin}_artefacts{os.sep}{"Release"}{os.sep}"
     if not os.path.exists(art):
         return False
@@ -176,8 +232,18 @@ def storeArtifacts(plugin) -> bool:
     return True
 
 
-def runAuVal():
-    res = subprocess.run(["auval", "-vt", "aufx", "NtFx"], check=False)
+def runAuVal() -> bool:
+    """
+    Runs Apple's AU validation utility for all plugins made by the 'NTfx' vendor.
+
+    Returns:
+        bool: True on success.
+    """
+    try:
+        res = subprocess.run(["auval", "-vt", "aufx", "NTfx"], check=False)
+    except FileNotFoundError:
+        print("Auval utility not found.")
+        return False
     return not bool(res.returncode)
 
 
@@ -186,6 +252,17 @@ def process(
     preformTests: bool,
     category: str,
 ) -> bool:
+    """
+    Configures, builds and tests all plugins.
+
+    Args:
+        plugins (list[str]): List of names of plugins to process.
+        preformTests (bool): If True, perform unittest before and validation after build.
+        category (str): Category to put plugin in in DAW. AAX format.
+
+    Returns:
+        bool: True on success.
+    """
     if preformTests:
         if not test.run({"files": plugins, "fs": 48e3}):
             return False
@@ -209,7 +286,16 @@ def process(
     return True
 
 
-def newPlugin(name: str):
+def newPlugin(name: str) -> bool:
+    """
+    Creates a new plugin.  If Vscode is installed, opens the file.
+
+    Args:
+        name: Name of new plugin.
+
+    Returns:
+        bool: True on success.
+    """
     template = f"""#pragma once
 
 #include "lib/Plugin.h"
@@ -258,6 +344,16 @@ struct {name} : NtFx::NtPlugin<signal_t> {{
 
 
 def newPluginTest(name: str):
+    """
+    Creates a new test file for a plugin plugin. If Vscode is installed, opens
+    the file.
+
+    Args:
+        name: Name of new plugin.
+
+    Returns:
+        bool: True on success.
+    """
     template = f"""#include "lib/ComponentTest.h"
 #include "plugins/{name}.h"
 
@@ -267,6 +363,8 @@ NTFX_TEST() {{
   auto bypass = {name}<double>();
   bypass.bypassEnable = true;
   NTFX_ADD_TEST(bypass, "impulse");
+  auto defaults = {name}<double>();
+  NTFX_ADD_TEST(defaults, "impulse");
   // TODO: Add more tests.
   return NTFX_RUN_TESTS();
 }}
@@ -288,7 +386,13 @@ def _openInVscode(path: str) -> None:
         pass
 
 
-def main() -> bool:
+def createParser() -> argparse.ArgumentParser:
+    """
+    Creates argument parser for ntPligin CLI.
+
+    Returns:
+        argparse.ArgumentParser: New parser.
+    """
     parser = argparse.ArgumentParser(
         description="Builds and tests all plugins."
     )
@@ -322,7 +426,7 @@ def main() -> bool:
     subParsers.add_parser(
         "test",
         help="Runs unit tests.",
-        parents=[test.make_test_subparser()],
+        parents=[test.createParser()],
         add_help=False,
     )
     newParser = subParsers.add_parser("new", help="Create a new plugin.")
@@ -333,7 +437,17 @@ def main() -> bool:
         action="store_true",
         help="Add test file to 'testWrapper/tests'.",
     )
-    args = parser.parse_args().__dict__
+    return parser
+
+
+def main() -> bool:
+    """
+    Main function for ntPlugin CLI.
+
+    Returns:
+        bool: True on success.
+    """
+    args = createParser().parse_args().__dict__
     if args["task"] == "build":
         return process(args["plugins"], args["test"], args["category"])
     if args["task"] == "test":

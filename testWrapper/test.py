@@ -35,19 +35,43 @@ FILE_DIR = os.path.dirname(__file__)
 
 
 def generateImpulse(n: int) -> np.ndarray:
+    """
+    Generates an impulse stimulus.
+
+    Args:
+        n (int): Length of result
+
+    Returns:
+        np.ndarray: Impulse.
+    """
     x = np.zeros(n)
     x[0] = 1
     return x
 
 
-def generateSteppedSine(
+def generateBurstSine(
     fs: float,
     t: float,
     f: float = 10e3,
     nBursts: int = 2,
     lowLevel: float = 0.25,
     highLevel: float = 1,
-):
+) -> np.ndarray:
+    """
+    Generates a sine ware a 'f' Hz, who's level steps between 'lowLevel' and
+    'highLevel'.
+
+    Args:
+        fs (float): Sample rate.
+        t (float): Length of result is seconds.
+        f (float, optional): Frequency of result. Defaults to 10e3.
+        nBursts (int, optional): Number of bursts. Defaults to 2.
+        lowLevel (float, optional): Low level between bursts. Defaults to 0.25.
+        highLevel (float, optional): Level during burst. Defaults to 1.
+
+    Returns:
+        np.ndarray: Generated, bursting sine wave.
+    """
     n = int(t * fs)
     nAx = np.array(range(n))
     y = np.sin(2 * np.pi * f * nAx / fs)
@@ -64,8 +88,23 @@ def generateSteppedSine(
 
 
 def generateSyncSweep(
-    f_start: float = 10, f_stop: float = 24e3, fs: float = 48e3, k: int = 2
+    f_start: float = 10,
+    f_stop: float = 24e3,
+    fs: float = 48e3,
+    k: int = 2,
 ) -> np.ndarray:
+    """
+    Generates a synchronized sine sweep.
+
+    Args:
+        f_start (float, optional): Starting frequency. Defaults to 10.
+        f_stop (float, optional): Ending frequency. Defaults to 24e3.
+        fs (float, optional): Sample rate. Defaults to 48e3.
+        k (int, optional): Konstant the length is derived from. Defaults to 2.
+
+    Returns:
+        np.ndarray: Synchronized chirp.
+    """
     n = int(np.ceil(np.log(f_stop / f_start) / f_start * k * fs))
     t_ax = np.array(range(n)) / fs
     x = np.sin(2 * np.pi * f_start * (k / f_start) * np.exp(t_ax * f_start / k))
@@ -75,18 +114,28 @@ def generateSyncSweep(
 
 
 def generateLinearSweep(fs: float, t: float) -> np.ndarray:
+    """
+    Generates a linear sweep.
+
+    Args:
+        fs (float): Sample rate.
+        t (float): Length in seconds.
+
+    Returns:
+        np.ndarray: Linear sweep.
+    """
     n = int(fs * t)
     tAx = np.arange(n) * t / n
     return s.chirp(tAx, 20, t, 20e3)
 
 
-def storeMonoTestVectorAsStereo(x: np.ndarray, filename: str):
+def _storeMonoTestVectorAsStereo(x: np.ndarray, filename: str):
     with open(filename, "w", encoding="utf8") as f:
         for sample in x:
             f.write(str(sample) + " " + str(sample) + "\n")
 
 
-def storeStereoTestVector(x: np.ndarray, filename: str):
+def _storeStereoTestVector(x: np.ndarray, filename: str):
     with open(filename, "w", encoding="utf8") as f:
         xL = x[0, :]
         xR = x[1, :]
@@ -94,28 +143,40 @@ def storeStereoTestVector(x: np.ndarray, filename: str):
             f.write(f"{xL[i]:.16f} {xR[i]:.16f}\n")
 
 
-def generateTestVectors(t: float, fs: float):
+def generateTestVectors(
+    t: float, fs: float
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Generates and stores all the test vectors.
+
+    Args:
+        t (float): Length of results.
+        fs (float): Sample rate.
+
+    Returns:
+        tuple: The generated test vectors.
+    """
     os.makedirs(f"{FILE_DIR}/{EXPECTED_DIR}", exist_ok=True)
     os.makedirs(f"{FILE_DIR}/{TMP_DIR}", exist_ok=True)
     n = int(t * fs)
     outputPath = f"{FILE_DIR}/{EXPECTED_DIR}/"
     _impulse = generateImpulse(n)
     impulse = np.vstack((_impulse, _impulse))
-    storeStereoTestVector(impulse, outputPath + "impulse.txt")
-    steppedSineL = generateSteppedSine(fs, t, 10e3, 2, 0.25, 1)
-    steppedSineR = generateSteppedSine(fs, t, 10e3, 2, 1, 0.25)
+    _storeStereoTestVector(impulse, outputPath + "impulse.txt")
+    steppedSineL = generateBurstSine(fs, t, 10e3, 2, 0.25, 1)
+    steppedSineR = generateBurstSine(fs, t, 10e3, 2, 1, 0.25)
     dynamic = np.array([steppedSineL, steppedSineR])
-    storeStereoTestVector(dynamic, outputPath + "dynamic.txt")
+    _storeStereoTestVector(dynamic, outputPath + "dynamic.txt")
     _syncSweep = generateSyncSweep()
     syncSweep = np.array([_syncSweep, _syncSweep])
-    storeStereoTestVector(syncSweep, outputPath + "syncSweep.txt")
+    _storeStereoTestVector(syncSweep, outputPath + "syncSweep.txt")
     _linearSweep = generateLinearSweep(fs, 1)
     linearSweep = np.array([_linearSweep, _linearSweep])
-    storeStereoTestVector(linearSweep, outputPath + "linearSweep.txt")
+    _storeStereoTestVector(linearSweep, outputPath + "linearSweep.txt")
     return (impulse, linearSweep, syncSweep, dynamic)
 
 
-def buildTestProg(cppPath: str):
+def _buildTestProg(cppPath: str) -> bool:
     os.makedirs(f"{FILE_DIR}/{TMP_DIR}", exist_ok=True)
     args = ["g++"]
     if platform.system() == "macOS":
@@ -151,7 +212,7 @@ def buildTestProg(cppPath: str):
     return True
 
 
-def runTestProg() -> int:
+def _runTestProg() -> int:
     res = sp.run(
         [f"{FILE_DIR}/{TMP_DIR}/main"],
         check=False,
@@ -159,7 +220,7 @@ def runTestProg() -> int:
     return res.returncode
 
 
-def findAllTests() -> list[str]:
+def _findAllTests() -> list[str]:
     paths = []
     allFiles = os.listdir(f"{FILE_DIR}/tests")
     for file in allFiles:
@@ -168,7 +229,7 @@ def findAllTests() -> list[str]:
     return paths
 
 
-def idxToLineStyle(i: int) -> str:
+def _idxToLineStyle(i: int) -> str:
     if (i // 2) % 2:
         return ":"
     return "-"
@@ -180,6 +241,16 @@ def plotImpulse(
     filename: str,
     legends: list | None = None,
 ):
+    """
+    Plots the results of an impulse response an frequency amplitude and phase
+    responses.
+
+    Args:
+        x (np.ndarray): Data to plot.
+        fs (float): Sample rate.
+        filename (str): Name of output file.
+        legends (list | None, optional): Legends of plots. Defaults to None.
+    """
     xFft = np.fft.fft(x)
     xAbs = np.abs(xFft)
     xPhase = np.angle(xFft)
@@ -200,6 +271,14 @@ def plotSpectrum(
     fs: float,
     filename: str,
 ):
+    """
+    Plots a spectrum of a sweep result.
+
+    Args:
+        x (np.ndarray): Sweep to plot.
+        fs (float): Sample rate.
+        filename (str): Path to store at.
+    """
     _x = x
     if x.shape[0] < 5:
         if x.shape[0] > 2:
@@ -226,11 +305,22 @@ def plotFrequencyDomain(
     ylim: list | None = None,
     ylabel: str | None = None,
 ):
+    """
+    Plots signal in frequency domain.
+
+    Args:
+        x (np.ndarray): Data to plot.
+        fs (float): Sample rate.
+        filename (str): Output file name.
+        legends (list | None, optional): Legends to add to plot. Defaults to None.
+        ylim (list | None, optional): Y axis limits. Defaults to None.
+        ylabel (str | None, optional): Lable for Y axis. Defaults to None.
+    """
     try:
         n = x.shape[1]
         fAx = np.linspace(0, fs - fs / n, n)
         for i, v in enumerate(x):
-            p.semilogx(fAx, v, linestyle=idxToLineStyle(i))
+            p.semilogx(fAx, v, linestyle=_idxToLineStyle(i))
     except IndexError:
         n = x.shape[0]
         fAx = np.linspace(0, fs - fs / n, n)
@@ -267,12 +357,22 @@ def plotDynamic(
     legends: list | None = None,
     zoom: int = 1,
 ):
+    """
+    Plots a dynamic response.
+
+    Args:
+        x (np.ndarray): Data to plot.
+        fs (float): Sample rate.
+        filename (str): Output file name.
+        legends (list | None, optional): Legends of plots. Defaults to None.
+        zoom (int, optional): Zoom level. 1 for whole plot. Defaults to 1.
+    """
     xDb = 20 * np.log10(np.abs(x) + 1e-8)
     try:
         nSamples = xDb.shape[1]
         tAx = np.array(range(nSamples)) / fs
         for i, v in enumerate(xDb):
-            p.plot(tAx, v, linestyle=idxToLineStyle(i))
+            p.plot(tAx, v, linestyle=_idxToLineStyle(i))
     except IndexError:
         nSamples = xDb.shape[0]
         tAx = np.array(range(nSamples)) / fs
@@ -297,13 +397,24 @@ def plotDynamic(
 
 
 def plotSweeps(
-    results: dict[str, list[np.ndarray]],
+    results: list[np.ndarray],
     legends: dict[str, list[str]],
     testFileName: str,
     fs: float,
     objectName: str,
 ):
-    for i, sweep in enumerate(results[objectName]):
+    """
+    Plots a spectrum for each sweep in 'results'. File name will be genarated
+    forom legends and objectName.
+
+    Args:
+        results (dict[str, list[np.ndarray]]): Data to plot.
+        legends (dict[str, list[str]]): Legends to add.
+        testFileName (str): Name of the test program the data came from.
+        fs (float): Sample rate.
+        objectName (str): Name of the specific test.
+    """
+    for i, sweep in enumerate(results):
         plotSpectrum(
             sweep,
             fs,
@@ -314,7 +425,7 @@ def plotSweeps(
         )
 
 
-def parseFiles(
+def _parseFiles(
     files: list[str],
     exceptedFiles: list[str],
 ):
@@ -336,13 +447,13 @@ def parseFiles(
         if len(info) != 5:
             print(f"Bad filename: '{file}'.")
             continue
-        result = readResult(f"{FILE_DIR}/{TMP_DIR}/" + file)
+        result = _readResult(f"{FILE_DIR}/{TMP_DIR}/" + file)
         if result is None:
             print(f"'{file}' not found.")
             continue
         legends = ["result left", "result right"]
         if info[0] + SEPARATOR + info[1] in exceptedFiles:
-            excepted = readResult(
+            excepted = _readResult(
                 f"{FILE_DIR}/{EXPECTED_DIR}/{file.replace("result", "expected")}"
             )
             if excepted is not None:
@@ -365,7 +476,7 @@ def parseFiles(
     return results_dict, legends_dict
 
 
-def readResult(path: str) -> np.ndarray | None:
+def _readResult(path: str) -> np.ndarray | None:
     if not os.path.exists(path):
         print(f"Bad path: {path}")
         return None
@@ -379,7 +490,38 @@ def readResult(path: str) -> np.ndarray | None:
     return y
 
 
-def readAndPlotTestResults(testFileName: str, fs: float):
+def _plotResults(
+    results: dict[str, list[np.ndarray]],
+    legends: dict[str, list[str]],
+    testFileName: str,
+    fs: float,
+):
+    os.makedirs(f"{FILE_DIR}/img", exist_ok=True)
+    if "impulse" in results and results["impulse"]:
+        plotImpulse(
+            np.concatenate(results["impulse"]),
+            fs,
+            f"{FILE_DIR}/img/{testFileName}{SEPARATOR}frequency.png",
+            legends["impulse"],
+        )
+    if "linearSweep" in results and results["linearSweep"]:
+        plotSweeps(
+            results["linearSweep"], legends, testFileName, fs, "linearSweep"
+        )
+    if "syncSweep" in results and results["syncSweep"]:
+        plotSweeps(results["syncSweep"], legends, testFileName, fs, "syncSweep")
+    if "dynamic" in results and results["dynamic"]:
+        for i in range(3):
+            plotDynamic(
+                np.concatenate(results["dynamic"]),
+                fs,
+                f"{FILE_DIR}/img/{testFileName}{SEPARATOR}dynamic{SEPARATOR}{i}.png",
+                legends["dynamic"],
+                i,
+            )
+
+
+def _readAndPlotTestResults(testFileName: str, fs: float):
     resultFiles: list[str] = []
     outFiles = os.listdir(f"{FILE_DIR}/{TMP_DIR}")
     for file in outFiles:
@@ -396,56 +538,41 @@ def readAndPlotTestResults(testFileName: str, fs: float):
                 print(f"Bad filename: {file}")
                 continue
             expectedFiles += [info[0] + SEPARATOR + info[1]]
-    results, legends = parseFiles(resultFiles, expectedFiles)
-    plotResults(results, legends, testFileName, fs)
+    results, legends = _parseFiles(resultFiles, expectedFiles)
+    _plotResults(results, legends, testFileName, fs)
 
 
-def plotResults(
-    results: dict[str, list[np.ndarray]],
-    legends: dict[str, list[str]],
-    testFileName: str,
-    fs: float,
-):
-    os.makedirs(f"{FILE_DIR}/img", exist_ok=True)
-    if "impulse" in results and results["impulse"]:
-        plotImpulse(
-            np.concatenate(results["impulse"]),
-            fs,
-            f"{FILE_DIR}/img/{testFileName}{SEPARATOR}frequency.png",
-            legends["impulse"],
-        )
-    if "linearSweep" in results and results["linearSweep"]:
-        plotSweeps(results, legends, testFileName, fs, "linearSweep")
-    if "syncSweep" in results and results["syncSweep"]:
-        plotSweeps(results, legends, testFileName, fs, "syncSweep")
-    if "dynamic" in results and results["dynamic"]:
-        for i in range(3):
-            plotDynamic(
-                np.concatenate(results["dynamic"]),
-                fs,
-                f"{FILE_DIR}/img/{testFileName}{SEPARATOR}dynamic{SEPARATOR}{i}.png",
-                legends["dynamic"],
-                i,
-            )
+def acceptLatestResult(files: list[str], objects: list[str]) -> bool:
+    """
+    Approves the latest results that match a specific test program file and
+    objects therein. Both args accept ["all"], which will match all files or all
+    objects within a file.
 
+    Args:
+        files (list[str]): Test program files. Typically named after class under test.
+        objects (list[str]): Names of objects under test.
 
-def acceptLatestResult(objects: list[str]) -> bool:
-    files = os.listdir(f"{FILE_DIR}/{TMP_DIR}")
+    Returns:
+        bool: True on success.
+    """
+    resultFiles = os.listdir(f"{FILE_DIR}/{TMP_DIR}")
     filesToCopy: list[str] = []
-    for file in files:
+    for file in resultFiles:
         if file.endswith(f"{SEPARATOR}result.txt"):
             info = file.split(SEPARATOR)
             if len(info) != 5:
                 print(f"Bad filename: {file}")
                 continue
-            if info[1] in objects:
-                filesToCopy += [file]
+            if files and files != ["all"] and info[0] not in files:
+                continue
+            if objects and objects != ["all"] and info[1] not in objects:
+                continue
+            filesToCopy += [file]
     if not filesToCopy:
         print("No result files found.")
         return False
     for file in filesToCopy:
         storeFile = file.replace("result", "expected")
-        # print(f"Storing {file} as {storeFile}.")
         with open(f"{FILE_DIR}/{TMP_DIR}/" + file, "r", encoding="utf8") as x:
             with open(
                 f"{FILE_DIR}/{EXPECTED_DIR}/" + storeFile, "w", encoding="utf8"
@@ -456,23 +583,40 @@ def acceptLatestResult(objects: list[str]) -> bool:
 
 
 def clean() -> bool:
+    """
+    Cleans all previous test outputs.
+
+    Returns:
+        bool: True on success.
+    """
     shutil.rmtree(f"{FILE_DIR}/{TMP_DIR}")
     return True
 
 
 def runTests(path: str, fs: float) -> bool:
+    """
+    Runs tests for a specific test program. Build the program, runs it and
+    collects results.
+
+    Args:
+        path (str): _description_
+        fs (float): _description_
+
+    Returns:
+        bool: _description_
+    """
     testFileName = (
         os.path.basename(path).replace("_test", "").replace(".cpp", "")
     )
     print(f"Testing '{testFileName}'")
-    if not buildTestProg(path):
+    if not _buildTestProg(path):
         return False
-    returncode = runTestProg()
-    readAndPlotTestResults(testFileName, fs)
+    returncode = _runTestProg()
+    _readAndPlotTestResults(testFileName, fs)
     return returncode == 0
 
 
-def readAggregateResults() -> dict[str, int]:
+def _readAggregateResults() -> dict[str, int]:
     results = {}
     path = f"{FILE_DIR}/{TMP_DIR}/results.txt"
     if not os.path.exists(path):
@@ -505,13 +649,22 @@ def readAggregateResults() -> dict[str, int]:
 
 
 def run(args: dict):
+    """
+    Runs test application.
+
+    Args:
+        args (dict): Used to get 'files' and 'fs' args from command line.
+
+    Returns:
+        bool: True on success.
+    """
     os.makedirs(f"{FILE_DIR}/{EXPECTED_DIR}", exist_ok=True)
     os.makedirs(f"{FILE_DIR}/{TMP_DIR}", exist_ok=True)
     clean()
     success = True
     files = args["files"]
     if not files or files == ["all"]:
-        files = findAllTests()
+        files = _findAllTests()
     for file in files:
         if not file.endswith(".cpp"):
             if not file.endswith("_test"):
@@ -522,7 +675,7 @@ def run(args: dict):
             continue
         success &= runTests(file, args["fs"])
         print()
-    results = readAggregateResults()
+    results = _readAggregateResults()
     if not results:
         return True
     print(
@@ -542,7 +695,13 @@ def run(args: dict):
     return success
 
 
-def make_test_subparser() -> argparse.ArgumentParser:
+def createParser() -> argparse.ArgumentParser:
+    """
+    Creates an argument parser for test program.
+
+    Returns:
+        argparse.ArgumentParser: New argument parser.
+    """
     parser = argparse.ArgumentParser(
         description="Runs test on NTfx Components. Usage: 'test.py run "
         "[test file name(s)]'. '_test.cpp' can be omitted."
@@ -562,18 +721,22 @@ def make_test_subparser() -> argparse.ArgumentParser:
     generateParser = subparsers.add_parser(
         "generate", help="Generate needed input files."
     )
-    cleanParser = subparsers.add_parser(
+    subparsers.add_parser(
         "clean", help="Cleans all outputs from previous tests."
     )
     approveParser = subparsers.add_parser(
         "approve", help="Set selected results in output dir as new expected."
     )
     approveParser.add_argument(
+        "files",
+        nargs="+",
+        help="Files containing tests to approve. '_test' and '.cpp' are ignored "
+        "and can be omitted",
+    )
+    approveParser.add_argument(
         "objects",
-        nargs="*",
-        default=["all"],
-        help="Objects to accept results for. 'all' for all previously tested "
-        "objects.",
+        nargs="+",
+        help="Objects to accept results for.",
     )
     parser.add_argument(
         "--fs",
@@ -592,6 +755,15 @@ def make_test_subparser() -> argparse.ArgumentParser:
 
 
 def main(args: dict) -> bool:
+    """
+    Main function for test program.
+
+    Args:
+        args (dict): Arguments as passed in from the command line.
+
+    Returns:
+        bool: True on success.
+    """
     fs = args["fs"]
     if args["test_task"] == "generate":
         t = args["duration"]
@@ -601,30 +773,10 @@ def main(args: dict) -> bool:
     if args["test_task"] == "clean":
         return clean()
     if args["test_task"] == "approve":
-        objects = args["objects"]
-        if "all" in objects:
-            # TODO: Make this list from files found in 'test', 'in' or 'out'.
-            objects = [
-                "bqBell",
-                "bqHfp",
-                "bqHiShelf",
-                "bqLpf",
-                "bqLoShelf",
-                "firstOrderHpf",
-                "firstOrderLpf",
-                "firstOrderLpfWithZero",
-                "peakSensor",
-                "peakHoldSensor",
-                "peakDbSc",
-                "peakDbScLink",
-                "rmsSensor",
-                "softClip3",
-                "softClip5",
-            ]
-        return acceptLatestResult(objects)
+        return acceptLatestResult(args["files"], args["objects"])
     print(f"Unknown command: '{args['task']}'.")
     return False
 
 
 if __name__ == "__main__":
-    sys.exit(not main(make_test_subparser().parse_args().__dict__))
+    sys.exit(not main(createParser().parse_args().__dict__))
