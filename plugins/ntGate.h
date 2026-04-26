@@ -21,19 +21,27 @@
 
 #include "gcem.hpp"
 #include "lib/Biquad.h"
+#include "lib/DynamicFilter.h"
 #include "lib/GateSc.h"
 #include "lib/Plugin.h"
 #include "lib/Stereo.h"
 
+#define _DO_INVERT true
+
 template <typename signal_t>
 struct ntGate : NtFx::NtPlugin<signal_t> {
-  bool bypassEnable { false };
   NtFx::GateScSettings<signal_t> scSettings;
   NtFx::GateSc<signal_t> sc;
+  NtFx::GateScSettings<signal_t> scHfSettings;
+  NtFx::GateSc<signal_t> scHf;
+  NtFx::DynamidShelf<signal_t> flt;
   NtFx::Biquad::EqBand<signal_t> hpf;
   NtFx::Biquad::EqBand<signal_t> lpf;
+  signal_t hfScale { 1 };
+  bool bypassEnable { false };
+  bool scListenEnable = false;
 
-  ntGate() : sc(scSettings) {
+  ntGate() : sc(scSettings), scHf(scHfSettings) {
     this->primaryKnobs = {
       {
           .p_val  = &this->scSettings.thresh_db,
@@ -70,9 +78,11 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
           .minVal = 10.0,
           .maxVal = 1000.0,
       },
+
     };
+    this->primaryKnobs[6].setLogScale();
     this->hpf.settings.fc_hz = 20;
-    this->hpf.settings.fc_hz = 20e3;
+    this->lpf.settings.fc_hz = 20e3;
     this->secondaryKnobs     = {
       {
           .p_val  = &this->hpf.settings.fc_hz,
@@ -88,16 +98,32 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
           .minVal = 20,
           .maxVal = 20e3,
       },
+      {
+          .p_val  = &this->hfScale,
+          .name   = "Hf accel",
+          .suffix = " x",
+          .minVal = 1,
+          .maxVal = 10,
+      },
+      {
+          .p_val  = &this->flt.fc_hz,
+          .name   = "Hf xover",
+          .suffix = " Hz",
+          .minVal = 200,
+          .maxVal = 20e3,
+      },
     };
     this->secondaryKnobs[0].setLogScale();
     this->secondaryKnobs[1].setLogScale();
     this->toggles = {
+      { .p_val = &this->scListenEnable, .name = "SC Listen" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
     this->meters = {
       { .name = "IN", .addRms = true },
       { .name = "OUT", .hasScale = true, .addRms = true },
-      { .name = "GR", .invert = true, .hasScale = true },
+      { .name = "GR", .invert = _DO_INVERT },
+      { .name = "HF GR", .invert = _DO_INVERT, .hasScale = true },
     };
     this->updateDefaults();
   }
@@ -111,26 +137,47 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
     }
     auto yHpf = this->hpf.process(x);
     auto yLpf = this->lpf.process(yHpf);
-    auto gr   = this->sc.process(yLpf);
-    auto y    = x * gr;
-    this->template updatePeakLevel<2, true>(gr);
+    if (this->scListenEnable) {
+      this->template updatePeakLevel<1>(yLpf);
+      this->template updatePeakLevel<2>(1);
+      return yLpf;
+    }
+    auto gr      = this->sc.process(yLpf);
+    auto grHf    = this->scHf.process(yLpf);
+    auto A       = grHf / gr;
+    flt.gain_lin = A.absMax();
+    auto yFlt    = this->flt.process(x);
+
+    auto y = yFlt * gr;
+    this->template updatePeakLevel<2, _DO_INVERT>(gr);
+    this->template updatePeakLevel<3, _DO_INVERT>(grHf);
     this->template updatePeakLevel<1>(y);
     return y;
   }
 
   void update() noexcept override {
-    this->sc.update();
+    this->flt.update();
     this->lpf.update();
     this->hpf.update();
+    this->sc.update();
+    this->scHf.settings.thresh_db = this->sc.settings.thresh_db;
+    this->scHf.settings.range_db  = this->sc.settings.range_db;
+    this->scHf.settings.tAtt_ms   = this->sc.settings.tAtt_ms;
+    this->scHf.settings.tRel_ms   = this->sc.settings.tRel_ms / this->hfScale;
+    this->scHf.settings.tHold_ms  = this->sc.settings.tHold_ms / this->hfScale;
+    this->scHf.update();
   }
 
   void reset(float fs) noexcept override {
     this->fs = fs;
     this->sc.reset(fs);
+    this->scHf.reset(fs);
     this->hpf.settings.shape = NtFx::Biquad::Shape::hpf;
     this->hpf.reset(fs);
     this->lpf.settings.shape = NtFx::Biquad::Shape::lpf;
     this->lpf.reset(fs);
+    this->flt.reset(fs);
     this->update();
   }
 };
+#undef _DO_INVERT

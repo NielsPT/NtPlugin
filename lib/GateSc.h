@@ -39,12 +39,12 @@ template <typename signal_t>
 struct GateSc : public Component<Stereo<signal_t>> {
   PeakSensor<signal_t> sensor;
   GateScSettings<signal_t>& settings;
-  signal_t slopeRel { 0 };
-  signal_t alphaAtt { 0 };
-  signal_t stateAtt { 0 };
-  signal_t stateRel { 0 };
-  int nHold { 0 };
-  int holdCount { 0 };
+  signal_t _slopeRel { 0 };
+  signal_t _alphaAtt { 0 };
+  signal_t _stateAtt { 0 };
+  signal_t _stateRel { 0 };
+  int _nHold { 0 };
+  int _holdCount { 0 };
 
   GateSc(GateScSettings<signal_t>& settings) : settings(settings) { }
 
@@ -55,18 +55,18 @@ struct GateSc : public Component<Stereo<signal_t>> {
   }
 
   virtual void update() noexcept override {
-    this->alphaAtt = gcem::exp(-2200 / (this->settings.tAtt_ms * this->fs));
-    this->slopeRel = this->settings.range_db * signal_t(20)
+    this->_alphaAtt = gcem::exp(-2200 / (this->settings.tAtt_ms * this->fs));
+    this->_slopeRel = this->settings.range_db * signal_t(20)
         / (this->settings.range_db * this->settings.tRel_ms * signal_t(0.001)
             * this->fs);
-    this->nHold = gcem::round(this->settings.tHold_ms * 0.001 * this->fs);
+    this->_nHold = gcem::round(this->settings.tHold_ms * 0.001 * this->fs);
     this->sensor.update();
   }
 
   virtual void reset(float fs) noexcept override {
     this->fs              = fs;
-    stateAtt              = -100;
-    stateRel              = -100;
+    _stateAtt             = -100;
+    _stateRel             = -100;
     this->sensor.tPeak_ms = 1;
     this->sensor.reset(fs);
     this->update();
@@ -77,22 +77,22 @@ struct GateSc : public Component<Stereo<signal_t>> {
     auto x_db = NtFx::db(ySens + 1e-20);
     signal_t target_db { -1e-20 };
     if (x_db > this->settings.thresh_db) {
-      this->holdCount = this->nHold;
+      this->_holdCount = this->_nHold;
     } else {
       target_db = this->settings.range_db;
     }
-    if (this->stateRel >= target_db) {
-      if (this->holdCount > 0) {
-        this->holdCount--;
+    if (this->_stateRel >= target_db) {
+      if (this->_holdCount > 0) {
+        this->_holdCount--;
       } else {
-        this->stateRel -= this->slopeRel;
+        this->_stateRel -= this->_slopeRel;
       }
     } else {
-      this->stateRel = target_db;
+      this->_stateRel = target_db;
     }
-    auto y_db =
-        this->alphaAtt * this->stateAtt + (1 - this->alphaAtt) * this->stateRel;
-    this->stateAtt = y_db;
+    auto y_db = this->_alphaAtt * this->_stateAtt
+        + (1 - this->_alphaAtt) * this->_stateRel;
+    this->_stateAtt = y_db;
     return NtFx::invDb(y_db);
   }
 };

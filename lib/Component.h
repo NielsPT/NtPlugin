@@ -41,7 +41,7 @@ struct Component {
    * @brief Sample rate of component.
    *
    */
-  float fs;
+  float fs { 48e3 };
 
   /**
    * @brief Called for every sample as audio is processed.

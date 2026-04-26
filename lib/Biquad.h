@@ -70,35 +70,35 @@ namespace Biquad {
 
   template <typename signal_t>
   struct Biquad6 {
-    Coeffs6<signal_t> coeffs;
+    Coeffs6<signal_t>& coeffs;
     State<signal_t> state;
+    Biquad6(Coeffs6<signal_t>& coeffs) : coeffs(coeffs) { }
     inline signal_t process(signal_t x) {
-      signal_t y = this->coeffs.b[0] * x + this->coeffs.b[1] * this->state.x[0]
-          + this->coeffs.b[2] * this->state.x[1]
-          - this->coeffs.a[1] * this->state.y[0]
-          - this->coeffs.a[2] * this->state.y[1];
+      signal_t y = (this->coeffs.b[0] * x + this->coeffs.b[1] * this->state.x[0]
+                       + this->coeffs.b[2] * this->state.x[1]
+                       - this->coeffs.a[1] * this->state.y[0]
+                       - this->coeffs.a[2] * this->state.y[1])
+          / this->coeffs.a[0];
       this->state.y[1] = this->state.y[0];
-      this->state.y[0] = y / this->coeffs.a[0];
+      this->state.y[0] = y;
       this->state.x[1] = this->state.x[0];
       this->state.x[0] = x;
       return y;
     }
-    inline void update(Settings<signal_t>& settings, signal_t fs) {
-      this->coeffs = calcCoeffs6<signal_t>(settings, fs);
-    }
   };
 
   template <typename signal_t>
-  struct BiQuad6Stereo {
+  struct BiQuad6Stereo : public Component<Stereo<signal_t>> {
     Settings<signal_t> settings;
+    Coeffs6<signal_t> coeffs;
     Biquad6<signal_t> l;
     Biquad6<signal_t> r;
-    inline Stereo<signal_t> process(Stereo<signal_t> x) {
-      return { l.process(x.l), r.process(x.r) };
+    BiQuad6Stereo() : l(this->coeffs), r(this->coeffs) { }
+    virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+      return { this->l.process(x.l), this->r.process(x.r) };
     }
-    inline void update(signal_t fs) {
-      this->l.update(this->settings, fs);
-      this->r.update(this->settings, fs);
+    virtual void update() noexcept override {
+      this->coeffs = calcCoeffs6<signal_t>(settings, this->fs);
     }
   };
 

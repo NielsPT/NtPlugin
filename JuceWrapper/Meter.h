@@ -74,6 +74,7 @@ struct MonoMeter : public juce::Component {
 
   MonoMeter(MeterSpec& meterSpec, UiSpec& uiSpec)
       : meterSpec(meterSpec), uiSpec(uiSpec), nDots(uiSpec.meterHeight_dots) {
+    // TODO: We need to be able to set these from the plugin.
     this->updateRelease(48000, 250, 100);
     this->refresh();
     this->isInitialized = true;
@@ -95,6 +96,7 @@ struct MonoMeter : public juce::Component {
     for (size_t i = 0; i < this->nDots; i++) {
       int y;
       y = this->pad + (i + 1) * this->dotDist;
+      if (this->meterSpec.invert && i < 2) { continue; }
       g.setColour(juce::Colour(this->uiSpec.foregroundColour));
       g.drawEllipse(this->pad, y, this->dotDiameter, this->dotDiameter, 1);
       float fillPad      = this->getWidth() * 4.0 / 35.0;
@@ -102,7 +104,6 @@ struct MonoMeter : public juce::Component {
       if (fillDiameter < 0) { return; }
       float fillX = this->pad + fillPad / 2;
       float fillY = y + fillPad / 2;
-      if (this->meterSpec.invert && i < 2) { continue; }
       if ((!this->meterSpec.invert && i >= this->nActiveDotsPeak)
           || (this->meterSpec.invert && i <= this->nActiveDotsPeak
               && this->nActiveDotsPeak != 0)) {
