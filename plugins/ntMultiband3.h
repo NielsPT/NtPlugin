@@ -44,7 +44,7 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
   signal_t ouputGain_lin { 1 };
   bool linkEnable { false };
   bool feedbackEnable { false };
-  bool bypass { false };
+  bool bypassEnable { false };
   // bool noise { false };
 
   std::array<bool, Bands::n> solos   = { false, false, false };
@@ -58,11 +58,10 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
   std::array<signal_t, Bands::n> makeup_lin;
   std::array<NtFx::Stereo<signal_t>, Bands::n> fbState;
   const std::array<std::string, Bands::n> BandNames = { "High", "Mid", "Low" };
-  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::lpfZero>
-      loFlt;
+  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::lpf> loFlt;
   NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::hpf>
       loMidFlt;
-  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::lpfZero>
+  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::lpf>
       hiMidFlt;
   NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::hpf> hiFlt;
   ntMultiband3() : sc { scSettings[0], scSettings[1], scSettings[2] } {
@@ -119,7 +118,7 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
     this->toggles = {
       { &this->linkEnable, "Link" },
       { &this->feedbackEnable, "Feedback" },
-      { &this->bypass, "Bypass" },
+      { &this->bypassEnable, "Bypass" },
       // { &this->noise, "Noise" },
     };
     this->toggleSets = {
@@ -150,7 +149,7 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
   }
 
   NtFx::Stereo<signal_t> process(NtFx::Stereo<signal_t> x) noexcept override {
-    if (this->bypass) { return x; }
+    if (this->bypassEnable) { return x; }
     std::array<NtFx::Stereo<signal_t>, 3> xComp;
     xComp[Bands::hi]  = this->hiFlt.process(x);
     auto xLoMidFlt    = this->hiMidFlt.process(x);
