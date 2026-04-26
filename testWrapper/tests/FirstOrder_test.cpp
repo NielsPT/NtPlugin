@@ -6,17 +6,17 @@
 NTFX_TEST_BEGIN
 
 NTFX_TEST() {
-  auto firstOrderHpf =
+  auto hpf =
       NtFx::FirstOrder::StereoFilter<double, NtFx::FirstOrder::Shape::hpf>();
-  firstOrderHpf.setFc(1e3);
-  NTFX_ADD_TEST(firstOrderHpf, "impulse");
-  auto firstOrderLpf =
+  hpf.setFc(1e3);
+  NTFX_ADD_TEST(hpf, "impulse");
+  auto lpf =
       NtFx::FirstOrder::StereoFilter<double, NtFx::FirstOrder::Shape::lpf>();
-  firstOrderLpf.setFc(1e3);
-  NTFX_ADD_TEST(firstOrderLpf, "impulse");
-  auto firstOrderLpfWithZero = NtFx::FirstOrder::StereoFilter<double,
+  lpf.setFc(1e3);
+  NTFX_ADD_TEST(lpf, "impulse");
+  auto lpfWithZero = NtFx::FirstOrder::StereoFilter<double,
       NtFx::FirstOrder::Shape::lpfZero>();
-  firstOrderLpfWithZero.setFc(1e3);
-  NTFX_ADD_TEST(firstOrderLpfWithZero, { "impulse" });
+  lpfWithZero.setFc(1e3);
+  NTFX_ADD_TEST(lpfWithZero, { "impulse" });
   return NTFX_RUN_TESTS();
 }

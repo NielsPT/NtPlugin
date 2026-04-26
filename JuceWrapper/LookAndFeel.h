@@ -61,7 +61,7 @@ struct KnobLookAndFeel : public juce::LookAndFeel_V4 {
         rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
     juce::Path knobPath;
     auto outerRadius = std::min(width / 2.5f, height / 2.5f) - 4.0f;
-    knobPath.addPolygon({ 0, 0 }, 8, outerRadius);
+    knobPath.addPolygon({ 0, 0 }, 12, outerRadius);
     knobPath.applyTransform(
         juce::AffineTransform::rotation(angle).translated(centreX, centreY));
     auto color = this->foregroundColour;

@@ -114,6 +114,9 @@ struct RadioButtonSet : public ToggleSetBase {
     if (this->val == i) {
       this->toggles[i]->setToggleState(
           true, juce::NotificationType::dontSendNotification);
+    } else {
+      this->toggles[i]->setToggleState(
+          false, juce::NotificationType::dontSendNotification);
     }
   }
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RadioButtonSet)

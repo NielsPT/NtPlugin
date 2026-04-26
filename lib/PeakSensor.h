@@ -44,9 +44,11 @@ namespace NtFx {
  */
 template <typename signal_t>
 struct PeakSensor : public Component<signal_t> {
-  signal_t tPeak_ms; ///< Time constant for peak detection in milliseconds.
-  signal_t _alpha;   ///< Smoothing factor for the peak detection.
-  signal_t _state;   ///< Internal state of the peak sensor.
+  signal_t tPeak_ms {
+    1
+  }; ///< Time constant for peak detection in milliseconds.
+  signal_t _alpha { 0 }; ///< Smoothing factor for the peak detection.
+  signal_t _state { 0 }; ///< Internal state of the peak sensor.
 
   /**
    * @brief Processes the input signal to detect and track the peak amplitude.

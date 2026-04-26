@@ -1,3 +1,5 @@
+#! ./.venv/bin/python
+
 """
 @file ntPlugin.py
 @author Niels Thøgersen (niels.thoegersen@gmail.com)
@@ -317,9 +319,15 @@ struct {name} : NtFx::NtPlugin<signal_t> {{
   }}
 
   NtFx::Stereo<signal_t> process(NtFx::Stereo<signal_t> x) noexcept override {{
-    if (this->bypassEnable) {{ return x; }}
+    this->template updatePeakLevel<0>(x);
+    if (this->bypassEnable) {{
+      this->template updatePeakLevel<1>(x);
+      return x;
+    }}
+    auto y = {{ 0, 0 }};
     // TODO: processing.
-    return 0;
+    this->template updatePeakLevel<1>(y);
+    return y;
   }}
 
   void update() noexcept override {{

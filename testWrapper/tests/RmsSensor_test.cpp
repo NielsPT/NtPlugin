@@ -8,6 +8,6 @@ NTFX_TEST_BEGIN
 NTFX_TEST() {
   auto rmsSensor = NtFx::RmsSensorStereo<double>();
   rmsSensor.setT_ms(10);
-  NTFX_ADD_TEST(rmsSensor, "dynamic");
+  NTFX_ADD_TEST(rmsSensor, "dynamic_alternating");
   return NTFX_RUN_TESTS();
 }

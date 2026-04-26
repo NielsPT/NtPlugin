@@ -277,8 +277,8 @@ using `NTFX_ADD_TEST`. Then you retrun `runAllTests()`. Example:
 #include "plugins/[your plugin].h"
 NTFX_TEST_BEGIN // Macro to instantiate statics.
 
-int main() { // Make a main function.
-  [plugin name]<float> plug; // Instantiate plugin.
+NTFX_TEST() { // Make a main function.
+  [plugin name]<double> plug; // Instantiate plugin.
   plug.[some variable] = 2; // Make setting you wanna test.
   NTFX_ADD_TEST(plug, "impulse") // Add test to testWrapper framework.
   return NTFX_RUN_TESTS(); // Run all test tests.
@@ -287,7 +287,8 @@ int main() { // Make a main function.
 
 `NTFX_ADD_TEST` takes a string argument that selects the stimulus to test
 against. The options are `"impulse"`, `"syncSweep"`, `"linearSweep"` and
-`"dynamic"`. Different plots are made based on the selected stimulus.
+`"dynamic_matched"` and `"dynamic_alternating"`. Different plots are made based
+on the selected stimulus.
 
 Save as `test/[plugin name]_test.cpp` and run
 
@@ -299,11 +300,13 @@ Alternativly, the path of the test cpp file can be used as argument.
 
 This should generate plots of frequency and phase response (`"impulse"`),
 spectrogram (`"linearSweep"`) and dynamic response using a stimulus of a 10 kHz
-sine stepping between -12 dB and 0 dB level (`"dynamic"`). `"syncSweep"` does
-not generate a plot at the time of writing. <!--TODO: Harmonic analysis.--> Both
-left and right channels are displayed in all plots to make differences or
-interactions visible. If the plots are good and the plugin is seen as passing
-test, the results are approved with the command:
+sine stepping between -12 dB and 0 dB level (`"dynamic_matched"` for the same on
+both channels, `"dynamic_alternating"` for alternating so the left is at 0 dB
+when right is at -12 dB and vice versa.) . `"syncSweep"` does not generate a
+plot at the time of writing. <!--TODO: Harmonic analysis.--> Both left and right
+channels are displayed in all plots to make differences or interactions visible.
+If the plots are good and the plugin is seen as passing test, the results are
+approved with the command:
 
 ```sh
 python testWrapper/test.py approve [test object names]

@@ -1,3 +1,4 @@
 CompileFlags:
   Add:
     - "-DNTFX_FS=48e3"
+    - -Ilib

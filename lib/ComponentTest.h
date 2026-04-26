@@ -102,9 +102,11 @@ consteval auto testFileBaseName(std::string_view fileName) {
 #define NTFX_RUN_TESTS() componentTestSet.runAllTests()
 
 namespace NtFx {
-static const std::vector<std::string> STIMULI_NAMES {
-  "impulse", "syncSweep", "linearSweep", "dynamic"
-};
+static const std::vector<std::string> STIMULI_NAMES { "impulse",
+  "syncSweep",
+  "linearSweep",
+  "dynamic_alternating",
+  "dynamic_matched" };
 
 constexpr char SEPARATOR = '.';
 
@@ -284,6 +286,7 @@ struct ComponentTestSet {
    * @return false If any test failed. Missing expected vector is a failure.
    */
   bool getResults() {
+    std::cout << std::fixed << std::setprecision(2);
     if (nSuccessful == this->nTests) {
       std::cout << "\033[32m";
     } else {

@@ -6,9 +6,9 @@
 NTFX_TEST_BEGIN
 
 NTFX_TEST() {
-  auto softClip3 = NtFx::SoftClip3<double>();
-  NTFX_ADD_TEST(softClip3, "linearSweep");
-  auto softClip5 = NtFx::SoftClip5<double>();
-  NTFX_ADD_TEST(softClip5, "linearSweep");
+  auto third = NtFx::SoftClip3<double>();
+  NTFX_ADD_TEST(third, "linearSweep");
+  auto fifth = NtFx::SoftClip5<double>();
+  NTFX_ADD_TEST(fifth, "linearSweep");
   return NTFX_RUN_TESTS();
 }

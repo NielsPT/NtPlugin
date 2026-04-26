@@ -30,7 +30,13 @@ from scipy import signal as s
 SEPARATOR = "."
 EXPECTED_DIR = "in"
 TMP_DIR = "out"
-STIMULI = ["impulse", "linearSweep", "syncSweep", "dynamic"]
+STIMULI = [
+    "impulse",
+    "linearSweep",
+    "syncSweep",
+    "dynamic_alternating",
+    "dynamic_matched",
+]
 FILE_DIR = os.path.dirname(__file__)
 
 
@@ -165,15 +171,19 @@ def generateTestVectors(
     _storeStereoTestVector(impulse, outputPath + "impulse.txt")
     steppedSineL = generateBurstSine(fs, t, 10e3, 2, 0.25, 1)
     steppedSineR = generateBurstSine(fs, t, 10e3, 2, 1, 0.25)
-    dynamic = np.array([steppedSineL, steppedSineR])
-    _storeStereoTestVector(dynamic, outputPath + "dynamic.txt")
+    dynamic_alternating = np.array([steppedSineL, steppedSineR])
+    _storeStereoTestVector(
+        dynamic_alternating, outputPath + "dynamic_alternating.txt"
+    )
+    dynamic_matched = np.array([steppedSineL, steppedSineL])
+    _storeStereoTestVector(dynamic_matched, outputPath + "dynamic_matched.txt")
     _syncSweep = generateSyncSweep()
     syncSweep = np.array([_syncSweep, _syncSweep])
     _storeStereoTestVector(syncSweep, outputPath + "syncSweep.txt")
     _linearSweep = generateLinearSweep(fs, 1)
     linearSweep = np.array([_linearSweep, _linearSweep])
     _storeStereoTestVector(linearSweep, outputPath + "linearSweep.txt")
-    return (impulse, linearSweep, syncSweep, dynamic)
+    return (impulse, linearSweep, syncSweep, dynamic_alternating)
 
 
 def _buildTestProg(cppPath: str) -> bool:
@@ -425,21 +435,20 @@ def plotSweeps(
         )
 
 
-def _parseFiles(
-    files: list[str],
-    exceptedFiles: list[str],
-):
+def _parseFiles(files: list[str], exceptedFiles: list[str]):
     results_dict = {
         "impulse": [],
         "linearSweep": [],
         "syncSweep": [],
-        "dynamic": [],
+        "dynamic_alternating": [],
+        "dynamic_matched": [],
     }
     legends_dict = {
         "impulse": [],
         "linearSweep": [],
         "syncSweep": [],
-        "dynamic": [],
+        "dynamic_alternating": [],
+        "dynamic_matched": [],
     }
     legends = ["result left", "result right"]
     for file in files:
@@ -510,13 +519,24 @@ def _plotResults(
         )
     if "syncSweep" in results and results["syncSweep"]:
         plotSweeps(results["syncSweep"], legends, testFileName, fs, "syncSweep")
-    if "dynamic" in results and results["dynamic"]:
+    _plotDynamic(results, "dynamic_alternating", testFileName, legends, fs)
+    _plotDynamic(results, "dynamic_matched", testFileName, legends, fs)
+
+
+def _plotDynamic(
+    results: dict[str, list[np.ndarray]],
+    name: str,
+    testFileName: str,
+    legends: dict[str, list[str]],
+    fs: float,
+):
+    if name in results and results[name]:
         for i in range(3):
             plotDynamic(
-                np.concatenate(results["dynamic"]),
+                np.concatenate(results[name]),
                 fs,
-                f"{FILE_DIR}/img/{testFileName}{SEPARATOR}dynamic{SEPARATOR}{i}.png",
-                legends["dynamic"],
+                f"{FILE_DIR}/img/{testFileName}{SEPARATOR}{name}{SEPARATOR}{i}.png",
+                legends[name],
                 i,
             )
 
@@ -682,7 +702,7 @@ def run(args: dict):
         f"Ran {results["nTests"]} tests on {results["nObjects"]} objects "
         f"in {results["nFiles"]} test files. "
         f"{results["nSuccessful"]} succeeded. "
-        f"({100.0 * results["nSuccessful"] /  results["nTests"]} %)"
+        f"({100.0 * results["nSuccessful"] /  results["nTests"]:.2f} %)"
     )
     if success:
         print("\033[32m", end="")
@@ -728,9 +748,9 @@ def createParser() -> argparse.ArgumentParser:
         "approve", help="Set selected results in output dir as new expected."
     )
     approveParser.add_argument(
-        "files",
-        nargs="+",
-        help="Files containing tests to approve. '_test' and '.cpp' are ignored "
+        "file",
+        nargs=1,
+        help="File containing tests to approve. '_test' and '.cpp' are ignored "
         "and can be omitted",
     )
     approveParser.add_argument(
@@ -773,7 +793,7 @@ def main(args: dict) -> bool:
     if args["test_task"] == "clean":
         return clean()
     if args["test_task"] == "approve":
-        return acceptLatestResult(args["files"], args["objects"])
+        return acceptLatestResult(args["file"], args["objects"])
     print(f"Unknown command: '{args['task']}'.")
     return False
 

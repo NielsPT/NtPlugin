@@ -35,18 +35,18 @@ NTFX_TEST() {
   compressor_lin_fb_softClip.clip        = true;
   compressor_dB_fb_softClip.clip         = true;
 
-  NTFX_ADD_TEST(compressor_dB, "dynamic");
-  NTFX_ADD_TEST(compressor_lin, "dynamic");
-  NTFX_ADD_TEST(compressor_lin_fb, "dynamic");
-  NTFX_ADD_TEST(compressor_dB_fb, "dynamic");
+  NTFX_ADD_TEST(compressor_dB, "dynamic_alternating");
+  NTFX_ADD_TEST(compressor_lin, "dynamic_alternating");
+  NTFX_ADD_TEST(compressor_lin_fb, "dynamic_alternating");
+  NTFX_ADD_TEST(compressor_dB_fb, "dynamic_alternating");
   NTFX_ADD_TEST(compressor_dB, "linearSweep");
   NTFX_ADD_TEST(compressor_lin, "linearSweep");
   NTFX_ADD_TEST(compressor_lin_fb, "linearSweep");
   NTFX_ADD_TEST(compressor_dB_fb, "linearSweep");
-  NTFX_ADD_TEST(compressor_dB_softClip, "dynamic");
-  NTFX_ADD_TEST(compressor_lin_softClip, "dynamic");
-  NTFX_ADD_TEST(compressor_lin_fb_softClip, "dynamic");
-  NTFX_ADD_TEST(compressor_dB_fb_softClip, "dynamic");
+  NTFX_ADD_TEST(compressor_dB_softClip, "dynamic_alternating");
+  NTFX_ADD_TEST(compressor_lin_softClip, "dynamic_alternating");
+  NTFX_ADD_TEST(compressor_lin_fb_softClip, "dynamic_alternating");
+  NTFX_ADD_TEST(compressor_dB_fb_softClip, "dynamic_alternating");
   NTFX_ADD_TEST(compressor_dB_softClip, "linearSweep");
   NTFX_ADD_TEST(compressor_lin_softClip, "linearSweep");
   NTFX_ADD_TEST(compressor_lin_fb_softClip, "linearSweep");
