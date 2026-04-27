@@ -156,6 +156,8 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
   }
 
   void update() noexcept override {
+    this->flt.q1 = 0.6;
+    this->flt.q2 = 0.6;
     this->flt.update();
     this->lpf.update();
     this->hpf.update();

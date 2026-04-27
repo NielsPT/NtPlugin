@@ -269,8 +269,9 @@ template <typename signal_t>
 struct ComponentTestSet {
   int nTests;      ///< Total tests run.
   int nSuccessful; ///< Number of successful tests.
-  std::vector<std::unique_ptr<ComponentTest<signal_t>>> tests;
-  std::string name;
+  std::vector<std::unique_ptr<ComponentTest<signal_t>>>
+      tests;        ///< Vector of tests to run.
+  std::string name; ///< Name of set of tests.
 
   /**
    * @brief Construct a new Component Test Set object
