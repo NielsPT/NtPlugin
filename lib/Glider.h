@@ -4,7 +4,6 @@
  * @file Glider.h
  * @author Niels Thøgersen (niels.thoegersen@gmail.com)
  * @brief Glider smooths out changes in parameters.
- * @version 0.1
  *
  * @copyright Copyright (c) 2026
  *

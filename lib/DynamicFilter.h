@@ -4,7 +4,6 @@
  * @file DynamicFilter.h
  * @author Niels Thøgersen (niels.thoegersen@gmail.com)
  * @brief Dynamic biquad filter.
- * @version 0.1
  *
  * @copyright Copyright (c) 2026
  *
@@ -47,7 +46,7 @@ namespace DynamicFilter {
     signal_t fc_hz { 2000 }; ///< Cutoff frequency.
     signal_t gain_lin {
       1
-    };                   ///< Gain in linear domain. Can be 0, creating a lpf.
+    }; ///< Gain in linear domain. Can be 0, creating a lpf.
     signal_t q1 = 0.707; ///< Q at the cutoff frequency.
     signal_t q2 =
         0.707; ///< Q where the response flattens (the other frequency).

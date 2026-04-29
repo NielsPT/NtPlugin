@@ -120,7 +120,7 @@ juce_add_plugin(${NTFX_PLUGIN}
   IS_MIDI_EFFECT FALSE # Is this plugin a MIDI effect?
   EDITOR_WANTS_KEYBOARD_FOCUS FALSE # Does the editor need keyboard focus?
   COPY_PLUGIN_AFTER_BUILD ${NTFX_DO_INSTALL} # Should the plugin be installed to a default location after building?
-  PLUGIN_MANUFACTURER_CODE NtFx # A four-character manufacturer id with at least one upper-case character
+  PLUGIN_MANUFACTURER_CODE NTfx # A four-character manufacturer id with at least one upper-case character
   PLUGIN_CODE ${NTFX_PLUGIN_CODE} # A unique four-character plugin id with exactly one upper-case character
   # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
   FORMATS ${NTFX_FORMATS} # The formats to build. Other valid formats are: AAX Unity VST AU AUv3

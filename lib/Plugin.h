@@ -4,7 +4,6 @@
  * @file Plugin.h
  * @author Niels Thøgersen (niels.thoegersen@gmail.com)
  * @brief Base class for NTplugin framework.
- * @version 0.1
  *
  * @copyright Copyright (c) 2026
  *

@@ -12,7 +12,6 @@
  * git source control since it contains expected test vectors along with
  * stimuli. Input and output files must contain two columns of floating point
  * numbers.
- * @version 0.1
  *
  * @copyright Copyright (c) 2026
  *
@@ -121,11 +120,10 @@ struct ComponentTestSet;
  */
 template <typename signal_t>
 struct ComponentTest {
-  ComponentTestSet<signal_t>& owner;
-  const std::string objName;
-  Component<Stereo<signal_t>>& cut; ///< Component under test.
-  std::vector<std::string> activeStimuli =
-      STIMULI_NAMES; ///< List of names of tests to run.
+  ComponentTestSet<signal_t>& owner; ///< Set this test belongs to.
+  const std::string objName;         ///< Object to be tested.
+  Component<Stereo<signal_t>>& cut;  ///< Component under test.
+  std::vector<std::string> activeStimuli = STIMULI_NAMES; ///< Tests to run.
 
   /**
    * @brief Construct a new Component Test object

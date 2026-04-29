@@ -2,7 +2,6 @@
  * @file FirstOrder.h
  * @author Niels Thøgersen (niels.thoegersen@gmail.com)
  * @brief First order high- and low pass filters.
- * @version 0.1
  *
  * @copyright Copyright (c) 2026
  *

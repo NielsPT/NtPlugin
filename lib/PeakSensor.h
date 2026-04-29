@@ -5,7 +5,6 @@
  * @author Niels Thøgersen (niels.thoegersen@gmail.com)
  * @brief Peak sensor component for audio processing.
  * Detect and tracks the peak amplitude of an audio signal. The peak
- * @version 0.1
  *
  * @copyright Copyright (c) 2026
  *

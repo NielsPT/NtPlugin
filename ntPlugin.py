@@ -172,7 +172,7 @@ def addNewPluginId(plugin: str, cmakeOut: str, category: str = "") -> bool:
         st = f"{plugin}:{newPluginId}"
         if category:
             st += f":{CATEGORY_MAP[category]}:{category}"
-        f.write(st)
+        f.write(f"{st}\n")
     return True
 
 
@@ -184,9 +184,17 @@ def build() -> bool:
         bool: True on success.
     """
     print("Building")
-    args = ["cmake", "--build", BUILD_DIR, f"-j{cpu_count()}"]
+    args = [
+        "cmake",
+        "--build",
+        BUILD_DIR,
+        f"-j{cpu_count()}",
+        "--config",
+        "Release",
+    ]
     res = subprocess.run(args, check=False)
     if res.returncode:
+        print(f"Build failed: {res.stderr}")
         return False
     return True
 
@@ -277,12 +285,12 @@ def process(
         if not build():
             return False
         if preformTests:
-            time.sleep(0.5)
-            if not runCtest():
-                return False
+            time.sleep(1)
             if sys.platform == "darwin":
                 if not runAuVal():
                     return False
+            if not runCtest():
+                return False
         if not storeArtifacts(plugin):
             return False
     return True

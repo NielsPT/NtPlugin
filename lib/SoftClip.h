@@ -5,7 +5,6 @@
  * @author Niels Thøgersen (niels.thoegersen@gmail.com)
  * @brief Soft clippers for audio processing. Calculates coeffs at compile time
  * and applies polynomials to signals.
- * @version 0.1
  *
  * @copyright Copyright (c) 2026
  *

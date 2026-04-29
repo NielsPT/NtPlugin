@@ -5,7 +5,6 @@
  * @author Niels Thøgersen (niels.thoegersen@gmail.com)
  * @brief Base class for Audio components. Defines the general interface of the
  * NTplugin framework.
- * @version 0.1
  *
  * @copyright Copyright (c) 2026
  *

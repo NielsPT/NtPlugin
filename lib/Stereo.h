@@ -4,7 +4,6 @@
  * @file Stereo.h
  * @author Niels Thøgersen (niels.thoegersen@gmail.com)
  * @brief A data type for stereo signals.
- * @version 0.1
  *
  * @copyright Copyright (c) 2026
  *

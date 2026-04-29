@@ -5,7 +5,6 @@
  * @author Niels Thøgersen (niels.thoegersen@gmail.com)
  * @brief Various usefull math functions. Mainly concerning FIR fitlers.
  * This code is modified from https://github.com/sidneycadot/WindowFunctions.git
- * @version 0.1
  *
  * @copyright Copyright (c) 2026
  *

@@ -6,7 +6,6 @@
  * @brief RMS sensor for audio. Accumulates in multiple stages, with a one
  * milliseond accumulator followed by a user controllable accumulator. This
  * means that the output has a real world sample rate of 1 kHz.
- * @version 0.1
  *
  * @copyright Copyright (c) 2026
  *
@@ -49,18 +48,15 @@ template <typename signal_t,
     int maxT_ms           = 1000,
     int maxSampleDLineLen = 192 * 8>
 struct RmsSensor : public Component<signal_t> {
-  bool resetAccums = false;   ///< Flag to reset accumulators
-  int msDLineLen   = maxT_ms; ///< Current time window in milliseconds
-  int sampleDLineLen =
-      maxSampleDLineLen; ///< Current length of the sample delay line
-  std::array<signal_t, maxSampleDLineLen>
-      samleDLine; ///< Sample delay line for storing recent signal values
-  std::array<signal_t, maxT_ms> msDLine; ///< Millisecond delay line for
-                                         ///< storing accumulated sample values
-  signal_t sampleAccum; ///< Accumulator for current sample values
-  signal_t msAccum;     ///< Accumulator for millisecond-level values
-  int sampleIdx;        ///< Current index in the sample delay line
-  int msIdx;            ///< Current index in the millisecond delay line
+  std::array<signal_t, maxSampleDLineLen> samleDLine; ///< Sample delay line.
+  std::array<signal_t, maxT_ms> msDLine; ///< Millisecond delay line.
+  signal_t sampleAccum { 0 }; ///< Accumulator for current sample values.
+  signal_t msAccum { 0 };     ///< Accumulator for millisecond-level values.
+  int sampleIdx { 0 };        ///< Current index in the sample delay line.
+  int msIdx { 0 };            ///< Current index in the millisecond delay line.
+  bool resetAccums { false }; ///< Flag to reset accumulators.
+  int msDLineLen { maxT_ms }; ///< Current time window in milliseconds.
+  int sampleDLineLen { 48 };  ///< Length of sample delay line.
 
   /**
    * @brief Process the input signal and update RMS calculation
@@ -123,7 +119,6 @@ struct RmsSensor : public Component<signal_t> {
    * @param fs The new sample rate in Hz
    */
   virtual void reset(float fs) noexcept override {
-    if (this->fs == fs) { return; }
     this->fs             = fs;
     this->sampleDLineLen = fs / 1000;
     this->resetAccums    = true;

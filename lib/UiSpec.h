@@ -4,7 +4,6 @@
  * @file UiSpec.h
  * @author Niels Thøgersen (niels.thoegersen@gmail.com)
  * @brief Specification for plugin UI.
- * @version 0.1
  *
  * @copyright Copyright (c) 2026
  *
