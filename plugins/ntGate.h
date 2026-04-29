@@ -209,20 +209,18 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
 
   void update() noexcept override {
     if (this->hfAccelEnable) {
-      this->secondaryKnobs[2].isActive = true;
-      this->secondaryKnobs[3].isActive = true;
-      this->secondaryKnobs[4].isActive = true;
+      this->activateParameter("Xover");
+      this->activateParameter("HF_Hold");
+      this->activateParameter("HF_Release");
     } else {
-      this->secondaryKnobs[2].isActive = false;
-      this->secondaryKnobs[3].isActive = false;
-      this->secondaryKnobs[4].isActive = false;
+      this->deactivateParameter("Xover");
+      this->deactivateParameter("HF_Hold");
+      this->deactivateParameter("HF_Release");
     }
     if (this->scMode == ScMode::ignore) {
-      this->secondaryKnobs[5].isActive = true;
-      this->secondaryKnobs[6].isActive = true;
+      this->activateParameter("Ignore_Sens");
     } else {
-      this->secondaryKnobs[5].isActive = false;
-      this->secondaryKnobs[6].isActive = false;
+      this->deactivateParameter("Ignore_Sens");
     }
     this->nIgnore          = gcem::round(this->tIgnore_ms * 0.001 * this->fs);
     this->ignoreThresh_lin = NtFx::invDb(this->ignoreThresh_db);
@@ -242,7 +240,6 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
       this->scHf.settings.tRel_ms = this->sc.settings.tRel_ms;
     }
     this->scHf.update();
-    this->uiNeedsUpdate = true;
   }
 
   void reset(float fs) noexcept override {

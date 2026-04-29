@@ -166,6 +166,60 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
     return nullptr;
   }
 
+  void setParameterActive(std::string name, bool val) {
+    for (auto& param : this->primaryKnobs) {
+      if (param.name == name) {
+        param.isActive      = false;
+        this->uiNeedsUpdate = true;
+        return;
+      }
+    }
+    for (auto& param : this->secondaryKnobs) {
+      if (param.name == name) {
+        param.isActive      = false;
+        this->uiNeedsUpdate = true;
+        return;
+      }
+    }
+    // TODO: isActive field for all param types. INCLUDES fixing editor.
+    // for (auto& param : this->toggles) {
+    //   if (param.name == name) {
+    //     param.isActive      = false;
+    //     this->uiNeedsUpdate = true;
+    //     return;
+    //   }
+    // }
+    // for (auto& param : this->dropdowns) {
+    //   if (param.name == name) {
+    //     param.isActive      = false;
+    //     this->uiNeedsUpdate = true;
+    //     return;
+    //   }
+    // }
+    // for (auto& param : this->radioButtons) {
+    //   if (param.name == name) {
+    //     param.isActive      = false;
+    //     this->uiNeedsUpdate = true;
+    //     return;
+    //   }
+    // }
+    // for (auto& param : this->toggleSets) {
+    //   if (param.name == name) {
+    //     param.isActive      = false;
+    //     this->uiNeedsUpdate = true;
+    //     return;
+    //   }
+    // }
+  }
+
+  void deactivateParameter(std::string name) {
+    this->setParameterActive(name, false);
+  }
+
+  void activateParameter(std::string name) {
+    this->setParameterActive(name, true);
+  }
+
   /**
    * @brief Copies the values of all members in the derived plugin class to
    * their respective knobs and toggels. Should always be called as the last

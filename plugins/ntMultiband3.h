@@ -111,9 +111,29 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
       });
     }
     this->secondaryKnobs = {
-      { &this->xOverLo_hz, "Lo_Xover", " Hz", 20, 2000, 200 },
-      { &this->xOverHi_hz, "Hi_Xover", " Hz", 200, 20000, 2000 },
-      { &this->ouputGain_db, "Out", " dB", -12, 12 },
+      {
+          .p_val    = &this->xOverLo_hz,
+          .name     = "Lo_Xover",
+          .suffix   = " Hz",
+          .minVal   = 20,
+          .maxVal   = 2000,
+          .midPoint = 200,
+      },
+      {
+          .p_val    = &this->xOverHi_hz,
+          .name     = "Hi_Xover",
+          .suffix   = " Hz",
+          .minVal   = 200,
+          .maxVal   = 20000,
+          .midPoint = 2000,
+      },
+      {
+          .p_val  = &this->ouputGain_db,
+          .name   = "Out",
+          .suffix = " dB",
+          .minVal = -12,
+          .maxVal = 12,
+      },
     };
     this->toggles = {
       { &this->linkEnable, "Link" },

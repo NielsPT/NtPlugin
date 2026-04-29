@@ -86,12 +86,10 @@ struct MeterSpec {
   std::string name { "" };   ///< Name of meter, used for label and id.
   float maxVal_db { 0.0 };   ///< Top value of meter.
   float minVal_db { -36.0 }; ///< Bottom value of meter.
-  bool invert {
-    false
-  }; ///< When true, the meter starts from maxVal and lights up downwords.
-  bool hasScale { false }; ///< Adds a text scale to the right of the meter.
-  float decay_s { 0.25 };  ///< Decay of meter fall off in seconds.
-  float hold_s { 2 };      ///< Meter Hold time in seconds.
+  bool invert { false };     ///< When true, the meter lights up top down.
+  bool hasScale { false };   ///< Adds a text scale to the right of the meter.
+  float decay_s { 0.25 };    ///< Decay of meter fall off in seconds.
+  float hold_s { 2 };        ///< Meter Hold time in seconds.
   /** Adds RMS to meter. Currently works for the first two meters. RMS of input
    * will be added to meter 0 and RMS of output will be added to meter 1.*/
   bool addRms = false;
@@ -108,8 +106,6 @@ struct OptionsSpec {
   int _defaultVal { 0 };            ///< Index of default option.
 };
 
-// struct DropDownSpec : public OptionsSpec { };
-// struct RadioButtonSetSpec : public OptionsSpec { };
 typedef OptionsSpec DropDownSpec;
 typedef OptionsSpec RadioButtonSetSpec;
 

@@ -55,10 +55,36 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
     this->uiSpec.defaultWindowWidth = 800;
 
     this->primaryKnobs = {
-      { &this->fHpf, "HPF", " Hz", 20, 20e3, 2e3 },
-      { &this->qHpf, "Q_HPF", "", 0.1, 2 },
-      { &this->fLpf, "LPF", " Hz", 20, 20e3, 2e3 },
-      { &this->qLpf, "Q_LPF", "", 0.1, 2 },
+      {
+          .p_val    = &this->fHpf,
+          .name     = "HPF",
+          .suffix   = " Hz",
+          .minVal   = 20,
+          .maxVal   = 20e3,
+          .midPoint = 2e3,
+      },
+      {
+          .p_val  = &this->qHpf,
+          .name   = "Q_HPF",
+          .suffix = "",
+          .minVal = 0.1,
+          .maxVal = 2,
+      },
+      {
+          .p_val    = &this->fLpf,
+          .name     = "LPF",
+          .suffix   = " Hz",
+          .minVal   = 20,
+          .maxVal   = 20e3,
+          .midPoint = 2e3,
+      },
+      {
+          .p_val  = &this->qLpf,
+          .name   = "Q_LPF",
+          .suffix = "",
+          .minVal = 0.1,
+          .maxVal = 2,
+      },
     };
     this->dropdowns = {
       {

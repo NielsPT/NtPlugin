@@ -88,13 +88,22 @@ plugin.
 ## Installation from source
 
 If you just want to install the included plugins, this can be done from source.
-The included `build_install.sh` script will do this for Mac and Linux once the
-[needed software](#install-needed-software) is installed. `build_install.bat` is
+The included `ntPlugin.sh` script will do this for Mac and Linux once the
+[needed software](#install-needed-software) is installed. `ntPlugin.bat` is
 available for build on Windows. At the time of writing, it does not install
 anything because of Windows security features. The easiest way to use the
 plugins after this build is to add `[repo dir]\artifacts\VST3` to you DAW's
 plugin search path. Alternatively, you can copy and paste the contents of that
-folder to your plugin install folder.
+folder to your plugin install folder. I order to perform the build type:
+
+```sh
+bash ./ntPlugin.sh build all # Linux / MacOS terminal.
+´´´
+or
+
+´´´sh
+cmd /c ./ntPlugin.bat build all # Windows PowerShell for VS.
+```
 
 ## Usage
 
