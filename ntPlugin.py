@@ -118,6 +118,8 @@ def configure(
         f"-DNTFX_PLUGIN={plugin}",
         "-DCMAKE_BUILD_TYPE=Release",
     ]
+    if sys.platform == "win32":
+        args += ["-A", "x64"]
     if category:
         args += [f"-DNTFX_AAX_CATEGORY={category}"]
         args += [f"-DNTFX_VST3_CATEGORY={CATEGORY_MAP[category]}"]
