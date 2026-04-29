@@ -160,11 +160,11 @@ def addNewPluginId(plugin: str, cmakeOut: str, category: str = "") -> bool:
     Returns:
         bool: True on success.
     """
-    m = re.search("-- Generated new plugin id: ([^ ]*)\n", cmakeOut)
-    if not m:
+    match = re.search("-- Generated new plugin id: ([^ ]*)\n", cmakeOut)
+    if not match:
         print("Failed to get new plugin ID from cmake output.")
         return False
-    newPluginId = m.group(1)
+    newPluginId = match.group(1)
     if not newPluginId:
         return False
     os.makedirs(ARTIFACTS_DIR, exist_ok=True)
