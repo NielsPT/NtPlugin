@@ -1,5 +1,5 @@
+#include "lib/Comp.h"
 #include "lib/ComponentTest.h"
-#include "lib/SideChain.h"
 
 NTFX_TEST_BEGIN
 

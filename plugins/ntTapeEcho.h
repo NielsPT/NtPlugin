@@ -88,35 +88,21 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
       { &this->tGui, "Time", " s", 0.02, 2 },
       { &this->fb_percent, "Feedback", " %", 0, 200 },
       { &this->clipG_db, "Drive", " dB", -20, 20 },
-      { &this->hpf.settings.fc_hz, "HPF", " Hz", 20, 2000 },
-      { &this->lpf.settings.fc_hz, "LPF", " Hz", 200, 20000 },
+      { &this->hpf.settings.fc_hz, "HPF", " Hz", 20, 2000, true },
+      { &this->lpf.settings.fc_hz, "LPF", " Hz", 200, 20000, true },
     };
-    this->primaryKnobs[3].setLogScale();
-    this->primaryKnobs[4].setLogScale();
     this->secondaryKnobs = {
-      { &this->hpf.settings.q, "Q_HP", "", 0.5, 2, 1 },
-      { &this->lpf.settings.q, "Q_LP", "", 0.5, 2, 1 },
-      { &this->modFreq, "Mod_Freq", " Hz", 0.1, 10 },
-      { &this->modDepth_percent,
-          "Mod_Depth",
-          " %",
-          0.01,
-          1,
-          0.031622776601683794 },
+      { &this->hpf.settings.q, "Q_HP", "", 0.5, 2, true },
+      { &this->lpf.settings.q, "Q_LP", "", 0.5, 2, true },
+      { &this->modFreq, "Mod_Freq", " Hz", 0.1, 10, true },
+      { &this->modDepth_percent, "Mod_Depth", " %", 0.01, 1, true },
       { &this->modPhase, "Mod_Phase", "deg", 0, 180 },
       { &this->tOffset, "Offset", " ms", 0, 50 },
-      // TODO: proper glide parameter.
-      // { &this->nGlide, "Glide_Speed", "", 0, 10 },
-      { &this->noise_db, "Noise", " dB", -100, 0 },
+      { &this->noise_db, "Noise", " dB", -100, 0, true },
       { &this->mix_percent, "Mix", " %", 0, 100 },
       { &this->tGlide, "Glide_Time", " s", 0.0, 1 },
     };
 
-    this->secondaryKnobs[0].setLogScale();
-    this->secondaryKnobs[1].setLogScale();
-    this->secondaryKnobs[2].setLogScale();
-    // this->secondaryKnobs[3].setLogScale();
-    this->secondaryKnobs[6].setLogScale();
     this->dropdowns = {
       {
           .p_val = (int*)&this->subDev,

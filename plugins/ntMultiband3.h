@@ -26,9 +26,9 @@
 
 #pragma once
 
+#include "lib/Comp.h"
 #include "lib/FirstOrder.h"
 #include "lib/Plugin.h"
-#include "lib/SideChain.h"
 #include "lib/Stereo.h"
 #include "lib/utils.h"
 #include <array>
@@ -51,8 +51,8 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
   std::array<bool, Bands::n> mutesUi = { false, false, false };
   std::array<bool, Bands::n> mutes   = { false, false, false };
 
-  std::array<NtFx::ScSettings<signal_t>, 3> scSettings;
-  std::array<NtFx::PeakSideChainLinear<signal_t>, 3> sc;
+  std::array<NtFx::Comp::ScSettings<signal_t>, 3> scSettings;
+  std::array<NtFx::Comp::PeakSideChainLinear<signal_t>, 3> sc;
   // TODO: Add makeup gain to sidechain?
   std::array<signal_t, Bands::n> makeup_db;
   std::array<signal_t, Bands::n> makeup_lin;

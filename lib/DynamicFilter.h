@@ -31,50 +31,54 @@
 #include "lib/Stereo.h"
 
 namespace NtFx {
+namespace DynamicFilter {
+  /**
+   * @brief An optimized dynamic shelving filter, which exposes both Q values.
+   * Feedback coeffs are calculated in update, while feed forward is calculated
+   * in process, so the gain of the filter can be updated while running, making
+   * the filter usefull for dynamic processing. Gain is in the linear domain for
+   * the same reason.
+   *
+   * @tparam signal_t
+   */
+  template <typename signal_t>
+  struct Shelf : public Component<Stereo<signal_t>> {
+    NtFx::Biquad::BiQuad6Stereo<signal_t> _flt;
+    signal_t fc_hz { 2000 }; ///< Cutoff frequency.
+    signal_t gain_lin {
+      1
+    };                   ///< Gain in linear domain. Can be 0, creating a lpf.
+    signal_t q1 = 0.707; ///< Q at the cutoff frequency.
+    signal_t q2 =
+        0.707; ///< Q where the response flattens (the other frequency).
+    signal_t _alphaSquared { 0 };
+    signal_t _beta1 { 0 };
+    signal_t _beta2 { 0 };
 
-/**
- * @brief An optimized dynamic shelving filter, which exposes both Q values.
- * Feedback coeffs are calculated in update, while feed forward is calculated in
- * process, so the gain of the filter can be updated while running, making the
- * filter usefull for dynamic processing. Gain is in the linear domain for the
- * same reason.
- *
- * @tparam signal_t
- */
-template <typename signal_t>
-struct DynamidShelf : public Component<Stereo<signal_t>> {
-  NtFx::Biquad::BiQuad6Stereo<signal_t> _flt;
-  signal_t fc_hz { 2000 }; ///< Cutoff frequency.
-  signal_t gain_lin { 1 }; ///< Gain in linear domain. Can be 0, creating a lpf.
-  signal_t q1 = 0.707;     ///< Q at the cutoff frequency.
-  signal_t q2 = 0.707; ///< Q where the response flattens (the other frequency).
-  signal_t _alphaSquared { 0 };
-  signal_t _beta1 { 0 };
-  signal_t _beta2 { 0 };
+    virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+      auto A4                = signal_t(4) * gain_lin;
+      auto z                 = this->_beta2 * gcem::sqrt(this->gain_lin);
+      this->_flt.coeffs.b[0] = this->_alphaSquared + z + A4;
+      this->_flt.coeffs.b[1] = signal_t(2) * (this->_alphaSquared - A4);
+      this->_flt.coeffs.b[2] = this->_alphaSquared - z + A4;
+      return _flt.process(x);
+    }
 
-  virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
-    auto A4                = signal_t(4) * gain_lin;
-    auto z                 = this->_beta2 * gcem::sqrt(this->gain_lin);
-    this->_flt.coeffs.b[0] = this->_alphaSquared + z + A4;
-    this->_flt.coeffs.b[1] = signal_t(2) * (this->_alphaSquared - A4);
-    this->_flt.coeffs.b[2] = this->_alphaSquared - z + A4;
-    return _flt.process(x);
-  }
+    virtual void update() noexcept override {
+      auto alpha             = signal_t(2) * GCEM_PI * this->fc_hz / this->fs;
+      this->_alphaSquared    = alpha * alpha;
+      this->_beta1           = signal_t(2) * alpha / this->q1;
+      this->_beta2           = signal_t(2) * alpha / this->q2;
+      this->_flt.coeffs.a[0] = this->_alphaSquared + this->_beta1 + 4;
+      this->_flt.coeffs.a[1] = signal_t(2) * this->_alphaSquared - 8;
+      this->_flt.coeffs.a[2] = this->_alphaSquared - this->_beta1 + 4;
+    }
 
-  virtual void update() noexcept override {
-    auto alpha             = signal_t(2) * GCEM_PI * this->fc_hz / this->fs;
-    this->_alphaSquared    = alpha * alpha;
-    this->_beta1           = signal_t(2) * alpha / this->q1;
-    this->_beta2           = signal_t(2) * alpha / this->q2;
-    this->_flt.coeffs.a[0] = this->_alphaSquared + this->_beta1 + 4;
-    this->_flt.coeffs.a[1] = signal_t(2) * this->_alphaSquared - 8;
-    this->_flt.coeffs.a[2] = this->_alphaSquared - this->_beta1 + 4;
-  }
-
-  virtual void reset(float fs) noexcept override {
-    this->fs = fs;
-    this->_flt.reset(fs);
-    this->update();
-  }
-};
+    virtual void reset(float fs) noexcept override {
+      this->fs = fs;
+      this->_flt.reset(fs);
+      this->update();
+    }
+  };
+}
 }

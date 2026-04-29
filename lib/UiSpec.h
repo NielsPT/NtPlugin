@@ -37,25 +37,21 @@ namespace NtFx {
  */
 template <typename signal_t>
 struct KnobSpec {
-  signal_t* p_val {
-    nullptr
-  }; ///< Pointer to value the knob represents. Used to bind to UI.
+  signal_t* p_val { nullptr }; ///< Pointer to value the knob represents.
+  // TODO: allow spaces in names and replace the other way around.
   /** Name of knob, used for IDs and label in UI. Can't contain ' '. '_' is
    * replaced with ' ' in UI lables. */
   std::string name { "" };
-  std::string suffix {
-    ""
-  }; ///< Added to the end of value label for knob. Eg. " dB" or " ms".
-  signal_t minVal { 0.0 }; ///< Starting level of knob.
-  signal_t maxVal { 1.0 }; ///< End level of knob,
-  signal_t midPoint {
-    0.0
-  }; ///< Sets the value at the middel of the knob radius. 0 for don't care.
-  void setLogScale() { ///< Sets midPoint for logarithmic scale.
+  std::string suffix { "" }; ///< Added to the end of value label for knob.
+  signal_t minVal { 0.0 };   ///< Starting level of knob.
+  signal_t maxVal { 1.0 };   ///< End level of knob,
+  bool logScale { false };   ///< Call setLogScale at construction.
+  bool isActive { true };    ///< Gray out knob and make it unresponsive.
+  signal_t midPoint { 0.0 }; ///< Sets the middel of the knob. 0 for don't care.
+  signal_t _defaultVal;      ///< Default value. Set by updateDefaults().
+  void setLogScale() {       ///< Sets midPoint for logarithmic scale.
     this->midPoint = gcem::sqrt(this->minVal * this->maxVal);
   }
-  signal_t _defaultVal;
-  bool isActive { true };
 };
 
 /**
@@ -154,42 +150,25 @@ struct TitleBarSpec {
  *
  */
 struct UiSpec {
-  bool includeMeters { true }; ///< Add meters to the UI.
-  /** Add titlebar to the top of the UI. This includes oversampling and display
-   * scaling.
-   */
-  bool includeTitleBar { true };
-  bool includeSecondaryKnobs {
-    true
-  }; ///< Enable row of smaller knobs below the main grid.
-  uint32_t foregroundColour {
-    0xFFFFFFFF
-  }; ///< UI foreground colour in HEX format 0x[opacity][red][green][blue].
-  uint32_t backgroundColour {
-    0xFF000000
-  }; ///< UI background colour in HEX format 0x[opacity][red][green][blue].
+  bool includeMeters { true };              ///< Add meters to the UI.
+  bool includeTitleBar { true };            ///< Add title bar to UI.
+  bool includeSecondaryKnobs { true };      ///< Enable row below the main grid.
+  uint32_t foregroundColour { 0xFFFFFFFF }; ///< UI foreground colour in HEX.
+  uint32_t backgroundColour { 0xFF000000 }; ///< UI background colour in HEX.
   int defaultWindowWidth { 1000 }; ///< Window width in pixels before scaling.
   int maxRows { 3 };    ///< The maximum number of rows in main knob grid.
   int maxColumns { 6 }; ///< The maximum number of columns in main knob grid.
   float defaultFontSize { 16 }; ///< Font size before scaling.
   float labelHeight { 20 };     ///< Height of all text labels in the UI.
   float toggleHeight { 45 }; ///< Height of toggle row at the bottom of the UI.
-  float radioButtonHeight { 25 }; ///< Height of each separate radio button.
-  float radioButtonAreaWidth {
-    120
-  }; ///< Width of the radio buttons ares to the right of the UI.
-  float knobHeight { 200 };        ///< Height or row of knobs in grid in UI.
-  float secondaryKnobWidth { 75 }; ///< Width of secondary knobs in UI.
-  float secondaryKnobHeight {
-    115
-  }; ///< Height of secondary knobs in UI including text labels name and value.
-  float titleBarHeight {
-    22
-  }; ///< Height of title bar in pixels before UI scaling.
-  int meterHeight_dots { 12 }; ///< Number of dots in the meteres.
-  int meterWidth { 35 };       ///< Width of each meter in pixels.
-  float meterRefreshRate_hz {
-    50
-  }; ///< Refresh rate of the timer that updates the meters in the UI.
+  float radioButtonHeight { 25 };     ///< Height of each separate radio button.
+  float radioButtonAreaWidth { 120 }; ///< Width of the radio buttons ares.
+  float knobHeight { 200 };           ///< Height or row of knobs in grid in UI.
+  float secondaryKnobWidth { 75 };    ///< Width of secondary knobs in UI.
+  float secondaryKnobHeight { 115 };  ///< Height of secondary knobs in UI.
+  float titleBarHeight { 22 };        ///< Height of title bar in pixels.
+  int meterHeight_dots { 12 };        ///< Number of dots in the meteres.
+  int meterWidth { 35 };              ///< Width of each meter in pixels.
+  float meterRefreshRate_hz { 50 };   ///< Refresh rate of meters in the UI.
 };
 } // namespace NtFx

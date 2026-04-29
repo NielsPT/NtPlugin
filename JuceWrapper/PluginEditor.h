@@ -68,31 +68,28 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   NtFx::KnobLookAndFeel knobLookAndFeel;
   NtFx::TitleBarLookAndFeel dropDownLookAndFeel;
 
-  std::vector<std::unique_ptr<juce::Slider>> allPrimaryKnobs;
-  std::vector<std::unique_ptr<juce::Label>> allPrimaryKnobLabels;
-  std::vector<std::unique_ptr<juce::Slider>> allSecondaryKnobs;
-  std::vector<std::unique_ptr<juce::Label>> allSecondaryKnobLabels;
-  std::vector<std::unique_ptr<NtFx::Toggle>> allToggles;
-  std::vector<std::unique_ptr<juce::ComboBox>> allDropDowns;
-  std::vector<std::unique_ptr<juce::Label>> allDropDownLabels;
-  std::vector<std::unique_ptr<NtFx::RadioButtonSet>> allRadioButtons;
-  std::vector<std::unique_ptr<juce::Label>> allRadioButtonLabels;
-  std::vector<std::unique_ptr<NtFx::ToggleSet>> allToggleSets;
-  std::vector<std::unique_ptr<juce::Label>> allToggleSetLabels;
+  std::vector<std::unique_ptr<juce::Slider>> primaryKnobs;
+  std::vector<std::unique_ptr<juce::Label>> primaryKnobLabels;
+  std::vector<std::unique_ptr<juce::Slider>> secondaryKnobs;
+  std::vector<std::unique_ptr<juce::Label>> secondaryKnobLabels;
+  std::vector<std::unique_ptr<NtFx::Toggle>> toggles;
+  std::vector<std::unique_ptr<juce::ComboBox>> dropDowns;
+  std::vector<std::unique_ptr<juce::Label>> dropDownLabels;
+  std::vector<std::unique_ptr<NtFx::RadioButtonSet>> radioButtons;
+  std::vector<std::unique_ptr<juce::Label>> radioButtonLabels;
+  std::vector<std::unique_ptr<NtFx::ToggleSet>> toggleSets;
+  std::vector<std::unique_ptr<juce::Label>> toggleSetLabels;
   std::vector<std::unique_ptr<juce::ComboBox>> titleBarDropDowns;
   std::vector<std::unique_ptr<juce::Label>> titleBarDropDownLabels;
   std::vector<
       std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>>
-      allKnobAttachments;
+      knobAttachments;
   std::vector<
       std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>>
-      allToggleAttachments;
+      toggleAttachments;
   std::vector<
       std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>>
-      allDropDownAttachments;
-  // std::vector<
-  //     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>>
-  //     allRadioButtonAttachments;
+      dropDownAttachments;
 
   std::vector<juce::Rectangle<int>> borderedAreas;
   std::vector<juce::Rectangle<int>> grayAreas;

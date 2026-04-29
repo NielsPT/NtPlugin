@@ -96,7 +96,7 @@ struct MonoMeter : public juce::Component {
     for (size_t i = 0; i < this->nDots; i++) {
       int y;
       y = this->pad + (i + 1) * this->dotDist;
-      if (this->meterSpec.invert && i < 2) { continue; }
+      // if (this->meterSpec.invert && i < 2) { continue; }
       g.setColour(juce::Colour(this->uiSpec.foregroundColour));
       g.drawEllipse(this->pad, y, this->dotDiameter, this->dotDiameter, 1);
       float fillPad      = this->getWidth() * 4.0 / 35.0;
@@ -171,7 +171,6 @@ struct MonoMeter : public juce::Component {
     if (rms_db > this->meterSpec.maxVal_db) {
       rms_db = this->meterSpec.maxVal_db;
     }
-
     this->nActiveDotsPeak = this->refreshNActiveDots(peak_db);
     this->nActiveDotsRms  = this->refreshNActiveDots(rms_db);
     this->refreshPeakHold(peak_db);
@@ -199,17 +198,9 @@ struct MonoMeter : public juce::Component {
 
   int refreshNActiveDots(float peak_db) {
     int nActiveDots;
-    if (peak_db >= 0.01) {
-      nActiveDots = this->nDots;
-      // } else if (peak_db >= -1.0) {
-      //   nActiveDots = this->nDots - 1;
-      // } else if (peak_db >= -3.0) {
-      //   nActiveDots = this->nDots - 2;
-    } else {
-      nActiveDots =
-          (peak_db + this->meterSpec.maxVal_db - this->meterSpec.minVal_db)
-          / this->dbPrDot;
-    }
+    nActiveDots =
+        (peak_db + this->meterSpec.maxVal_db - this->meterSpec.minVal_db)
+        / this->dbPrDot;
     return this->nDots - nActiveDots;
   }
 
@@ -242,13 +233,9 @@ struct MeterScale : public juce::Component {
     auto offset = this->meter.pad + this->meter.dotDist;
     g.setColour(juce::Colour(meter.uiSpec.foregroundColour));
     g.setFont(this->fontSize);
-    g.drawText("OVER", 0, offset, 1000, 10, juce::Justification::left, false);
-    // auto y = this->meter.dotDist + offset;
-    // g.drawText("- 1", 0, y, 1000, 10, juce::Justification::left, false);
-    for (size_t i = 1; i < this->meter.nDots; i++) {
+    for (size_t i = 0; i < this->meter.nDots; i++) {
       auto y = i * this->meter.dotDist + offset;
-      auto t = "- "
-          + std::to_string(static_cast<int>(this->meter.dbPrDot * (i - 1)));
+      auto t = "- " + std::to_string(static_cast<int>(this->meter.dbPrDot * i));
       g.drawText(t, 0, y, 1000, 10, juce::Justification::left, false);
     }
   }

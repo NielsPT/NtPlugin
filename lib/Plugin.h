@@ -175,9 +175,11 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
   constexpr void updateDefaults() noexcept {
     for (auto& k : this->primaryKnobs) {
       if (k.p_val) { k._defaultVal = *k.p_val; }
+      if (k.logScale) { k.setLogScale(); }
     }
     for (auto& k : this->secondaryKnobs) {
       if (k.p_val) { k._defaultVal = *k.p_val; }
+      if (k.logScale) { k.setLogScale(); }
     }
     for (auto& t : this->toggles) {
       if (t.p_val) { t._defaultVal = *t.p_val; }
@@ -228,9 +230,9 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
     signal_t def = signal_t(0);
     if (idx >= this->meters.size()) { return def; }
     if (this->meters[idx].invert) { def = signal_t(1); }
+    ensureFinite(this->peakLevels[idx]);
     NtFx::Stereo<signal_t> tmp = this->peakLevels[idx];
     this->peakLevels[idx]      = signal_t(def);
-    ensureFinite(tmp, def);
     return tmp;
   }
 

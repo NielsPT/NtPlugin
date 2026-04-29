@@ -21,23 +21,22 @@
 #pragma once
 
 #include "lib/Biquad.h"
+#include "lib/Comp.h"
 #include "lib/Plugin.h"
-#include "lib/SideChain.h"
 #include "lib/SoftClip.h"
 #include "lib/Stereo.h"
 #include "lib/utils.h"
-
 #include <algorithm>
 
 enum scMode { feedForward = 0, feedback, external };
 
 template <typename signal_t>
 struct ntCompressor : public NtFx::NtPlugin<signal_t> {
-  NtFx::ScSettings<signal_t> scSettings;
-  NtFx::PeakSideChainDb<signal_t> peakScDb;
-  NtFx::PeakSideChainLinear<signal_t> peakScLin;
-  NtFx::RmsSideChainDb<signal_t> rmsScDb;
-  NtFx::RmsSideChainLinear<signal_t> rmsScLin;
+  NtFx::Comp::ScSettings<signal_t> scSettings;
+  NtFx::Comp::PeakSideChainDb<signal_t> peakScDb;
+  NtFx::Comp::PeakSideChainLinear<signal_t> peakScLin;
+  NtFx::Comp::RmsSideChainDb<signal_t> rmsScDb;
+  NtFx::Comp::RmsSideChainLinear<signal_t> rmsScLin;
 
   signal_t makeup_db   = signal_t(0.0);
   signal_t mix_percent = signal_t(100.0);
@@ -157,7 +156,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     this->radioButtons.push_back({
         .p_val   = (int*)&this->scMode,
         .name    = "Side Chain",
-        .options = { "Internal", "Feedback", "External" },
+        .options = { "Feed Forward", "Feedback", "External" },
     });
 
     this->meters = {
@@ -229,10 +228,8 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   }
 
   void reset(float fs) noexcept override {
-    this->fs = fs;
-    std::fill(this->peakLevels.begin(), this->peakLevels.end(), signal_t(0));
-    this->peakLevels[2] = signal_t(1);
-    this->fbState       = signal_t(0);
+    this->fs      = fs;
+    this->fbState = signal_t(0);
     this->peakScDb.reset(this->fs);
     this->peakScLin.reset(this->fs);
     this->rmsScDb.reset(this->fs);
