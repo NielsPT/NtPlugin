@@ -104,15 +104,18 @@ struct MonoMeter : public juce::Component {
       if (fillDiameter < 0) { return; }
       float fillX = this->pad + fillPad / 2;
       float fillY = y + fillPad / 2;
+
+      // Filled regular dots.
       if ((!this->meterSpec.invert && i >= this->nActiveDotsPeak)
-          || (this->meterSpec.invert && i <= this->nActiveDotsPeak
-              && this->nActiveDotsPeak != 0)) {
+          || (this->meterSpec.invert && i <= this->nActiveDotsPeak - 1)) {
         uint8_t opacity = 255.0f * this->opacity;
         g.setColour(juce::Colour(
             this->uiSpec.foregroundColour & 0x00FFFFFF | (opacity << 24)));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
-      if (this->meterSpec.invert && i == this->nActiveDotsPeak + 1
+
+      // Fractional.
+      if (this->meterSpec.invert && i == this->nActiveDotsPeak
           && this->nActiveDotsPeak != 0) {
         uint8_t opacity = 255.0f * (1 - this->fractPeak);
         g.setColour(juce::Colour(
@@ -125,12 +128,16 @@ struct MonoMeter : public juce::Component {
             this->uiSpec.foregroundColour & 0x00FFFFFF | (opacity << 24)));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
+
+      // RMS overlay.
       if (!this->meterSpec.invert && i >= this->nActiveDotsRms) {
         uint8_t opacity = 255.0f * this->opacity;
         g.setColour(juce::Colour(
             this->uiSpec.foregroundColour & 0x00FFFFFF | (opacity << 24)));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
+
+      // Peak hold ring.
       if (i == this->iHoldDot && this->meterSpec.hold_s
           && !(this->meterSpec.invert && i == 0)) {
         g.setColour(juce::Colour(
@@ -171,8 +178,8 @@ struct MonoMeter : public juce::Component {
     if (rms_db > this->meterSpec.maxVal_db) {
       rms_db = this->meterSpec.maxVal_db;
     }
-    this->nActiveDotsPeak = this->refreshNActiveDots(peak_db);
-    this->nActiveDotsRms  = this->refreshNActiveDots(rms_db);
+    this->nActiveDotsPeak = this->calcActiveDots(peak_db);
+    this->nActiveDotsRms  = this->calcActiveDots(rms_db);
     this->refreshPeakHold(peak_db);
     this->fractPeak = gcem::abs(peak_db + this->nActiveDotsPeak * this->dbPrDot)
         / this->dbPrDot;
@@ -196,7 +203,7 @@ struct MonoMeter : public juce::Component {
         (this->meterSpec.maxVal_db - this->meterSpec.minVal_db) / this->nDots;
   }
 
-  int refreshNActiveDots(float peak_db) {
+  int calcActiveDots(float peak_db) {
     int nActiveDots;
     nActiveDots =
         (peak_db + this->meterSpec.maxVal_db - this->meterSpec.minVal_db)

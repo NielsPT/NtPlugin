@@ -26,7 +26,6 @@
 #include "lib/SoftClip.h"
 #include "lib/Stereo.h"
 #include "lib/utils.h"
-#include <algorithm>
 
 enum scMode { feedForward = 0, feedback, external };
 
@@ -37,23 +36,20 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   NtFx::Comp::PeakSideChainLinear<signal_t> peakScLin;
   NtFx::Comp::RmsSideChainDb<signal_t> rmsScDb;
   NtFx::Comp::RmsSideChainLinear<signal_t> rmsScLin;
-
-  signal_t makeup_db   = signal_t(0.0);
-  signal_t mix_percent = signal_t(100.0);
-
-  int linEnable       = 0;
-  int rmsEnable       = 0;
-  int scMode          = 0;
-  bool scListenEnable = false;
-  bool clip           = true;
-  bool bypassEnable   = false;
-
-  signal_t mix_lin               = signal_t(1.0);
-  signal_t makeup_lin            = signal_t(1.0);
-  NtFx::Stereo<signal_t> fbState = signal_t(0.0);
-
   NtFx::Biquad::EqBand<signal_t> hpf;
   NtFx::Biquad::EqBand<signal_t> boost;
+
+  signal_t makeup_db { signal_t(0.0) };
+  signal_t mix_percent { signal_t(100.0) };
+  int linEnable { 0 };
+  int rmsEnable { 0 };
+  int scMode { scMode::feedForward };
+  bool scListenEnable { false };
+  bool clip { true };
+  bool bypassEnable { false };
+  signal_t mix_lin { signal_t(1.0) };
+  signal_t makeup_lin { signal_t(1.0) };
+  NtFx::Stereo<signal_t> fbState { signal_t(0.0) };
 
   ntCompressor()
       : peakScDb(scSettings), peakScLin(scSettings), rmsScDb(scSettings),
@@ -155,8 +151,8 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     });
     this->radioButtons.push_back({
         .p_val   = (int*)&this->scMode,
-        .name    = "Side Chain",
-        .options = { "Feed Forward", "Feedback", "External" },
+        .name    = "Side_Chain",
+        .options = { "Normal", "Feedback", "External" },
     });
 
     this->meters = {

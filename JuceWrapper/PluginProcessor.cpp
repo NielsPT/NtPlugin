@@ -133,18 +133,16 @@ void NtPluginAudioProcessor::processBlock(
   auto leftBuffer  = buffer.getWritePointer(0);
   auto rightBuffer = buffer.getWritePointer(1);
 
-  bool scConnected = false;
-  const float* scBuffer;
+  const float* scBuffer    = nullptr;
   const auto& sidechainBus = this->getBusBuffer(buffer, true, 1);
   if (sidechainBus.getNumChannels() > 0) {
-    scConnected = true;
-    scBuffer    = sidechainBus.getReadPointer(0);
+    scBuffer = sidechainBus.getReadPointer(0);
   }
   for (size_t i = 0; i < buffer.getNumSamples(); i++) {
     NtFx::Stereo<float> x { leftBuffer[i], rightBuffer[i] };
-    if (scConnected) { this->plug.xSc = scBuffer[i]; }
+    if (scBuffer) { this->plug.xSc = scBuffer[i]; }
     auto y = this->src.process(x);
-    if (this->plug.meters.size() <= 2) {
+    if (this->plug.meters.size() >= 2) {
       if (this->plug.meters[0].addRms) { this->plug.xRms[0].process(x); }
       if (this->plug.meters[1].addRms) { this->plug.xRms[1].process(y); }
     }
@@ -199,13 +197,13 @@ void NtPluginAudioProcessor::loadParameter(std::vector<T>& v) {
 void NtPluginAudioProcessor::loadRadioButtons(
     std::vector<NtFx::RadioButtonSetSpec>& v) {
   for (auto& p : v) {
-    int val;
+    int val { 0 };
     for (size_t i = 0; i < p.options.size(); i++) {
       auto par = this->paramLayout.getParameterAsValue(
           NtFx::makeTmpToggle(p.name, p.options[i], "radioButton").name);
       if (par.getValue()) { val = i; }
     }
-    *p.p_val = val + 1;
+    *p.p_val = val;
     DBG("Loaded '" << p.name << "': " << float(*p.p_val));
   }
 }

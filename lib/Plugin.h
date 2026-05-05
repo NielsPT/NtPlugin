@@ -168,14 +168,14 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
   void setParameterActive(std::string name, bool val) {
     for (auto& param : this->primaryKnobs) {
       if (param.name == name) {
-        param.isActive      = false;
+        param.isActive      = val;
         this->uiNeedsUpdate = true;
         return;
       }
     }
     for (auto& param : this->secondaryKnobs) {
       if (param.name == name) {
-        param.isActive      = false;
+        param.isActive      = val;
         this->uiNeedsUpdate = true;
         return;
       }

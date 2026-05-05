@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include "JuceWrapper/RadioButtons.h"
 #include "LookAndFeel.h"
 #include "Meter.h"
 #include "PluginProcessor.h"
+#include "RadioButtons.h"
 #include "Toggle.h"
 #include "lib/UiSpec.h"
 
@@ -59,9 +59,16 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   NtPluginAudioProcessorEditor(NtPluginAudioProcessor&);
   ~NtPluginAudioProcessorEditor() override;
 
-  //==============================================================================
-  void paint(juce::Graphics&) override;
-  void resized() override;
+  // "Public".
+  virtual void paint(juce::Graphics&) override;
+  virtual void resized() override;
+
+  // Callbacks.
+  virtual void sliderValueChanged(juce::Slider* slider) override;
+  virtual void buttonClicked(juce::Button* button) override;
+  virtual void changeListenerCallback(juce::ChangeBroadcaster* source) override;
+  virtual void comboBoxChanged(juce::ComboBox* p_box) override;
+  virtual void timerCallback() override;
 
   NtPluginAudioProcessor& proc;
   NtFx::MeterGroup meters;
@@ -102,49 +109,49 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
 
   juce::Label pluginNameLabel;
 
-  void sliderValueChanged(juce::Slider* slider) override;
-  void buttonClicked(juce::Button* button) override;
-  void changeListenerCallback(juce::ChangeBroadcaster* source) override;
-  void comboBoxChanged(juce::ComboBox* p_box) override;
-  void timerCallback() override;
-  void updateUi();
-  void updateTitleBar(juce::Rectangle<int>& area);
-  void updateMeters(juce::Rectangle<int>& area);
-  void placeSmallTogglesArea(juce::Rectangle<int>& area);
-  void placeBottomRow(juce::Rectangle<int>& area);
-  void updateSecondaryKnobs(juce::Rectangle<int>& area);
-  void updatePrimaryKnobs(juce::Rectangle<int>& area);
-  void initPrimaryKnob(NtFx::KnobSpec<float>& p_spec);
-  void initSecondaryKnob(NtFx::KnobSpec<float>& p_spec);
+  // Initializers.
+  void _initPrimaryKnob(NtFx::KnobSpec<float>& p_spec);
+  void _initSecondaryKnob(NtFx::KnobSpec<float>& p_spec);
   void _initKnob(NtFx::KnobSpec<float>& p_spec,
       std::unique_ptr<juce::Slider>& p_slider,
       std::unique_ptr<juce::Label>& p_label);
-  void initToggle(NtFx::ToggleSpec& spec);
-  void _initToggle(NtFx::Toggle* p_toggle, NtFx::ToggleSpec& spec);
-  void initToggleGroup(NtFx::ToggleSetSpec& spec);
-  void initDropDown(NtFx::DropDownSpec& p_spec, bool addToTitleBar = false);
-  void initRadioButton(NtFx::RadioButtonSetSpec& spec);
+  void _initToggle(NtFx::ToggleSpec& spec);
+  void __initToggle(NtFx::Toggle* p_toggle, NtFx::ToggleSpec& spec);
+  void _initToggleGroup(NtFx::ToggleSetSpec& spec);
+  void _initDropDown(NtFx::DropDownSpec& p_spec, bool addToTitleBar = false);
+  void _initRadioButton(NtFx::RadioButtonSetSpec& spec);
+
+  // UI update.
+  void _updateUi();
+  void _updateTitleBar(juce::Rectangle<int>& area);
+  void _updateMeters(juce::Rectangle<int>& area);
+  void _updateSecondaryKnobs(juce::Rectangle<int>& area);
+  void _updatePrimaryKnobs(juce::Rectangle<int>& area);
+  void _updateColours();
+  void _updateUiScale();
+  void _updateOversampling();
+  void _updateTheme();
+  void _placeSmallTogglesArea(juce::Rectangle<int>& area);
+  void _placeBottomRow(juce::Rectangle<int>& area);
+  void _placeDropdowns(juce::Rectangle<int>& area, size_t columnWidth);
+  void _placeToggles(juce::Rectangle<int>& area, size_t columnWidth);
+  template <typename T>
+  void _placeSmallToggles(juce::Rectangle<int>& area,
+      int size,
+      std::vector<std::unique_ptr<juce::Label>>& labels,
+      std::vector<std::unique_ptr<T>>& toggles);
+
+  // Helpers.
   template <typename T, typename spec_t>
-  std::unique_ptr<T> makeSmallToggleSet(spec_t& spec);
-  void updateColours();
-  void updateUiScale();
-  void updateOversampling();
-  void updateTheme();
-  void calcSliderRowsCols(
+  std::unique_ptr<T> _makeSmallToggleSet(spec_t& spec);
+  void _calcSliderRowsCols(
       int nSliders, int& nRows, int& nColumns, int maxRows, int maxColumns);
-  void makeGrid(juce::Rectangle<int>& area,
+  void _makeGrid(juce::Rectangle<int>& area,
       float nRows,
       float nCols,
       float colWidth,
       float rowHeight,
       float pad);
-  std::unique_ptr<juce::Label> makeLabel(const std::string name);
-  void placeDropdowns(juce::Rectangle<int>& area, size_t columnWidth);
-  void placeToggles(juce::Rectangle<int>& area, size_t columnWidth);
-  template <typename T>
-  void placeSmallToggles(juce::Rectangle<int>& area,
-      int size,
-      std::vector<std::unique_ptr<juce::Label>>& labels,
-      std::vector<std::unique_ptr<T>>& toggles);
+  std::unique_ptr<juce::Label> _makeLabel(const std::string name);
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtPluginAudioProcessorEditor)
 };

@@ -103,6 +103,7 @@ struct OptionsSpec {
   std::string name; ///< Name of drop down, used for label and id.
   std::vector<std::string> options; ///< Vector of options in the drop down.
   int _defaultVal { 0 };            ///< Index of default option.
+  int _id { 0 };
 };
 
 typedef OptionsSpec DropDownSpec;

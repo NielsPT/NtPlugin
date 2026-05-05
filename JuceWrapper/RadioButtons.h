@@ -38,7 +38,6 @@
 #include "lib/UiSpec.h"
 
 namespace NtFx {
-
 struct ToggleSetBase : public juce::Component, public juce::ChangeBroadcaster {
   UiSpec& uiSpec;
   std::vector<std::unique_ptr<Toggle>> toggles;
@@ -94,24 +93,30 @@ struct ToggleSet : public ToggleSetBase {
 
 struct RadioButtonSet : public ToggleSetBase {
   RadioButtonSetSpec& spec;
-  int val;
-  static int id;
+  static int s_id;
   RadioButtonSet(RadioButtonSetSpec& spec, UiSpec& uiSpec)
-      : spec(spec), ToggleSetBase(uiSpec), val(spec._defaultVal) {
+      : spec(spec), ToggleSetBase(uiSpec) { //}, val(spec._defaultVal) {
     for (size_t i = 0; i < spec.options.size(); i++) {
       auto option   = spec.options[i];
       auto p_toggle = this->makeToggle(option);
-      p_toggle->setRadioGroupId(id++);
+      if (!this->spec._id) {
+        this->spec._id = ++s_id;
+        p_toggle->setRadioGroupId(
+            this->spec._id, juce::NotificationType::dontSendNotification);
+      }
       p_toggle->onClick = [this, i]() {
-        this->val = i;
+        if (!this->toggles[i]->getToggleState()) { return; }
+        *this->spec.p_val = i;
+        DBG("Onclick: Radio button '" << this->spec.name << "', group ID: "
+                                      << this->spec._id << " val: " << i);
         this->sendChangeMessage();
       };
-      toggles.push_back(std::move(p_toggle));
+      this->toggles.push_back(std::move(p_toggle));
     }
   }
 
   virtual void updateToggleStates(int i) override {
-    if (this->val == i) {
+    if (*this->spec.p_val == i) {
       this->toggles[i]->setToggleState(
           true, juce::NotificationType::dontSendNotification);
     } else {
@@ -119,6 +124,7 @@ struct RadioButtonSet : public ToggleSetBase {
           false, juce::NotificationType::dontSendNotification);
     }
   }
+
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RadioButtonSet)
 };
 }

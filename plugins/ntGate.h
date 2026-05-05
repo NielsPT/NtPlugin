@@ -65,7 +65,7 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
           .name   = "Range",
           .suffix = " dB",
           .minVal = -60,
-          .maxVal = 0,
+          .maxVal = -0.01,
       },
       {
           .p_val  = &this->scSettings.tAtt_ms,
@@ -158,7 +158,7 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
       { .name = "IN", .addRms = true },
       { .name = "OUT", .hasScale = true, .addRms = true },
       { .name = "GR", .invert = _DO_INVERT },
-      { .name = "HF_GR", .invert = _DO_INVERT, .hasScale = true },
+      { .name = "HF GR", .invert = _DO_INVERT, .hasScale = true },
     };
     this->updateDefaults();
   }
@@ -175,7 +175,7 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
       xSc = this->xSc;
     } else if (this->scMode == ScMode::ignore) {
       auto xAbs = gcem::abs(this->xSc);
-      if (xAbs > this->ignorePeak) {
+      if (xAbs >= this->ignorePeak) {
         this->ignorePeak  = xAbs;
         this->ignoreCount = 0;
       }
