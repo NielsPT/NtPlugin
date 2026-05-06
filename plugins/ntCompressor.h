@@ -217,6 +217,11 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   }
 
   void update() noexcept override {
+    if (this->rmsEnable) {
+      this->activateParameter("RMS");
+    } else {
+      this->deactivateParameter("RMS");
+    }
     this->hpf.update();
     this->boost.update();
     this->peakScDb.update();

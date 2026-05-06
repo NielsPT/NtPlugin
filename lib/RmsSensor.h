@@ -47,7 +47,7 @@ namespace NtFx {
 template <typename signal_t,
     int maxT_ms           = 1000,
     int maxSampleDLineLen = 192 * 8>
-struct RmsSensor : public Component<signal_t> {
+struct LongRmsSensor : public Component<signal_t> {
   std::array<signal_t, maxSampleDLineLen> samleDLine; ///< Sample delay line.
   std::array<signal_t, maxT_ms> msDLine; ///< Millisecond delay line.
   signal_t sampleAccum { 0 }; ///< Accumulator for current sample values.
@@ -171,8 +171,9 @@ struct RmsSensor : public Component<signal_t> {
 template <typename signal_t,
     int maxT_ms           = 1000,
     int maxSampleDLineLen = 192 * 8>
-struct RmsSensorStereo : public StereoComponent<signal_t,
-                             RmsSensor<signal_t, maxT_ms, maxSampleDLineLen>> {
+struct LongRmsSensorStereo
+    : public StereoComponent<signal_t,
+          LongRmsSensor<signal_t, maxT_ms, maxSampleDLineLen>> {
   /**
    * @brief Set the time window for RMS calculation
    *

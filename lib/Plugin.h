@@ -48,7 +48,7 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
    * @brief Array of rms sensors for RMS meter.
    *
    */
-  std::array<RmsSensorStereo<signal_t, 250, 192>, 2> xRms;
+  std::array<LongRmsSensorStereo<signal_t, 250, 192>, 2> xRms;
 
   /**
    * @brief Peak level to be displayed in the meters.

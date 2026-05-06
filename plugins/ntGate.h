@@ -26,10 +26,13 @@
 #include "lib/Plugin.h"
 #include "lib/Stereo.h"
 #include "lib/utils.h"
+#include <array>
 
 #define _DO_INVERT true
 
 enum ScMode { internal, external, ignore };
+
+constexpr int dlLookaheadLen = 192 * 8 * 10;
 
 template <typename signal_t>
 struct ntGate : NtFx::NtPlugin<signal_t> {
@@ -40,19 +43,25 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
   NtFx::DynamicFilter::Shelf<signal_t> flt;
   NtFx::Biquad::EqBand<signal_t> hpf;
   NtFx::Biquad::EqBand<signal_t> lpf;
+  std::array<NtFx::Stereo<signal_t>, dlLookaheadLen> dlLookahead;
   signal_t ignoreThresh_db { -20 };
   signal_t ignoreThresh_lin { 0.1 };
   signal_t tIgnore_ms { 6 };
   signal_t ignorePeak { 0 };
+  signal_t tLookahead_ms { 0.2 };
   int ignoreCount { 0 };
   int nIgnore { 384 };
   int scMode { 0 };
+  int nLookahead { 4 };
+  int iLookahead { 0 };
   bool bypassEnable { false };
   bool scListenEnable { false };
   bool hfAccelEnable { false };
+  bool lookaheadEnable { true };
 
   ntGate() : sc(scSettings), scHf(scHfSettings) {
-    this->primaryKnobs = {
+    this->uiSpec.defaultWindowWidth = 1200;
+    this->primaryKnobs              = {
       {
           .p_val  = &this->scSettings.thresh_db,
           .name   = "Threshold",
@@ -141,10 +150,18 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
           .maxVal   = 0,
           .isActive = false,
       },
+      {
+          .p_val  = &this->tLookahead_ms,
+          .name   = "Lookahead",
+          .suffix = " ms",
+          .minVal = 0,
+          .maxVal = 10,
+      },
     };
     this->toggles = {
       { .p_val = &this->scListenEnable, .name = "SC_Listen" },
       { .p_val = &this->hfAccelEnable, .name = "Dual_Band" },
+      // { .p_val = &this->lookaheadEnable, .name = "Lookahead" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
     this->radioButtons = {
@@ -164,6 +181,8 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
   }
 
   NtFx::Stereo<signal_t> process(NtFx::Stereo<signal_t> x) noexcept override {
+    this->dlLookahead[this->iLookahead++] = x;
+    if (this->iLookahead >= dlLookaheadLen) { this->iLookahead = 0; }
     this->template updatePeakLevel<0>(x);
     if (this->bypassEnable) {
       this->template updatePeakLevel<1>(x);
@@ -194,12 +213,19 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
     }
     auto gr   = this->sc.process(yLpf);
     auto grHf = gr;
-    auto y    = x * gr;
+    auto xGr  = x;
+    if (this->lookaheadEnable) {
+      // TODO: delayline class.
+      auto i = this->iLookahead - this->nLookahead;
+      if (i < 0) { i += dlLookaheadLen; }
+      xGr = this->dlLookahead[i];
+    }
+    auto y = xGr * gr;
     if (this->hfAccelEnable) {
       grHf         = this->scHf.process(yLpf);
       auto A       = grHf / gr;
       flt.gain_lin = A.absMax();
-      y            = this->flt.process(x) * gr;
+      y            = this->flt.process(xGr) * gr;
     }
     this->template updatePeakLevel<1>(y);
     this->template updatePeakLevel<2, _DO_INVERT>(gr);
@@ -222,6 +248,8 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
     } else {
       this->deactivateParameter("Ignore_Sens");
     }
+    this->lookaheadEnable  = (this->tLookahead_ms > 0);
+    this->nLookahead       = this->tLookahead_ms * 0.001 * this->fs;
     this->nIgnore          = gcem::round(this->tIgnore_ms * 0.001 * this->fs);
     this->ignoreThresh_lin = NtFx::invDb(this->ignoreThresh_db);
     this->flt.q1           = 0.6;
