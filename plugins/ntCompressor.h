@@ -51,6 +51,10 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   signal_t makeup_lin { signal_t(1.0) };
   NtFx::Stereo<signal_t> fbState { signal_t(0.0) };
 
+  bool dummy1;
+  bool dummy2;
+  bool dummy3;
+
   ntCompressor()
       : peakScDb(scSettings), peakScLin(scSettings), rmsScDb(scSettings),
         rmsScLin(scSettings) {

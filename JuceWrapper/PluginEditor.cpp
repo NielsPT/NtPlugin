@@ -18,9 +18,9 @@
  **/
 
 #include "PluginEditor.h"
-#include "JuceWrapper/RadioButtons.h"
 #include "Meter.h"
 #include "PluginProcessor.h"
+#include "RadioButtons.h"
 #include "Toggle.h"
 
 #include "juce_audio_processors/juce_audio_processors.h"

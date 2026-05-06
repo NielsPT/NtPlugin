@@ -44,8 +44,8 @@ struct ToggleSetBase : public juce::Component, public juce::ChangeBroadcaster {
 
   float uiScale = 1;
   ToggleSetBase(UiSpec& uiSpec) : uiSpec(uiSpec) { }
-  std::unique_ptr<Toggle> makeToggle(std::string option) {
-    auto p_toggle = std::make_unique<Toggle>(option);
+  std::unique_ptr<Toggle> makeToggle(std::string option, int i) {
+    auto p_toggle = std::make_unique<Toggle>(option, i);
     this->addAndMakeVisible(p_toggle.get());
     p_toggle->setButtonText(option);
     p_toggle->setClickingTogglesState(true);
@@ -83,8 +83,13 @@ struct ToggleSet : public ToggleSetBase {
   ToggleSet(ToggleSetSpec spec, UiSpec& uiSpec)
       : spec(spec), ToggleSetBase(uiSpec) {
     for (size_t i = 0; i < spec.toggles.size(); i++) {
-      auto p_toggle     = this->makeToggle(spec.toggles[i].name);
-      p_toggle->onClick = [this]() { this->sendChangeMessage(); };
+      auto p_toggle     = this->makeToggle(spec.toggles[i].name, i);
+      auto pp_toggle    = p_toggle.get();
+      p_toggle->onClick = [this, pp_toggle]() {
+        DBG("Onclick toggle '" << pp_toggle->getName()
+                               << "': " << int(pp_toggle->getToggleState()));
+        this->sendChangeMessage();
+      };
       toggles.push_back(std::move(p_toggle));
     }
   }
@@ -94,21 +99,24 @@ struct ToggleSet : public ToggleSetBase {
 struct RadioButtonSet : public ToggleSetBase {
   RadioButtonSetSpec& spec;
   static int s_id;
+
   RadioButtonSet(RadioButtonSetSpec& spec, UiSpec& uiSpec)
       : spec(spec), ToggleSetBase(uiSpec) { //}, val(spec._defaultVal) {
     for (size_t i = 0; i < spec.options.size(); i++) {
       auto option   = spec.options[i];
-      auto p_toggle = this->makeToggle(option);
+      auto p_toggle = this->makeToggle(option, i);
       if (!this->spec._id) {
         this->spec._id = ++s_id;
         p_toggle->setRadioGroupId(
             this->spec._id, juce::NotificationType::dontSendNotification);
       }
-      p_toggle->onClick = [this, i]() {
-        if (!this->toggles[i]->getToggleState()) { return; }
-        *this->spec.p_val = i;
-        DBG("Onclick: Radio button '" << this->spec.name << "', group ID: "
-                                      << this->spec._id << " val: " << i);
+      auto pp_toggle    = p_toggle.get();
+      p_toggle->onClick = [this, pp_toggle]() {
+        if (!pp_toggle->getToggleState()) { return; }
+        *this->spec.p_val = pp_toggle->_id;
+        DBG("Onclick radiobutton '" << this->spec.name
+                                    << "', group ID: " << this->spec._id
+                                    << " val: " << *this->spec.p_val);
         this->sendChangeMessage();
       };
       this->toggles.push_back(std::move(p_toggle));
@@ -116,12 +124,12 @@ struct RadioButtonSet : public ToggleSetBase {
   }
 
   virtual void updateToggleStates(int i) override {
-    if (*this->spec.p_val == i) {
+    if (*this->spec.p_val != i) {
       this->toggles[i]->setToggleState(
-          true, juce::NotificationType::dontSendNotification);
+          false, juce::NotificationType::sendNotificationSync);
     } else {
       this->toggles[i]->setToggleState(
-          false, juce::NotificationType::dontSendNotification);
+          true, juce::NotificationType::sendNotificationSync);
     }
   }
 

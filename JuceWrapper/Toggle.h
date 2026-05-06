@@ -37,16 +37,13 @@
 namespace NtFx {
 class Toggle : public juce::TextButton {
 public:
-  //==============================================================================
-  Toggle(const juce::String& buttonName = { })
-      : juce::TextButton(buttonName) { }
-
+  Toggle(const juce::String& buttonName = { }, int _id = 0)
+      : juce::TextButton(buttonName), _id(_id) { }
+  int _id { 0 };
   float fontSize { 10 };
   uint32_t colour { 0xFFFFFFFF };
 
-  //==============================================================================
-  void paintButton(
-      juce::Graphics& g, ///< Override to paint the button exactly as you want.
+  void paintButton(juce::Graphics& g,
       const bool isMouseOver,
       const bool isMouseDown) override {
     auto h            = this->getHeight();
@@ -75,7 +72,6 @@ public:
     g.drawText(this->getButtonText(), r3, juce::Justification::centredLeft);
   }
 
-  //==============================================================================
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Toggle)
 };
 }

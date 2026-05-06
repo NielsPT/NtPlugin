@@ -242,6 +242,8 @@ NtPluginAudioProcessor::createParameterLayout() {
   this->createParameters<int>(this->plug.dropdowns, parameters, i);
   this->createParameters<int>(this->titleBarSpec.dropdowns, parameters, i);
   // TODO: Look at this. Please DRY!
+  // TODO: This does NOT work. Store the int for a radiobuttonset as an int
+  // instead.
   std::vector<NtFx::ToggleSpec> vTmpToggles;
   for (auto& r : this->plug.radioButtons) {
     vTmpToggles.clear();
