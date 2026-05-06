@@ -28,7 +28,7 @@ struct ntRmsMeter : NtFx::NtPlugin<signal_t> {
     RMS,
   };
 
-  NtFx::RmsSensorStereo<signal_t> msSensor;
+  NtFx::LongRmsSensorStereo<signal_t> msSensor;
   signal_t decay_s = 0.1;
   signal_t hold_s  = 2;
   signal_t tRms_ms = 10;
