@@ -36,17 +36,19 @@ ID_FILE = f"{JUCE_WRAPPER_DIR}/pluginIds.txt"
 TEST_SCRIPT_DIR = "testWrapper"
 TEST_DIR = "test"
 FILE_DIR = os.path.dirname(__file__)
+SECRETS_FILE = f"{FILE_DIR}/.secrets.txt"
 
+SECRETS = ["devId", "email", "password", "team"]
 ID = 0
 VST3_CAT = 1
 AAX_CAT = 2
 
+"""
+Maps from AAX format categories to VST3 format. AU doesn't make sense since 
+the only applicable fromat there in 'Effect'.
+Keys are AAX format, values are VST3 format.
+"""
 CATEGORY_MAP = {
-    """
-    Maps from AAX format categories to VST3 format. AU doesn't make sense since 
-    the only applicable fromat there in 'Effect'.
-    Keys are AAX format, values are VST3 format.
-    """
     "Effect": "Fx",
     "EQ": "EQ",
     "Dynamics": "Dynamics",
@@ -58,6 +60,116 @@ CATEGORY_MAP = {
     "NioseReduction": "Restoration",
     "SoundField": "Spacial",
 }
+
+"""
+Maps from folders containing resulting artifacts to extensions of those 
+artifacts.
+"""
+TARGET_EXT_MAP = {
+    "VST3": "vst3",
+    "AU": "component",
+    "AAX": "aaxplugin",
+    "Standalone": "app",
+}
+
+
+def newPlugin(name: str) -> bool:
+    """
+    Creates a new plugin.  If Vscode is installed, opens the file.
+
+    Args:
+        name: Name of new plugin.
+
+    Returns:
+        bool: True on success.
+    """
+    template = f"""#pragma once
+
+#include "lib/Plugin.h"
+#include "lib/Stereo.h"
+
+template <typename signal_t>
+struct {name} : NtFx::NtPlugin<signal_t> {{
+  bool bypassEnable {{ false }};
+  // TODO: Create some variables.
+
+  {name}() {{
+    this->primaryKnobs = {{
+      // TODO: Create some knobs.
+    }};
+    this->toggles = {{
+      {{ .p_val = &this->bypassEnable, .name = "Bypass" }},
+    }};
+    this->updateDefaults();
+  }}
+
+  NtFx::Stereo<signal_t> process(NtFx::Stereo<signal_t> x) noexcept override {{
+    this->template updatePeakLevel<0>(x);
+    if (this->bypassEnable) {{
+      this->template updatePeakLevel<1>(x);
+      return x;
+    }}
+    auto y = {{ 0, 0 }};
+    // TODO: processing.
+    this->template updatePeakLevel<1>(y);
+    return y;
+  }}
+
+  void update() noexcept override {{
+    // TODO: Update coeffs.
+  }}
+
+  void reset(float fs) noexcept override {{
+    this->fs = fs;
+    // TODO: Allocate and reset.
+    this->update();
+  }}
+}};
+"""
+    path = f"{FILE_DIR}/plugins/{name}.h"
+    if os.path.exists(path):
+        print(f"'{path}' already exists.")
+        return False
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(template)
+    _openInVscode(path)
+    return True
+
+
+def newPluginTest(name: str):
+    """
+    Creates a new test file for a plugin plugin. If Vscode is installed, opens
+    the file.
+
+    Args:
+        name: Name of new plugin.
+
+    Returns:
+        bool: True on success.
+    """
+    template = f"""#include "lib/ComponentTest.h"
+#include "plugins/{name}.h"
+
+NTFX_TEST_BEGIN
+
+NTFX_TEST() {{
+  auto bypass = {name}<double>();
+  bypass.bypassEnable = true;
+  NTFX_ADD_TEST(bypass, "impulse");
+  auto defaults = {name}<double>();
+  NTFX_ADD_TEST(defaults, "impulse");
+  // TODO: Add more tests.
+  return NTFX_RUN_TESTS();
+}}
+"""
+    path = f"{FILE_DIR}/testWrapper/tests/{name}_test.cpp"
+    if os.path.exists(path):
+        print(f"'{path}' already exists.")
+        return False
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(template)
+    _openInVscode(path)
+    return True
 
 
 def readPluginIds() -> dict[str, list[str]]:
@@ -117,6 +229,7 @@ def configure(
         JUCE_WRAPPER_DIR,
         f"-DNTFX_PLUGIN={plugin}",
         "-DCMAKE_BUILD_TYPE=Release",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE",
     ]
     if sys.platform == "win32":
         args += ["-A", "x64"]
@@ -259,6 +372,262 @@ def runAuVal() -> bool:
     return not bool(res.returncode)
 
 
+def _storeSecrets(secrets: dict[str, str]) -> bool:
+    for secret in secrets:
+        if not secrets[secret] or secret not in SECRETS:
+            return False
+    with open(SECRETS_FILE, "w", encoding="utf-8") as f:
+        for k, v in secrets.items():
+            f.write(f"{k}:{v}\n")
+    print(f"Stored secrets to file '{SECRETS_FILE}'.")
+    res = subprocess.run(
+        [
+            "xcrun",
+            "notraytool",
+            "store-credentials",
+            "ntPlugin-credentials",
+            "--apple-id",
+            secrets["email"],
+            "--team-id",
+            secrets["team"],
+            "--password",
+            secrets["password"],
+        ],
+        check=False,
+    )
+    if res.returncode:
+        return False
+    return True
+
+
+def _loadSecrets() -> dict[str, str]:
+    if not os.path.exists(SECRETS_FILE):
+        print("Secrets file not found.")
+        return {}
+    with open(SECRETS_FILE, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+    if not lines:
+        return {}
+    secrets = {}
+    for line in lines:
+        d = line.split(":", 1)
+        secrets[d[0]] = d[1].replace("\n", "")
+    return secrets
+
+
+def sign(plugins: list[str], devId: str) -> bool:
+    """
+    Applies code signing on Mac.
+
+    Args:
+        plugins (list[str]): Names of plugins to sign.
+        devId (str): Developer Application ID as generated at
+        developer.apple.com or using Xcode.
+
+    Returns:
+        bool: True on success.
+    """
+    for target, extension in TARGET_EXT_MAP.items():
+        for plugin in plugins:
+            file = f"{ARTIFACTS_DIR}/{target}/{plugin}.{extension}"
+            print(f"Running codesign for '{file}'.")
+            if not os.path.exists(file):
+                print(f"Artifact '{file}' not found.")
+                continue
+            res = subprocess.run(
+                [
+                    "codesign",
+                    "--force",
+                    "-s",
+                    f"{devId}",
+                    f"{ARTIFACTS_DIR}/{target}/{plugin}.{extension}",
+                    "-v",
+                    "--deep",
+                    "--strict",
+                    "--options=runtime",
+                    "--timestamp",
+                ],
+                check=False,
+            )
+            if res.returncode:
+                print(f"Codesign failed for '{plugin}'.")
+                return False
+            print(f"'{plugin}' signed succesfully.")
+    return True
+
+
+def notarize(
+    plugins: list[str],
+    email: str,
+    password: str,
+    teamId: str,
+) -> bool:
+    """
+    Notarizes plugins.
+
+    Args:
+        plugins (list[str]): Names of plugins to notarize.
+        email (str): Email address/user name for Apple ID.
+        password (str): Password for Apple Developer ID. Must be app-specific.
+        teamId (str): Team ID from Apple Developer.
+
+    Returns:
+        bool: True on success.
+    """
+    for target, extension in TARGET_EXT_MAP.items():
+        for plugin in plugins:
+            file = f"{ARTIFACTS_DIR}/{target}/{plugin}.{extension}"
+            print(f"Running codesign for '{file}'.")
+            if not os.path.exists(file):
+                print(f"Artifact '{file}' not found.")
+                continue
+            tmpZipFile = f"{BUILD_DIR}/{plugin}_{target}_unnotarized.zip"
+            os.chdir(f"{ARTIFACTS_DIR}/{target}")
+            res = subprocess.run(
+                [
+                    "zip",
+                    f"../../{tmpZipFile}",
+                    f"{plugin}.{extension}",
+                    "-r",
+                ],
+                check=False,
+            )
+            os.chdir(FILE_DIR)
+            if res.returncode:
+                print(f"Failed to compress '{file}'.")
+                return False
+            res = subprocess.run(
+                [
+                    "xcrun",
+                    "notarytool",
+                    "submit",
+                    tmpZipFile,
+                    "--apple-id",
+                    email,
+                    "--password",
+                    password,
+                    "--team-id",
+                    teamId,
+                    "--wait",
+                ],
+                check=False,
+            )
+            if res.returncode:
+                print(f"Notarization failed for '{plugin}'.")
+                return False
+            print(f"'{plugin}' notarized succesfully.")
+    return True
+
+
+def _validateAppSigning(plugins: list[str]) -> bool:
+    for plugin in plugins:
+        path = f"{ARTIFACTS_DIR}/Standalone/{plugin}.app"
+        if not os.path.exists(path):
+            print(f"'{path}' does not exist.")
+            return False
+        res = subprocess.run(
+            ["spctl", "-vvv", "--asses", "--type", "exec", path],
+            check=False,
+        )
+        if res.returncode:
+            return False
+    return True
+
+
+def staple(plugins: list[str]) -> bool:
+    """
+    Staple plugins with approval. Depends on plugins being notarized.
+
+    Args:
+        plugins (list[str]): Plugins to staple.
+
+    Returns:
+        bool: Trie on success.
+    """
+    for target, extension in TARGET_EXT_MAP.items():
+        for plugin in plugins:
+            path = f"{ARTIFACTS_DIR}/{target}/{plugin}.{extension}"
+            if not os.path.exists(path):
+                print(f"'{path}' does not exist.")
+                return False
+            res = subprocess.run(
+                ["xcrun", "stapler", "staple", path],
+                check=False,
+            )
+            if res.returncode:
+                print(f"Failed to staple '{path}'.")
+                return False
+    return True
+
+
+def _zipPackage(plugins: list[str]) -> bool:
+    targetDirs = [f"{ARTIFACTS_DIR}/{d}" for d in TARGET_EXT_MAP]
+    files = []
+    for target in targetDirs:
+        _plugins = os.listdir(target)
+        for _plugin in _plugins:
+            if _plugin.split(".")[0] in plugins:
+                files += [f"{target}/{_plugin}"]
+    print(f"{files=}")
+    outPath = f"{ARTIFACTS_DIR}/package.zip"
+    res = subprocess.run(
+        ["zip", "-r", outPath] + list(files),
+        check=False,
+    )
+    if res.returncode:
+        return False
+    print(f"Package stored to '{outPath}'.")
+    return True
+
+
+def packageForMacOs(args: dict) -> bool:
+    """
+    Packages selected plugins for MacOS.
+
+    Args:
+        args (dict): CLI arguments.
+
+    Returns:
+        bool: True on success.
+    """
+    if sys.platform != "darwin":
+        print("Signing only available for MacOS.")
+        return False
+    plugins = args["plugins"]
+    if not plugins or plugins == ["all"]:
+        plugins = readPlugins()
+    secrets = {}
+    for secret in SECRETS:
+        if args[secret]:
+            secrets[secret] = args[secret].replace("/n", "")
+    if secrets and args["store_secrets"]:
+        _storeSecrets(secrets)
+    if not secrets:
+        secrets = _loadSecrets()
+    if not secrets:
+        print("Faild to get credentials.")
+        return False
+    if not args["no_sign"]:
+        if not sign(plugins, secrets["devId"]):
+            return False
+        if not _validateAppSigning(plugins):
+            return False
+    if not args["no_notarize"]:
+        if not notarize(
+            plugins,
+            secrets["email"],
+            secrets["password"],
+            secrets["team"],
+        ):
+            return False
+    if not args["no_staple"]:
+        if not staple(plugins):
+            return False
+    if not _zipPackage(plugins):
+        return False
+    return True
+
+
 def process(
     plugins: list[str],
     preformTests: bool,
@@ -295,105 +664,6 @@ def process(
                 return False
         if not storeArtifacts(plugin):
             return False
-    return True
-
-
-def newPlugin(name: str) -> bool:
-    """
-    Creates a new plugin.  If Vscode is installed, opens the file.
-
-    Args:
-        name: Name of new plugin.
-
-    Returns:
-        bool: True on success.
-    """
-    template = f"""#pragma once
-
-#include "lib/Plugin.h"
-#include "lib/Stereo.h"
-
-template <typename signal_t>
-struct {name} : NtFx::NtPlugin<signal_t> {{
-  bool bypassEnable {{ false }};
-  // TODO: Create some variables.
-
-  {name}() {{
-    this->primaryKnobs = {{
-      // TODO: Create some knobs.
-    }};
-    this->toggles = {{
-      {{ .p_val = &this->bypassEnable, .name = "Bypass" }},
-    }};
-    this->updateDefaults();
-  }}
-
-  NtFx::Stereo<signal_t> process(NtFx::Stereo<signal_t> x) noexcept override {{
-    this->template updatePeakLevel<0>(x);
-    if (this->bypassEnable) {{
-      this->template updatePeakLevel<1>(x);
-      return x;
-    }}
-    auto y = {{ 0, 0 }};
-    // TODO: processing.
-    this->template updatePeakLevel<1>(y);
-    return y;
-  }}
-
-  void update() noexcept override {{
-    // TODO: Update coeffs.
-  }}
-
-  void reset(float fs) noexcept override {{
-    this->fs = fs;
-    // TODO: Allocate and reset.
-    this->update();
-  }}
-}};
-"""
-    path = f"{FILE_DIR}/plugins/{name}.h"
-    if os.path.exists(path):
-        print(f"'{path}' already exists.")
-        return False
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(template)
-    _openInVscode(path)
-    return True
-
-
-def newPluginTest(name: str):
-    """
-    Creates a new test file for a plugin plugin. If Vscode is installed, opens
-    the file.
-
-    Args:
-        name: Name of new plugin.
-
-    Returns:
-        bool: True on success.
-    """
-    template = f"""#include "lib/ComponentTest.h"
-#include "plugins/{name}.h"
-
-NTFX_TEST_BEGIN
-
-NTFX_TEST() {{
-  auto bypass = {name}<double>();
-  bypass.bypassEnable = true;
-  NTFX_ADD_TEST(bypass, "impulse");
-  auto defaults = {name}<double>();
-  NTFX_ADD_TEST(defaults, "impulse");
-  // TODO: Add more tests.
-  return NTFX_RUN_TESTS();
-}}
-"""
-    path = f"{FILE_DIR}/testWrapper/tests/{name}_test.cpp"
-    if os.path.exists(path):
-        print(f"'{path}' already exists.")
-        return False
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(template)
-    _openInVscode(path)
     return True
 
 
@@ -441,6 +711,12 @@ def createParser() -> argparse.ArgumentParser:
         help="Set the category you wish the plugin to be shown under in the "
         "host plugin list.",
     )
+    buildParser.add_argument(
+        "--package",
+        help="For MacOS, package plugins as an installer. Requires 'package' "
+        "command to have been run with full credentials and 'store_secrets' "
+        "flag at least once.",
+    )
     subParsers.add_parser(
         "test",
         help="Runs unit tests.",
@@ -455,6 +731,51 @@ def createParser() -> argparse.ArgumentParser:
         action="store_true",
         help="Add test file to 'testWrapper/tests'.",
     )
+    packageParser = subParsers.add_parser(
+        "package",
+        help="Sign, notarize, staple and bundle for MacOS. Requires Apple ID, "
+        "Application developer ID and Apple Developer team ID. Once set once, "
+        "credentials are cached in '.secrets'.",
+    )
+    packageParser.add_argument("plugins", help="Plugins to package.", nargs="*")
+    packageParser.add_argument(
+        "--devId",
+        "-d",
+        help="Application Developer ID as exported from Xcode.",
+        type=str,
+    )
+    packageParser.add_argument("--email", help="Apple ID email address.")
+    packageParser.add_argument(
+        "--password",
+        "-p",
+        help="Password for Apple ID. Must be an 'app-specific password',",
+    )
+    packageParser.add_argument(
+        "--team",
+        "-t",
+        help="Team ID. Found in the paranthesis in the Developer ID.",
+    )
+    packageParser.add_argument(
+        "--store_secrets",
+        "-s",
+        action="store_true",
+        help="Store IDs and password to file.",
+    )
+    packageParser.add_argument(
+        "--no_notarize",
+        action="store_true",
+        help="Don't notarize artifacts.",
+    )
+    packageParser.add_argument(
+        "--no_sign",
+        action="store_true",
+        help="Don't sign artifacts.",
+    )
+    packageParser.add_argument(
+        "--no_staple",
+        action="store_true",
+        help="Don't staple artifacts.",
+    )
     return parser
 
 
@@ -466,6 +787,7 @@ def main() -> bool:
         bool: True on success.
     """
     args = createParser().parse_args().__dict__
+    print(args)
     if args["task"] == "build":
         return process(args["plugins"], args["test"], args["category"])
     if args["task"] == "test":
@@ -474,6 +796,8 @@ def main() -> bool:
         if "test" in args and args["test"]:
             newPluginTest(args["name"])
         return newPlugin(args["name"])
+    if args["task"] == "package":
+        return packageForMacOs(args)
     print(f"Unknown command: {args["task"]}")
     return False
 
