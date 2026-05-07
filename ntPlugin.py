@@ -28,17 +28,18 @@ import shutil
 from multiprocessing import cpu_count
 from testWrapper import test
 
-PLUGINS_DIR = "plugins"
-BUILD_DIR = "build"
-ARTIFACTS_DIR = "artifacts"
-JUCE_WRAPPER_DIR = "JuceWrapper"
-ID_FILE = f"{JUCE_WRAPPER_DIR}/pluginIds.txt"
-TEST_SCRIPT_DIR = "testWrapper"
-TEST_DIR = "test"
 FILE_DIR = os.path.dirname(__file__)
+PLUGINS_DIR = f"{FILE_DIR}/plugins"
+BUILD_DIR = f"{FILE_DIR}/build"
+ARTIFACTS_DIR = f"{FILE_DIR}/artifacts"
+JUCE_WRAPPER_DIR = f"{FILE_DIR}/JuceWrapper"
+TEST_SCRIPT_DIR = f"{FILE_DIR}/testWrapper"
+ID_FILE = f"{JUCE_WRAPPER_DIR}/pluginIds.txt"
 SECRETS_FILE = f"{FILE_DIR}/.secrets.txt"
+PACKAGING_DIR = f"{BUILD_DIR}/packaging"
+PACKAGE_ARTIFACT = "ntPlugin"
 
-SECRETS = ["devId", "email", "password", "team"]
+SECRETS = ["devId", "email", "password", "team", "installerId", "company"]
 ID = 0
 VST3_CAT = 1
 AAX_CAT = 2
@@ -456,7 +457,7 @@ def sign(plugins: list[str], devId: str) -> bool:
     return True
 
 
-def notarize(
+def notarizePlugins(
     plugins: list[str],
     email: str,
     password: str,
@@ -496,26 +497,37 @@ def notarize(
             if res.returncode:
                 print(f"Failed to compress '{file}'.")
                 return False
-            res = subprocess.run(
-                [
-                    "xcrun",
-                    "notarytool",
-                    "submit",
-                    tmpZipFile,
-                    "--apple-id",
-                    email,
-                    "--password",
-                    password,
-                    "--team-id",
-                    teamId,
-                    "--wait",
-                ],
-                check=False,
-            )
-            if res.returncode:
-                print(f"Notarization failed for '{plugin}'.")
+            if not _notarize(tmpZipFile, email, password, teamId):
+                print(f"Failed to notarize '{plugin}'.")
                 return False
             print(f"'{plugin}' notarized succesfully.")
+    return True
+
+
+def _notarize(
+    file: str,
+    email: str,
+    password: str,
+    teamId: str,
+) -> bool:
+    res = subprocess.run(
+        [
+            "xcrun",
+            "notarytool",
+            "submit",
+            file,
+            "--apple-id",
+            email,
+            "--password",
+            password,
+            "--team-id",
+            teamId,
+            "--wait",
+        ],
+        check=False,
+    )
+    if res.returncode:
+        return False
     return True
 
 
@@ -534,6 +546,23 @@ def _validateAppSigning(plugins: list[str]) -> bool:
     return True
 
 
+def _validateInsataller(path: str) -> bool:
+    res = subprocess.run(
+        [
+            "spctl",
+            "-vvv",
+            "--asses",
+            "--type",
+            "install",
+            path,
+        ],
+        check=False,
+    )
+    if res.returncode:
+        return False
+    return True
+
+
 def staple(plugins: list[str]) -> bool:
     """
     Staple plugins with approval. Depends on plugins being notarized.
@@ -547,16 +576,22 @@ def staple(plugins: list[str]) -> bool:
     for target, extension in TARGET_EXT_MAP.items():
         for plugin in plugins:
             path = f"{ARTIFACTS_DIR}/{target}/{plugin}.{extension}"
-            if not os.path.exists(path):
-                print(f"'{path}' does not exist.")
+            if not _staple(path):
                 return False
-            res = subprocess.run(
-                ["xcrun", "stapler", "staple", path],
-                check=False,
-            )
-            if res.returncode:
-                print(f"Failed to staple '{path}'.")
-                return False
+    return True
+
+
+def _staple(path: str) -> bool:
+    if not os.path.exists(path):
+        print(f"'{path}' does not exist.")
+        return False
+    res = subprocess.run(
+        ["xcrun", "stapler", "staple", path],
+        check=False,
+    )
+    if res.returncode:
+        print(f"Failed to staple '{path}'.")
+        return False
     return True
 
 
@@ -568,10 +603,12 @@ def _zipPackage(plugins: list[str]) -> bool:
         for _plugin in _plugins:
             if _plugin.split(".")[0] in plugins:
                 files += [f"{target}/{_plugin}"]
-    print(f"{files=}")
-    outPath = f"{ARTIFACTS_DIR}/package.zip"
+    zipFileName = PACKAGE_ARTIFACT
+    if len(plugins) == 1:
+        zipFileName = plugins[0]
+    outPath = f"{ARTIFACTS_DIR}/{zipFileName}.zip"
     res = subprocess.run(
-        ["zip", "-r", outPath] + list(files),
+        ["zip", "-r", outPath] + files,
         check=False,
     )
     if res.returncode:
@@ -580,7 +617,97 @@ def _zipPackage(plugins: list[str]) -> bool:
     return True
 
 
-def packageForMacOs(args: dict) -> bool:
+def _makeDistributionXml(
+    plugins: list[str],
+    company: str,
+    version: str = "0.1.0",
+) -> bool:
+    xml = '<?xml version="1.0" encoding="utf-8" standalone="no"?>\n'
+    xml += '<installer-gui-script minSpecVersion="2">\n'
+    xml += '<options customize="always" require-scripts="false" '
+    xml += 'hostArchitectures="arm64"/>\n'
+    xml += '<choices-outline>\n'
+    for plugin in plugins:
+        for target in TARGET_EXT_MAP:
+            xml += f'  <line choice="{plugin}.{target}" />\n'
+    xml += '</choices-outline>\n'
+    for plugin in plugins:
+        for target, extension in TARGET_EXT_MAP.items():
+            xml += f'<choice id="{plugin}.{target}" visible="true" '
+            xml += f'start_selected="true" title="{plugin} {target}">\n'
+            xml += '  <pkg-ref '
+            xml += f'id="com.{company}.{plugin}.{target.lower()}.pkg" '
+            # TODO: What to do about version?
+            xml += f'version="{version}" onConclusion="none">\n'
+            xml += f"    {plugin}.{target}.pkg\n"
+            xml += '  </pkg-ref>\n'
+            xml += '</choice>\n'
+    xml += '</installer-gui-script>\n'
+    with open(f"{PACKAGING_DIR}/dist.xml", "w", encoding="utf-8") as f:
+        f.write(xml)
+    return True
+
+
+def _makeInstallerPkg(installerId: str) -> bool:
+    os.chdir(PACKAGING_DIR)
+    res = subprocess.run(
+        [
+            "productbuild",
+            "--resources",
+            f"{PACKAGING_DIR}",
+            "--distribution",
+            f"{PACKAGING_DIR}/dist.xml",
+            "--sign",
+            installerId,
+            "--timestamp",
+            f"{ARTIFACTS_DIR}/{PACKAGE_ARTIFACT}.pkg",
+        ],
+        check=False,
+        capture_output=True,
+    )
+    os.chdir(FILE_DIR)
+    print(res.stdout.decode())
+    if "warning" in res.stdout.decode():
+        return False
+    if res.returncode:
+        return False
+    return True
+
+
+def _makePluginPkgs(plugins: list[str], company: str) -> bool:
+    for plugin in plugins:
+        # TODO: Targets arg. Everywhere.
+        for target, extension in TARGET_EXT_MAP.items():
+            installLocation = "/Library/Audio/Plug-Ins/VST3"
+            if target == "AU":
+                installLocation = "/Library/Audio/Plug-Ins/Components"
+            if target == "Standalone":
+                installLocation = "/Applications"
+            if target == "AAX":
+                installLocation = (
+                    "/Library/Application Support/Avid/Audio/Plug-Ins"
+                )
+            os.chdir(PACKAGING_DIR)
+            res = subprocess.run(
+                [
+                    "pkgbuild",
+                    "--identifier",
+                    f"com.{company}.{plugin}.{target.lower()}.pkg",
+                    "--component",
+                    f"{ARTIFACTS_DIR}/{target}/{plugin}.{extension}",
+                    "--install-location",
+                    installLocation,
+                    f"{plugin}.{target}.pkg",
+                ],
+                check=False,
+            )
+            if res.returncode:
+                return False
+            os.chdir(FILE_DIR)
+    return True
+
+
+def package(args: dict) -> bool:
     """
     Packages selected plugins for MacOS.
 
@@ -591,19 +718,19 @@ def packageForMacOs(args: dict) -> bool:
         bool: True on success.
     """
     if sys.platform != "darwin":
-        print("Signing only available for MacOS.")
+        print("Packaging only available for MacOS.")
         return False
+    os.makedirs(PACKAGING_DIR, exist_ok=True)
     plugins = args["plugins"]
     if not plugins or plugins == ["all"]:
         plugins = readPlugins()
-    secrets = {}
+    secrets = _loadSecrets()
     for secret in SECRETS:
         if args[secret]:
             secrets[secret] = args[secret].replace("/n", "")
     if secrets and args["store_secrets"]:
-        _storeSecrets(secrets)
-    if not secrets:
-        secrets = _loadSecrets()
+        if not _storeSecrets(secrets):
+            return False
     if not secrets:
         print("Faild to get credentials.")
         return False
@@ -612,39 +739,58 @@ def packageForMacOs(args: dict) -> bool:
             return False
         if not _validateAppSigning(plugins):
             return False
+    if args["zip"]:
+        if not args["no_notarize"]:
+            if not notarizePlugins(
+                plugins,
+                secrets["email"],
+                secrets["password"],
+                secrets["team"],
+            ):
+                return False
+        if not args["no_staple"]:
+            if not staple(plugins):
+                return False
+            if not _zipPackage(plugins):
+                return False
+        return True
+    if not _makePluginPkgs(plugins, secrets["company"]):
+        return False
+    if not _makeDistributionXml(plugins, secrets["company"]):
+        return False
+    if not _makeInstallerPkg(secrets["installerId"]):
+        return False
     if not args["no_notarize"]:
-        if not notarize(
-            plugins,
+        if not _notarize(
+            f"{ARTIFACTS_DIR}/{PACKAGE_ARTIFACT}.pkg",
             secrets["email"],
             secrets["password"],
             secrets["team"],
         ):
             return False
     if not args["no_staple"]:
-        if not staple(plugins):
+        if not _staple(f"{ARTIFACTS_DIR}/{PACKAGE_ARTIFACT}.pkg"):
             return False
-    if not _zipPackage(plugins):
+    if not _validateInsataller(f"{ARTIFACTS_DIR}/{PACKAGE_ARTIFACT}.pkg"):
         return False
     return True
 
 
-def process(
-    plugins: list[str],
-    preformTests: bool,
-    category: str,
-) -> bool:
+def process(args: dict) -> bool:
     """
     Configures, builds and tests all plugins.
 
     Args:
-        plugins (list[str]): List of names of plugins to process.
-        preformTests (bool): If True, perform unittest before and validation after build.
-        category (str): Category to put plugin in in DAW. AAX format.
+        args (dict): CLI args.
 
     Returns:
         bool: True on success.
     """
-    if preformTests:
+    plugins = args["plugins"] if "plugins" in args else []
+    category = args["category"] if "category" in args else ""
+    doTest = args["test"] if "test" in args else False
+    doPackage = args["package"] if "package" in args else False
+    if doTest:
         if not test.run({"files": plugins, "fs": 48e3}):
             return False
     pluginIds = readPluginIds()
@@ -655,7 +801,7 @@ def process(
             return False
         if not build():
             return False
-        if preformTests:
+        if doTest:
             time.sleep(1)
             if sys.platform == "darwin":
                 if not runAuVal():
@@ -663,6 +809,9 @@ def process(
             if not runCtest():
                 return False
         if not storeArtifacts(plugin):
+            return False
+    if doPackage:
+        if not package(args):
             return False
     return True
 
@@ -713,6 +862,7 @@ def createParser() -> argparse.ArgumentParser:
     )
     buildParser.add_argument(
         "--package",
+        action="store_true",
         help="For MacOS, package plugins as an installer. Requires 'package' "
         "command to have been run with full credentials and 'store_secrets' "
         "flag at least once.",
@@ -741,7 +891,7 @@ def createParser() -> argparse.ArgumentParser:
     packageParser.add_argument(
         "--devId",
         "-d",
-        help="Application Developer ID as exported from Xcode.",
+        help="Application Developer ID Application as exported from Xcode.",
         type=str,
     )
     packageParser.add_argument("--email", help="Apple ID email address.")
@@ -756,25 +906,47 @@ def createParser() -> argparse.ArgumentParser:
         help="Team ID. Found in the paranthesis in the Developer ID.",
     )
     packageParser.add_argument(
+        "--installerId",
+        "-i",
+        help="Developer ID Installer from Apple.",
+    )
+    packageParser.add_argument(
         "--store_secrets",
+        "--store-secrets",
         "-s",
         action="store_true",
         help="Store IDs and password to file.",
     )
     packageParser.add_argument(
         "--no_notarize",
+        "--no-notarize",
         action="store_true",
         help="Don't notarize artifacts.",
     )
     packageParser.add_argument(
         "--no_sign",
+        "--no-sign",
         action="store_true",
         help="Don't sign artifacts.",
     )
     packageParser.add_argument(
         "--no_staple",
+        "--no-staple",
         action="store_true",
         help="Don't staple artifacts.",
+    )
+    packageParser.add_argument(
+        "--zip",
+        "-z",
+        action="store_true",
+        help="Instead of creating an installer, create a zip file with "
+        "notarized plugins.",
+    )
+    # TODO: Set company in Cmake from this.
+    packageParser.add_argument(
+        "--company",
+        help="Company/vendor of plugin.",
+        default="NTfx",
     )
     return parser
 
@@ -787,9 +959,8 @@ def main() -> bool:
         bool: True on success.
     """
     args = createParser().parse_args().__dict__
-    print(args)
     if args["task"] == "build":
-        return process(args["plugins"], args["test"], args["category"])
+        return process(args)
     if args["task"] == "test":
         return test.main(args)
     if args["task"] == "new":
@@ -797,7 +968,7 @@ def main() -> bool:
             newPluginTest(args["name"])
         return newPlugin(args["name"])
     if args["task"] == "package":
-        return packageForMacOs(args)
+        return package(args)
     print(f"Unknown command: {args["task"]}")
     return False
 
