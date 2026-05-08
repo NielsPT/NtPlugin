@@ -198,7 +198,7 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
     this->template updatePeakLevel<2, true>(gr[Bands::lo]);
     this->template updatePeakLevel<3, true>(gr[Bands::mid]);
     this->template updatePeakLevel<4, true>(gr[Bands::hi]);
-    // if (this->noise) { return NtFx::rand<signal_t>(); }s
+    // if (this->noise) { return NtFx::rand<signal_t>() * 0.125; }
     return y;
   }
 
