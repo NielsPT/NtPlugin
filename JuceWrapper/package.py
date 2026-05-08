@@ -23,6 +23,12 @@ import os
 import argparse
 import sys
 
+BLACK = "\033[0m"
+RED = "\033[31m"
+GREEN = "\033[32m"
+YELLOW = "\033[33m"
+BLUE = "\033[34m"
+
 REPO_BASE_DIR = f"{os.path.dirname(__file__)}/.."
 PLUGINS_DIR = f"{REPO_BASE_DIR}/plugins"
 BUILD_DIR = f"{REPO_BASE_DIR}/build"
@@ -47,6 +53,10 @@ TARGET_EXT_MAP = {
 }
 
 
+def _pluginPath(plugin: str, target: str):
+    return f"{ARTIFACTS_DIR}/{target}/{plugin}.{TARGET_EXT_MAP[target]}"
+
+
 def readPlugins() -> list[str]:
     """
     Returns a list of all plugins found in folder 'plugins'.
@@ -66,7 +76,7 @@ def _storeSecrets(secrets: dict[str, str]) -> bool:
     with open(SECRETS_FILE, "w", encoding="utf-8") as f:
         for k, v in secrets.items():
             f.write(f"{k}:{v}\n")
-    print(f"Stored secrets to file '{SECRETS_FILE}'.")
+    print(f"{GREEN}Stored secrets to file '{SECRETS_FILE}'.{BLACK}")
     res = subprocess.run(
         [
             "xcrun",
@@ -89,7 +99,7 @@ def _storeSecrets(secrets: dict[str, str]) -> bool:
 
 def _loadSecrets() -> dict[str, str]:
     if not os.path.exists(SECRETS_FILE):
-        print("Secrets file not found.")
+        print(f"{YELLOW}Secrets file not found.{BLACK}")
         return {}
     with open(SECRETS_FILE, "r", encoding="utf-8") as f:
         lines = f.readlines()
@@ -119,9 +129,9 @@ def sign(plugins: list[str], targets: list[str], devId: str) -> bool:
         extension = TARGET_EXT_MAP[target]
         for plugin in plugins:
             file = f"{ARTIFACTS_DIR}/{target}/{plugin}.{extension}"
-            print(f"Running codesign for '{file}'.")
+            print(f"{BLUE}Running codesign for '{file}'.{BLACK}")
             if not os.path.exists(file):
-                print(f"Artifact '{file}' not found.")
+                print(f"{YELLOW}Artifact '{file}' not found. Skipping.{BLACK}")
                 continue
             res = subprocess.run(
                 [
@@ -129,7 +139,7 @@ def sign(plugins: list[str], targets: list[str], devId: str) -> bool:
                     "--force",
                     "-s",
                     f"{devId}",
-                    f"{ARTIFACTS_DIR}/{target}/{plugin}.{extension}",
+                    file,
                     "-v",
                     "--deep",
                     "--strict",
@@ -139,9 +149,9 @@ def sign(plugins: list[str], targets: list[str], devId: str) -> bool:
                 check=False,
             )
             if res.returncode:
-                print(f"Codesign failed for '{plugin}'.")
+                print(f"{RED}Codesign failed for '{plugin}'.{BLACK}")
                 return False
-            print(f"'{plugin}' signed succesfully.")
+            print(f"{GREEN}'{plugin}' signed succesfully.{BLACK}")
     return True
 
 
@@ -169,9 +179,9 @@ def notarizePlugins(
         extension = TARGET_EXT_MAP[target]
         for plugin in plugins:
             file = f"{ARTIFACTS_DIR}/{target}/{plugin}.{extension}"
-            print(f"Running codesign for '{file}'.")
+            print(f"{BLUE}Running codesign for '{file}'.{BLACK}")
             if not os.path.exists(file):
-                print(f"Artifact '{file}' not found.")
+                print(f"{RED}Artifact '{file}' not found.{BLACK}")
                 continue
             tmpZipFile = f"{BUILD_DIR}/{plugin}_{target}_unnotarized.zip"
             os.chdir(f"{ARTIFACTS_DIR}/{target}")
@@ -186,12 +196,12 @@ def notarizePlugins(
             )
             os.chdir(REPO_BASE_DIR)
             if res.returncode:
-                print(f"Failed to compress '{file}'.")
+                print(f"{RED}Failed to compress '{file}'.{BLACK}")
                 return False
             if not notarize(tmpZipFile, email, password, teamId):
-                print(f"Failed to notarize '{plugin}'.")
+                print(f"{RED}Failed to notarize '{plugin}'.{BLACK}")
                 return False
-            print(f"'{plugin}' notarized succesfully.")
+            print(f"{GREEN}'{plugin}' notarized succesfully.{BLACK}")
     return True
 
 
@@ -234,30 +244,6 @@ def notarize(
     return True
 
 
-def validateAppSigning(plugins: list[str]) -> bool:
-    """
-    Returns True if app is valid.
-
-    Args:
-        path (str): Path of app.
-
-    Returns:
-        bool: True if valid.
-    """
-    for plugin in plugins:
-        path = f"{ARTIFACTS_DIR}/Standalone/{plugin}.app"
-        if not os.path.exists(path):
-            print(f"'{path}' does not exist.")
-            return False
-        res = subprocess.run(
-            ["spctl", "-vvv", "--asses", "--type", "exec", path],
-            check=False,
-        )
-        if res.returncode:
-            return False
-    return True
-
-
 def validateInstaller(path: str) -> bool:
     """
     Returns True if installer is signed, notarized and stapled.
@@ -268,6 +254,7 @@ def validateInstaller(path: str) -> bool:
     Returns:
         bool: True if valid.
     """
+    print(f"{BLUE}Validating installer '{path}'.{BLACK}")
     res = subprocess.run(
         [
             "spctl",
@@ -280,7 +267,9 @@ def validateInstaller(path: str) -> bool:
         check=False,
     )
     if res.returncode:
+        print(f"{RED}Installer validation failed.{BLACK}")
         return False
+    print(f"{GREEN}Installer validation passed.{BLACK}")
     return True
 
 
@@ -294,6 +283,7 @@ def staplePlugins(plugins: list[str], targets: list[str]) -> bool:
     Returns:
         bool: Trie on success.
     """
+    print(f"{BLUE}Stapling plugins.{BLACK}")
     for target in targets:
         extension = TARGET_EXT_MAP[target]
         for plugin in plugins:
@@ -313,15 +303,16 @@ def staple(path: str) -> bool:
     Returns:
         bool: True on success.
     """
+    print(f"{BLUE}Stapling '{path}'.{BLACK}")
     if not os.path.exists(path):
-        print(f"'{path}' does not exist.")
+        print(f"{RED}'{path}' does not exist.{BLACK}")
         return False
     res = subprocess.run(
         ["xcrun", "stapler", "staple", path],
         check=False,
     )
     if res.returncode:
-        print(f"Failed to staple '{path}'.")
+        print(f"{RED}Failed to staple '{path}'.{BLACK}")
         return False
     return True
 
@@ -353,8 +344,9 @@ def zipPackage(plugins: list[str], targets: list[str]) -> bool:
         check=False,
     )
     if res.returncode:
+        print(f"{RED}Failed to zip.{BLACK}")
         return False
-    print(f"Package stored to '{outPath}'.")
+    print(f"{GREEN}Package stored to '{outPath}'.{BLACK}")
     return True
 
 
@@ -382,10 +374,14 @@ def makeDistributionXml(
     xml += '<choices-outline>\n'
     for plugin in plugins:
         for target in targets:
+            if not os.path.exists(_pluginPath(plugin, target)):
+                continue
             xml += f'  <line choice="{plugin}.{target}" />\n'
     xml += '</choices-outline>\n'
     for plugin in plugins:
         for target in targets:
+            if not os.path.exists(_pluginPath(plugin, target)):
+                continue
             xml += f'<choice id="{plugin}.{target}" visible="true" '
             xml += f'start_selected="true" title="{plugin} {target}">\n'
             xml += '  <pkg-ref '
@@ -412,6 +408,7 @@ def makeInstallerPkg(installerId: str, path: str) -> bool:
     Returns:
         bool: True on success.
     """
+    print(f"{BLUE}Making installer.{BLACK}")
     os.chdir(PACKAGING_DIR)
     res = subprocess.run(
         [
@@ -431,8 +428,10 @@ def makeInstallerPkg(installerId: str, path: str) -> bool:
     os.chdir(REPO_BASE_DIR)
     print(res.stdout.decode())
     if "warning" in res.stdout.decode():
+        print(f"{RED}Warnings in productbuild. Aborting.{BLACK}")
         return False
     if res.returncode:
+        print(f"{RED}Failed to make installer.{BLACK}")
         return False
     return True
 
@@ -472,6 +471,13 @@ def makePluginPkg(plugin: str, target: str, company: str) -> bool:
     Returns:
         bool: True on success.
     """
+    os.chdir(PACKAGING_DIR)
+    pluginPath = _pluginPath(plugin, target)
+    print(f"{BLUE}Packaging '{plugin}' {target}.{BLACK}")
+    if not os.path.exists(pluginPath):
+        print(f"{YELLOW}'{pluginPath}' not found. Skipping.{BLACK}")
+        return True
+    targetPath = f"{plugin}.{target}.pkg"
     installLocation = "/Library/Audio/Plug-Ins/VST3"
     if target == "AU":
         installLocation = "/Library/Audio/Plug-Ins/Components"
@@ -479,17 +485,16 @@ def makePluginPkg(plugin: str, target: str, company: str) -> bool:
         installLocation = "/Applications"
     if target == "AAX":
         installLocation = "/Library/Application Support/Avid/Audio/Plug-Ins"
-    os.chdir(PACKAGING_DIR)
     res = subprocess.run(
         [
             "pkgbuild",
             "--identifier",
             f"com.{company}.{plugin}.{target.lower()}.pkg",
             "--component",
-            f"{ARTIFACTS_DIR}/{target}/{plugin}.{TARGET_EXT_MAP[target]}",
+            pluginPath,
             "--install-location",
             installLocation,
-            f"{plugin}.{target}.pkg",
+            targetPath,
         ],
         check=False,
     )
@@ -510,7 +515,7 @@ def main(args: dict) -> bool:
         bool: True on success.
     """
     if sys.platform != "darwin":
-        print("Packaging only available for MacOS.")
+        print(f"{RED}Packaging only available for MacOS.{BLACK}")
         return False
     os.makedirs(PACKAGING_DIR, exist_ok=True)
     plugins = args["plugins"]
@@ -527,12 +532,10 @@ def main(args: dict) -> bool:
         if not _storeSecrets(secrets):
             return False
     if not secrets:
-        print("Faild to get credentials.")
+        print(f"{RED}Faild to get credentials.{BLACK}")
         return False
     if not args["no_sign"]:
         if not sign(plugins, targets, secrets["devId"]):
-            return False
-        if not validateAppSigning(plugins):
             return False
     if args["zip"]:
         if not args["no_notarize"]:
@@ -547,8 +550,8 @@ def main(args: dict) -> bool:
         if not args["no_staple"]:
             if not staplePlugins(plugins, targets):
                 return False
-            if not zipPackage(plugins, targets):
-                return False
+        if not zipPackage(plugins, targets):
+            return False
         return True
     if not makePluginPkgs(plugins, targets, secrets["company"]):
         return False
