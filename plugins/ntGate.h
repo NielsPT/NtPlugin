@@ -74,7 +74,7 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
           .name   = "Range",
           .suffix = " dB",
           .minVal = -60,
-          .maxVal = -0.01,
+          .maxVal = -0.0,
       },
       {
           .p_val  = &this->scSettings.tAtt_ms,

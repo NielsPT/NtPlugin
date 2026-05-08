@@ -107,7 +107,8 @@ struct MonoMeter : public juce::Component {
 
       // Filled regular dots.
       if ((!this->meterSpec.invert && i >= this->nActiveDotsPeak)
-          || (this->meterSpec.invert && i <= this->nActiveDotsPeak - 1)) {
+          || (this->meterSpec.invert && i <= this->nActiveDotsPeak - 1)
+              && this->nActiveDotsPeak != 0) {
         uint8_t opacity = 255.0f * this->opacity;
         g.setColour(juce::Colour(
             this->uiSpec.foregroundColour & 0x00FFFFFF | (opacity << 24)));
@@ -215,7 +216,7 @@ struct MonoMeter : public juce::Component {
     if ((!this->meterSpec.invert && peak_db > this->holdVal_db)
         || (this->meterSpec.invert && peak_db < this->holdVal_db)) {
       this->holdVal_db         = peak_db;
-      this->iHoldDot           = this->nActiveDotsPeak;
+      this->iHoldDot           = this->nActiveDotsPeak - 1;
       this->holdCounter_frames = 0;
       return;
     }
@@ -227,7 +228,7 @@ struct MonoMeter : public juce::Component {
       } else {
         this->holdVal_db = this->meterSpec.minVal_db;
       }
-      this->iHoldDot = this->nActiveDotsPeak;
+      this->iHoldDot = this->nActiveDotsPeak - 1;
     }
   }
 };
