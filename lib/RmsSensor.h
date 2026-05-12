@@ -183,7 +183,9 @@ struct LongRmsSensorStereo
    */
   void setT_ms(int t_ms) {
     this->l.setT_ms(t_ms);
+#ifndef NTFX_MONO
     this->r.setT_ms(t_ms);
+#endif
   }
   /**
    * @brief Get the current RMS values for both channels
@@ -194,7 +196,11 @@ struct LongRmsSensorStereo
    * @return The current RMS values for both channels
    */
   Stereo<signal_t> getRms() const noexcept {
+#ifdef NTFX_MONO
+    return this->l.getRms();
+#else
     return { this->l.getRms(), this->r.getRms() };
+#endif
   }
 };
 }

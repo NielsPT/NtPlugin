@@ -46,6 +46,7 @@
 
 namespace NtFx {
 struct MonoMeter : public juce::Component {
+  PeakHoldSensor<float> peakSensor;
   MeterSpec& meterSpec;
   UiSpec& uiSpec;
   int pad             = 10;
@@ -70,7 +71,7 @@ struct MonoMeter : public juce::Component {
   float holdVal_db       = 0;
   int iHoldDot           = 0;
 
-  PeakHoldSensor<float> peakSensor;
+  bool hasScale { false };
 
   MonoMeter(MeterSpec& meterSpec, UiSpec& uiSpec)
       : meterSpec(meterSpec), uiSpec(uiSpec), nDots(uiSpec.meterHeight_dots) {
@@ -297,6 +298,73 @@ struct StereoMeter : public juce::Component {
 };
 
 struct MeterGroup : public juce::Component {
+#ifdef NTFX_MONO
+  float uiScale { 1 };
+  std::vector<std::unique_ptr<MonoMeter>> meters;
+  std::vector<std::unique_ptr<MeterScale>> scales;
+  MeterGroup(UiSpec& uiSpec, std::vector<MeterSpec>& meterSpecs) {
+    size_t i = 0;
+    for (auto& spec : meterSpecs) {
+      auto meter = std::make_unique<MonoMeter>(spec, uiSpec);
+      this->addAndMakeVisible(meter.get());
+      if (spec.hasScale) {
+        meter->hasScale = true;
+        auto scale      = std::make_unique<MeterScale>(*meter.get());
+        this->addAndMakeVisible(scale.get());
+        scales.push_back(std::move(scale));
+      }
+      meter->label = spec.name;
+      meters.push_back(std::move(meter));
+    }
+  }
+  template <typename signal_t>
+  void refresh(size_t idx, Stereo<signal_t> xPeak, Stereo<signal_t> xRms) {
+    this->meters[idx]->refresh(xPeak.l, xRms.l);
+  }
+  void resized() override {
+    this->updateUi();
+    this->repaint();
+  }
+  int size() const noexcept { return this->meters.size(); }
+  void updateUi() noexcept {
+    auto area       = this->getLocalBounds();
+    auto totalWidth = area.getWidth();
+    auto scaleWidth = totalWidth / (this->meters.size() + this->scales.size());
+    auto meterWidth = scaleWidth;
+    size_t iScale   = 0;
+    for (auto& m : this->meters) {
+      m->setBounds(area.removeFromLeft(meterWidth));
+      if (m->hasScale) {
+        auto scaleArea = area.removeFromLeft(scaleWidth);
+        this->scales[iScale++]->setBounds(scaleArea);
+      }
+    }
+  }
+  void setFontSize(int size) {
+    for (auto& m : meters) { m->fontSize = size; }
+    for (auto& s : scales) { s->fontSize = size; }
+  }
+  void setUiScale(float uiScale) {
+    this->uiScale = uiScale;
+    // for (auto& m : meters) { m->uiScale = uiScale; }
+  }
+  float getMinimalWidth() const noexcept {
+    if (!this->meters.size()) { return 0; }
+    return this->meters[0]->uiSpec.meterWidth
+        * (this->meters.size() + this->scales.size());
+  }
+  float getMinimalHeight() const noexcept {
+    if (!this->meters.size()) { return 0; }
+    auto& m = *this->meters[0].get();
+    m.refresh(false);
+    return (m.uiSpec.labelHeight) + (m.nDots + 2) * m.dotDist + m.pad;
+  }
+  void updateRelease(float fs) {
+    for (auto& m : this->meters) {
+      m->updateRelease(fs, m->meterSpec.decay_s * 1000);
+    }
+  }
+#else
   std::vector<std::unique_ptr<StereoMeter>> meters;
   std::vector<std::unique_ptr<MeterScale>> scales;
   MeterGroup(UiSpec& uiSpec, std::vector<MeterSpec>& meterSpecs) {
@@ -362,5 +430,6 @@ struct MeterGroup : public juce::Component {
       m->r.updateRelease(fs, m->r.meterSpec.decay_s * 1000);
     }
   }
+#endif
 };
 } // namespace NtFx

@@ -22,11 +22,11 @@
  */
 
 #include "gcem.hpp"
-#include "gcem_incl/abs.hpp"
 #include "lib/utils.h"
 #include <cstddef>
 #include <type_traits>
 
+#define NTFX_MONO
 namespace NtFx {
 
 /**
@@ -40,6 +40,188 @@ namespace NtFx {
  */
 template <typename signal_t>
 struct Stereo {
+#ifdef NTFX_MONO
+  signal_t l { 0 };
+  Stereo() : l(0) { }
+  Stereo(signal_t v) : l(v) { }
+  Stereo(signal_t l, signal_t r) : l((l + r) / 2) { }
+  Stereo<signal_t>& operator=(const Stereo<signal_t>& x) noexcept {
+    this->l = x.l;
+    return *this;
+  }
+  Stereo<signal_t>& operator=(const signal_t& x) noexcept {
+    this->l = x;
+    return *this;
+  }
+  bool operator==(const Stereo<signal_t>& x) const noexcept {
+    return (this->l == x.l);
+  }
+  bool operator<(const Stereo<signal_t>& x) const noexcept {
+    return this->absMin() < x.absMin();
+  }
+  bool operator>(const Stereo<signal_t>& x) const noexcept {
+    return this->absMax() > x.absMax();
+  }
+  bool operator<=(const Stereo<signal_t>& x) const noexcept {
+    return this->absMin() <= x.absMin();
+  }
+  bool operator>=(const Stereo<signal_t>& x) const noexcept {
+    return this->absMax() >= x.absMax();
+  }
+  bool operator<(const signal_t& x) const noexcept {
+    return this->absMin() < x;
+  }
+  bool operator>(const signal_t& x) const noexcept {
+    return this->absMax() > x;
+  }
+  bool operator<=(const signal_t& x) const noexcept {
+    return this->absMin() <= x;
+  }
+  bool operator>=(const signal_t& x) const noexcept {
+    return this->absMax() >= x;
+  }
+
+  Stereo<signal_t>& operator*=(const signal_t x) noexcept {
+    this->l = this->l * x;
+    return *this;
+  }
+  Stereo<signal_t>& operator*=(const Stereo<signal_t> x) noexcept {
+    this->l = this->l * x.l;
+    return *this;
+  }
+  Stereo<signal_t>& operator+=(const signal_t x) noexcept {
+    this->l = this->l + x;
+    return *this;
+  }
+  Stereo<signal_t>& operator+=(const Stereo<signal_t> x) noexcept {
+    this->l = this->l + x.l;
+    return *this;
+  }
+  Stereo<signal_t> operator-() const { return -this->l; }
+  /**
+   * @brief Square left and right channels and take the average.
+   *
+   * @return signal_t Result.
+   */
+  signal_t avgSquared() const noexcept { return this->l; }
+
+  /**
+   * @brief Returns the larges of left and right disregarding sign.
+   *
+   * @return signal_t
+   */
+  signal_t absMax() const noexcept { return gcem::abs(this->l); }
+
+  /**
+   * @brief Returns the smallest of left and right disregarding sign.
+   *
+   * @return signal_t
+   */
+  signal_t absMin() const noexcept { return gcem::abs(this->l); }
+
+  /**
+   * @brief Returns the abs of both channels.
+   *
+   * @return Stereo<signal_t>
+   */
+  Stereo<signal_t> abs() const noexcept { return gcem::abs(this->l); }
+};
+template <typename signal_t>
+static inline Stereo<signal_t> operator+(
+    const Stereo<signal_t>& y, const signal_t& x) noexcept {
+  return y.l + x;
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator-(
+    const Stereo<signal_t>& y, const signal_t& x) noexcept {
+  return y.l - x;
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator*(
+    const Stereo<signal_t>& y, const signal_t& x) noexcept {
+  return y.l * x;
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator/(
+    const Stereo<signal_t>& y, const signal_t& x) noexcept {
+  return y.l / x;
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator+(
+    const Stereo<signal_t>& y, const int& x) noexcept {
+  return y.l + x;
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator-(
+    const Stereo<signal_t>& y, const int& x) noexcept {
+  return y.l - x;
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator*(
+    const Stereo<signal_t>& y, const int& x) noexcept {
+  return y.l * x;
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator/(
+    const Stereo<signal_t>& y, const int& x) noexcept {
+  return y.l / x;
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator+(
+    const Stereo<signal_t>& y, const Stereo<signal_t>& x) noexcept {
+  return y.l + x.l;
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator-(
+    const Stereo<signal_t>& y, const Stereo<signal_t>& x) noexcept {
+  return y.l - x.l;
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator*(
+    const Stereo<signal_t>& y, const Stereo<signal_t>& x) noexcept {
+  return y.l * x.l;
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator/(
+    const Stereo<signal_t>& y, const Stereo<signal_t>& x) noexcept {
+  return y.l / x.l;
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator+(
+    const signal_t& x, const Stereo<signal_t>& y) noexcept {
+  return x + y.l;
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator-(
+    const signal_t& x, const Stereo<signal_t>& y) noexcept {
+  return x - y.l;
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator*(
+    const signal_t& x, const Stereo<signal_t>& y) noexcept {
+  return x * y.l;
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator/(
+    const signal_t& x, const Stereo<signal_t>& y) noexcept {
+  return x / y.l;
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator*(
+    const Stereo<signal_t>& y, const size_t& x) noexcept {
+  return y.l * signal_t(x);
+}
+template <typename signal_t>
+static inline Stereo<signal_t> operator*(
+    const size_t x, const Stereo<signal_t>& y) noexcept {
+  return y.l * signal_t(x);
+}
+template <typename signal_t>
+static inline void ensureFinite(
+    Stereo<signal_t>& x, signal_t def = signal_t(0)) noexcept {
+  ensureFinite(x.l, def);
+}
+#else
   signal_t l { 0 };
   signal_t r { 0 };
   Stereo() : l(0.0f), r(0.0f) {
@@ -248,4 +430,5 @@ static inline void ensureFinite(
   ensureFinite(x.l, def);
   ensureFinite(x.r, def);
 }
+#endif
 } // namespace NtFx

@@ -78,6 +78,16 @@ struct Component {
  */
 template <typename signal_t, typename component_t>
 struct StereoComponent : public Component<Stereo<signal_t>> {
+#ifdef NTFX_MONO
+  component_t l;
+  virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+    return this->l.process(x.l);
+  }
+
+  virtual void update() noexcept override { this->l.update(); }
+
+  virtual void reset(float fs) noexcept override { this->l.reset(fs); }
+#else
   component_t l;
   component_t r;
 
@@ -94,5 +104,6 @@ struct StereoComponent : public Component<Stereo<signal_t>> {
     this->l.reset(fs);
     this->r.reset(fs);
   }
+#endif
 };
 }

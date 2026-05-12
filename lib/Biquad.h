@@ -89,24 +89,37 @@ namespace Biquad {
 
   template <typename signal_t>
   struct BiQuad6Stereo : public Component<Stereo<signal_t>> {
+    Biquad6<signal_t> l;
+#ifndef NTFX_MONO
+    Biquad6<signal_t> r;
+#endif
     Settings<signal_t> settings;
     Coeffs6<signal_t> coeffs;
-    Biquad6<signal_t> l;
-    Biquad6<signal_t> r;
-    BiQuad6Stereo() : l(this->coeffs), r(this->coeffs) { }
+#ifdef NTFX_MONO
+    BiQuad6Stereo() : l(coeffs) { }
+#else
+    BiQuad6Stereo() : l(coeffs), r(coeffs) { }
+#endif
     virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+#ifdef NTFX_MONO
+      return this->l.process(x.l);
+#else
       return { this->l.process(x.l), this->r.process(x.r) };
+#endif
     }
     virtual void update() noexcept override {
       this->coeffs = calcCoeffs6<signal_t>(settings, this->fs);
     }
+    virtual void reset(float fs) noexcept override { this->fs = fs; }
   };
 
   template <typename signal_t>
-  struct Biquad5 {
+  struct Biquad5 : public Component<signal_t> {
     Coeffs5<signal_t> coeffs;
     State<signal_t> state;
-    inline signal_t process(signal_t x) {
+    Settings<signal_t>& settings;
+    Biquad5(Settings<signal_t>& settings) : settings(settings) { }
+    virtual inline signal_t process(signal_t x) noexcept override {
       signal_t y = this->coeffs.b[0] * x + this->coeffs.b[1] * this->state.x[0]
           + this->coeffs.b[2] * this->state.x[1]
           - this->coeffs.a[0] * this->state.y[0]
@@ -117,28 +130,44 @@ namespace Biquad {
       this->state.x[0] = x;
       return y;
     }
-    inline void update(Settings<signal_t>& settings, signal_t fs) {
-      this->coeffs = calcCoeffs5<signal_t>(settings, fs);
+    virtual inline void update() noexcept override {
+      this->coeffs = calcCoeffs5<signal_t>(this->settings, this->fs);
     }
   };
 
   template <typename signal_t>
   struct EqBand : public Component<Stereo<signal_t>> {
     Settings<signal_t> settings;
-    Biquad5<signal_t> l;
-    Biquad5<signal_t> r;
-    virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
-      return { l.process(x.l), r.process(x.r) };
-    }
-    virtual void update() noexcept override {
-      this->l.update(this->settings, this->fs);
-      this->r.update(this->settings, this->fs);
-    }
     virtual void reset(float fs) noexcept override {
       this->fs      = fs;
       this->l.state = { { 0, 0 }, { 0, 0 } };
+#ifndef NTFX_MONO
       this->r.state = { { 0, 0 }, { 0, 0 } };
+#endif
       this->update();
+    }
+    Biquad5<signal_t> l;
+#ifndef NTFX_MONO
+    Biquad5<signal_t> r;
+#endif
+    Coeffs5<signal_t> coeffs;
+#ifdef NTFX_MONO
+    EqBand() : l(settings) { }
+#else
+    EqBand() : l(settings), r(settings) { }
+#endif
+    virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+#ifdef NTFX_MONO
+      return this->l.process(x.l);
+#else
+      return { this->l.process(x.l), this->r.process(x.r) };
+#endif
+    }
+    virtual void update() noexcept override {
+      this->l.update();
+#ifndef NTFX_MONO
+      this->r.update();
+#endif
     }
   };
 
