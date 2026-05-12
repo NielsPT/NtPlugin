@@ -1,38 +1,33 @@
+cmake_minimum_required(VERSION 3.22)
 # set(NTFX_PLUGIN ntCompressor)
 
 if(NOT DEFINED NTFX_PLUGIN)
   message(FATAL_ERROR "Define plugin to build using '-DNTFX_PLUGIN=[plugin name]'.")
 endif()
+if(NOT DEFINED NTFX_VERSION)
+  message(STATUS "NTFX_VERSION not defined. Please define using '_DNTFX_VERSION=[version]'. Setting to 0.1.0.")
+  set(NTFX_VERSION 0.1.0)
+endif()
+if(NOT DEFINED NTFX_COMPANY)
+  message(STATUS "NTFX_COMPANY not defined. Please define using '_DNTFX_COMPANY=[company]'. Setting to 'NTfx'.")
+  set(NTFX_COMPANY "NTfx")
+endif()
 set(NTFX_PLUGIN_FILE "\"plugins/${NTFX_PLUGIN}.h\"")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-# message(STATUS "NTFX_PLUGIN:${NTFX_PLUGIN}")
-# message(STATUS "NTFX_PLUGIN_LAST:${NTFX_PLUGIN_LAST}")
-
 if(NOT "${NTFX_PLUGIN}" STREQUAL "${NTFX_PLUGIN_LAST}")
   set(NTFX_PLUGIN_LAST "${NTFX_PLUGIN}" CACHE STRING "Last plugin built." FORCE)
   set(NTFX_PLUGIN_CODE "" CACHE STRING "" FORCE)
 endif()
 
-# Example Audio Plugin CMakeLists.txt
-
-# To get started on a new plugin, copy this entire folder (containing this file and C++ sources) to
-# a convenient location, and then start making modifications.
-
-# The first line of any CMake project should be a call to `cmake_minimum_required`, which checks
-# that the installed CMake will be able to understand the following CMakeLists, and ensures that
-# CMake's behaviour is compatible with the named version. This is a standard CMake command, so more
-# information can be found in the CMake docs.
-
-cmake_minimum_required(VERSION 3.22)
-
 # The top-level CMakeLists.txt file for a project must contain a literal, direct call to the
 # `project()` command. `project()` sets up some helpful variables that describe source/binary
 # directories, and the current project version. This is a standard CMake command.
 
-project(${NTFX_PLUGIN} VERSION 0.1.0)
+project(${NTFX_PLUGIN} VERSION ${NTFX_VERSION})
 enable_testing()
+
 # If you've installed JUCE somehow (via a package manager, or directly using the CMake install
 # target), you'll need to tell this project that it depends on the installed copy of JUCE. If you've
 # included JUCE directly in your source tree (perhaps as a submodule), you'll need to tell CMake to
@@ -113,14 +108,14 @@ juce_add_plugin(${NTFX_PLUGIN}
   # VERSION ...                               # Set this if the plugin version is different to the project version
   # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
   # ICON_SMALL ...
-  COMPANY_NAME NTfx # Specify the name of the plugin's author
+  COMPANY_NAME ${NTFX_COMPANY} # Specify the name of the plugin's author
   IS_SYNTH FALSE # Is this a synth or an effect?
   NEEDS_MIDI_INPUT FALSE # Does the plugin need midi input?
   NEEDS_MIDI_OUTPUT FALSE # Does the plugin need midi output?
   IS_MIDI_EFFECT FALSE # Is this plugin a MIDI effect?
   EDITOR_WANTS_KEYBOARD_FOCUS FALSE # Does the editor need keyboard focus?
   COPY_PLUGIN_AFTER_BUILD ${NTFX_DO_INSTALL} # Should the plugin be installed to a default location after building?
-  PLUGIN_MANUFACTURER_CODE NTfx # A four-character manufacturer id with at least one upper-case character
+  PLUGIN_MANUFACTURER_CODE ${NTFX_COMPANY} # A four-character manufacturer id with at least one upper-case character
   PLUGIN_CODE ${NTFX_PLUGIN_CODE} # A unique four-character plugin id with exactly one upper-case character
   # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
   FORMATS ${NTFX_FORMATS} # The formats to build. Other valid formats are: AAX Unity VST AU AUv3

@@ -6,3 +6,4 @@ ntTapeEcho:Zinm:Delay:Delay
 gainExample:Sdfh
 ntTransformer:Migc
 ntRmsMeter:Joxj
+nrCompressor:Zhel

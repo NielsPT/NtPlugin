@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "lib/utils.h"
 #include NTFX_PLUGIN_FILE
 #include "Stereo.h"
 #include "lib/windowFunctions.h"
@@ -155,7 +156,12 @@ namespace Src {
      * @return Processed audio samples
      */
     Stereo<signal_t> process(Stereo<signal_t> x) {
-      if (this->coeffs.disable) { return this->plug.process(x); }
+      ensureFinite(x);
+      if (this->coeffs.disable) {
+        auto y = this->plug.process(x);
+        ensureFinite(y);
+        return y;
+      }
       this->state.dlInterpolation[this->state.iStoreIn]              = x;
       this->state.dlInterpolation[this->state.iStoreIn + nDelayLine] = x;
       if (++this->state.iStoreIn >= nDelayLine) { this->state.iStoreIn = 0; }
@@ -181,6 +187,7 @@ namespace Src {
           i++) {
         accum += this->coeffs.b[i] * this->state.dlAntialiasing[iReadOut + i];
       }
+      ensureFinite(accum);
       return accum;
     }
 
@@ -261,6 +268,7 @@ namespace Src {
       std::fill(this->state.dlInterpolation.begin(),
           this->state.dlInterpolation.end(),
           0.0);
+      std::fill(this->coeffs.b.begin(), this->coeffs.b.end(), 0.0);
       this->update();
     }
   };

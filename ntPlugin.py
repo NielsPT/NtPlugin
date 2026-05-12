@@ -28,13 +28,14 @@ import shutil
 from multiprocessing import cpu_count
 from testWrapper import test
 from JuceWrapper import package
+from JuceWrapper.package import RED, GREEN, BLUE, BLACK
 
-REPO_BASE_DIR = os.path.dirname(__file__)
-BUILD_DIR = f"{REPO_BASE_DIR}/build"
-ARTIFACTS_DIR = f"{REPO_BASE_DIR}/artifacts"
-JUCE_WRAPPER_DIR = f"{REPO_BASE_DIR}/JuceWrapper"
-TEST_SCRIPT_DIR = f"{REPO_BASE_DIR}/testWrapper"
-ID_FILE = f"{JUCE_WRAPPER_DIR}/pluginIds.txt"
+REPO_BASE_DIR = os.path.realpath(os.path.dirname(__file__))
+BUILD_DIR = os.path.realpath(f"{REPO_BASE_DIR}/build")
+ARTIFACTS_DIR = os.path.realpath(f"{REPO_BASE_DIR}/artifacts")
+JUCE_WRAPPER_DIR = os.path.realpath(f"{REPO_BASE_DIR}/JuceWrapper")
+TEST_SCRIPT_DIR = os.path.realpath(f"{REPO_BASE_DIR}/testWrapper")
+ID_FILE = os.path.realpath(f"{JUCE_WRAPPER_DIR}/pluginIds.txt")
 
 
 SECRETS = ["devId", "email", "password", "team", "installerId", "company"]
@@ -183,6 +184,7 @@ def configure(
     plugin: str,
     pluginIds: dict[str, list[str]],
     category: str = "",
+    version: str = "",
 ) -> bool:
     """
     Configures Cmake for build
@@ -209,6 +211,8 @@ def configure(
     ]
     if sys.platform == "win32":
         args += ["-A", "x64"]
+    if version:
+        args += [f"-DNTFX_VERSION={version}"]
     if category:
         args += [f"-DNTFX_AAX_CATEGORY={category}"]
         args += [f"-DNTFX_VST3_CATEGORY={CATEGORY_MAP[category]}"]
@@ -362,14 +366,30 @@ def process(args: dict) -> bool:
     category = args["category"] if "category" in args else ""
     doTest = args["test"] if "test" in args else False
     doPackage = args["package"] if "package" in args else False
+    secrets = package.loadSecrets()
+    for secret in SECRETS:
+        if secret in args and args[secret]:
+            secrets[secret] = args[secret].replace("/n", "")
+    if not secrets:
+        print(f"{RED}Faild to get credentials.{BLACK}")
+        return False
+    version = package.findVersion(args, secrets)
+    if not version:
+        print(f"{RED}Version is not provided. Aborting.{BLACK}")
+        return False
+    secrets["version"] = version
     if doTest:
         if not test.run({"files": plugins, "fs": 48e3}):
             return False
     pluginIds = readPluginIds()
+    allPlugins = package.readPlugins()
     if not plugins or plugins == ["all"]:
-        plugins = package.readPlugins()
+        plugins = allPlugins
     for plugin in plugins:
-        if not configure(plugin, pluginIds, category):
+        if plugin not in allPlugins:
+            print(f"{RED}Plugin '{plugin}' does not exist.{BLACK}")
+            return False
+        if not configure(plugin, pluginIds, category, version):
             return False
         if not build():
             return False
@@ -385,6 +405,8 @@ def process(args: dict) -> bool:
     if doPackage:
         if not package.main(args):
             return False
+    if not package.storeSecrets(secrets):
+        return False
     return True
 
 
@@ -430,14 +452,26 @@ def createParser() -> argparse.ArgumentParser:
         default="",
         choices=CATEGORY_MAP.keys(),
         help="Set the category you wish the plugin to be shown under in the "
-        "host plugin list.",
+        "host plugin list. Setting is cached, so it's only needed once per "
+        "plugin, and never when building all plugins.",
     )
     buildParser.add_argument(
         "--package",
+        "-p",
         action="store_true",
         help="For MacOS, package plugins as an installer. Requires 'package' "
-        "command to have been run with full credentials and 'store_secrets' "
-        "flag at least once.",
+        "command to have been run with full credentials and at least once, "
+        "which will cache the credentials.",
+    )
+    buildParser.add_argument(
+        "--version",
+        help="Version to be used for all plugins and installer. Cached and "
+        "minor minor number auto-incremented if not given.",
+    )
+    parser.add_argument(
+        "--company",
+        help="Company/vendor of plugins.",
+        default="NTfx",
     )
     subParsers.add_parser(
         "test",
@@ -462,14 +496,13 @@ def createParser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> bool:
+def main(args: dict) -> bool:
     """
     Main function for ntPlugin CLI.
 
     Returns:
         bool: True on success.
     """
-    args = createParser().parse_args().__dict__
     if args["task"] == "build":
         return process(args)
     if args["task"] == "test":
@@ -485,4 +518,4 @@ def main() -> bool:
 
 
 if __name__ == "__main__":
-    sys.exit(not main())
+    sys.exit(not main(createParser().parse_args().__dict__))

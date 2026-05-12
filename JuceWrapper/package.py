@@ -21,6 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import subprocess
 import os
 import argparse
+import json
 import sys
 
 BLACK = "\033[0m"
@@ -29,17 +30,25 @@ GREEN = "\033[32m"
 YELLOW = "\033[33m"
 BLUE = "\033[34m"
 
-REPO_BASE_DIR = f"{os.path.dirname(__file__)}/.."
-PLUGINS_DIR = f"{REPO_BASE_DIR}/plugins"
-BUILD_DIR = f"{REPO_BASE_DIR}/build"
-ARTIFACTS_DIR = f"{REPO_BASE_DIR}/artifacts"
-JUCE_WRAPPER_DIR = f"{REPO_BASE_DIR}/JuceWrapper"
-TEST_SCRIPT_DIR = f"{REPO_BASE_DIR}/testWrapper"
-SECRETS_FILE = f"{REPO_BASE_DIR}/.secrets.txt"
-PACKAGING_DIR = f"{BUILD_DIR}/packaging"
+REPO_BASE_DIR = os.path.realpath(f"{os.path.dirname(__file__)}/..")
+PLUGINS_DIR = os.path.realpath(f"{REPO_BASE_DIR}/plugins")
+BUILD_DIR = os.path.realpath(f"{REPO_BASE_DIR}/build")
+ARTIFACTS_DIR = os.path.realpath(f"{REPO_BASE_DIR}/artifacts")
+JUCE_WRAPPER_DIR = os.path.realpath(f"{REPO_BASE_DIR}/JuceWrapper")
+TEST_SCRIPT_DIR = os.path.realpath(f"{REPO_BASE_DIR}/testWrapper")
+SECRETS_FILE = os.path.realpath(f"{JUCE_WRAPPER_DIR}/.secrets.txt")
+PACKAGING_DIR = os.path.realpath(f"{BUILD_DIR}/packaging")
 PACKAGE_ARTIFACT = "ntPlugin"
 
-SECRETS = ["devId", "email", "password", "team", "installerId", "company"]
+SECRETS = [
+    "devId",
+    "email",
+    "password",
+    "team",
+    "installerId",
+    "company",
+    "version",
+]
 
 """
 Maps from folders containing resulting artifacts to extensions of those 
@@ -69,7 +78,7 @@ def readPlugins() -> list[str]:
     return plugins
 
 
-def _storeSecrets(secrets: dict[str, str]) -> bool:
+def storeSecrets(secrets: dict[str, str]) -> bool:
     for secret in secrets:
         if not secrets[secret] or secret not in SECRETS:
             return False
@@ -77,27 +86,10 @@ def _storeSecrets(secrets: dict[str, str]) -> bool:
         for k, v in secrets.items():
             f.write(f"{k}:{v}\n")
     print(f"{GREEN}Stored secrets to file '{SECRETS_FILE}'.{BLACK}")
-    res = subprocess.run(
-        [
-            "xcrun",
-            "notraytool",
-            "store-credentials",
-            "ntPlugin-credentials",
-            "--apple-id",
-            secrets["email"],
-            "--team-id",
-            secrets["team"],
-            "--password",
-            secrets["password"],
-        ],
-        check=False,
-    )
-    if res.returncode:
-        return False
     return True
 
 
-def _loadSecrets() -> dict[str, str]:
+def loadSecrets() -> dict[str, str]:
     if not os.path.exists(SECRETS_FILE):
         print(f"{YELLOW}Secrets file not found.{BLACK}")
         return {}
@@ -386,7 +378,6 @@ def makeDistributionXml(
             xml += f'start_selected="true" title="{plugin} {target}">\n'
             xml += '  <pkg-ref '
             xml += f'id="com.{company}.{plugin}.{target.lower()}.pkg" '
-            # TODO: What to do about version?
             xml += f'version="{version}" onConclusion="none">\n'
             xml += f"    {plugin}.{target}.pkg\n"
             xml += '  </pkg-ref>\n'
@@ -504,6 +495,58 @@ def makePluginPkg(plugin: str, target: str, company: str) -> bool:
     return True
 
 
+def secretsAreValid(secrets: dict) -> bool:
+    valid = True
+    for s in SECRETS:
+        if s not in secrets.keys():
+            print(f"{RED}'{s}' is missing.")
+            valid = False
+    return valid
+
+
+def verisonIsNewer(new: str, old: str) -> bool:
+    try:
+        newInts = [int(v) for v in new.split(".")]
+        oldInts = [int(v) for v in old.split(".")]
+    except ValueError:
+        return False
+    if len(newInts) != 3:
+        return False
+    if len(oldInts) != 3:
+        return False
+    if newInts[0] > oldInts[0]:
+        return True
+    if newInts[1] > oldInts[1]:
+        return True
+    if newInts[2] > oldInts[2]:
+        return True
+    return False
+
+
+def incrementMinorMonirVersion(old: str) -> str:
+    ints = [int(v) for v in old.split(".")]
+    version = f"{ints[0]}.{ints[1]}.{ints[2] + 1}"
+    print(f"{BLUE}Incremented version: {version}{BLACK}")
+    return version
+
+
+def findVersion(args: dict, secrets: dict) -> str:
+    version = ""
+    if args["version"]:
+        if "version" in secrets and secrets["version"]:
+            if not verisonIsNewer(args["version"], secrets["version"]):
+                if args["version"] == secrets["version"]:
+                    version = incrementMinorMonirVersion(args["version"])
+                else:
+                    print(f"{RED}New version is lower than last build.{BLACK}")
+                    return ""
+        version = args["version"]
+        secrets["version"] = version
+    elif secrets["version"]:
+        version = incrementMinorMonirVersion(secrets["version"])
+    return version
+
+
 def main(args: dict) -> bool:
     """
     Packages selected plugins for MacOS.
@@ -514,30 +557,36 @@ def main(args: dict) -> bool:
     Returns:
         bool: True on success.
     """
+    # print(f"args: {json.dumps(args, indent=2)}")
     if sys.platform != "darwin":
         print(f"{RED}Packaging only available for MacOS.{BLACK}")
         return False
+
     os.makedirs(PACKAGING_DIR, exist_ok=True)
     plugins = args["plugins"]
     targets = list(TARGET_EXT_MAP.keys())
-    if args["targets"]:
+    if "targets" in args and args["targets"]:
         targets = args["targets"]
     if not plugins or plugins == ["all"]:
         plugins = readPlugins()
-    secrets = _loadSecrets()
+    secrets = loadSecrets()
     for secret in SECRETS:
-        if args[secret]:
+        if secret in args and args[secret]:
             secrets[secret] = args[secret].replace("/n", "")
-    if secrets and args["store_secrets"]:
-        if not _storeSecrets(secrets):
-            return False
-    if not secrets:
+    if not secretsAreValid(secrets):
         print(f"{RED}Faild to get credentials.{BLACK}")
         return False
-    if not args["no_sign"]:
+    version = findVersion(args, secrets)
+    if not version:
+        print(f"{RED}Version is not provided. Aborting.{BLACK}")
+        return False
+    secrets["version"] = version
+    if not storeSecrets(secrets):
+        return False
+    if "no_sign" not in args or not args["no_sign"]:
         if not sign(plugins, targets, secrets["devId"]):
             return False
-    if args["zip"]:
+    if "zip" in args and args["zip"]:
         if not args["no_notarize"]:
             if not notarizePlugins(
                 plugins,
@@ -547,7 +596,7 @@ def main(args: dict) -> bool:
                 secrets["team"],
             ):
                 return False
-        if not args["no_staple"]:
+        if "no_staple" not in args or not args["no_staple"]:
             if not staplePlugins(plugins, targets):
                 return False
         if not zipPackage(plugins, targets):
@@ -562,7 +611,7 @@ def main(args: dict) -> bool:
         path = f"{ARTIFACTS_DIR}/{plugins[0]}.pkg"
     if not makeInstallerPkg(secrets["installerId"], path):
         return False
-    if not args["no_notarize"]:
+    if "no_notarize" not in args or not args["no_notarize"]:
         if not notarize(
             path,
             secrets["email"],
@@ -570,7 +619,7 @@ def main(args: dict) -> bool:
             secrets["team"],
         ):
             return False
-    if not args["no_staple"]:
+    if "no_staple" not in args or not args["no_staple"]:
         if not staple(path):
             return False
     if not validateInstaller(path):
@@ -619,13 +668,6 @@ def createParser() -> argparse.ArgumentParser:
         help="Developer ID Installer from Apple.",
     )
     parser.add_argument(
-        "--store_secrets",
-        "--store-secrets",
-        "-s",
-        action="store_true",
-        help="Store IDs and password to file.",
-    )
-    parser.add_argument(
         "--no_notarize",
         "--no-notarize",
         action="store_true",
@@ -653,8 +695,12 @@ def createParser() -> argparse.ArgumentParser:
     # TODO: Set company in Cmake from this.
     parser.add_argument(
         "--company",
-        help="Company/vendor of plugin.",
+        help="Company/vendor of plugins.",
         default="NTfx",
+    )
+    parser.add_argument(
+        "--version",
+        help="Version to be used for all plugins and installer.",
     )
     return parser
 

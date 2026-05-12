@@ -141,8 +141,8 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     this->thetaModPhase.process();
     this->nOffset.process();
     auto xNoisy = x + NtFx::rand<signal_t>() * this->noise_lin;
-    NtFx::ensureFinite<NtFx::Stereo<signal_t>>(xNoisy);
-    NtFx::ensureFinite<NtFx::Stereo<signal_t>>(this->fbState);
+    NtFx::ensureFinite(xNoisy);
+    NtFx::ensureFinite(this->fbState);
     this->iStore++;
     if (this->iStore >= delayLineLength) { this->iStore = 0; }
     this->delayLine[this->iStore] = xNoisy + this->fb_lin * this->fbState;
@@ -171,7 +171,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     };
     auto yFbClip =
         NtFx::softClip3rdStereo(yDelay * this->aClip_lin) / aClip_lin;
-    NtFx::ensureFinite<NtFx::Stereo<signal_t>>(yFbClip);
+    NtFx::ensureFinite(yFbClip);
     auto yHp      = hpf.process(yFbClip);
     auto yLp      = lpf.process(yHp);
     this->fbState = yLp;
