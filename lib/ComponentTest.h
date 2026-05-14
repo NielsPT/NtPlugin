@@ -120,9 +120,9 @@ struct ComponentTestSet;
  */
 template <typename signal_t>
 struct ComponentTest {
-  ComponentTestSet<signal_t>& owner; ///< Set this test belongs to.
-  const std::string objName;         ///< Object to be tested.
-  Component<Stereo<signal_t>>& cut;  ///< Component under test.
+  ComponentTestSet<signal_t>& owner;    ///< Set this test belongs to.
+  const std::string objName;            ///< Object to be tested.
+  ComponentBase<Stereo<signal_t>>& cut; ///< Component under test.
   std::vector<std::string> activeStimuli = STIMULI_NAMES; ///< Tests to run.
 
   /**
@@ -137,7 +137,7 @@ struct ComponentTest {
    */
   ComponentTest(ComponentTestSet<signal_t>& owner,
       std::string objName,
-      Component<Stereo<signal_t>>& cut,
+      ComponentBase<Stereo<signal_t>>& cut,
       std::vector<std::string> stimuli = { })
       : owner(owner), objName(objName), cut(cut) {
     if (stimuli.empty()) { return; }
@@ -312,7 +312,7 @@ struct ComponentTestSet {
    * @return true if tests pass.
    * @return false if tests fail.
    */
-  bool addTest(Component<Stereo<signal_t>>& componentObj,
+  bool addTest(ComponentBase<Stereo<signal_t>>& componentObj,
       std::string objName,
       std::vector<std::string> stimuli) {
     this->tests.push_back(std::make_unique<NtFx::ComponentTest<double>>(

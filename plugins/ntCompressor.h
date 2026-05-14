@@ -49,7 +49,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   bool bypassEnable { false };
   signal_t mix_lin { signal_t(1.0) };
   signal_t makeup_lin { signal_t(1.0) };
-  NtFx::Stereo<signal_t> fbState { signal_t(0.0) };
+  NtFx::Audio<signal_t> fbState { signal_t(0.0) };
 
   bool dummy1;
   bool dummy2;
@@ -171,7 +171,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     this->updateDefaults();
   }
 
-  NtFx::Stereo<signal_t> process(NtFx::Stereo<signal_t> x) noexcept override {
+  NtFx::Audio<signal_t> process(NtFx::Audio<signal_t> x) noexcept override {
     this->template updatePeakLevel<0>(x);
     if (this->bypassEnable) {
       this->template updatePeakLevel<1>(x);
@@ -179,17 +179,17 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     }
     NtFx::ensureFinite(x);
     NtFx::ensureFinite(this->fbState);
-    NtFx::Stereo<signal_t> xHpf = x;
+    NtFx::Audio<signal_t> xHpf = x;
     if (this->scMode == scMode::feedback) {
       xHpf = this->fbState;
     } else if (this->scMode == scMode::external) {
       xHpf = this->xSc;
     }
 
-    NtFx::Stereo<signal_t> xBoost = hpf.process(xHpf);
-    NtFx::Stereo<signal_t> xSc    = boost.process(xBoost);
+    NtFx::Audio<signal_t> xBoost = hpf.process(xHpf);
+    NtFx::Audio<signal_t> xSc    = boost.process(xBoost);
 
-    NtFx::Stereo<signal_t> gr;
+    NtFx::Audio<signal_t> gr;
     if (this->linEnable) {
       if (this->rmsEnable) {
         gr = rmsScLin.process(xSc);
@@ -205,10 +205,10 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     }
     this->template updatePeakLevel<2, true>(gr);
     NtFx::ensureFinite(gr, signal_t(1.0));
-    NtFx::Stereo<signal_t> yComp = x * gr;
-    this->fbState                = yComp;
-    auto xClip                   = yComp * this->makeup_lin;
-    auto xMix                    = xClip;
+    NtFx::Audio<signal_t> yComp = x * gr;
+    this->fbState               = yComp;
+    auto xClip                  = yComp * this->makeup_lin;
+    auto xMix                   = xClip;
     if (this->clip) { xMix = NtFx::softClip5thStereo<signal_t>(xClip); }
     auto y = this->mix_lin * xMix + (1 - this->mix_lin) * x;
     this->template updatePeakLevel<1>(y);

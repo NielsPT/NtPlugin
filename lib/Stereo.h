@@ -26,46 +26,34 @@
 #include <cstddef>
 #include <type_traits>
 
-#define NTFX_MONO
 namespace NtFx {
-
-/**
- * @brief Wraps two values as a stereo signal.This allows us to do DSP math on
- * both channels at the same time. The class overloads all the normal math
- * functions. Please note that comparison operators are different for stereo
- * signals and that a < b not necessarily equals b > a since '<' compares the
- * minimum values while '>' compares maximums.
- *
- * @tparam signal_t Audio datatype.
- */
 template <typename signal_t>
-struct Stereo {
-#ifdef NTFX_MONO
+struct Mono {
   signal_t l { 0 };
-  Stereo() : l(0) { }
-  Stereo(signal_t v) : l(v) { }
-  Stereo(signal_t l, signal_t r) : l((l + r) / 2) { }
-  Stereo<signal_t>& operator=(const Stereo<signal_t>& x) noexcept {
+  Mono() : l(0) { }
+  Mono(signal_t v) : l(v) { }
+  Mono(signal_t l, signal_t r) : l((l + r) / 2) { }
+  Mono<signal_t>& operator=(const Mono<signal_t>& x) noexcept {
     this->l = x.l;
     return *this;
   }
-  Stereo<signal_t>& operator=(const signal_t& x) noexcept {
+  Mono<signal_t>& operator=(const signal_t& x) noexcept {
     this->l = x;
     return *this;
   }
-  bool operator==(const Stereo<signal_t>& x) const noexcept {
+  bool operator==(const Mono<signal_t>& x) const noexcept {
     return (this->l == x.l);
   }
-  bool operator<(const Stereo<signal_t>& x) const noexcept {
+  bool operator<(const Mono<signal_t>& x) const noexcept {
     return this->absMin() < x.absMin();
   }
-  bool operator>(const Stereo<signal_t>& x) const noexcept {
+  bool operator>(const Mono<signal_t>& x) const noexcept {
     return this->absMax() > x.absMax();
   }
-  bool operator<=(const Stereo<signal_t>& x) const noexcept {
+  bool operator<=(const Mono<signal_t>& x) const noexcept {
     return this->absMin() <= x.absMin();
   }
-  bool operator>=(const Stereo<signal_t>& x) const noexcept {
+  bool operator>=(const Mono<signal_t>& x) const noexcept {
     return this->absMax() >= x.absMax();
   }
   bool operator<(const signal_t& x) const noexcept {
@@ -81,23 +69,23 @@ struct Stereo {
     return this->absMax() >= x;
   }
 
-  Stereo<signal_t>& operator*=(const signal_t x) noexcept {
+  Mono<signal_t>& operator*=(const signal_t x) noexcept {
     this->l = this->l * x;
     return *this;
   }
-  Stereo<signal_t>& operator*=(const Stereo<signal_t> x) noexcept {
+  Mono<signal_t>& operator*=(const Mono<signal_t> x) noexcept {
     this->l = this->l * x.l;
     return *this;
   }
-  Stereo<signal_t>& operator+=(const signal_t x) noexcept {
+  Mono<signal_t>& operator+=(const signal_t x) noexcept {
     this->l = this->l + x;
     return *this;
   }
-  Stereo<signal_t>& operator+=(const Stereo<signal_t> x) noexcept {
+  Mono<signal_t>& operator+=(const Mono<signal_t> x) noexcept {
     this->l = this->l + x.l;
     return *this;
   }
-  Stereo<signal_t> operator-() const { return -this->l; }
+  Mono<signal_t> operator-() const { return -this->l; }
   /**
    * @brief Square left and right channels and take the average.
    *
@@ -122,106 +110,118 @@ struct Stereo {
   /**
    * @brief Returns the abs of both channels.
    *
-   * @return Stereo<signal_t>
+   * @return Mono<signal_t>
    */
-  Stereo<signal_t> abs() const noexcept { return gcem::abs(this->l); }
+  Mono<signal_t> abs() const noexcept { return gcem::abs(this->l); }
 };
+
 template <typename signal_t>
-static inline Stereo<signal_t> operator+(
-    const Stereo<signal_t>& y, const signal_t& x) noexcept {
+static inline Mono<signal_t> operator+(
+    const Mono<signal_t>& y, const signal_t& x) noexcept {
   return y.l + x;
 }
 template <typename signal_t>
-static inline Stereo<signal_t> operator-(
-    const Stereo<signal_t>& y, const signal_t& x) noexcept {
+static inline Mono<signal_t> operator-(
+    const Mono<signal_t>& y, const signal_t& x) noexcept {
   return y.l - x;
 }
 template <typename signal_t>
-static inline Stereo<signal_t> operator*(
-    const Stereo<signal_t>& y, const signal_t& x) noexcept {
+static inline Mono<signal_t> operator*(
+    const Mono<signal_t>& y, const signal_t& x) noexcept {
   return y.l * x;
 }
 template <typename signal_t>
-static inline Stereo<signal_t> operator/(
-    const Stereo<signal_t>& y, const signal_t& x) noexcept {
+static inline Mono<signal_t> operator/(
+    const Mono<signal_t>& y, const signal_t& x) noexcept {
   return y.l / x;
 }
 template <typename signal_t>
-static inline Stereo<signal_t> operator+(
-    const Stereo<signal_t>& y, const int& x) noexcept {
+static inline Mono<signal_t> operator+(
+    const Mono<signal_t>& y, const int& x) noexcept {
   return y.l + x;
 }
 template <typename signal_t>
-static inline Stereo<signal_t> operator-(
-    const Stereo<signal_t>& y, const int& x) noexcept {
+static inline Mono<signal_t> operator-(
+    const Mono<signal_t>& y, const int& x) noexcept {
   return y.l - x;
 }
 template <typename signal_t>
-static inline Stereo<signal_t> operator*(
-    const Stereo<signal_t>& y, const int& x) noexcept {
+static inline Mono<signal_t> operator*(
+    const Mono<signal_t>& y, const int& x) noexcept {
   return y.l * x;
 }
 template <typename signal_t>
-static inline Stereo<signal_t> operator/(
-    const Stereo<signal_t>& y, const int& x) noexcept {
+static inline Mono<signal_t> operator/(
+    const Mono<signal_t>& y, const int& x) noexcept {
   return y.l / x;
 }
 template <typename signal_t>
-static inline Stereo<signal_t> operator+(
-    const Stereo<signal_t>& y, const Stereo<signal_t>& x) noexcept {
+static inline Mono<signal_t> operator+(
+    const Mono<signal_t>& y, const Mono<signal_t>& x) noexcept {
   return y.l + x.l;
 }
 template <typename signal_t>
-static inline Stereo<signal_t> operator-(
-    const Stereo<signal_t>& y, const Stereo<signal_t>& x) noexcept {
+static inline Mono<signal_t> operator-(
+    const Mono<signal_t>& y, const Mono<signal_t>& x) noexcept {
   return y.l - x.l;
 }
 template <typename signal_t>
-static inline Stereo<signal_t> operator*(
-    const Stereo<signal_t>& y, const Stereo<signal_t>& x) noexcept {
+static inline Mono<signal_t> operator*(
+    const Mono<signal_t>& y, const Mono<signal_t>& x) noexcept {
   return y.l * x.l;
 }
 template <typename signal_t>
-static inline Stereo<signal_t> operator/(
-    const Stereo<signal_t>& y, const Stereo<signal_t>& x) noexcept {
+static inline Mono<signal_t> operator/(
+    const Mono<signal_t>& y, const Mono<signal_t>& x) noexcept {
   return y.l / x.l;
 }
 template <typename signal_t>
-static inline Stereo<signal_t> operator+(
-    const signal_t& x, const Stereo<signal_t>& y) noexcept {
+static inline Mono<signal_t> operator+(
+    const signal_t& x, const Mono<signal_t>& y) noexcept {
   return x + y.l;
 }
 template <typename signal_t>
-static inline Stereo<signal_t> operator-(
-    const signal_t& x, const Stereo<signal_t>& y) noexcept {
+static inline Mono<signal_t> operator-(
+    const signal_t& x, const Mono<signal_t>& y) noexcept {
   return x - y.l;
 }
 template <typename signal_t>
-static inline Stereo<signal_t> operator*(
-    const signal_t& x, const Stereo<signal_t>& y) noexcept {
+static inline Mono<signal_t> operator*(
+    const signal_t& x, const Mono<signal_t>& y) noexcept {
   return x * y.l;
 }
 template <typename signal_t>
-static inline Stereo<signal_t> operator/(
-    const signal_t& x, const Stereo<signal_t>& y) noexcept {
+static inline Mono<signal_t> operator/(
+    const signal_t& x, const Mono<signal_t>& y) noexcept {
   return x / y.l;
 }
 template <typename signal_t>
-static inline Stereo<signal_t> operator*(
-    const Stereo<signal_t>& y, const size_t& x) noexcept {
+static inline Mono<signal_t> operator*(
+    const Mono<signal_t>& y, const size_t& x) noexcept {
   return y.l * signal_t(x);
 }
 template <typename signal_t>
-static inline Stereo<signal_t> operator*(
-    const size_t x, const Stereo<signal_t>& y) noexcept {
+static inline Mono<signal_t> operator*(
+    const size_t x, const Mono<signal_t>& y) noexcept {
   return y.l * signal_t(x);
 }
 template <typename signal_t>
 static inline void ensureFinite(
-    Stereo<signal_t>& x, signal_t def = signal_t(0)) noexcept {
+    Mono<signal_t>& x, signal_t def = signal_t(0)) noexcept {
   ensureFinite(x.l, def);
 }
-#else
+
+/**
+ * @brief Wraps two values as a stereo signal.This allows us to do DSP math on
+ * both channels at the same time. The class overloads all the normal math
+ * functions. Please note that comparison operators are different for stereo
+ * signals and that a < b not necessarily equals b > a since '<' compares the
+ * minimum values while '>' compares maximums.
+ *
+ * @tparam signal_t Audio datatype.
+ */
+template <typename signal_t>
+struct Stereo {
   signal_t l { 0 };
   signal_t r { 0 };
   Stereo() : l(0.0f), r(0.0f) {
@@ -420,7 +420,7 @@ static inline Stereo<signal_t> operator*(
 /**
  * @brief Sets 'x' to 0 if it is not a finite number.
  *
- * @tparam signal_t Audio datatype.
+ * @tparam signal_t Stereo datatype.
  * @param x Value to validate.
  * @param def Value to set 'x' to in case it's not a finite number.
  */
@@ -428,7 +428,28 @@ template <typename signal_t>
 static inline void ensureFinite(
     Stereo<signal_t>& x, signal_t def = signal_t(0)) noexcept {
   ensureFinite(x.l, def);
-  ensureFinite(x.r, def);
+  if constexpr (!isMono<signal_t>().v) { ensureFinite(x.r, def); }
 }
+
+template <typename T>
+struct isMono {
+  static const bool v { false };
+};
+
+template <>
+struct isMono<Mono<float>> {
+  static const bool v { true };
+};
+
+template <>
+struct isMono<Mono<double>> {
+  static const bool v { true };
+};
+
+template <typename signal_t>
+#ifdef NTFX_MONO
+using Audio = Mono<signal_t>;
+#else
+using Audio = Stereo<signal_t>;
 #endif
 } // namespace NtFx

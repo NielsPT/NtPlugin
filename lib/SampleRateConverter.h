@@ -79,12 +79,12 @@ namespace Src {
     /**
      * @brief Delay line for interpolation filter (at base sample rate).
      */
-    std::array<Stereo<signal_t>, nDelayLine * 2> dlInterpolation;
+    std::array<Audio<signal_t>, nDelayLine * 2> dlInterpolation;
     /**
      * @brief Delay line for antialiasing (stores processed samples at high
      * sample rate).
      */
-    std::array<Stereo<signal_t>, nDelayLine * 2> dlAntialiasing;
+    std::array<Audio<signal_t>, nDelayLine * 2> dlAntialiasing;
   };
   /**
    * @brief Coefficients structure for sample rate converter
@@ -155,7 +155,7 @@ namespace Src {
      * @param x Input audio samples
      * @return Processed audio samples
      */
-    Stereo<signal_t> process(Stereo<signal_t> x) {
+    Audio<signal_t> process(Audio<signal_t> x) {
       ensureFinite(x);
       if (this->coeffs.disable) {
         auto y = this->plug.process(x);
@@ -167,7 +167,7 @@ namespace Src {
       if (++this->state.iStoreIn >= nDelayLine) { this->state.iStoreIn = 0; }
       auto iReadIn = this->state.iStoreIn + nDelayLine;
       for (size_t i = 0; i < this->coeffs.osFactor; i++) {
-        Stereo<signal_t> accum;
+        Audio<signal_t> accum;
         for (size_t j = 0; j < this->coeffs.osFirLenMult; j++) {
           accum += this->coeffs.b[j * this->coeffs.osFactor + i]
               * this->state.dlInterpolation[iReadIn - j];
@@ -182,7 +182,7 @@ namespace Src {
       }
       auto iReadOut = this->state.iStoreOut + nDelayLine
           - this->coeffs.osFactor * this->coeffs.osFirLenMult;
-      Stereo<signal_t> accum;
+      Audio<signal_t> accum;
       for (size_t i = 0; i < this->coeffs.osFactor * this->coeffs.osFirLenMult;
           i++) {
         accum += this->coeffs.b[i] * this->state.dlAntialiasing[iReadOut + i];

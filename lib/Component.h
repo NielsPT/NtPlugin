@@ -35,7 +35,7 @@ namespace NtFx {
  * @tparam signal_t Datatype for audio signals.
  */
 template <typename T>
-struct Component {
+struct ComponentBase {
   /**
    * @brief Sample rate of component.
    *
@@ -71,27 +71,17 @@ struct Component {
 
 /**
  * @brief Wraps two objects of type Component<signal_t> as a
- * Component<Stereo<signal_t>> and calls through the both objects.
+ * Component<Audio<signal_t>> and calls through the both objects.
  *
  * @tparam signal_t Datatype for signal. Must be a floating point type.
  * @tparam component_t Type of Component to wrap.
  */
 template <typename signal_t, typename component_t>
-struct StereoComponent : public Component<Stereo<signal_t>> {
-#ifdef NTFX_MONO
-  component_t l;
-  virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
-    return this->l.process(x.l);
-  }
-
-  virtual void update() noexcept override { this->l.update(); }
-
-  virtual void reset(float fs) noexcept override { this->l.reset(fs); }
-#else
+struct StereoComponent : public ComponentBase<Audio<signal_t>> {
   component_t l;
   component_t r;
 
-  virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+  virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
     return { this->l.process(x.l), this->r.process(x.r) };
   }
 
@@ -104,6 +94,30 @@ struct StereoComponent : public Component<Stereo<signal_t>> {
     this->l.reset(fs);
     this->r.reset(fs);
   }
-#endif
 };
-}
+
+/**
+ * @brief Wraps two objects of type Component<signal_t> as a
+ * Component<Audio<signal_t>> and calls through the both objects.
+ *
+ * @tparam signal_t Datatype for signal. Must be a floating point type.
+ * @tparam component_t Type of Component to wrap.
+ */
+template <typename signal_t, typename component_t>
+struct MonoComponent : public ComponentBase<Audio<signal_t>> {
+  component_t l;
+  virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
+    return this->l.process(x.l);
+  }
+
+  virtual void update() noexcept override { this->l.update(); }
+  virtual void reset(float fs) noexcept override { this->l.reset(fs); }
+};
+
+template <typename signal_t, typename component_t>
+#ifdef NTFX_MONO
+using AudioComponent = MonoComponent<signal_t, component_t>;
+#else
+using AudioComponent = StereoComponent<signal_t, component_t>;
+#endif
+} // namespace NtFx

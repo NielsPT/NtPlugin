@@ -43,7 +43,7 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
   NtFx::DynamicFilter::Shelf<signal_t> flt;
   NtFx::Biquad::EqBand<signal_t> hpf;
   NtFx::Biquad::EqBand<signal_t> lpf;
-  std::array<NtFx::Stereo<signal_t>, dlLookaheadLen> dlLookahead;
+  std::array<NtFx::Audio<signal_t>, dlLookaheadLen> dlLookahead;
   signal_t ignoreThresh_db { -20 };
   signal_t ignoreThresh_lin { 0.1 };
   signal_t tIgnore_ms { 6 };
@@ -180,7 +180,7 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
     this->updateDefaults();
   }
 
-  NtFx::Stereo<signal_t> process(NtFx::Stereo<signal_t> x) noexcept override {
+  NtFx::Audio<signal_t> process(NtFx::Audio<signal_t> x) noexcept override {
     this->dlLookahead[this->iLookahead++] = x;
     if (this->iLookahead >= dlLookaheadLen) { this->iLookahead = 0; }
     this->template updatePeakLevel<0>(x);

@@ -42,7 +42,7 @@ namespace NtFx {
  * @tparam signal_t The type of the audio signal (e.g., float, double).
  */
 template <typename signal_t>
-struct PeakSensor : public Component<signal_t> {
+struct PeakSensor : public ComponentBase<signal_t> {
   signal_t tPeak_ms {
     1
   }; ///< Time constant for peak detection in milliseconds.
@@ -114,7 +114,7 @@ struct PeakSensor : public Component<signal_t> {
  */
 template <typename signal_t>
 struct PeakSensorStereo
-    : public StereoComponent<signal_t, PeakSensor<signal_t>> {
+    : public AudioComponent<signal_t, PeakSensor<signal_t>> {
   /**
    * @brief Sets the time constant for peak detection in milliseconds.
    *
@@ -124,7 +124,7 @@ struct PeakSensorStereo
    */
   void setT_ms(signal_t t_ms) {
     this->l.tPeak_ms = t_ms;
-    this->r.tPeak_ms = t_ms;
+    if constexpr (!isMono<Audio<signal_t>>().v) { this->r.tPeak_ms = t_ms; }
   }
 };
 
@@ -186,7 +186,7 @@ struct PeakHoldSensor : public PeakSensor<signal_t> {
 
 template <typename signal_t,
     int delayLineLength = defaultPeakSensorDelayLineLength>
-struct PeakHoldSensorStereo : public StereoComponent<signal_t,
+struct PeakHoldSensorStereo : public AudioComponent<signal_t,
                                   PeakHoldSensor<signal_t, delayLineLength>> {
   /**
    * @brief Sets the time constant for peak detection in milliseconds.
@@ -197,7 +197,7 @@ struct PeakHoldSensorStereo : public StereoComponent<signal_t,
    */
   void setT_ms(signal_t t_ms) {
     this->l.tPeak_ms = t_ms;
-    this->r.tPeak_ms = t_ms;
+    if constexpr (!isMono<Audio<signal_t>>().v) { this->r.tPeak_ms = t_ms; }
   }
 
   /**
@@ -207,7 +207,7 @@ struct PeakHoldSensorStereo : public StereoComponent<signal_t,
    */
   void setTHold_ms(signal_t tHold_ms) {
     this->l.tHold_ms = tHold_ms;
-    this->r.tHold_ms = tHold_ms;
+    if constexpr (!isMono<Audio<signal_t>>().v) { this->r.tHold_ms = tHold_ms; }
   }
 };
 }

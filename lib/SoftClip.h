@@ -34,8 +34,8 @@ namespace NtFx {
  * @tparam signal_t Audio datatype.
  */
 template <typename signal_t>
-class SoftClip3 : public Component<Stereo<signal_t>> {
-  virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+class SoftClip3 : public ComponentBase<Audio<signal_t>> {
+  virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
     return softClip3rdStereo(x);
   }
 };
@@ -46,8 +46,8 @@ class SoftClip3 : public Component<Stereo<signal_t>> {
  * @tparam signal_t Audio datatype.
  */
 template <typename signal_t>
-class SoftClip5 : public Component<Stereo<signal_t>> {
-  virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+class SoftClip5 : public ComponentBase<Audio<signal_t>> {
+  virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
     return softClip5thStereo(x);
   }
 };
@@ -110,7 +110,8 @@ static inline signal_t softClip5thMono(signal_t x) noexcept {
  * @return signal_t Output sample.
  */
 template <typename signal_t>
-static inline Stereo<signal_t> softClip5thStereo(Stereo<signal_t> x) noexcept {
+static inline Audio<signal_t> softClip5thStereo(Audio<signal_t> x) noexcept {
+  if constexpr (isMono<Audio<signal_t>>().v) { return softClip5thMono(x.l); }
   return { softClip5thMono(x.l), softClip5thMono(x.r) };
 }
 
@@ -140,6 +141,7 @@ static inline signal_t softClip3rdMono(signal_t x) {
  */
 template <typename signal_t>
 static inline signal_t softClip3rdStereo(signal_t x) {
+  if constexpr (isMono<Audio<signal_t>>().v) { return softClip3rdMono(x.l); }
   return { softClip3rdMono(x.l), softClip3rdMono(x.r) };
 }
 } // namespace NtFx

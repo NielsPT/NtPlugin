@@ -38,7 +38,7 @@ namespace Gate {
   enum State { open, hold, release, closed };
 
   template <typename signal_t>
-  struct Sc : public Component<Stereo<signal_t>> {
+  struct Sc : public ComponentBase<Audio<signal_t>> {
     PeakSensor<signal_t> sensor;
     ScSettings<signal_t>& settings;
     State state;
@@ -51,7 +51,7 @@ namespace Gate {
 
     Sc(ScSettings<signal_t>& settings) : settings(settings) { }
 
-    virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
       auto xSc = x.absMax();
       auto y   = this->gateSc_db(xSc);
       return { y, y };

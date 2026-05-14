@@ -47,7 +47,7 @@ namespace NtFx {
 template <typename signal_t,
     int maxT_ms           = 1000,
     int maxSampleDLineLen = 192 * 8>
-struct LongRmsSensor : public Component<signal_t> {
+struct LongRmsSensor : public ComponentBase<signal_t> {
   std::array<signal_t, maxSampleDLineLen> samleDLine; ///< Sample delay line.
   std::array<signal_t, maxT_ms> msDLine; ///< Millisecond delay line.
   signal_t sampleAccum { 0 }; ///< Accumulator for current sample values.
@@ -172,7 +172,7 @@ template <typename signal_t,
     int maxT_ms           = 1000,
     int maxSampleDLineLen = 192 * 8>
 struct LongRmsSensorStereo
-    : public StereoComponent<signal_t,
+    : public AudioComponent<signal_t,
           LongRmsSensor<signal_t, maxT_ms, maxSampleDLineLen>> {
   /**
    * @brief Set the time window for RMS calculation
@@ -183,9 +183,7 @@ struct LongRmsSensorStereo
    */
   void setT_ms(int t_ms) {
     this->l.setT_ms(t_ms);
-#ifndef NTFX_MONO
-    this->r.setT_ms(t_ms);
-#endif
+    if constexpr (!isMono<Audio<signal_t>>().v) { this->r.setT_ms(t_ms); }
   }
   /**
    * @brief Get the current RMS values for both channels
@@ -195,7 +193,7 @@ struct LongRmsSensorStereo
    *
    * @return The current RMS values for both channels
    */
-  Stereo<signal_t> getRms() const noexcept {
+  Audio<signal_t> getRms() const noexcept {
 #ifdef NTFX_MONO
     return this->l.getRms();
 #else

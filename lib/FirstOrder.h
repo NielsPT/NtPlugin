@@ -45,7 +45,7 @@ namespace FirstOrder {
    * @tparam shape Type of filter.
    */
   template <typename signal_t, Shape shape>
-  struct Filter : public Component<signal_t> {
+  struct Filter : public ComponentBase<signal_t> {
     signal_t fc_hz = 1000;
     signal_t _a    = 0;
     signal_t _yn1  = 0;
@@ -92,11 +92,11 @@ namespace FirstOrder {
    * @tparam shape Filter shape.
    */
   template <typename signal_t, Shape shape>
-  struct StereoFilter : public Component<Stereo<signal_t>> {
+  struct StereoFilter : public ComponentBase<Audio<signal_t>> {
     Filter<signal_t, shape> l;
     Filter<signal_t, shape> r;
 
-    Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+    Audio<signal_t> process(Audio<signal_t> x) noexcept override {
       return { l.process(x.l), r.process(x.r) };
     }
 

@@ -54,30 +54,9 @@ const juce::String NtPluginAudioProcessor::getName() const {
   return JucePlugin_Name;
 }
 
-bool NtPluginAudioProcessor::acceptsMidi() const {
-#if JucePlugin_WantsMidiInput
-  return true;
-#else
-  return false;
-#endif
-}
-
-bool NtPluginAudioProcessor::producesMidi() const {
-#if JucePlugin_ProducesMidiOutput
-  return true;
-#else
-  return false;
-#endif
-}
-
-bool NtPluginAudioProcessor::isMidiEffect() const {
-#if JucePlugin_IsMidiEffect
-  return true;
-#else
-  return false;
-#endif
-}
-
+bool NtPluginAudioProcessor::acceptsMidi() const { return false; }
+bool NtPluginAudioProcessor::producesMidi() const { return false; }
+bool NtPluginAudioProcessor::isMidiEffect() const { return false; }
 double NtPluginAudioProcessor::getTailLengthSeconds() const { return 0.0; }
 int NtPluginAudioProcessor::getNumPrograms() { return 1; }
 int NtPluginAudioProcessor::getCurrentProgram() { return 0; }
@@ -96,26 +75,17 @@ void NtPluginAudioProcessor::prepareToPlay(
   this->plug.xRms[1].reset(sampleRate);
 }
 
-juce::AudioChannelSet m_outputFormat;
 void NtPluginAudioProcessor::releaseResources() { }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
 bool NtPluginAudioProcessor::isBusesLayoutSupported(
     const BusesLayout& layouts) const {
-  #if JucePlugin_IsMidiEffect
-  juce::ignoreUnused(layouts);
-  return true;
-  #else
   if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
       && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
     return false;
-    #if !JucePlugin_IsSynth
   if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
     return false;
-    #endif
-
   return true;
-  #endif
 }
 #endif
 
@@ -148,9 +118,9 @@ void NtPluginAudioProcessor::processBlock(
   }
   for (size_t i = 0; i < buffer.getNumSamples(); i++) {
 #ifndef NTFX_MONO
-    NtFx::Stereo<float> x { leftBuffer[i], rightBuffer[i] };
+    NtFx::Audio<float> x { leftBuffer[i], rightBuffer[i] };
 #else
-    NtFx::Stereo<float> x { leftBuffer[i] };
+    NtFx::Audio<float> x { leftBuffer[i] };
 #endif
     if (scBuffer) { this->plug.xSc = scBuffer[i]; }
     auto y = this->src.process(x);

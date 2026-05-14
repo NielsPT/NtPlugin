@@ -56,7 +56,7 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
   // TODO: Add makeup gain to sidechain?
   std::array<signal_t, Bands::n> makeup_db;
   std::array<signal_t, Bands::n> makeup_lin;
-  std::array<NtFx::Stereo<signal_t>, Bands::n> fbState;
+  std::array<NtFx::Audio<signal_t>, Bands::n> fbState;
   const std::array<std::string, Bands::n> BandNames = { "High", "Mid", "Low" };
   NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::lpf> loFlt;
   NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::hpf>
@@ -168,25 +168,25 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
     this->updateDefaults();
   }
 
-  NtFx::Stereo<signal_t> process(NtFx::Stereo<signal_t> x) noexcept override {
+  NtFx::Audio<signal_t> process(NtFx::Audio<signal_t> x) noexcept override {
     if (this->bypassEnable) { return x; }
-    std::array<NtFx::Stereo<signal_t>, 3> xComp;
+    std::array<NtFx::Audio<signal_t>, 3> xComp;
     xComp[Bands::hi]  = this->hiFlt.process(x);
     auto xLoMidFlt    = this->hiMidFlt.process(x);
     xComp[Bands::mid] = this->loMidFlt.process(xLoMidFlt);
     xComp[Bands::lo]  = this->loFlt.process(x);
-    std::array<NtFx::Stereo<signal_t>, 3> xSc;
+    std::array<NtFx::Audio<signal_t>, 3> xSc;
     if (this->feedbackEnable) {
       for (size_t i = 0; i < Bands::n; i++) { xSc[i] = this->fbState[i]; }
     } else {
       for (size_t i = 0; i < Bands::n; i++) { xSc[i] = xComp[i]; }
     }
-    std::array<NtFx::Stereo<signal_t>, Bands::n> gr;
+    std::array<NtFx::Audio<signal_t>, Bands::n> gr;
     for (size_t i = 0; i < Bands::n; i++) {
       gr[i] = this->sc[i].process(xSc[i]);
       if (this->linkEnable) { gr[i] = gr[i].absMin(); }
     }
-    NtFx::Stereo<signal_t> yComp;
+    NtFx::Audio<signal_t> yComp;
     for (size_t i = 0; i < Bands::n; i++) {
       auto tmp         = xComp[i] * gr[i];
       this->fbState[i] = tmp;

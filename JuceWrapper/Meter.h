@@ -291,18 +291,34 @@ struct StereoMeter : public juce::Component {
     this->r.setBounds(area);
   }
   template <typename signal_t>
-  void refresh(Stereo<signal_t> xPeak, Stereo<signal_t> xRms) {
+  void refresh(Audio<signal_t> xPeak, Audio<signal_t> xRms) {
     this->l.refresh(xPeak.l, xRms.l);
     this->r.refresh(xPeak.r, xRms.r);
   }
 };
 
-struct MeterGroup : public juce::Component {
-#ifdef NTFX_MONO
-  float uiScale { 1 };
-  std::vector<std::unique_ptr<MonoMeter>> meters;
+template <typename meter_t>
+struct MeterGroupBase : public juce::Component {
+  std::vector<std::unique_ptr<meter_t>> meters;
   std::vector<std::unique_ptr<MeterScale>> scales;
-  MeterGroup(UiSpec& uiSpec, std::vector<MeterSpec>& meterSpecs) {
+  const int nChs { 0 };
+  MeterGroupBase(int nChs) : nChs(nChs) { }
+  virtual void updateUi() = 0;
+  int size() const noexcept { return this->meters.size(); }
+  void resized() override {
+    this->updateUi();
+    this->repaint();
+  }
+  void setFontSize(int size) {
+    for (auto& m : meters) { m->fontSize = size; }
+    for (auto& s : scales) { s->fontSize = size; }
+  }
+};
+
+struct MonoMeterGroup : public MeterGroupBase<MonoMeter> {
+  float uiScale { 1 };
+  MonoMeterGroup(UiSpec& uiSpec, std::vector<MeterSpec>& meterSpecs)
+      : MeterGroupBase(1) {
     size_t i = 0;
     for (auto& spec : meterSpecs) {
       auto meter = std::make_unique<MonoMeter>(spec, uiSpec);
@@ -318,15 +334,10 @@ struct MeterGroup : public juce::Component {
     }
   }
   template <typename signal_t>
-  void refresh(size_t idx, Stereo<signal_t> xPeak, Stereo<signal_t> xRms) {
+  void refresh(size_t idx, Audio<signal_t> xPeak, Audio<signal_t> xRms) {
     this->meters[idx]->refresh(xPeak.l, xRms.l);
   }
-  void resized() override {
-    this->updateUi();
-    this->repaint();
-  }
-  int size() const noexcept { return this->meters.size(); }
-  void updateUi() noexcept {
+  virtual void updateUi() noexcept override {
     auto area       = this->getLocalBounds();
     auto totalWidth = area.getWidth();
     auto scaleWidth = totalWidth / (this->meters.size() + this->scales.size());
@@ -340,34 +351,31 @@ struct MeterGroup : public juce::Component {
       }
     }
   }
-  void setFontSize(int size) {
-    for (auto& m : meters) { m->fontSize = size; }
-    for (auto& s : scales) { s->fontSize = size; }
-  }
-  void setUiScale(float uiScale) {
-    this->uiScale = uiScale;
-    // for (auto& m : meters) { m->uiScale = uiScale; }
-  }
-  float getMinimalWidth() const noexcept {
-    if (!this->meters.size()) { return 0; }
-    return this->meters[0]->uiSpec.meterWidth
-        * (this->meters.size() + this->scales.size());
-  }
-  float getMinimalHeight() const noexcept {
-    if (!this->meters.size()) { return 0; }
-    auto& m = *this->meters[0].get();
-    m.refresh(false);
-    return (m.uiSpec.labelHeight) + (m.nDots + 2) * m.dotDist + m.pad;
-  }
+  void setUiScale(float uiScale) { this->uiScale = uiScale; }
   void updateRelease(float fs) {
     for (auto& m : this->meters) {
       m->updateRelease(fs, m->meterSpec.decay_s * 1000);
     }
   }
-#else
+  float getMinimalWidth() const noexcept {
+    if (!this->meters.size()) { return 0; }
+    return this->meters[0]->uiSpec.meterWidth
+        * (this->meters.size() * this->nChs + this->scales.size());
+  }
+  float getMinimalHeight() const noexcept {
+    if (!this->meters.size()) { return 0; }
+    auto& m = this->meters[0];
+    m->refresh(false);
+    return (m->uiSpec.labelHeight) * this->nChs + (m->nDots + 2) * m->dotDist
+        + m->pad;
+  }
+};
+
+struct StereoMeterGroup : public MeterGroupBase<StereoMeter> {
   std::vector<std::unique_ptr<StereoMeter>> meters;
   std::vector<std::unique_ptr<MeterScale>> scales;
-  MeterGroup(UiSpec& uiSpec, std::vector<MeterSpec>& meterSpecs) {
+  StereoMeterGroup(UiSpec& uiSpec, std::vector<MeterSpec>& meterSpecs)
+      : MeterGroupBase(2) {
     size_t i = 0;
     for (auto& spec : meterSpecs) {
       auto meter = std::make_unique<StereoMeter>(spec, uiSpec);
@@ -382,20 +390,15 @@ struct MeterGroup : public juce::Component {
     }
   }
   template <typename signal_t>
-  void refresh(size_t idx, Stereo<signal_t> xPeak, Stereo<signal_t> xRms) {
+  void refresh(size_t idx, Audio<signal_t> xPeak, Audio<signal_t> xRms) {
     this->meters[idx]->refresh(xPeak, xRms);
   }
-  void resized() override {
-    this->updateUi();
-    this->repaint();
-  }
-  int size() const noexcept { return this->meters.size(); }
-  void updateUi() noexcept {
+  virtual void updateUi() noexcept override {
     auto area       = this->getLocalBounds();
     auto totalWidth = area.getWidth();
     auto scaleWidth =
-        totalWidth / (this->meters.size() * 2 + this->scales.size());
-    auto meterWidth = scaleWidth * 2;
+        totalWidth / (this->meters.size() * this->nChs + this->scales.size());
+    auto meterWidth = scaleWidth * this->nChs;
     size_t iScale   = 0;
     for (auto& m : this->meters) {
       m->setBounds(area.removeFromLeft(meterWidth));
@@ -406,23 +409,8 @@ struct MeterGroup : public juce::Component {
       }
     }
   }
-  void setFontSize(int size) {
-    for (auto& m : meters) { m->fontSize = size; }
-    for (auto& s : scales) { s->fontSize = size; }
-  }
   void setUiScale(float uiScale) {
     for (auto& m : meters) { m->uiScale = uiScale; }
-  }
-  float getMinimalWidth() const noexcept {
-    if (!this->meters.size()) { return 0; }
-    return this->meters[0]->l.uiSpec.meterWidth
-        * (this->meters.size() * 2 + this->scales.size());
-  }
-  float getMinimalHeight() const noexcept {
-    if (!this->meters.size()) { return 0; }
-    auto& m = this->meters[0]->l;
-    m.refresh(false);
-    return (m.uiSpec.labelHeight) * 2 + (m.nDots + 2) * m.dotDist + m.pad;
   }
   void updateRelease(float fs) {
     for (auto& m : this->meters) {
@@ -430,6 +418,23 @@ struct MeterGroup : public juce::Component {
       m->r.updateRelease(fs, m->r.meterSpec.decay_s * 1000);
     }
   }
-#endif
+  float getMinimalWidth() const noexcept {
+    if (!this->meters.size()) { return 0; }
+    return this->meters[0]->l.uiSpec.meterWidth
+        * (this->meters.size() * this->nChs + this->scales.size());
+  }
+  float getMinimalHeight() const noexcept {
+    if (!this->meters.size()) { return 0; }
+    auto& m = this->meters[0]->l;
+    m.refresh(false);
+    return (m.uiSpec.labelHeight) * this->nChs + (m.nDots + 2) * m.dotDist
+        + m.pad;
+  }
 };
+
+#ifdef NTFX_MONO
+using MeterGroup = MonoMeterGroup;
+#else
+using MeterGroup = StereoMeterGroup;
+#endif
 } // namespace NtFx

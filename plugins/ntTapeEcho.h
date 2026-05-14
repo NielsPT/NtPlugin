@@ -65,8 +65,8 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
   signal_t tempoScale       = 1;
   NtFx::Biquad::EqBand<signal_t> hpf;
   NtFx::Biquad::EqBand<signal_t> lpf;
-  NtFx::Stereo<signal_t> fbState;
-  std::array<NtFx::Stereo<signal_t>, delayLineLength> delayLine;
+  NtFx::Audio<signal_t> fbState;
+  std::array<NtFx::Audio<signal_t>, delayLineLength> delayLine;
   signal_t fb_lin    = 0.2;
   signal_t noise_lin = 0;
   signal_t tGlide    = 0.36;
@@ -133,8 +133,8 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     this->updateDefaults();
   }
 
-  virtual NtFx::Stereo<signal_t> process(
-      NtFx::Stereo<signal_t> x) noexcept override {
+  virtual NtFx::Audio<signal_t> process(
+      NtFx::Audio<signal_t> x) noexcept override {
     this->nDelay.process();
     this->modDepth.process();
     this->thetaMod.process();
@@ -165,7 +165,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     if (iLoadL < 0) { iLoadL += delayLineLength; }
     int iLoadR = this->iStore - gcem::round(nModR);
     if (iLoadR < 0) { iLoadR += delayLineLength; }
-    NtFx::Stereo<signal_t> yDelay = {
+    NtFx::Audio<signal_t> yDelay = {
       this->delayLine[iLoadL].l,
       this->delayLine[iLoadR].r,
     };

@@ -88,24 +88,14 @@ namespace Biquad {
   };
 
   template <typename signal_t>
-  struct BiQuad6Stereo : public Component<Stereo<signal_t>> {
+  struct EqBand6Stereo : public ComponentBase<Audio<signal_t>> {
     Biquad6<signal_t> l;
-#ifndef NTFX_MONO
     Biquad6<signal_t> r;
-#endif
     Settings<signal_t> settings;
     Coeffs6<signal_t> coeffs;
-#ifdef NTFX_MONO
-    BiQuad6Stereo() : l(coeffs) { }
-#else
-    BiQuad6Stereo() : l(coeffs), r(coeffs) { }
-#endif
-    virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
-#ifdef NTFX_MONO
-      return this->l.process(x.l);
-#else
+    EqBand6Stereo() : l(coeffs), r(coeffs) { }
+    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
       return { this->l.process(x.l), this->r.process(x.r) };
-#endif
     }
     virtual void update() noexcept override {
       this->coeffs = calcCoeffs6<signal_t>(settings, this->fs);
@@ -114,7 +104,22 @@ namespace Biquad {
   };
 
   template <typename signal_t>
-  struct Biquad5 : public Component<signal_t> {
+  struct EqBand6Mono : public ComponentBase<Audio<signal_t>> {
+    Biquad6<signal_t> l;
+    Settings<signal_t> settings;
+    Coeffs6<signal_t> coeffs;
+    EqBand6Mono() : l(coeffs) { }
+    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
+      return this->l.process(x.l);
+    }
+    virtual void update() noexcept override {
+      this->coeffs = calcCoeffs6<signal_t>(settings, this->fs);
+    }
+    virtual void reset(float fs) noexcept override { this->fs = fs; }
+  };
+
+  template <typename signal_t>
+  struct Biquad5 : public ComponentBase<signal_t> {
     Coeffs5<signal_t> coeffs;
     State<signal_t> state;
     Settings<signal_t>& settings;
@@ -136,38 +141,41 @@ namespace Biquad {
   };
 
   template <typename signal_t>
-  struct EqBand : public Component<Stereo<signal_t>> {
+  struct EqBandMono : public ComponentBase<Audio<signal_t>> {
     Settings<signal_t> settings;
     virtual void reset(float fs) noexcept override {
       this->fs      = fs;
       this->l.state = { { 0, 0 }, { 0, 0 } };
-#ifndef NTFX_MONO
-      this->r.state = { { 0, 0 }, { 0, 0 } };
-#endif
       this->update();
     }
     Biquad5<signal_t> l;
-#ifndef NTFX_MONO
-    Biquad5<signal_t> r;
-#endif
     Coeffs5<signal_t> coeffs;
-#ifdef NTFX_MONO
-    EqBand() : l(settings) { }
-#else
-    EqBand() : l(settings), r(settings) { }
-#endif
-    virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
-#ifdef NTFX_MONO
+    EqBandMono() : l(settings) { }
+    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
       return this->l.process(x.l);
-#else
+    }
+    virtual void update() noexcept override { this->l.update(); }
+  };
+
+  template <typename signal_t>
+  struct EqBandStereo : public ComponentBase<Audio<signal_t>> {
+    Settings<signal_t> settings;
+    virtual void reset(float fs) noexcept override {
+      this->fs      = fs;
+      this->l.state = { { 0, 0 }, { 0, 0 } };
+      this->r.state = { { 0, 0 }, { 0, 0 } };
+      this->update();
+    }
+    Biquad5<signal_t> l;
+    Biquad5<signal_t> r;
+    Coeffs5<signal_t> coeffs;
+    EqBandStereo() : l(settings), r(settings) { }
+    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
       return { this->l.process(x.l), this->r.process(x.r) };
-#endif
     }
     virtual void update() noexcept override {
       this->l.update();
-#ifndef NTFX_MONO
       this->r.update();
-#endif
     }
   };
 
@@ -356,6 +364,17 @@ namespace Biquad {
     return c;
   }
 
+#ifdef NTFX_MONO
+  template <typename signal_t>
+  using EqBand6 = EqBand6Mono<signal_t>;
+  template <typename signal_t>
+  using EqBand = EqBandMono<signal_t>;
+#else
+  template <typename signal_t>
+  using EqBand6 = EqBand6Stereo<signal_t>;
+  template <typename signal_t>
+  using EqBand = EqBandStereo<signal_t>;
+#endif
 } // namespace Biquad
 } // namespace NtFx
 
@@ -498,250 +517,3 @@ namespace Biquad {
 //    }
 // };
 // }
-
-// // #pragma once
-
-// // /*
-// //  * Firmware for AudioCura / SoundFocus (AC) Loudspeaker Digital (LS-D)
-// active
-// //  * loudspeaker platform.
-// //  * Copyright (c) 2023, AudioCura Aps.
-// //  * Author: Niels Thøgersen
-// //  */
-
-// // #include "defines.h"
-// // #include "Error.h"
-// // #include <stdint.h>
-
-// // #include "AudioSigTypes.h"
-// // #include "AudioUtils.h"
-// // #include "Biquad.h"
-
-// // namespace AcLsdEnhancer {
-
-// // constexpr int b0     = 0;
-// // constexpr int b1     = 1;
-// // constexpr int b2     = 2;
-// // constexpr int a1     = 3;
-// // constexpr int a2     = 4;
-// // constexpr int minus1 = 0;
-// // constexpr int minus2 = 1;
-
-// // template <typename T>
-// // struct BiquadParameterSet {
-// //    /**
-// //     * @brief Coeffs are stored in the order { b0 a1 b1 a2 b2, padding * 3}
-// //     *
-// //     */
-// //    T m_coeffs[8] { 1, 0, 0, 0, 0, 0, 0, 0 };
-// // };
-
-// // /**
-// //  * @brief Cascade of t_numStages biquad filters. Optimized to recycle feed
-// back
-// //  state
-// //  * of previous stage as feed forward state for the next stage in the
-// cascade. This
-// //  * should decrease the amount of writes by half in the filter. To be
-// confirmed.
-// //  *
-// //  * @tparam T Data type of audio.
-// //  * @tparam t_numStages Number of stages.
-// //  * @tparam t_normalizeA0 Set to true for normalization of A0, removing one
-// MAC pr
-// //  stage.
-// //  * @tparam t_32bitState Set to true for 32 bit precision in feed back
-// loop. Only
-// //  * applicable for T == int16_t.
-// //  */
-// // template <typename T, int t_numStages = 1>
-// // class BiquadCascade {
-// // private:
-// //    // Privacy is so last millennium.
-
-// // public:
-// //    BiquadParameterSet<T> m_params[t_numStages];
-
-// //    /**
-// //     * @brief Feed forward state for frist filter in chain.
-// //     *
-// //     */
-// //    typename AudioSigTypes<T, true>::fb_t m_xn[2];
-
-// //    /**
-// //     * @brief Feed back state for each stage doubles as feed forward state
-// for the
-// //     next
-// //     * stage.
-// //     *
-// //     */
-// //    typename AudioSigTypes<T, true>::fb_t m_yn[2 * t_numStages];
-
-// //    /**
-// //     * @brief Processes one sample with BiquadCascade.
-// //     *
-// //     * @param x Input sample.
-// //     * @return T y Out put sample.
-// //     */
-// //    processSample(T x) {
-// //       if (AudioSigTypes<T>::typeIsInt16) { // constexpr if
-// //          int32_t x32 = i32(x) << 15;
-// //          int32_t acc = (i64(m_params[0].m_coeffs[b0]) * i64(x32) + 0x3FFF)
-// >> 14;
-// //          acc += (i64(m_params[0].m_coeffs[b1]) * i64(m_xn[minus1]) +
-// 0x3FFF) >>
-// //          14; acc += (i64(m_params[0].m_coeffs[b2]) * i64(m_xn[minus2]) +
-// 0x3FFF)
-// //          >> 14; acc += (i64(m_params[0].m_coeffs[a1]) * i64(m_yn[minus1])
-// +
-// //          0x3FFF) >> 14; acc += (i64(m_params[0].m_coeffs[a2]) *
-// i64(m_yn[minus2])
-// //          + 0x3FFF) >> 14;
-
-// //          // Store feed forward state for first stage.
-// //          m_xn[minus2] = m_xn[minus1];
-// //          m_xn[minus1] = x32;
-
-// //          // acc += 0x7FFF;
-// //          // acc >>= 14;
-// //          int32_t xRemainingStages = acc;
-
-// //          // Process the remaining stages using feedback state from the
-// previous
-// //          stage for feed forward state. for (size_t i = 1; i < t_numStages;
-// i++) {
-// //             acc = (i64(m_params[i].m_coeffs[b0]) * i64(xRemainingStages) +
-// 0x3FFF)
-// //             >> 14; acc += (i64(m_params[i].m_coeffs[b1]) * i64(m_yn[(i -
-// 1) * 2 +
-// //             minus1]) + 0x3FFF) >> 14; acc +=
-// (i64(m_params[i].m_coeffs[b2]) *
-// //             i64(m_yn[(i - 1) * 2 + minus2]) + 0x3FFF) >> 14; acc +=
-// //             (i64(m_params[i].m_coeffs[a1]) * i64(m_yn[i * 2 + minus1]) +
-// 0x3FFF)
-// //             >> 14; acc += (i64(m_params[i].m_coeffs[a2]) * i64(m_yn[i * 2
-// +
-// //             minus2]) + 0x3FFF) >> 14;
-
-// //             // Update feed back state for previous stage.
-// //             m_yn[(i - 1) * 2 + minus2] = m_yn[(i - 1) * 2 + minus1];
-// //             m_yn[(i - 1) * 2 + minus1] = xRemainingStages;
-
-// //             // acc += 0x7FFF;
-// //             // acc >>= 14;
-// //             xRemainingStages = acc;
-// //          }
-
-// //          // update feed back state for last stage.
-// //          m_yn[(t_numStages - 1) * 2 + minus2] = m_yn[(t_numStages - 1) * 2
-// +
-// //          minus1]; m_yn[(t_numStages - 1) * 2 + minus1] = acc; return
-// clip(i32(acc
-// //          >> 15));
-// //       } else { // Generic code
-// //          // First stage uses the stored feed forward state m_xn.
-// //          T acc = m_params[0].m_coeffs[b0] * x;
-
-// //          acc += m_params[0].m_coeffs[b1] * m_xn[minus1];
-// //          acc += m_params[0].m_coeffs[b2] * m_xn[minus2];
-// //          acc += m_params[0].m_coeffs[a1] * m_yn[minus1];
-// //          acc += m_params[0].m_coeffs[a2] * m_yn[minus2];
-
-// //          // Store feed forward state for first stage.
-// //          m_xn[minus2] = m_xn[minus1];
-// //          m_xn[minus1] = x;
-
-// //          T xRemainingStages = acc;
-
-// //          // Process the remaining stages using feedback state from the
-// previous
-// //          stage for feed forward state. for (size_t i = 1; i < t_numStages;
-// i++) {
-// //             acc = m_params[i].m_coeffs[b0] * xRemainingStages;
-
-// //             acc += m_params[i].m_coeffs[b1] * m_yn[(i - 1) * 2 + minus1];
-// //             acc += m_params[i].m_coeffs[b2] * m_yn[(i - 1) * 2 + minus2];
-// //             acc += m_params[i].m_coeffs[a1] * m_yn[i * 2 + minus1];
-// //             acc += m_params[i].m_coeffs[a2] * m_yn[i * 2 + minus2];
-
-// //             // Update feed back state for previous stage.
-// //             m_yn[(i - 1) * 2 + minus2] = m_yn[(i - 1) * 2 + minus1];
-// //             m_yn[(i - 1) * 2 + minus1] = xRemainingStages;
-
-// //             xRemainingStages = acc;
-// //          }
-
-// //          // update feed back state for last stage.
-// //          m_yn[(t_numStages - 1) * 2 + minus2] = m_yn[(t_numStages - 1) * 2
-// +
-// //          minus1]; m_yn[(t_numStages - 1) * 2 + minus1] = acc; return acc;
-// //       }
-// //    }
-
-// //    /**
-// //     * @brief Initialize cascade by resetting all states.
-// //     *
-// //     * @return error
-// //     */
-// //    error init() {
-// //       for (size_t i = 0; i < t_numStages * 2; i++) {
-// //          m_yn[i] = 0;
-// //          if (AudioSigTypes<T>::typeIsInt16) { // constexpr if
-// //             m_params[i].m_coeffs[0] = 0x4000;
-// //          }
-// //       }
-// //       m_xn[0] = 0;
-// //       m_xn[1] = 0;
-// //       return Error::noError;
-// //    }
-
-// //    /**
-// //     * @brief Set the Coeffs of biquad filter, with normalization and
-// scaling.
-// //     * This is the method to use in the general case and for any static
-// filter.
-// //     *
-// //     * @param[in] p_coeffs Pointer to unnormalized, floating point
-// coefficients.
-// //     * @param coeffSet Number of stage in cascade to change coeffs for.
-// //     * @return error
-// //     */
-// //    template <typename T_coeffs>
-// //    error setCoeffs(const BiquadCoeffs<T_coeffs>* const p_coeffs, int
-// coeffSet = 0)
-// //    {
-// //       if (coeffSet < 0 || coeffSet >= t_numStages) {
-// //          return Error::outOfRangeError;
-// //       }
-
-// //       // Copy the coeffs so that we don't mutate the original.
-// //       BiquadCoeffs<T_coeffs> coeffs = *p_coeffs;
-
-// //       // Normalize coeffs with respect to a0.
-// //       normalizeCoeffs(&coeffs);
-
-// //       if (AudioSigTypes<T>::typeIsInt16) { // constexpr if
-// //          // m_shiftVal replaces a0.
-// //          // Make sure that the coeffs are in the range [-1:1]
-// //          int v = scaleCoeffsDownToOne(&coeffs);
-// //          if (v != 1) {
-// //             return Error::hardError;
-// //          }
-
-// //          m_params[coeffSet].m_coeffs[b0] = floatToInt16(coeffs.m_b[0]);
-// //          m_params[coeffSet].m_coeffs[b1] = floatToInt16(coeffs.m_b[1]);
-// //          m_params[coeffSet].m_coeffs[b2] = floatToInt16(coeffs.m_b[2]);
-// //          m_params[coeffSet].m_coeffs[a1] = -floatToInt16(coeffs.m_a[1]);
-// //          m_params[coeffSet].m_coeffs[a2] = -floatToInt16(coeffs.m_a[2]);
-
-// //       } else { // Generic code
-// //          m_params[coeffSet].m_coeffs[b0] = coeffs.m_b[0];
-// //          m_params[coeffSet].m_coeffs[b1] = coeffs.m_b[1];
-// //          m_params[coeffSet].m_coeffs[b2] = coeffs.m_b[2];
-// //          m_params[coeffSet].m_coeffs[a1] = -coeffs.m_a[1];
-// //          m_params[coeffSet].m_coeffs[a2] = -coeffs.m_a[2];
-// //       }
-
-// //       return Error::noError;
-// //    }
-// // };

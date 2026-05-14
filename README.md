@@ -395,7 +395,7 @@ be confused with the `juce::Component` class, which is for UI components. It is
 a true virtual base class, which enforces the interface for audio components in
 the system. All stateful audio components in the library inherits this class,
 including the `NtFx::NtPlugin` class, with either `signal_t` or
-`Stereo<signal_t>` as template parameter denoting whether the component process
+`Audio<signal_t>` as template parameter denoting whether the component process
 stereo or mono signals.
 
 As stated [earlier](#usage), `NtFx::Component` has the following true virtual

@@ -60,13 +60,13 @@ namespace Comp {
    * @tparam signal_t The signal type (e.g., float, double)
    */
   template <typename signal_t>
-  struct PeakSideChainDb : public Component<Stereo<signal_t>> {
+  struct PeakSideChainDb : public ComponentBase<Audio<signal_t>> {
     PeakSensorStereo<signal_t> peakSensor; ///< Peak sensor for stereo signals
     signal_t alphaAtt = signal_t(0);       ///< Attack coefficient
     signal_t alphaRel = signal_t(0);       ///< Release coefficient
 
     ScSettings<signal_t>& settings; ///< Reference to side chain settings
-    Stereo<signal_t> stateFilter =
+    Audio<signal_t> stateFilter =
         signal_t(0.0); ///< State filter for gain computation
 
     /**
@@ -80,13 +80,19 @@ namespace Comp {
      * @param x Input stereo signal
      * @return Gain reduction in linear domain.
      */
-    virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
       auto ySens = this->peakSensor.process(x);
       ensureFinite(this->stateFilter);
-      auto y = Stereo<signal_t>({
-          this->_gainComputer_db(ySens.l, this->stateFilter.l),
-          this->_gainComputer_db(ySens.r, this->stateFilter.r),
-      });
+      Audio<signal_t> y;
+      if constexpr (isMono<Audio<signal_t>>().v) {
+        y = Audio<signal_t>(
+            this->_gainComputer_db(ySens.l, this->stateFilter.l));
+      } else {
+        y = Audio<signal_t>({
+            this->_gainComputer_db(ySens.l, this->stateFilter.l),
+            this->_gainComputer_db(ySens.r, this->stateFilter.r),
+        });
+      }
       if (this->settings.linkEnable) {
         auto _y = y.absMin();
         return { _y, _y };
@@ -175,9 +181,12 @@ namespace Comp {
      * @return Result of side chain. Multiply your input by this to apply side
      * chain.
      */
-    virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
       auto ySens = this->peakSensor.process(x);
       ensureFinite(this->stateFilter);
+      if constexpr (isMono<Audio<signal_t>>().v) {
+        return this->_gainComputer_lin(ySens.l, this->stateFilter.l);
+      }
       return {
         this->_gainComputer_lin(ySens.l, this->stateFilter.l),
         this->_gainComputer_lin(ySens.r, this->stateFilter.r),
@@ -248,10 +257,13 @@ namespace Comp {
      * @param x Input stereo signal
      * @return Processed stereo signal with gain reduction applied
      */
-    virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
       auto ySens = rmsSensor.process(x);
-      ensureFinite(this->stateFilter.l);
-      ensureFinite(this->stateFilter.r);
+
+      ensureFinite(this->stateFilter);
+      if constexpr (isMono<Audio<signal_t>>().v) {
+        return this->_gainComputer_db(ySens.l, this->stateFilter.l);
+      }
       return {
         this->_gainComputer_db(ySens.l, this->stateFilter.l),
         this->_gainComputer_db(ySens.r, this->stateFilter.r),
@@ -302,9 +314,12 @@ namespace Comp {
      * @param x Input stereo signal
      * @return Processed stereo signal with gain reduction applied
      */
-    virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
       auto ySens = rmsSensor.process(x);
       ensureFinite(this->stateFilter);
+      if constexpr (!isMono<signal_t>().v) {
+        return this->_gainComputer_lin(ySens.l, this->stateFilter.l);
+      }
       return {
         this->_gainComputer_lin(ySens.l, this->stateFilter.l),
         this->_gainComputer_lin(ySens.r, this->stateFilter.r),

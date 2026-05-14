@@ -121,7 +121,7 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
     this->updateDefaults();
   }
 
-  NtFx::Stereo<signal_t> process(NtFx::Stereo<signal_t> x) noexcept override {
+  NtFx::Audio<signal_t> process(NtFx::Audio<signal_t> x) noexcept override {
     auto xBqHpf0 = x;
     if ((this->orderHpf + 1) % 2) { xBqHpf0 = this->firstOrderHpf.process(x); }
     auto yBqHpf0 = this->bqHpf0.process(xBqHpf0);

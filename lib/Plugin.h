@@ -43,7 +43,7 @@ namespace NtFx {
  */
 template <typename signal_t>
   requires std::is_floating_point_v<signal_t>
-struct NtPlugin : public Component<Stereo<signal_t>> {
+struct NtPlugin : public ComponentBase<Audio<signal_t>> {
   /**
    * @brief Array of rms sensors for RMS meter.
    *
@@ -53,7 +53,7 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
   /**
    * @brief Peak level to be displayed in the meters.
    */
-  std::array<Stereo<signal_t>, nMetersMax> peakLevels;
+  std::array<Audio<signal_t>, nMetersMax> peakLevels;
 
   /**
    * @brief Specification for UI. Modify this to change the look of your
@@ -261,7 +261,7 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
    * @return
    */
   template <size_t idx, bool invert = false>
-  NtFx::Stereo<signal_t> updatePeakLevel(NtFx::Stereo<signal_t> val) noexcept {
+  NtFx::Audio<signal_t> updatePeakLevel(NtFx::Audio<signal_t> val) noexcept {
     if constexpr (idx >= nMetersMax) {
       static_assert(false, "Meter index is out of bounds.");
     }
@@ -277,15 +277,15 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
    * @brief Get and reset peak level for specified meter.
    *
    * @param idx
-   * @return NtFx::Stereo<signal_t> Highest signal level since last call.
+   * @return NtFx::Audio<signal_t> Highest signal level since last call.
    */
-  NtFx::Stereo<signal_t> getAndResetPeakLevel(size_t idx) noexcept {
+  NtFx::Audio<signal_t> getAndResetPeakLevel(size_t idx) noexcept {
     signal_t def = signal_t(0);
     if (idx >= this->meters.size()) { return def; }
     if (this->meters[idx].invert) { def = signal_t(1); }
     ensureFinite(this->peakLevels[idx]);
-    NtFx::Stereo<signal_t> tmp = this->peakLevels[idx];
-    this->peakLevels[idx]      = signal_t(def);
+    NtFx::Audio<signal_t> tmp = this->peakLevels[idx];
+    this->peakLevels[idx]     = signal_t(def);
     return tmp;
   }
 
@@ -294,9 +294,9 @@ struct NtPlugin : public Component<Stereo<signal_t>> {
    * from the peak level.
    *
    * @param idx Index of meter to get RMS level for.
-   * @return NtFx::Stereo<signal_t> RMS level.
+   * @return NtFx::Audio<signal_t> RMS level.
    */
-  NtFx::Stereo<signal_t> getRms(size_t idx) noexcept {
+  NtFx::Audio<signal_t> getRms(size_t idx) noexcept {
     if (idx >= 2) { return signal_t(0); }
     return this->xRms[idx].getRms();
   }

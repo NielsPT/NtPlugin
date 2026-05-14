@@ -41,8 +41,8 @@ struct ntTransformer : public NtFx::NtPlugin<signal_t> {
     this->toggles                   = { { &this->bypass, "Bypass" } };
     this->uiSpec.defaultWindowWidth = 350;
   }
-  virtual NtFx::Stereo<signal_t> process(
-      NtFx::Stereo<signal_t> x) noexcept override {
+  virtual NtFx::Audio<signal_t> process(
+      NtFx::Audio<signal_t> x) noexcept override {
     this->template updatePeakLevel<0>(x);
     if (this->bypass) {
       this->template updatePeakLevel<1>(x);
