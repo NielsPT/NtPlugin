@@ -17,9 +17,9 @@
 
 #pragma once
 
+#include "lib/Audio.h"
 #include "lib/Plugin.h"
 #include "lib/RmsSensor.h"
-#include "lib/Stereo.h"
 
 template <typename signal_t>
 struct ntRmsMeter : NtFx::NtPlugin<signal_t> {

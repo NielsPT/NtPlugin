@@ -20,11 +20,11 @@
  */
 
 #include "gcem.hpp"
+#include "lib/Audio.h"
 #include "lib/Biquad.h"
 #include "lib/DynamicFilter.h"
 #include "lib/GateSc.h"
 #include "lib/Plugin.h"
-#include "lib/Stereo.h"
 #include "lib/utils.h"
 #include <array>
 

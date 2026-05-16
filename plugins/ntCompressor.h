@@ -20,11 +20,11 @@
 
 #pragma once
 
+#include "lib/Audio.h"
 #include "lib/Biquad.h"
 #include "lib/Comp.h"
 #include "lib/Plugin.h"
 #include "lib/SoftClip.h"
-#include "lib/Stereo.h"
 #include "lib/utils.h"
 
 enum scMode { feedForward = 0, feedback, external };

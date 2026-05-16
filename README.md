@@ -232,9 +232,8 @@ In order to automate a number of general workflows, a CLI tool name
 create new plugins. Results of this program are stored in `artifacts`, separate
 from `build` so that the build dir can be cleaned out without deleting any
 artifacts. Files in `artifacts` are sorted according to plugin type and a text
-file named `plugin_ids.txt` contains the ID and category of each plugin so that
-those persist across builds. This is the tool that `build_install.sh/bat` uses
-under the hood. Type `python ntPlugin.py -h` for more info.
+file named `pluginIds.txt` contains the ID and category of each plugin so that
+those persist across builds. Type `python ntPlugin.py -h` for more info.
 
 ## Collaborations
 
@@ -245,6 +244,24 @@ the JUCE framework is available, but since plugins are written in
 platform-agnostic code, targeting more platforms in the future is possible. If
 anyone wishes to colaborate, adding a wrapper for eg. ESP32 or an ADI device
 would be an option for a project.
+
+## Mono plugins
+
+Plugins are stereo by default. If you want to build a plugin as mono, simply add
+`#define NTFX_MONO` to your plugin file **before** including any NtFx library
+headers. If you want your plugin to build in both mono and stereo versions, add
+a new plugin, which set the `NTFX_MONO` define, includes your plugin and
+typedefs your original plugin to the new plugin file name. This snippet is the
+mono plugin file in it's totality.
+
+```c++
+#pragma once
+#define NTFX_MONO
+#include "[stereo plugin name].h"
+template <typename signal_t>
+using [mono plugin name] = [stereo plugin name]<signal_t>;
+
+```
 
 ## Testing your plugin
 
@@ -383,10 +400,11 @@ is the main signal datatype. At the time of writing, this always resolves to a
 float, but it is a template parameter in order to change that at a later point
 without having to touch all the code.
 
-### The Stereo class
+### The Audio class
 
-The Stereo class wraps two `signal_t` values in a single object and allows the
-user to write the dsp code once for both channels.
+The Audio class wraps two `signal_t` values in a single object and allows the
+user to write the dsp code once for both channels. If `NTFX_MONO` is set, it
+will wrap a single value.
 
 ### The Component class
 

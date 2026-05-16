@@ -25,9 +25,9 @@
  */
 
 #include "gcem.hpp"
+#include "lib/Audio.h"
 #include "lib/Biquad.h"
 #include "lib/Component.h"
-#include "lib/Stereo.h"
 
 namespace NtFx {
 namespace DynamicFilter {

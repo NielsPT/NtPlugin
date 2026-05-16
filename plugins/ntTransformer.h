@@ -20,9 +20,9 @@
 
 #pragma once
 
+#include "lib/Audio.h"
 #include "lib/Biquad.h"
 #include "lib/Plugin.h"
-#include "lib/Stereo.h"
 #include "lib/Transformer.h"
 #include "lib/utils.h"
 

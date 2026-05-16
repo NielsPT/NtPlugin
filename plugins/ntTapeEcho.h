@@ -21,11 +21,11 @@
 #pragma once
 
 #include "gcem.hpp"
+#include "lib/Audio.h"
 #include "lib/Biquad.h"
 #include "lib/Glider.h"
 #include "lib/Plugin.h"
 #include "lib/SoftClip.h"
-#include "lib/Stereo.h"
 #include "lib/utils.h"
 #include <algorithm>
 #include <array>

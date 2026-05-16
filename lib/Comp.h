@@ -21,10 +21,10 @@
 #pragma once
 
 #include "gcem.hpp"
+#include "lib/Audio.h"
 #include "lib/Component.h"
 #include "lib/PeakSensor.h"
 #include "lib/RmsSensor.h"
-#include "lib/Stereo.h"
 #include "lib/utils.h"
 
 namespace NtFx {

@@ -75,7 +75,7 @@ def newPlugin(name: str) -> bool:
     template = f"""#pragma once
 
 #include "lib/Plugin.h"
-#include "lib/Stereo.h"
+#include "lib/Audio.h"
 
 template <typename signal_t>
 struct {name} : NtFx::NtPlugin<signal_t> {{

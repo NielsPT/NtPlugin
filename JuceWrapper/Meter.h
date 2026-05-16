@@ -19,8 +19,8 @@
 
 #include "gcem.hpp"
 #include "juce_core/system/juce_PlatformDefs.h"
+#include "lib/Audio.h"
 #include "lib/PeakSensor.h"
-#include "lib/Stereo.h"
 #include "lib/UiSpec.h"
 #include "lib/utils.h"
 

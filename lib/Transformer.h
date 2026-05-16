@@ -17,10 +17,10 @@
 
 #pragma once
 
+#include "lib/Audio.h"
 #include "lib/Component.h"
 #include "lib/FirstOrder.h"
 #include "lib/SoftClip.h"
-#include "lib/Stereo.h"
 
 namespace NtFx {
 template <typename signal_t>

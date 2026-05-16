@@ -20,8 +20,8 @@
 
 #pragma once
 
+#include "lib/Audio.h"
 #include "lib/Plugin.h"
-#include "lib/Stereo.h"
 
 // Make a class the inherits from Plugin. This must be a template so we can keep
 // the whole thing in headers and swap the signal data type. I perfer using

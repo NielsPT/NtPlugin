@@ -21,10 +21,10 @@
 
 #pragma once
 
+#include "lib/Audio.h"
 #include "lib/Biquad.h"
 #include "lib/FirstOrder.h"
 #include "lib/Plugin.h"
-#include "lib/Stereo.h"
 
 enum Order : int {
   first,

@@ -21,8 +21,8 @@
 #include "PluginEditor.h"
 #include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/system/juce_PlatformDefs.h"
+#include "lib/Audio.h"
 #include "lib/SampleRateConverter.h"
-#include "lib/Stereo.h"
 #include "lib/UiSpec.h"
 
 #include <cstddef>

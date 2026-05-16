@@ -26,10 +26,10 @@
 
 #pragma once
 
+#include "lib/Audio.h"
 #include "lib/Comp.h"
 #include "lib/FirstOrder.h"
 #include "lib/Plugin.h"
-#include "lib/Stereo.h"
 #include "lib/utils.h"
 #include <array>
 #include <string>

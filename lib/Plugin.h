@@ -21,9 +21,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "lib/Audio.h"
 #include "lib/Component.h"
 #include "lib/RmsSensor.h"
-#include "lib/Stereo.h"
 #include "lib/UiSpec.h"
 #include "lib/utils.h"
 

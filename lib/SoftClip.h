@@ -22,8 +22,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "lib/Audio.h"
 #include "lib/Component.h"
-#include "lib/Stereo.h"
 #include <array>
 
 namespace NtFx {

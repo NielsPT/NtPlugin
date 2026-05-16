@@ -23,8 +23,8 @@
  */
 
 #include "gcem.hpp"
+#include "lib/Audio.h"
 #include "lib/Component.h"
-#include "lib/Stereo.h"
 #include "lib/utils.h"
 #include <array>
 #include <cstddef>

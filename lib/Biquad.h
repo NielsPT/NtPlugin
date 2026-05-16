@@ -17,8 +17,8 @@
 
 #pragma once
 
+#include "lib/Audio.h"
 #include "lib/Component.h"
-#include "lib/Stereo.h"
 
 #include "gcem.hpp"
 

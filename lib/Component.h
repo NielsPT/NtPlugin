@@ -25,7 +25,7 @@
  * purposes. Just don't resell it or a build of it, modified or otherwise.
  */
 
-#include "lib/Stereo.h"
+#include "lib/Audio.h"
 
 namespace NtFx {
 /**

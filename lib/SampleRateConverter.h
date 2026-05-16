@@ -20,9 +20,10 @@
 
 #pragma once
 
-#include "lib/utils.h"
 #include NTFX_PLUGIN_FILE
-#include "Stereo.h"
+
+#include "lib/Audio.h"
+#include "lib/utils.h"
 #include "lib/windowFunctions.h"
 #include <algorithm>
 #include <array>

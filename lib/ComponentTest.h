@@ -33,8 +33,8 @@
  *
  */
 
+#include "lib/Audio.h"
 #include "lib/Component.h"
-#include "lib/Stereo.h"
 #include <algorithm>
 #include <cstring>
 #include <filesystem>

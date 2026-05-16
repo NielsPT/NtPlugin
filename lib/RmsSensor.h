@@ -23,8 +23,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "Component.h"
-#include "Stereo.h"
+#include "lib/Audio.h"
+#include "lib/Component.h"
 #include <algorithm>
 #include <array>
 
