@@ -262,10 +262,8 @@ struct NtPlugin : public ComponentBase<Audio<signal_t>> {
    */
   template <size_t idx, bool invert = false>
   NtFx::Audio<signal_t> updatePeakLevel(NtFx::Audio<signal_t> val) noexcept {
-    if constexpr (idx >= nMetersMax) {
-      static_assert(false, "Meter index is out of bounds.");
-    }
-    if (invert) {
+    static_assert(idx < nMetersMax, "Meter index is out of bounds.");
+    if constexpr (invert) {
       if (val < this->peakLevels[idx]) { this->peakLevels[idx] = val; }
     } else {
       if (val > this->peakLevels[idx]) { this->peakLevels[idx] = val; }

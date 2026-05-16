@@ -28,7 +28,7 @@ import shutil
 from multiprocessing import cpu_count
 from testWrapper import test
 from JuceWrapper import package
-from JuceWrapper.package import RED, GREEN, BLUE, BLACK
+from JuceWrapper.package import RED, YELLOW, GREEN, BLUE, BLACK
 
 REPO_BASE_DIR = os.path.realpath(os.path.dirname(__file__))
 BUILD_DIR = os.path.realpath(f"{REPO_BASE_DIR}/build")
@@ -116,12 +116,36 @@ struct {name} : NtFx::NtPlugin<signal_t> {{
 }};
 """
     path = f"{REPO_BASE_DIR}/plugins/{name}.h"
+    if not _writeFile(path, template):
+        return False
+    _openInVscode(path)
+    return True
+
+
+def newPluginMono(name: str) -> bool:
+    template = f"""#pragma once
+
+#define NTFX_MONO
+
+#include "{name}.h"
+
+template <typename signal_t>
+using {name}Mono = {name}<signal_t>;
+
+    """
+    path = f"{REPO_BASE_DIR}/plugins/{name}Mono.h"
+    if not _writeFile(path, template):
+        return False
+    _openInVscode(path)
+    return True
+
+
+def _writeFile(path: str, content: str) -> bool:
     if os.path.exists(path):
-        print(f"'{path}' already exists.")
+        print(f"{YELLOW}'{path}' already exists.{BLACK}")
         return False
     with open(path, "w", encoding="utf-8") as f:
-        f.write(template)
-    _openInVscode(path)
+        f.write(content)
     return True
 
 
@@ -182,10 +206,9 @@ def readPluginIds() -> dict[str, list[str]]:
 
 def configure(
     plugin: str,
-    cachedPluginIds: dict[str, list[str]],
-    category: str,
-    version: str,
-    mono: bool,
+    pluginIds: dict[str, list[str]],
+    category: str = "",
+    version: str = "",
 ) -> bool:
     """
     Configures Cmake for build
@@ -217,12 +240,8 @@ def configure(
     if category:
         args += [f"-DNTFX_AAX_CATEGORY={category}"]
         args += [f"-DNTFX_VST3_CATEGORY={CATEGORY_MAP[category]}"]
-    cachedPluginName = plugin
-    if mono:
-        args += ["-DNTFX_MONO=1"]
-        cachedPluginName = f"{plugin}Mono"
-    if cachedPluginName in cachedPluginIds:
-        info = cachedPluginIds[cachedPluginName]
+    if plugin in pluginIds:
+        info = pluginIds[plugin]
         args += [f"-DNTFX_ID={info[ID].strip()}"]
         print(f"Reusing existing plugin id for {plugin}: {info[ID].strip()}.")
         if not category and len(info) > 2:
@@ -239,10 +258,12 @@ def configure(
     cmakeOut = res.stdout.decode()
     print(cmakeOut)
     if res.returncode:
-        print(f"{RED}Cmake config failed.{BLACK}")
+        print("\033[31m", end="")
+        print(f"Cmake config failed: {res.stderr}")
+        print("\033[0m", end="")
         return False
-    if cachedPluginName not in cachedPluginIds:
-        addNewPluginId(cachedPluginName, cmakeOut, category)
+    if plugin not in pluginIds:
+        addNewPluginId(plugin, cmakeOut, category)
     return True
 
 
@@ -331,7 +352,7 @@ def storeArtifacts(plugin: str) -> bool:
         outDir = f"{ARTIFACTS_DIR}{os.sep}{target}"
         os.makedirs(outDir, exist_ok=True)
         shutil.copytree(f"{art}{target}", outDir, dirs_exist_ok=True)
-        print(f"Storing target '{target}' for plugin '{plugin}'.")
+        print(f"Storing target {target} for plugin {plugin}.")
         if sys.platform == "win32" and target == "VST3":
             print(
                 f"Add '{os.path.abspath(outDir)}' to you host/DAW plugin path "
@@ -388,71 +409,27 @@ def process(args: dict) -> bool:
     allPlugins = package.readPlugins()
     if not plugins or plugins == ["all"]:
         plugins = allPlugins
-    # if "mono" in args and args["mono"]:
-    #     tmp = []
-    #     for plugin in plugins:
-    #         tmp += [plugin]
-    #         tmp += [f"{plugin}Mono"]
-    #     plugins = tmp
     for plugin in plugins:
-        if args["mono"]:
-            if not processPlugin(
-                plugin,
-                pluginIds,
-                allPlugins,
-                category,
-                version,
-                doTest,
-                True,
-            ):
+        if plugin not in allPlugins:
+            print(f"{RED}Plugin '{plugin}' does not exist.{BLACK}")
+            return False
+        if not configure(plugin, pluginIds, category, version):
+            return False
+        if not build():
+            return False
+        if doTest:
+            time.sleep(1)
+            if sys.platform == "darwin":
+                if not runAuVal():
+                    return False
+            if not runCtest():
                 return False
-        if args["stereo"] or (not args["mono"] and not args["stereo"]):
-            if not processPlugin(
-                plugin,
-                pluginIds,
-                allPlugins,
-                category,
-                version,
-                doTest,
-                False,
-            ):
-                return False
+        if not storeArtifacts(plugin):
+            return False
     if doPackage:
         if not package.main(args):
             return False
     if not package.storeSecrets(secrets):
-        return False
-    return True
-
-
-def processPlugin(
-    plugin: str,
-    pluginIds: dict[str, list[str]],
-    allPlugins: list[str],
-    category: str,
-    version: str,
-    doTest: bool,
-    mono: bool,
-) -> bool:
-    print(
-        f"{BLUE}Processing {"mono" if mono else "stereo"} version of plugin "
-        f"'{plugin}'."
-    )
-    if plugin not in allPlugins:
-        print(f"{RED}Plugin '{plugin}' does not exist.{BLACK}")
-        return False
-    if not configure(plugin, pluginIds, category, version, mono):
-        return False
-    if not build():
-        return False
-    if doTest:
-        time.sleep(1)
-        if sys.platform == "darwin":
-            if not runAuVal():
-                return False
-        if not runCtest():
-            return False
-    if not storeArtifacts(plugin):
         return False
     return True
 
@@ -515,18 +492,6 @@ def createParser() -> argparse.ArgumentParser:
         help="Version to be used for all plugins and installer. Cached and "
         "minor minor number auto-incremented if not given.",
     )
-    buildParser.add_argument(
-        "--mono",
-        action="store_true",
-        help="Build mono version of plugins only. If neither 'mono' "
-        "or 'stereo' is set, both will be build.",
-    )
-    buildParser.add_argument(
-        "--stereo",
-        action="store_true",
-        help="Build stereo version of plugins only. If neither 'mono' "
-        "or 'stereo' is set, both will be build.",
-    )
     parser.add_argument(
         "--company",
         help="Company/vendor of plugins.",
@@ -552,6 +517,14 @@ def createParser() -> argparse.ArgumentParser:
         action="store_true",
         help="Add test file to 'testWrapper/tests'.",
     )
+    newParser.add_argument(
+        "--mono",
+        "--add-mono",
+        "-m",
+        action="store_true",
+        help="Create a mono stub for the plugin. Builds a mono version of the "
+        "plugin. New mono-plugin is named [plugin name]Mono",
+    )
     return parser
 
 
@@ -569,6 +542,8 @@ def main(args: dict) -> bool:
     if args["task"] == "new":
         if "test" in args and args["test"]:
             newPluginTest(args["name"])
+        if "mono" in args and args["mono"]:
+            newPluginMono(args["name"])
         return newPlugin(args["name"])
     if args["task"] == "package":
         return package.main(args)

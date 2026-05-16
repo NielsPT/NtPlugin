@@ -28,17 +28,13 @@
 #include "lib/utils.h"
 #include <array>
 
-#define _DO_INVERT true
-
 enum ScMode { internal, external, ignore };
 
 constexpr int dlLookaheadLen = 192 * 8 * 10;
 
 template <typename signal_t>
 struct ntGate : NtFx::NtPlugin<signal_t> {
-  NtFx::Gate::ScSettings<signal_t> scSettings;
   NtFx::Gate::Sc<signal_t> sc;
-  NtFx::Gate::ScSettings<signal_t> scHfSettings;
   NtFx::Gate::Sc<signal_t> scHf;
   NtFx::DynamicFilter::Shelf<signal_t> flt;
   NtFx::Biquad::EqBand<signal_t> hpf;
@@ -59,39 +55,39 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
   bool hfAccelEnable { false };
   bool lookaheadEnable { true };
 
-  ntGate() : sc(scSettings), scHf(scHfSettings) {
+  ntGate() {
     this->uiSpec.defaultWindowWidth = 1200;
     this->primaryKnobs              = {
       {
-          .p_val  = &this->scSettings.thresh_db,
+          .p_val  = &this->sc.settings.thresh_db,
           .name   = "Threshold",
           .suffix = " dB",
           .minVal = -60,
           .maxVal = 0,
       },
       {
-          .p_val  = &this->scSettings.range_db,
+          .p_val  = &this->sc.settings.range_db,
           .name   = "Range",
           .suffix = " dB",
           .minVal = -60,
           .maxVal = -0.0,
       },
       {
-          .p_val  = &this->scSettings.tAtt_ms,
+          .p_val  = &this->sc.settings.tAtt_ms,
           .name   = "Attack",
           .suffix = " ms",
           .minVal = 0.01,
           .maxVal = 50.0,
       },
       {
-          .p_val  = &this->scSettings.tHold_ms,
+          .p_val  = &this->sc.settings.tHold_ms,
           .name   = "Hold",
           .suffix = " ms",
           .minVal = 0.01,
           .maxVal = 1000.0,
       },
       {
-          .p_val  = &this->scSettings.tRel_ms,
+          .p_val  = &this->sc.settings.tRel_ms,
           .name   = "Release",
           .suffix = " ms",
           .minVal = 10.0,
@@ -174,8 +170,8 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
     this->meters = {
       { .name = "IN", .addRms = true },
       { .name = "OUT", .hasScale = true, .addRms = true },
-      { .name = "GR", .invert = _DO_INVERT },
-      { .name = "HF GR", .invert = _DO_INVERT, .hasScale = true },
+      { .name = "GR", .invert = true },
+      { .name = "HF GR", .invert = true, .hasScale = true },
     };
     this->updateDefaults();
   }
@@ -228,8 +224,8 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
       y            = this->flt.process(xGr) * gr;
     }
     this->template updatePeakLevel<1>(y);
-    this->template updatePeakLevel<2, _DO_INVERT>(gr);
-    this->template updatePeakLevel<3, _DO_INVERT>(grHf);
+    this->template updatePeakLevel<2, true>(gr);
+    this->template updatePeakLevel<3, true>(grHf);
     return y;
   }
 
@@ -282,4 +278,3 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
     this->update();
   }
 };
-#undef _DO_INVERT

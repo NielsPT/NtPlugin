@@ -40,7 +40,7 @@ namespace Gate {
   template <typename signal_t>
   struct Sc : public ComponentBase<Audio<signal_t>> {
     PeakSensor<signal_t> sensor;
-    ScSettings<signal_t>& settings;
+    ScSettings<signal_t> settings;
     State state;
     signal_t _slopeRel { 0 };
     signal_t _alphaAtt { 0 };
@@ -48,8 +48,6 @@ namespace Gate {
     signal_t _stateRel { 0 };
     int _nHold { 0 };
     int _holdCount { 0 };
-
-    Sc(ScSettings<signal_t>& settings) : settings(settings) { }
 
     virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
       auto xSc = x.absMax();

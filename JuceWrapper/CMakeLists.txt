@@ -5,11 +5,11 @@ if(NOT DEFINED NTFX_PLUGIN)
   message(FATAL_ERROR "Define plugin to build using '-DNTFX_PLUGIN=[plugin name]'.")
 endif()
 if(NOT DEFINED NTFX_VERSION)
-  message(STATUS "NTFX_VERSION not defined. Please define using '-DNTFX_VERSION=[version]'. Setting to 0.1.0.")
+  message(STATUS "NTFX_VERSION not defined. Please define using '_DNTFX_VERSION=[version]'. Setting to 0.1.0.")
   set(NTFX_VERSION 0.1.0)
 endif()
 if(NOT DEFINED NTFX_COMPANY)
-  message(STATUS "NTFX_COMPANY not defined. Please define using '-DNTFX_COMPANY=[company]'. Setting to 'NTfx'.")
+  message(STATUS "NTFX_COMPANY not defined. Please define using '_DNTFX_COMPANY=[company]'. Setting to 'NTfx'.")
   set(NTFX_COMPANY "NTfx")
 endif()
 set(NTFX_PLUGIN_FILE "\"plugins/${NTFX_PLUGIN}.h\"")
@@ -186,11 +186,6 @@ target_compile_definitions(${NTFX_PLUGIN}
   DONT_SET_USING_JUCE_NAMESPACE=1
   NTFX_PLUGIN=${NTFX_PLUGIN}
   NTFX_PLUGIN_FILE=${NTFX_PLUGIN_FILE})
-
-if(DEFINED NTFX_MONO)
-  add_definitions(-DNTFX_MONO=${NTFX_MONO})
-  message(STATUS "Building mono plugin.")
-endif()
 
 # If your target needs extra binary assets, you can add them here. The first argument is the name of
 # a new static library target that will include all the binary resources. There is an optional

@@ -100,7 +100,10 @@ namespace Biquad {
     virtual void update() noexcept override {
       this->coeffs = calcCoeffs6<signal_t>(settings, this->fs);
     }
-    virtual void reset(float fs) noexcept override { this->fs = fs; }
+    virtual void reset(float fs) noexcept override {
+      this->fs = fs;
+      this->update();
+    }
   };
 
   template <typename signal_t>
@@ -115,67 +118,63 @@ namespace Biquad {
     virtual void update() noexcept override {
       this->coeffs = calcCoeffs6<signal_t>(settings, this->fs);
     }
-    virtual void reset(float fs) noexcept override { this->fs = fs; }
+    virtual void reset(float fs) noexcept override {
+      this->fs = fs;
+      this->update();
+    }
   };
 
   template <typename signal_t>
-  struct Biquad5 : public ComponentBase<signal_t> {
-    Coeffs5<signal_t> coeffs;
-    State<signal_t> state;
-    Settings<signal_t>& settings;
-    Biquad5(Settings<signal_t>& settings) : settings(settings) { }
-    virtual inline signal_t process(signal_t x) noexcept override {
-      signal_t y = this->coeffs.b[0] * x + this->coeffs.b[1] * this->state.x[0]
-          + this->coeffs.b[2] * this->state.x[1]
-          - this->coeffs.a[0] * this->state.y[0]
-          - this->coeffs.a[1] * this->state.y[1];
-      this->state.y[1] = this->state.y[0];
-      this->state.y[0] = y;
-      this->state.x[1] = this->state.x[0];
-      this->state.x[0] = x;
-      return y;
-    }
-    virtual inline void update() noexcept override {
-      this->coeffs = calcCoeffs5<signal_t>(this->settings, this->fs);
-    }
-  };
+  inline static signal_t processBiquad5(
+      signal_t x, Coeffs5<signal_t>& coeffs, State<signal_t>& state) noexcept {
+    signal_t y = coeffs.b[0] * x + coeffs.b[1] * state.x[0]
+        + coeffs.b[2] * state.x[1] - coeffs.a[0] * state.y[0]
+        - coeffs.a[1] * state.y[1];
+    state.y[1] = state.y[0];
+    state.y[0] = y;
+    state.x[1] = state.x[0];
+    state.x[0] = x;
+    return y;
+  }
 
   template <typename signal_t>
   struct EqBandMono : public ComponentBase<Audio<signal_t>> {
     Settings<signal_t> settings;
+    Coeffs5<signal_t> coeffs;
+    State<signal_t> state;
+
+    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
+      return processBiquad5(x.l, this->coeffs, this->state);
+    }
+    virtual void update() noexcept override {
+      this->coeffs = calcCoeffs5<signal_t>(this->settings, this->fs);
+    }
     virtual void reset(float fs) noexcept override {
-      this->fs      = fs;
-      this->l.state = { { 0, 0 }, { 0, 0 } };
+      this->fs    = fs;
+      this->state = { { 0, 0 }, { 0, 0 } };
       this->update();
     }
-    Biquad5<signal_t> l;
-    Coeffs5<signal_t> coeffs;
-    EqBandMono() : l(settings) { }
-    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
-      return this->l.process(x.l);
-    }
-    virtual void update() noexcept override { this->l.update(); }
   };
 
   template <typename signal_t>
   struct EqBandStereo : public ComponentBase<Audio<signal_t>> {
     Settings<signal_t> settings;
-    virtual void reset(float fs) noexcept override {
-      this->fs      = fs;
-      this->l.state = { { 0, 0 }, { 0, 0 } };
-      this->r.state = { { 0, 0 }, { 0, 0 } };
-      this->update();
-    }
-    Biquad5<signal_t> l;
-    Biquad5<signal_t> r;
     Coeffs5<signal_t> coeffs;
-    EqBandStereo() : l(settings), r(settings) { }
+    State<signal_t> stateL;
+    State<signal_t> stateR;
+
     virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
-      return { this->l.process(x.l), this->r.process(x.r) };
+      return { processBiquad5(x.l, this->coeffs, this->stateL),
+        processBiquad5(x.r, this->coeffs, this->stateR) };
     }
     virtual void update() noexcept override {
-      this->l.update();
-      this->r.update();
+      this->coeffs = calcCoeffs5<signal_t>(this->settings, this->fs);
+    }
+    virtual void reset(float fs) noexcept override {
+      this->fs     = fs;
+      this->stateL = { { 0, 0 }, { 0, 0 } };
+      this->stateR = { { 0, 0 }, { 0, 0 } };
+      this->update();
     }
   };
 

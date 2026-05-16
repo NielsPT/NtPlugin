@@ -21,6 +21,7 @@
 #define Q(x) #x
 #define QUOTE(x) Q(x)
 
+// TODO: Pass version through to here.
 #if !JUCE_DONT_DECLARE_PROJECTINFO
 namespace ProjectInfo {
 const char* const projectName   = QUOTE(NTFX_PLUGIN);
