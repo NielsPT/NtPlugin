@@ -43,9 +43,9 @@ struct ntRmsMeter : NtFx::NtPlugin<signal_t> {
       { &this->hold_s, "Hold", " s", 0, 10 },
       { &this->tRms_ms, "RMS_Time", " ms", 1, 1000 },
     };
-    this->uiSpec.meterHeight_dots   = 25;
-    this->uiSpec.defaultWindowWidth = 350;
-    this->uiSpec.maxColumns         = 1;
+    this->uiSpec.meterHeight_dots = 25;
+
+    this->uiSpec.maxColumns = 1;
     this->updateDefaults();
   }
 

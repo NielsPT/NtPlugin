@@ -49,7 +49,6 @@ struct gainExample : NtFx::NtPlugin<signal_t> {
     this->uiSpec.foregroundColour = 0xFF000000;
 
     // We don't need that big a window for just one knob.
-    this->uiSpec.defaultWindowWidth = 500;
 
     // Let's make the meter smaller.
     this->uiSpec.meterHeight_dots = 8;

@@ -52,7 +52,6 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
   NtFx::Biquad::EqBand<signal_t> bqHpf0;
   NtFx::Biquad::EqBand<signal_t> bqHpf1;
   ntFilters() {
-    this->uiSpec.defaultWindowWidth = 800;
 
     this->primaryKnobs = {
       {

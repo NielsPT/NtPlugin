@@ -61,28 +61,8 @@ NtPluginAudioProcessorEditor::NtPluginAudioProcessorEditor(
       JucePlugin_Name, juce::NotificationType::dontSendNotification);
   this->pluginNameLabel.setJustificationType(juce::Justification::right);
   this->addAndMakeVisible(this->pluginNameLabel);
-  int nRows, nCols;
-  this->_calcSliderRowsCols(this->primaryKnobs.size(),
-      nRows,
-      nCols,
-      this->proc.plug.uiSpec.maxRows,
-      this->proc.plug.uiSpec.maxColumns);
-  auto height = 0;
-  if (this->proc.plug.uiSpec.includeTitleBar) {
-    height += this->proc.plug.uiSpec.titleBarHeight;
-  }
-  height += nRows * this->proc.plug.uiSpec.knobHeight;
-  if (this->proc.plug.secondaryKnobs.size() != 0) {
-    height += this->proc.plug.uiSpec.secondaryKnobHeight;
-  }
-  if (this->proc.plug.toggles.size() != 0) {
-    height += this->proc.plug.uiSpec.toggleHeight;
-  }
-  if (this->proc.plug.uiSpec.includeMeters) {
-    auto minHeight = this->meters.getMinimalHeight();
-    if (height < minHeight) { height = minHeight; }
-  }
-  this->unscaledWindowHeight = height;
+
+  this->_initWindowSize();
   this->_updateUiScale();
   this->_updateOversampling();
   this->_updateTheme();
@@ -228,6 +208,68 @@ void NtPluginAudioProcessorEditor::__initToggle(
   this->toggleAttachments.emplace_back(
       new juce::AudioProcessorValueTreeState::ButtonAttachment(
           this->proc.paramLayout, spec.name, *p_toggle));
+}
+
+void NtPluginAudioProcessorEditor::_initWindowSize() {
+  int nRows, nCols;
+  this->_calcSliderRowsCols(this->primaryKnobs.size(),
+      nRows,
+      nCols,
+      this->proc.plug.uiSpec.maxRows,
+      this->proc.plug.uiSpec.maxColumns);
+  auto width = 0;
+  if (this->proc.plug.uiSpec.includeMeters) {
+    width += this->meters.getMinimalWidth();
+  }
+  if (this->proc.plug.radioButtons.size()
+      || this->proc.plug.toggleSets.size()) {
+    width += this->proc.plug.uiSpec.radioButtonAreaWidth;
+  }
+  width += nCols * this->proc.plug.uiSpec.knobWidth;
+  this->unscaledWindowWidth = width;
+  auto height               = 0;
+  if (this->proc.plug.uiSpec.includeTitleBar) {
+    height += this->proc.plug.uiSpec.titleBarHeight;
+  }
+  height += nRows * this->proc.plug.uiSpec.knobHeight;
+  if (this->proc.plug.secondaryKnobs.size() != 0) {
+    height += this->proc.plug.uiSpec.secondaryKnobHeight;
+  }
+  if (this->proc.plug.toggles.size() != 0) {
+    height += this->proc.plug.uiSpec.toggleHeight;
+  }
+  if (this->proc.plug.uiSpec.includeMeters) {
+    auto minHeight = this->meters.getMinimalHeight();
+    if (height < minHeight) { height = minHeight; }
+  }
+  this->unscaledWindowHeight = height;
+}
+
+void NtPluginAudioProcessorEditor::_calcSliderRowsCols(
+    int nKnobs, int& nRows, int& nColumns, int maxRows, int maxColumns) {
+  if (nKnobs > maxRows * maxColumns) {
+    juce::NativeMessageBox::showMessageBoxAsync(
+        juce::MessageBoxIconType::WarningIcon,
+        "Bad Grid Layout",
+        "Too many parameters. Max is " + std::to_string(maxRows * maxColumns)
+            + ".");
+    return;
+  }
+  int bestRows    = 1;
+  int bestColumns = nKnobs;
+  int minCells    = std::numeric_limits<int>::max();
+  for (int r = 1; r <= maxRows; ++r) {
+    int c = (nKnobs + r - 1) / r;
+    if (c > maxColumns) { continue; }
+    int cells = r * c;
+    if (cells < minCells) {
+      minCells    = cells;
+      bestRows    = r;
+      bestColumns = c;
+    }
+  }
+  nRows    = bestRows;
+  nColumns = bestColumns;
 }
 
 void NtPluginAudioProcessorEditor::paint(juce::Graphics& g) {
@@ -500,7 +542,7 @@ void NtPluginAudioProcessorEditor::_updateColours() {
 }
 
 void NtPluginAudioProcessorEditor::timerCallback() {
-  for (size_t i = 0; i < this->meters.size(); i++) {
+  for (size_t i = 0; i < this->meters.meters.size(); i++) {
     this->meters.refresh(
         i, this->proc.plug.getAndResetPeakLevel(i), this->proc.plug.getRms(i));
   }
@@ -537,12 +579,6 @@ void NtPluginAudioProcessorEditor::changeListenerCallback(
   for (size_t i = 0; i < this->proc.plug.radioButtons.size(); i++) {
     auto& r = this->radioButtons[i];
     if (p_b != r.get()) { continue; }
-    // auto p_val = this->proc.plug.radioButtons[i].p_val;
-    // if (!p_val) {
-    //   DBG("RadioButton value is null.");
-    //   continue;
-    // }
-    // *p_val = r->val;
     this->proc.plug.update();
     this->proc.plug.uiNeedsUpdate = true;
     return;
@@ -585,7 +621,7 @@ void NtPluginAudioProcessorEditor::comboBoxChanged(juce::ComboBox* p_box) {
 void NtPluginAudioProcessorEditor::_updateUiScale() {
   auto p_box    = this->titleBarDropDowns[e_uiScale].get();
   this->uiScale = 0.5 + 0.25 * (p_box->getSelectedId() - 1);
-  this->setSize(this->proc.plug.uiSpec.defaultWindowWidth * this->uiScale,
+  this->setSize(this->unscaledWindowWidth * this->uiScale,
       this->unscaledWindowHeight * this->uiScale);
 }
 
@@ -617,33 +653,6 @@ void NtPluginAudioProcessorEditor::_updateTheme() {
   }
   this->_updateColours();
   this->_updateUi();
-}
-
-void NtPluginAudioProcessorEditor::_calcSliderRowsCols(
-    int nKnobs, int& nRows, int& nColumns, int maxRows, int maxColumns) {
-  if (nKnobs > maxRows * maxColumns) {
-    juce::NativeMessageBox::showMessageBoxAsync(
-        juce::MessageBoxIconType::WarningIcon,
-        "Bad Grid Layout",
-        "Too many parameters. Max is " + std::to_string(maxRows * maxColumns)
-            + ".");
-    return;
-  }
-  int bestRows    = 1;
-  int bestColumns = nKnobs;
-  int minCells    = std::numeric_limits<int>::max();
-  for (int r = 1; r <= maxRows; ++r) {
-    int c = (nKnobs + r - 1) / r;
-    if (c > maxColumns) { continue; }
-    int cells = r * c;
-    if (cells < minCells) {
-      minCells    = cells;
-      bestRows    = r;
-      bestColumns = c;
-    }
-  }
-  nRows    = bestRows;
-  nColumns = bestColumns;
 }
 
 std::unique_ptr<juce::Label> NtPluginAudioProcessorEditor::_makeLabel(

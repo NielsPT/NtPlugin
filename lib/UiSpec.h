@@ -151,14 +151,14 @@ struct UiSpec {
   bool includeSecondaryKnobs { true };      ///< Enable row below the main grid.
   uint32_t foregroundColour { 0xFFFFFFFF }; ///< UI foreground colour in HEX.
   uint32_t backgroundColour { 0xFF000000 }; ///< UI background colour in HEX.
-  int defaultWindowWidth { 1000 }; ///< Window width in pixels before scaling.
   int maxRows { 3 };    ///< The maximum number of rows in main knob grid.
   int maxColumns { 6 }; ///< The maximum number of columns in main knob grid.
   float defaultFontSize { 16 }; ///< Font size before scaling.
   float labelHeight { 20 };     ///< Height of all text labels in the UI.
   float toggleHeight { 45 }; ///< Height of toggle row at the bottom of the UI.
   float radioButtonHeight { 25 };     ///< Height of each separate radio button.
-  float radioButtonAreaWidth { 120 }; ///< Width of the radio buttons ares.
+  float radioButtonAreaWidth { 125 }; ///< Width of the radio buttons ares.
+  float knobWidth { 150 };            ///< Width of primary knobs.
   float knobHeight { 200 };           ///< Height or row of knobs in grid in UI.
   float secondaryKnobWidth { 75 };    ///< Width of secondary knobs in UI.
   float secondaryKnobHeight { 115 };  ///< Height of secondary knobs in UI.

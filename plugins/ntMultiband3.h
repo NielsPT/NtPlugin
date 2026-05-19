@@ -65,9 +65,8 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
       hiMidFlt;
   NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::hpf> hiFlt;
   ntMultiband3() : sc { scSettings[0], scSettings[1], scSettings[2] } {
-    this->uiSpec.maxColumns         = 5;
-    this->uiSpec.maxRows            = Bands::n;
-    this->uiSpec.defaultWindowWidth = 1200;
+    this->uiSpec.maxColumns = 5;
+    this->uiSpec.maxRows    = Bands::n;
 
     for (size_t i = 0; i < Bands::n; i++) {
       this->primaryKnobs.push_back({

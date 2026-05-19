@@ -56,8 +56,8 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
   bool lookaheadEnable { true };
 
   ntGate() {
-    this->uiSpec.defaultWindowWidth = 1200;
-    this->primaryKnobs              = {
+
+    this->primaryKnobs = {
       {
           .p_val  = &this->sc.settings.thresh_db,
           .name   = "Threshold",

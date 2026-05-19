@@ -38,8 +38,7 @@ struct ntTransformer : public NtFx::NtPlugin<signal_t> {
     this->primaryKnobs = {
       { &this->drive_db, "Drive", " dB", -24, 24 },
     };
-    this->toggles                   = { { &this->bypass, "Bypass" } };
-    this->uiSpec.defaultWindowWidth = 350;
+    this->toggles = { { &this->bypass, "Bypass" } };
   }
   virtual NtFx::Audio<signal_t> process(
       NtFx::Audio<signal_t> x) noexcept override {

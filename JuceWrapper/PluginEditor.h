@@ -102,6 +102,7 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   std::vector<juce::Rectangle<int>> grayAreas;
 
   float unscaledWindowHeight = 0;
+  float unscaledWindowWidth  = 0;
   float uiScale              = 1;
   float titleBarScale        = 0.7;
   float pad                  = 10;
@@ -140,6 +141,7 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
       int size,
       std::vector<std::unique_ptr<juce::Label>>& labels,
       std::vector<std::unique_ptr<T>>& toggles);
+  void _initWindowSize();
 
   // Helpers.
   template <typename T, typename spec_t>

@@ -49,28 +49,24 @@ struct MonoMeter : public juce::Component {
   PeakHoldSensor<float> peakSensor;
   MeterSpec& meterSpec;
   UiSpec& uiSpec;
-  int pad             = 10;
-  int dotDiameter     = 0;
-  int dotDist         = 0;
-  int nDots           = 14;
-  int nActiveDotsPeak = 0;
-  float fractPeak     = 0;
-  int nActiveDotsRms  = 0;
-  float peakVal_lin   = 0;
-  float rmsVal_lin    = 0;
-  float dbPrDot       = 0;
-  float opacity       = 0.7f;
-
-  std::string label  = "";
-  bool isInitialized = false;
-  int fontSize       = 20;
-
-  // Peak hold dot
-  int nHold_frames       = 0;
-  int holdCounter_frames = 0;
-  float holdVal_db       = 0;
-  int iHoldDot           = 0;
-
+  std::string label { "" };
+  int pad { 10 };
+  int dotDiameter { 0 };
+  int dotDist { 0 };
+  int nDots { 14 };
+  int nActiveDotsPeak { 0 };
+  float fractPeak { 0 };
+  int nActiveDotsRms { 0 };
+  float peakVal_lin { 0 };
+  float rmsVal_lin { 0 };
+  float dbPrDot { 0 };
+  float opacity { 0.7f };
+  bool isInitialized { false };
+  int fontSize { 20 };
+  int nHold_frames { 0 };
+  int holdCounter_frames { 0 };
+  float holdVal_db { 0 };
+  int iHoldDot { 0 };
   bool hasScale { false };
 
   MonoMeter(MeterSpec& meterSpec, UiSpec& uiSpec)
@@ -236,12 +232,11 @@ struct MonoMeter : public juce::Component {
 
 struct MeterScale : public juce::Component {
   MonoMeter& meter;
-  int fontSize { 0 };
   MeterScale(MonoMeter& m) : meter(m) { }
   void paint(juce::Graphics& g) override {
     auto offset = this->meter.pad + this->meter.dotDist;
     g.setColour(juce::Colour(meter.uiSpec.foregroundColour));
-    g.setFont(this->fontSize);
+    g.setFont(this->meter.fontSize);
     for (size_t i = 0; i < this->meter.nDots; i++) {
       auto y = i * this->meter.dotDist + offset;
       auto t = "- " + std::to_string(static_cast<int>(this->meter.dbPrDot * i));
@@ -297,28 +292,19 @@ struct StereoMeter : public juce::Component {
   }
 };
 
-template <typename meter_t>
-struct MeterGroupBase : public juce::Component {
-  std::vector<std::unique_ptr<meter_t>> meters;
+struct MonoMeterGroup : public juce::Component {
+  std::vector<std::unique_ptr<MonoMeter>> meters;
   std::vector<std::unique_ptr<MeterScale>> scales;
-  const int nChs { 0 };
-  MeterGroupBase(int nChs) : nChs(nChs) { }
-  virtual void updateUi() = 0;
-  int size() const noexcept { return this->meters.size(); }
+  const int nChs { 1 };
   void resized() override {
     this->updateUi();
     this->repaint();
   }
-  void setFontSize(int size) {
-    for (auto& m : meters) { m->fontSize = size; }
-    for (auto& s : scales) { s->fontSize = size; }
+  virtual void setFontSize(int size) {
+    for (auto& m : this->meters) { m->fontSize = size; }
   }
-};
-
-struct MonoMeterGroup : public MeterGroupBase<MonoMeter> {
   float uiScale { 1 };
-  MonoMeterGroup(UiSpec& uiSpec, std::vector<MeterSpec>& meterSpecs)
-      : MeterGroupBase(1) {
+  MonoMeterGroup(UiSpec& uiSpec, std::vector<MeterSpec>& meterSpecs) {
     size_t i = 0;
     for (auto& spec : meterSpecs) {
       auto meter = std::make_unique<MonoMeter>(spec, uiSpec);
@@ -337,7 +323,7 @@ struct MonoMeterGroup : public MeterGroupBase<MonoMeter> {
   void refresh(size_t idx, Audio<signal_t> xPeak, Audio<signal_t> xRms) {
     this->meters[idx]->refresh(xPeak.l, xRms.l);
   }
-  virtual void updateUi() noexcept override {
+  void updateUi() noexcept {
     auto area       = this->getLocalBounds();
     auto totalWidth = area.getWidth();
     auto scaleWidth = totalWidth / (this->meters.size() + this->scales.size());
@@ -371,11 +357,18 @@ struct MonoMeterGroup : public MeterGroupBase<MonoMeter> {
   }
 };
 
-struct StereoMeterGroup : public MeterGroupBase<StereoMeter> {
+struct StereoMeterGroup : public juce::Component {
   std::vector<std::unique_ptr<StereoMeter>> meters;
   std::vector<std::unique_ptr<MeterScale>> scales;
-  StereoMeterGroup(UiSpec& uiSpec, std::vector<MeterSpec>& meterSpecs)
-      : MeterGroupBase(2) {
+  const int nChs { 2 };
+  void resized() override {
+    this->updateUi();
+    this->repaint();
+  }
+  virtual void setFontSize(int size) {
+    for (auto& m : this->meters) { m->fontSize = size; }
+  }
+  StereoMeterGroup(UiSpec& uiSpec, std::vector<MeterSpec>& meterSpecs) {
     size_t i = 0;
     for (auto& spec : meterSpecs) {
       auto meter = std::make_unique<StereoMeter>(spec, uiSpec);
@@ -393,7 +386,7 @@ struct StereoMeterGroup : public MeterGroupBase<StereoMeter> {
   void refresh(size_t idx, Audio<signal_t> xPeak, Audio<signal_t> xRms) {
     this->meters[idx]->refresh(xPeak, xRms);
   }
-  virtual void updateUi() noexcept override {
+  void updateUi() noexcept {
     auto area       = this->getLocalBounds();
     auto totalWidth = area.getWidth();
     auto scaleWidth =
