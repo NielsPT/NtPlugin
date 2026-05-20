@@ -4,17 +4,19 @@
 NTFX_TEST_BEGIN
 
 NTFX_TEST() {
-  auto set      = NtFx::Gate::ScSettings<double>();
-  set.thresh_db = -6;
-  set.range_db  = -12;
-  set.tHold_ms  = 1;
-  set.tRel_ms   = 10;
-  auto noHold   = NtFx::Gate::Sc<double>(set);
+  auto noHold               = NtFx::Gate::Sc<double>();
+  noHold.settings.thresh_db = -6;
+  noHold.settings.range_db  = -12;
+  noHold.settings.tHold_ms  = 1;
+  noHold.settings.tRel_ms   = 10;
   NTFX_ADD_TEST(noHold, "dynamic_matched");
-  auto holdSet        = set;
-  holdSet.tHold_ms    = 10;
-  holdSet.tAtt_ms     = 5;
-  auto slowAttAndHold = NtFx::Gate::Sc<double>(holdSet);
+  auto slowAttAndHold               = NtFx::Gate::Sc<double>();
+  slowAttAndHold.settings.thresh_db = -6;
+  slowAttAndHold.settings.range_db  = -12;
+  slowAttAndHold.settings.tHold_ms  = 1;
+  slowAttAndHold.settings.tRel_ms   = 10;
+  slowAttAndHold.settings.tHold_ms  = 10;
+  slowAttAndHold.settings.tAtt_ms   = 5;
   NTFX_ADD_TEST(slowAttAndHold, "dynamic_matched");
   return NTFX_RUN_TESTS();
 }

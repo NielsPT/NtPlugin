@@ -258,11 +258,10 @@ def configure(
     cmakeOut = res.stdout.decode()
     print(cmakeOut)
     if res.returncode:
-        print("\033[31m", end="")
-        print(f"Cmake config failed: {res.stderr}")
-        print("\033[0m", end="")
+        print(f"{RED}Cmake config failed.{BLACK}")
         return False
     if plugin not in pluginIds:
+        # TODO: updatePluginId for adding category.
         addNewPluginId(plugin, cmakeOut, category)
     return True
 
@@ -419,12 +418,12 @@ def process(args: dict) -> bool:
             return False
         if doTest:
             time.sleep(1)
-            if sys.platform == "darwin":
-                if not runAuVal():
-                    return False
             if not runCtest():
                 return False
         if not storeArtifacts(plugin):
+            return False
+    if doTest and sys.platform == "darwin":
+        if not runAuVal():
             return False
     if doPackage:
         if not package.main(args):

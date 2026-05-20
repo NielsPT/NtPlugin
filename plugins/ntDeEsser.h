@@ -71,7 +71,7 @@ struct ntDeEsser : NtFx::NtPlugin<signal_t> {
     this->meters.push_back({ .name = "GR", .invert = true });
     this->scSettings.ratio_db = 10;
     this->scSettings.knee_db  = 3;
-    this->scSettings.tAtt_ms  = 0.1;
+    this->scSettings.tAtt_ms  = 0.01;
     this->updateDefaults();
   }
 

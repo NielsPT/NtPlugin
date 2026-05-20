@@ -1,0 +1,9 @@
+BasedOnStyle: webkit
+IndentWidth: 3
+TabWidth: 3
+AccessModifierOffset: -3
+BreakBeforeBraces: Custom
+BraceWrapping:
+   AfterFunction: false
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeComma

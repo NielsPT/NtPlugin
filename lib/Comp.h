@@ -317,7 +317,7 @@ namespace Comp {
     virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
       auto ySens = rmsSensor.process(x);
       ensureFinite(this->stateFilter);
-      if constexpr (!isMono<Audio<signal_t>>().v) {
+      if constexpr (isMono<Audio<signal_t>>().v) {
         return this->_gainComputer_lin(ySens.l, this->stateFilter.l);
       }
       return {
