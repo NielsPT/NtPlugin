@@ -32,6 +32,7 @@ const int versionNumber         = 0x100;
 #endif
 
 #include NTFX_PLUGIN_FILE
+
 #include "lib/SampleRateConverter.h"
 #include "lib/UiSpec.h"
 

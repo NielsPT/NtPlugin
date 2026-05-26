@@ -417,7 +417,13 @@ def process(args: dict) -> bool:
         if not build():
             return False
         if doTest:
-            time.sleep(1)
+            for i in range(30):
+                if _artefactExists(plugin, "AU") and _artefactExists(
+                    plugin, "VST3"
+                ):
+                    break
+                print("Test files not found.")
+                time.sleep(1)
             if not runCtest():
                 return False
         if not storeArtifacts(plugin):
@@ -431,6 +437,15 @@ def process(args: dict) -> bool:
     if not package.storeSecrets(secrets):
         return False
     return True
+
+
+def _artefactExists(plugin: str, target: str) -> bool:
+    if os.path.exists(
+        f"{BUILD_DIR}/{plugin}_artefacts/Release/{target}/"
+        f"{plugin}.{package.TARGET_EXT_MAP[target]}"
+    ):
+        return True
+    return False
 
 
 def _openInVscode(path: str) -> None:

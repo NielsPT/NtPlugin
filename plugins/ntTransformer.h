@@ -30,7 +30,6 @@ template <typename signal_t>
 struct ntTransformer : public NtFx::NtPlugin<signal_t> {
   NtFx::Biquad::EqBand<signal_t> bqHpf0;
   NtFx::Transformer<signal_t> transformer;
-  int rbVal;
   signal_t drive_db  = -10;
   signal_t drive_lin = 0.3;
   bool bypass        = false;

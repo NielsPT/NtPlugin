@@ -19,14 +19,14 @@
 
 #pragma once
 
+#include "PluginProcessor.h"
+
 #include "LookAndFeel.h"
 #include "Meter.h"
-#include "PluginProcessor.h"
 #include "RadioButtons.h"
 #include "Toggle.h"
 #include "lib/UiSpec.h"
 
-#include <cstddef>
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_audio_formats/juce_audio_formats.h>
@@ -40,6 +40,8 @@
 #include <juce_graphics/juce_graphics.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_gui_extra/juce_gui_extra.h>
+
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>

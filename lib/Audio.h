@@ -27,12 +27,16 @@
 #include <type_traits>
 
 namespace NtFx {
+
+template <typename signal_t>
+struct Stereo;
 template <typename signal_t>
 struct Mono {
   signal_t l { 0 };
   Mono() : l(0) { }
   Mono(signal_t v) : l(v) { }
   Mono(signal_t l, signal_t r) : l((l + r) / 2) { }
+  Mono(Stereo<signal_t> x) : l(x.l, x.r) { };
   Mono<signal_t>& operator=(const Mono<signal_t>& x) noexcept {
     this->l = x.l;
     return *this;
@@ -229,7 +233,8 @@ struct Stereo {
         std::is_floating_point_v<signal_t>, "Type must be floating point.");
   }
   Stereo(signal_t x) : l(x), r(x) { }
-  Stereo(signal_t left, signal_t right) : l(left), r(right) { }
+  Stereo(signal_t l, signal_t r) : l(l), r(r) { }
+  Stereo(Mono<signal_t> l, Mono<signal_t> r) : l(l.l), r(r.l) { }
   Stereo<signal_t>& operator=(const Stereo<signal_t>& x) noexcept {
     this->l = x.l;
     this->r = x.r;

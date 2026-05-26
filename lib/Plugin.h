@@ -48,7 +48,7 @@ struct NtPlugin : public ComponentBase<Audio<signal_t>> {
    * @brief Array of rms sensors for RMS meter.
    *
    */
-  std::array<LongRmsSensorStereo<signal_t, 250, 192>, 2> xRms;
+  std::array<LongRmsSensor<signal_t, 250, 192>, 2> xRms;
 
   /**
    * @brief Peak level to be displayed in the meters.
@@ -116,6 +116,11 @@ struct NtPlugin : public ComponentBase<Audio<signal_t>> {
    * @brief Set this to true if you want to force an update of the UI
    */
   bool uiNeedsUpdate = false;
+
+  /**
+   * @brief True if plugin in fully initialized. Must be set by child plugin.
+   */
+  bool isInitialized = false;
 
   /**
    * @brief Called by the wrapper whenever the tempo changes.
@@ -248,6 +253,7 @@ struct NtPlugin : public ComponentBase<Audio<signal_t>> {
         if (t.p_val) { t._defaultVal = *t.p_val; }
       }
     }
+    this->isInitialized = true;
   }
 
   /**

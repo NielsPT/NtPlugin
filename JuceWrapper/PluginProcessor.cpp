@@ -69,6 +69,8 @@ void NtPluginAudioProcessor::changeProgramName(
 
 void NtPluginAudioProcessor::prepareToPlay(
     double sampleRate, int samplesPerBlock) {
+  if (!this->plug.isInitialized) { return; }
+  if (!sampleRate) { return; }
   this->fsBase = sampleRate;
   this->updateOversampling();
   this->plug.xRms[0].reset(sampleRate);

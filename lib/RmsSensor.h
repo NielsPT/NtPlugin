@@ -47,8 +47,8 @@ namespace NtFx {
 template <typename signal_t,
     int maxT_ms           = 1000,
     int maxSampleDLineLen = 192 * 8>
-struct LongRmsSensor : public ComponentBase<signal_t> {
-  std::array<signal_t, maxSampleDLineLen> samleDLine; ///< Sample delay line.
+struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
+  std::array<signal_t, maxSampleDLineLen> sampleDLine; ///< Sample delay line.
   std::array<signal_t, maxT_ms> msDLine; ///< Millisecond delay line.
   signal_t sampleAccum { 0 }; ///< Accumulator for current sample values.
   signal_t msAccum { 0 };     ///< Accumulator for millisecond-level values.
@@ -67,8 +67,8 @@ struct LongRmsSensor : public ComponentBase<signal_t> {
    * @param x The input signal value
    * @return The current RMS value
    */
-  virtual signal_t process(signal_t x) noexcept override {
-    this->processDelayLine(x);
+  virtual Mono<signal_t> process(Mono<signal_t> x) noexcept override {
+    this->processDelayLine(x.l);
     return this->getRms();
   }
 
@@ -83,8 +83,8 @@ struct LongRmsSensor : public ComponentBase<signal_t> {
   void processDelayLine(signal_t x) noexcept {
     auto x2 = x * x;
     if (x2 != x2) { x2 = signal_t(0.0); }
-    this->sampleAccum += x2 - this->samleDLine[this->sampleIdx];
-    this->samleDLine[this->sampleIdx] = x2;
+    this->sampleAccum += x2 - this->sampleDLine[this->sampleIdx];
+    this->sampleDLine[this->sampleIdx] = x2;
     if (++this->sampleIdx < this->sampleDLineLen) { return; }
     this->sampleIdx = 0;
     this->msAccum += sampleAccum - this->msDLine[this->msIdx];
@@ -104,7 +104,7 @@ struct LongRmsSensor : public ComponentBase<signal_t> {
       this->msIdx       = 0;
       this->sampleAccum = 0;
       this->msAccum     = 0;
-      std::fill(this->samleDLine.begin(), this->samleDLine.end(), 0);
+      std::fill(this->sampleDLine.begin(), this->sampleDLine.end(), 0);
       std::fill(this->msDLine.begin(), this->msDLine.end(), 0);
       this->resetAccums = false;
     }
@@ -173,7 +173,7 @@ template <typename signal_t,
     int maxSampleDLineLen = 192 * 8>
 struct LongRmsSensorStereo
     : public AudioComponent<signal_t,
-          LongRmsSensor<signal_t, maxT_ms, maxSampleDLineLen>> {
+          LongRmsSensorMono<signal_t, maxT_ms, maxSampleDLineLen>> {
   /**
    * @brief Set the time window for RMS calculation
    *
@@ -183,7 +183,7 @@ struct LongRmsSensorStereo
    */
   void setT_ms(int t_ms) {
     this->l.setT_ms(t_ms);
-    if constexpr (!isMono<Audio<signal_t>>().v) { this->r.setT_ms(t_ms); }
+    this->r.setT_ms(t_ms);
   }
   /**
    * @brief Get the current RMS values for both channels
@@ -194,11 +194,15 @@ struct LongRmsSensorStereo
    * @return The current RMS values for both channels
    */
   Audio<signal_t> getRms() const noexcept {
-#ifdef NTFX_MONO
-    return this->l.getRms();
-#else
     return { this->l.getRms(), this->r.getRms() };
-#endif
   }
 };
+template <typename signal_t,
+    int maxT_ms           = 1000,
+    int maxSampleDLineLen = 192 * 8>
+#ifdef NTFX_MONO
+using LongRmsSensor = LongRmsSensorMono<signal_t, maxT_ms, maxSampleDLineLen>;
+#else
+using LongRmsSensor = LongRmsSensorStereo<signal_t, maxT_ms, maxSampleDLineLen>;
+#endif
 }

@@ -243,7 +243,7 @@ namespace Comp {
    */
   template <typename signal_t>
   struct RmsSideChainDb : public PeakSideChainDb<signal_t> {
-    LongRmsSensorStereo<signal_t> rmsSensor; ///< RMS sensor for stereo signals
+    LongRmsSensor<signal_t> rmsSensor; ///< RMS sensor for stereo signals
 
     /**
      * @brief Constructor
@@ -300,7 +300,7 @@ namespace Comp {
    */
   template <typename signal_t>
   struct RmsSideChainLinear : public PeakSideChainLinear<signal_t> {
-    LongRmsSensorStereo<signal_t> rmsSensor; ///< RMS sensor for stereo signals
+    LongRmsSensor<signal_t> rmsSensor; ///< RMS sensor for stereo signals
 
     /**
      * @brief Constructor

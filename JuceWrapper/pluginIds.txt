@@ -6,5 +6,5 @@ ntTapeEcho:Zinm:Delay:Delay
 gainExample:Sdfh
 ntTransformer:Migc
 ntRmsMeter:Joxj
-nrCompressor:Zhel
 ntDeEsser:Bagy:Dynamics:Dynamics
+ntGateMono:Jlkd:Dynamics:Dynamics

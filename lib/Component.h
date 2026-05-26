@@ -77,11 +77,11 @@ struct ComponentBase {
  * @tparam component_t Type of Component to wrap.
  */
 template <typename signal_t, typename component_t>
-struct StereoComponent : public ComponentBase<Audio<signal_t>> {
+struct StereoComponent : public ComponentBase<Stereo<signal_t>> {
   component_t l;
   component_t r;
 
-  virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
+  virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
     return { this->l.process(x.l), this->r.process(x.r) };
   }
 
@@ -104,9 +104,9 @@ struct StereoComponent : public ComponentBase<Audio<signal_t>> {
  * @tparam component_t Type of Component to wrap.
  */
 template <typename signal_t, typename component_t>
-struct MonoComponent : public ComponentBase<Audio<signal_t>> {
+struct MonoComponent : public ComponentBase<Mono<signal_t>> {
   component_t l;
-  virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
+  virtual Mono<signal_t> process(Mono<signal_t> x) noexcept override {
     return this->l.process(x.l);
   }
 
