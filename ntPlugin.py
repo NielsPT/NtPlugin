@@ -177,7 +177,7 @@ NTFX_TEST() {{
 """
     path = f"{REPO_BASE_DIR}/testWrapper/tests/{name}_test.cpp"
     if os.path.exists(path):
-        print(f"'{path}' already exists.")
+        print(f"{YELLOW}'{path}' already exists.{BLACK}")
         return False
     with open(path, "w", encoding="utf-8") as f:
         f.write(template)
@@ -243,15 +243,22 @@ def configure(
     if plugin in pluginIds:
         info = pluginIds[plugin]
         args += [f"-DNTFX_ID={info[ID].strip()}"]
-        print(f"Reusing existing plugin id for {plugin}: {info[ID].strip()}.")
+        print(
+            f"{BLUE}Reusing existing plugin id for {plugin}: "
+            f"{info[ID].strip()}.{BLACK}"
+        )
         if not category and len(info) > 2:
             args += [f"-DNTFX_VST3_CATEGORY={info[VST3_CAT].strip()}"]
-            print(f"Reusing VST3 category: {info[VST3_CAT].strip()}.")
+            print(
+                f"{BLUE}Reusing VST3 category: {info[VST3_CAT].strip()}.{BLACK}"
+            )
         if not category and len(info) > 3:
             args += [f"-DNTFX_AAX_CATEGORY={info[AAX_CAT].strip()}"]
-            print(f"Reusing AAX category: {info[AAX_CAT].strip()}.")
+            print(
+                f"{BLUE}Reusing AAX category: {info[AAX_CAT].strip()}.{BLACK}"
+            )
 
-    print(f"Running cmake for plugin {plugin}.")
+    print(f"{BLUE}Running cmake for plugin {plugin}.{BLACK}")
     res = subprocess.run(
         args, check=False, capture_output=True, env=os.environ.copy()
     )
@@ -280,7 +287,7 @@ def addNewPluginId(plugin: str, cmakeOut: str, category: str = "") -> bool:
     """
     match = re.search("-- Generated new plugin id: ([^ ]*)\n", cmakeOut)
     if not match:
-        print("Failed to get new plugin ID from cmake output.")
+        print(f"{RED}Failed to get new plugin ID from cmake output.{BLACK}")
         return False
     newPluginId = match.group(1)
     if not newPluginId:
@@ -301,7 +308,7 @@ def build() -> bool:
     Returns:
         bool: True on success.
     """
-    print("Building")
+    print(f"{BLUE}Building.{BLACK}")
     args = [
         "cmake",
         "--build",
@@ -312,7 +319,7 @@ def build() -> bool:
     ]
     res = subprocess.run(args, check=False)
     if res.returncode:
-        print(f"Build failed: {res.stderr}")
+        print(f"{RED}Build failed.{BLACK}")
         return False
     return True
 
@@ -351,11 +358,12 @@ def storeArtifacts(plugin: str) -> bool:
         outDir = f"{ARTIFACTS_DIR}{os.sep}{target}"
         os.makedirs(outDir, exist_ok=True)
         shutil.copytree(f"{art}{target}", outDir, dirs_exist_ok=True)
-        print(f"Storing target {target} for plugin {plugin}.")
+        print(f"{GREEN}Storing target {target} for plugin {plugin}.{BLACK}")
         if sys.platform == "win32" and target == "VST3":
             print(
-                f"Add '{os.path.abspath(outDir)}' to you host/DAW plugin path "
-                "or copy content to your plugin folder in order to use plugins."
+                f"{BLUE}Add '{os.path.abspath(outDir)}' to you host/DAW plugin "
+                "path or copy content to your plugin folder in order to use "
+                f"plugins.{BLACK}"
             )
     return True
 
@@ -370,7 +378,7 @@ def runAuVal() -> bool:
     try:
         res = subprocess.run(["auval", "-vt", "aufx", "NTfx"], check=False)
     except FileNotFoundError:
-        print("Auval utility not found.")
+        print(f"{RED}Auval utility not found.{BLACK}")
         return False
     return not bool(res.returncode)
 
@@ -417,12 +425,11 @@ def process(args: dict) -> bool:
         if not build():
             return False
         if doTest:
-            for i in range(30):
-                if _artefactExists(plugin, "AU") and _artefactExists(
-                    plugin, "VST3"
-                ):
-                    break
-                print("Test files not found.")
+            for _ in range(30):
+                if _artefactExists(plugin, "AU"):
+                    if _artefactExists(plugin, "VST3"):
+                        break
+                print(f"{RED}Test files not found.{BLACK}")
                 time.sleep(1)
             if not runCtest():
                 return False
@@ -561,7 +568,7 @@ def main(args: dict) -> bool:
         return newPlugin(args["name"])
     if args["task"] == "package":
         return package.main(args)
-    print(f"Unknown command: {args["task"]}")
+    print(f"{RED}Unknown command: {args["task"]}{BLACK}.")
     return False
 
 

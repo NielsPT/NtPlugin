@@ -56,7 +56,6 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
   bool lookaheadEnable { true };
 
   ntGate() {
-
     this->primaryKnobs = {
       {
           .p_val  = &this->sc.settings.thresh_db,

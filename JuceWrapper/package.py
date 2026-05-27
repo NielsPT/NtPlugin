@@ -21,7 +21,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import subprocess
 import os
 import argparse
-import json
 import sys
 
 BLACK = "\033[0m"
