@@ -691,7 +691,6 @@ def createParser() -> argparse.ArgumentParser:
         help="Instead of creating an installer, create a zip file with "
         "notarized plugins.",
     )
-    # TODO: Set company in Cmake from this.
     parser.add_argument(
         "--company",
         help="Company/vendor of plugins.",

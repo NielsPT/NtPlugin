@@ -57,9 +57,34 @@ CATEGORY_MAP = {
     "PitchShift": "Pitch Shift",
     "Modulation": "Modulation",
     "Harmonic": "Distortion",
-    "NioseReduction": "Restoration",
-    "SoundField": "Spacial",
+    "NoiseReduction": "Restoration",
+    "SoundField": "Spatial",
 }
+
+
+def _artefactExists(plugin: str, target: str) -> bool:
+    if os.path.exists(
+        f"{BUILD_DIR}/{plugin}_artefacts/Release/{target}/"
+        f"{plugin}.{package.TARGET_EXT_MAP[target]}"
+    ):
+        return True
+    return False
+
+
+def _openInVscode(path: str) -> None:
+    try:
+        subprocess.run(["code", path], check=False)
+    except FileNotFoundError:
+        pass
+
+
+def _writeFile(path: str, content: str) -> bool:
+    if os.path.exists(path):
+        print(f"{YELLOW}'{path}' already exists.{BLACK}")
+        return False
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(content)
+    return True
 
 
 def newPlugin(name: str) -> bool:
@@ -123,6 +148,13 @@ struct {name} : NtFx::NtPlugin<signal_t> {{
 
 
 def newPluginMono(name: str) -> bool:
+    """
+    Creates a new file in 'plugins' that builds as a mono version of a stereo
+    plugin. New mono plugin is named '[name]Mono'.
+
+    Args:
+        name: Name of stereoplugin.
+    """
     template = f"""#pragma once
 
 #define NTFX_MONO
@@ -137,15 +169,6 @@ using {name}Mono = {name}<signal_t>;
     if not _writeFile(path, template):
         return False
     _openInVscode(path)
-    return True
-
-
-def _writeFile(path: str, content: str) -> bool:
-    if os.path.exists(path):
-        print(f"{YELLOW}'{path}' already exists.{BLACK}")
-        return False
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(content)
     return True
 
 
@@ -197,7 +220,7 @@ def readPluginIds() -> dict[str, list[str]]:
     with open(ID_FILE, "r", encoding="utf-8") as f:
         lines = f.readlines()
         for line in lines:
-            kv = line.split(":")
+            kv = line.replace("\n", "").split(":")
             if len(kv) < 2:
                 continue
             pluginIds[kv[0]] = kv[1:]
@@ -209,6 +232,7 @@ def configure(
     pluginIds: dict[str, list[str]],
     category: str = "",
     version: str = "",
+    company: str = "",
 ) -> bool:
     """
     Configures Cmake for build
@@ -240,6 +264,8 @@ def configure(
     if category:
         args += [f"-DNTFX_AAX_CATEGORY={category}"]
         args += [f"-DNTFX_VST3_CATEGORY={CATEGORY_MAP[category]}"]
+    if company:
+        args += [f"-DNTFX_COMPANY={company}"]
     if plugin in pluginIds:
         info = pluginIds[plugin]
         args += [f"-DNTFX_ID={info[ID].strip()}"]
@@ -265,11 +291,14 @@ def configure(
     cmakeOut = res.stdout.decode()
     print(cmakeOut)
     if res.returncode:
-        print(f"{RED}Cmake config failed.{BLACK}")
+        print(f"{RED}Cmake config failed:{BLACK}\n {res.stderr.decode()}")
         return False
     if plugin not in pluginIds:
-        # TODO: updatePluginId for adding category.
-        addNewPluginId(plugin, cmakeOut, category)
+        if not addNewPluginId(plugin, cmakeOut, category):
+            return False
+    elif len(pluginIds[plugin]) < 2 or pluginIds[plugin][VST3_CAT] != category:
+        if not updatePluginId(plugin, category):
+            return False
     return True
 
 
@@ -292,12 +321,41 @@ def addNewPluginId(plugin: str, cmakeOut: str, category: str = "") -> bool:
     newPluginId = match.group(1)
     if not newPluginId:
         return False
+    if not _writePluginId(plugin, newPluginId, category):
+        return False
+    return True
+
+
+def _writePluginId(plugin: str, newPluginId: str, category: str) -> bool:
     os.makedirs(ARTIFACTS_DIR, exist_ok=True)
     with open(ID_FILE, "a", encoding="utf-8") as f:
         st = f"{plugin}:{newPluginId}"
         if category:
             st += f":{CATEGORY_MAP[category]}:{category}"
         f.write(f"{st}\n")
+    return True
+
+
+def _overwriteIdFile(pluginIds: dict[str, list[str]]) -> bool:
+    os.remove(ID_FILE)
+    for name, info in pluginIds.items():
+        if not _writePluginId(
+            name, info[ID], info[VST3_CAT] if len(info) > 1 else ""
+        ):
+            return False
+    return True
+
+
+def updatePluginId(plugin: str, category: str) -> bool:
+    pluginIds = readPluginIds()
+    if not pluginIds or plugin not in pluginIds:
+        return False
+    if len(pluginIds[plugin]) < 2:
+        pluginIds[plugin] += [category.strip()]
+    else:
+        pluginIds[plugin][VST3_CAT] = category
+    if not _overwriteIdFile(pluginIds):
+        return False
     return True
 
 
@@ -397,6 +455,7 @@ def process(args: dict) -> bool:
     category = args["category"] if "category" in args else ""
     doTest = args["test"] if "test" in args else False
     doPackage = args["package"] if "package" in args else False
+    company = args["company"]
     secrets = package.loadSecrets()
     for secret in SECRETS:
         if secret in args and args[secret]:
@@ -420,7 +479,7 @@ def process(args: dict) -> bool:
         if plugin not in allPlugins:
             print(f"{RED}Plugin '{plugin}' does not exist.{BLACK}")
             return False
-        if not configure(plugin, pluginIds, category, version):
+        if not configure(plugin, pluginIds, category, version, company):
             return False
         if not build():
             return False
@@ -444,22 +503,6 @@ def process(args: dict) -> bool:
     if not package.storeSecrets(secrets):
         return False
     return True
-
-
-def _artefactExists(plugin: str, target: str) -> bool:
-    if os.path.exists(
-        f"{BUILD_DIR}/{plugin}_artefacts/Release/{target}/"
-        f"{plugin}.{package.TARGET_EXT_MAP[target]}"
-    ):
-        return True
-    return False
-
-
-def _openInVscode(path: str) -> None:
-    try:
-        subprocess.run(["code", path], check=False)
-    except FileNotFoundError:
-        pass
 
 
 def createParser() -> argparse.ArgumentParser:
@@ -513,7 +556,7 @@ def createParser() -> argparse.ArgumentParser:
         help="Version to be used for all plugins and installer. Cached and "
         "minor minor number auto-incremented if not given.",
     )
-    parser.add_argument(
+    buildParser.add_argument(
         "--company",
         help="Company/vendor of plugins.",
         default="NTfx",

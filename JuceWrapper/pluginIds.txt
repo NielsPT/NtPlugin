@@ -4,7 +4,7 @@ ntFilters:Coja:EQ:EQ
 ntMultiband3:Elam:Dynamics:Dynamics
 ntTapeEcho:Zinm:Delay:Delay
 gainExample:Sdfh
-ntTransformer:Migc:Harmonic:Distortion
+ntTransformer:Migc
 ntRmsMeter:Joxj
 ntDeEsser:Bagy:Dynamics:Dynamics
 ntGateMono:Jlkd:Dynamics:Dynamics
