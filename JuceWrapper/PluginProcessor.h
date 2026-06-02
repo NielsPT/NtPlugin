@@ -99,10 +99,9 @@ struct NtPluginAudioProcessor : public juce::AudioProcessor {
 
   NtFx::TitleBarSpec titleBarSpec;
   float fsBase = 48000;
-  NTFX_PLUGIN<float> plug;
-  NtFx::Src::SampleRateConverter<float> src;
+  NTFX_PLUGIN plug;
+  NtFx::Src::SampleRateConverter src;
   juce::AudioProcessorValueTreeState paramLayout;
-  // std::vector<std::vector<bool>> dummyBools;
   bool monoMode { false };
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtPluginAudioProcessor)

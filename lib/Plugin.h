@@ -25,12 +25,10 @@
 #include "lib/Component.h"
 #include "lib/RmsSensor.h"
 #include "lib/UiSpec.h"
-#include "lib/utils.h"
 
 #include <array>
 #include <cstddef>
 #include <string>
-#include <type_traits>
 #include <vector>
 
 namespace NtFx {
@@ -41,19 +39,17 @@ namespace NtFx {
  *
  * @tparam signal_t Basic datatype for audio signal.
  */
-template <typename signal_t>
-  requires std::is_floating_point_v<signal_t>
-struct NtPlugin : public ComponentBase<Audio<signal_t>> {
+struct NtPlugin : public ComponentBase<Audio> {
   /**
    * @brief Array of rms sensors for RMS meter.
    *
    */
-  std::array<LongRmsSensor<signal_t, 250, 192>, 2> xRms;
+  std::array<LongRmsSensor<250, 192>, 2> xRms;
 
   /**
    * @brief Peak level to be displayed in the meters.
    */
-  std::array<Audio<signal_t>, nMetersMax> peakLevels;
+  std::array<Audio, nMetersMax> peakLevels;
 
   /**
    * @brief Specification for UI. Modify this to change the look of your
@@ -65,12 +61,12 @@ struct NtPlugin : public ComponentBase<Audio<signal_t>> {
    * @brief vector of primary knobs. Add your number paramters to this to
    * display them in the UI.
    */
-  std::vector<KnobSpec<signal_t>> primaryKnobs;
+  std::vector<KnobSpec> primaryKnobs;
 
   /**
    * @brief vector of secondary knobs.
    */
-  std::vector<KnobSpec<signal_t>> secondaryKnobs;
+  std::vector<KnobSpec> secondaryKnobs;
 
   /**
    * @brief vector of DropDowns to be displayed
@@ -267,7 +263,7 @@ struct NtPlugin : public ComponentBase<Audio<signal_t>> {
    * @return
    */
   template <size_t idx, bool invert = false>
-  NtFx::Audio<signal_t> updatePeakLevel(NtFx::Audio<signal_t> val) noexcept {
+  Audio updatePeakLevel(Audio val) noexcept {
     static_assert(idx < nMetersMax, "Meter index is out of bounds.");
     if constexpr (invert) {
       if (val < this->peakLevels[idx]) { this->peakLevels[idx] = val; }
@@ -281,15 +277,15 @@ struct NtPlugin : public ComponentBase<Audio<signal_t>> {
    * @brief Get and reset peak level for specified meter.
    *
    * @param idx
-   * @return NtFx::Audio<signal_t> Highest signal level since last call.
+   * @return Audio<signal_t> Highest signal level since last call.
    */
-  NtFx::Audio<signal_t> getAndResetPeakLevel(size_t idx) noexcept {
+  Audio getAndResetPeakLevel(size_t idx) noexcept {
     signal_t def = signal_t(0);
     if (idx >= this->meters.size()) { return def; }
     if (this->meters[idx].invert) { def = signal_t(1); }
     ensureFinite(this->peakLevels[idx]);
-    NtFx::Audio<signal_t> tmp = this->peakLevels[idx];
-    this->peakLevels[idx]     = signal_t(def);
+    auto tmp              = this->peakLevels[idx];
+    this->peakLevels[idx] = signal_t(def);
     return tmp;
   }
 
@@ -298,9 +294,9 @@ struct NtPlugin : public ComponentBase<Audio<signal_t>> {
    * from the peak level.
    *
    * @param idx Index of meter to get RMS level for.
-   * @return NtFx::Audio<signal_t> RMS level.
+   * @return Audio<signal_t> RMS level.
    */
-  NtFx::Audio<signal_t> getRms(size_t idx) noexcept {
+  Audio getRms(size_t idx) noexcept {
     if (idx >= 2) { return signal_t(0); }
     return this->xRms[idx].getRms();
   }

@@ -67,7 +67,6 @@ namespace Src {
    * @brief State structure for sample rate converter
    * @tparam signal_t Type of signal samples
    */
-  template <typename signal_t>
   struct State {
     /**
      * @brief Index for storing input samples
@@ -80,18 +79,17 @@ namespace Src {
     /**
      * @brief Delay line for interpolation filter (at base sample rate).
      */
-    std::array<Audio<signal_t>, nDelayLine * 2> dlInterpolation;
+    std::array<Audio, nDelayLine * 2> dlInterpolation;
     /**
      * @brief Delay line for antialiasing (stores processed samples at high
      * sample rate).
      */
-    std::array<Audio<signal_t>, nDelayLine * 2> dlAntialiasing;
+    std::array<Audio, nDelayLine * 2> dlAntialiasing;
   };
   /**
    * @brief Coefficients structure for sample rate converter
    * @tparam signal_t Type of signal samples
    */
-  template <typename signal_t>
   struct Coeffs {
     /**
      * @brief Flag to disable sample rate conversion
@@ -122,20 +120,19 @@ namespace Src {
    * @brief Sample rate converter class
    * @tparam signal_t Type of signal samples
    */
-  template <typename signal_t>
   struct SampleRateConverter {
     /**
      * @brief Reference to the plugin
      */
-    NTFX_PLUGIN<signal_t>& plug;
+    NTFX_PLUGIN& plug;
     /**
      * @brief State of the sample rate converter
      */
-    State<signal_t> state;
+    State state;
     /**
      * @brief Coefficients of the sample rate converter
      */
-    Coeffs<signal_t> coeffs;
+    Coeffs coeffs;
     /**
      * @brief Oversampling mode
      */
@@ -149,14 +146,14 @@ namespace Src {
      * @brief Constructor
      * @param plug Reference to the plugin
      */
-    SampleRateConverter(NTFX_PLUGIN<signal_t>& plug) : plug(plug) { }
+    SampleRateConverter(NTFX_PLUGIN& plug) : plug(plug) { }
 
     /**
      * @brief Process audio samples through the sample rate converter
      * @param x Input audio samples
      * @return Processed audio samples
      */
-    Audio<signal_t> process(Audio<signal_t> x) {
+    Audio process(Audio x) {
       ensureFinite(x);
       if (this->coeffs.disable) {
         auto y = this->plug.process(x);
@@ -168,7 +165,7 @@ namespace Src {
       if (++this->state.iStoreIn >= nDelayLine) { this->state.iStoreIn = 0; }
       auto iReadIn = this->state.iStoreIn + nDelayLine;
       for (size_t i = 0; i < this->coeffs.osFactor; i++) {
-        Audio<signal_t> accum;
+        Audio accum;
         for (size_t j = 0; j < this->coeffs.osFirLenMult; j++) {
           accum += this->coeffs.b[j * this->coeffs.osFactor + i]
               * this->state.dlInterpolation[iReadIn - j];
@@ -183,7 +180,7 @@ namespace Src {
       }
       auto iReadOut = this->state.iStoreOut + nDelayLine
           - this->coeffs.osFactor * this->coeffs.osFirLenMult;
-      Audio<signal_t> accum;
+      Audio accum;
       for (size_t i = 0; i < this->coeffs.osFactor * this->coeffs.osFirLenMult;
           i++) {
         accum += this->coeffs.b[i] * this->state.dlAntialiasing[iReadOut + i];

@@ -76,7 +76,7 @@ consteval auto testFileBaseName(std::string_view fileName) {
 
 #define _NTFX_TEST_BEGIN_IMPL                                                  \
   auto componentTestSet =                                                      \
-      NtFx::ComponentTestSet<double>(std::string(testFileBaseName(__FILE__)));
+      NtFx::ComponentTestSet(std::string(testFileBaseName(__FILE__)));
 
 #ifndef _NTFX_TEST_STARTED
   /**
@@ -109,18 +109,81 @@ static const std::vector<std::string> STIMULI_NAMES { "impulse",
 
 constexpr char SEPARATOR = '.';
 
-template <typename signal_t>
-struct ComponentTestSet;
+struct ComponentTest;
 
+/**
+ * @brief Set of a number of tests. Represents a full test file and this a test
+ * of a Component in the library or an NtPlugin.
+ *
+ * @tparam signal_t Audio datatype
+ */
+struct ComponentTestSet {
+  int nTests;      ///< Total tests run.
+  int nSuccessful; ///< Number of successful tests.
+  std::vector<std::unique_ptr<ComponentTest>>
+      tests;        ///< Vector of tests to run.
+  std::string name; ///< Name of set of tests.
+
+  /**
+   * @brief Construct a new Component Test Set object
+   *
+   * @param name Name of component under test.
+   */
+  ComponentTestSet(std::string name) : name(name) { }
+
+  /**
+   * @brief Get and print the results of all tests.
+   *
+   * @return true If all tests passed.
+   * @return false If any test failed. Missing expected vector is a failure.
+   */
+  bool getResults() {
+    std::cout << std::fixed << std::setprecision(2);
+    if (nSuccessful == this->nTests) {
+      std::cout << "\033[32m";
+    } else {
+      std::cout << "\033[31m";
+    }
+    std::cout << "Ran a total of " << this->nTests << " test on "
+              << this->tests.size() << " objects. " << this->nSuccessful
+              << " succeeded. ("
+              << 100.0 * double(this->nSuccessful) / double(this->nTests)
+              << "%)."
+              << "\033[0m" << "\n";
+    auto f = std::ofstream("testWrapper/out/results.txt", std::ios_base::app);
+    f << this->name << "," << this->nTests << "," << this->tests.size() << ","
+      << this->nSuccessful << "\n";
+    return nSuccessful == nTests;
+  }
+
+  /**
+   * @brief Adds a new test to set.
+   *
+   * @param componentObj Reference to object under test.
+   * @param objName Name of object under test.
+   * @param stimuli Vector of stimuli to test against.
+   * @return true if tests pass.
+   * @return false if tests fail.
+   */
+  bool addTest(ComponentBase<Stereo<signal_t>>& componentObj,
+      std::string objName,
+      std::vector<std::string> stimuli);
+
+  /**
+   * @brief Runs all tests added to test set.
+   *
+   * @return int 0 on success, 1 on failure.
+   */
+  int runAllTests();
+};
 /**
  * @brief Processes a vector of test data with audio component and compares
  * to expected results. Total number of tests and number of succesful test
  * are stored as statics in order to make statistics.
  *
  */
-template <typename signal_t>
 struct ComponentTest {
-  ComponentTestSet<signal_t>& owner;    ///< Set this test belongs to.
+  ComponentTestSet& owner;              ///< Set this test belongs to.
   const std::string objName;            ///< Object to be tested.
   ComponentBase<Stereo<signal_t>>& cut; ///< Component under test.
   std::vector<std::string> activeStimuli = STIMULI_NAMES; ///< Tests to run.
@@ -135,7 +198,7 @@ struct ComponentTest {
    * Accepted values are defined in STIMULI_NAMES. Defaults to an empty vector,
    * selecting all knows stimuli as defined in STIMULI_NAMES.
    */
-  ComponentTest(ComponentTestSet<signal_t>& owner,
+  ComponentTest(ComponentTestSet& owner,
       std::string objName,
       ComponentBase<Stereo<signal_t>>& cut,
       std::vector<std::string> stimuli = { })
@@ -257,79 +320,18 @@ struct ComponentTest {
   }
 };
 
-/**
- * @brief Set of a number of tests. Represents a full test file and this a test
- * of a Component in the library or an NtPlugin.
- *
- * @tparam signal_t Audio datatype
- */
-template <typename signal_t>
-struct ComponentTestSet {
-  int nTests;      ///< Total tests run.
-  int nSuccessful; ///< Number of successful tests.
-  std::vector<std::unique_ptr<ComponentTest<signal_t>>>
-      tests;        ///< Vector of tests to run.
-  std::string name; ///< Name of set of tests.
+bool ComponentTestSet::addTest(ComponentBase<Stereo<signal_t>>& componentObj,
+    std::string objName,
+    std::vector<std::string> stimuli) {
+  this->tests.push_back(std::make_unique<NtFx::ComponentTest>(
+      *this, objName, componentObj, stimuli));
+  return true;
+}
 
-  /**
-   * @brief Construct a new Component Test Set object
-   *
-   * @param name Name of component under test.
-   */
-  ComponentTestSet(std::string name) : name(name) { }
-
-  /**
-   * @brief Get and print the results of all tests.
-   *
-   * @return true If all tests passed.
-   * @return false If any test failed. Missing expected vector is a failure.
-   */
-  bool getResults() {
-    std::cout << std::fixed << std::setprecision(2);
-    if (nSuccessful == this->nTests) {
-      std::cout << "\033[32m";
-    } else {
-      std::cout << "\033[31m";
-    }
-    std::cout << "Ran a total of " << this->nTests << " test on "
-              << this->tests.size() << " objects. " << this->nSuccessful
-              << " succeeded. ("
-              << 100.0 * double(this->nSuccessful) / double(this->nTests)
-              << "%)."
-              << "\033[0m" << "\n";
-    auto f = std::ofstream("testWrapper/out/results.txt", std::ios_base::app);
-    f << this->name << "," << this->nTests << "," << this->tests.size() << ","
-      << this->nSuccessful << "\n";
-    return nSuccessful == nTests;
+int ComponentTestSet::runAllTests() {
+  for (auto& stimulus : STIMULI_NAMES) {
+    for (size_t i = 0; i < tests.size(); i++) { tests[i]->run(stimulus); }
   }
-
-  /**
-   * @brief Adds a new test to set.
-   *
-   * @param componentObj Reference to object under test.
-   * @param objName Name of object under test.
-   * @param stimuli Vector of stimuli to test against.
-   * @return true if tests pass.
-   * @return false if tests fail.
-   */
-  bool addTest(ComponentBase<Stereo<signal_t>>& componentObj,
-      std::string objName,
-      std::vector<std::string> stimuli) {
-    this->tests.push_back(std::make_unique<NtFx::ComponentTest<double>>(
-        *this, objName, componentObj, stimuli));
-    return true;
-  }
-
-  /**
-   * @brief Runs all tests added to test set.
-   *
-   * @return int 0 on success, 1 on failure.
-   */
-  int runAllTests() {
-    for (auto& stimulus : STIMULI_NAMES) {
-      for (size_t i = 0; i < tests.size(); i++) { tests[i]->run(stimulus); }
-    }
-    return !this->getResults();
-  }
-};
+  return !this->getResults();
+}
 }

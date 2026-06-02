@@ -6,12 +6,11 @@
 #include "lib/DynamicFilter.h"
 #include "lib/Plugin.h"
 
-template <typename signal_t>
-struct ntDeEsser : NtFx::NtPlugin<signal_t> {
-  NtFx::Comp::PeakSideChainLinear<signal_t> sc;
-  NtFx::Biquad::EqBand<signal_t> scFlt;
-  NtFx::DynamicFilter::Shelf<signal_t> flt;
-  NtFx::Comp::ScSettings<signal_t> scSettings;
+struct ntDeEsser : public NtFx::NtPlugin {
+  NtFx::Comp::PeakSideChainLinear sc;
+  NtFx::Biquad::EqBand scFlt;
+  NtFx::DynamicFilter::Shelf flt;
+  NtFx::Comp::ScSettings scSettings;
   signal_t q { 0.6 };
   signal_t fc_hz { 4e3 };
   bool bypassEnable { false };
@@ -75,7 +74,7 @@ struct ntDeEsser : NtFx::NtPlugin<signal_t> {
     this->updateDefaults();
   }
 
-  NtFx::Audio<signal_t> process(NtFx::Audio<signal_t> x) noexcept override {
+  Audio process(Audio x) noexcept override {
     this->template updatePeakLevel<0>(x);
     if (this->bypassEnable) {
       this->template updatePeakLevel<1>(x);

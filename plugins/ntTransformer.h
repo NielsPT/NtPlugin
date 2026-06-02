@@ -26,10 +26,9 @@
 #include "lib/Transformer.h"
 #include "lib/utils.h"
 
-template <typename signal_t>
-struct ntTransformer : public NtFx::NtPlugin<signal_t> {
-  NtFx::Biquad::EqBand<signal_t> bqHpf0;
-  NtFx::Transformer<signal_t> transformer;
+struct ntTransformer : public NtFx::NtPlugin {
+  NtFx::Biquad::EqBand bqHpf0;
+  NtFx::Transformer transformer;
   signal_t drive_db  = -10;
   signal_t drive_lin = 0.3;
   bool bypass        = false;
@@ -39,8 +38,7 @@ struct ntTransformer : public NtFx::NtPlugin<signal_t> {
     };
     this->toggles = { { &this->bypass, "Bypass" } };
   }
-  virtual NtFx::Audio<signal_t> process(
-      NtFx::Audio<signal_t> x) noexcept override {
+  virtual Audio process(Audio x) noexcept override {
     this->template updatePeakLevel<0>(x);
     if (this->bypass) {
       this->template updatePeakLevel<1>(x);

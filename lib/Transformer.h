@@ -23,14 +23,14 @@
 #include "lib/SoftClip.h"
 
 namespace NtFx {
-template <typename signal_t>
-struct Transformer : public ComponentBase<Audio<signal_t>> {
+
+struct Transformer : public ComponentBase<Audio> {
   signal_t fc_hz       = 250;
   signal_t lfCutoff_hz = 20;
   signal_t gain_lin { 0 };
-  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::lpf> lpf;
-  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::hpf> hpf;
-  virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
+  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> lpf;
+  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> hpf;
+  virtual Audio process(Audio x) noexcept override {
     auto yShelf = x + this->lpf.process(x) * this->gain_lin;
     auto yClip  = NtFx::softClip5thStereo(yShelf);
     auto yHpf   = this->hpf.process(yClip);

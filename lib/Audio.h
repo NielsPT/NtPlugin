@@ -422,21 +422,6 @@ static inline Stereo<signal_t> operator*(
   return { (y.l * signal_t(x)), (y.r * signal_t(x)) };
 }
 
-template <typename T>
-struct isMono {
-  static const bool v { false };
-};
-
-template <>
-struct isMono<Mono<float>> {
-  static const bool v { true };
-};
-
-template <>
-struct isMono<Mono<double>> {
-  static const bool v { true };
-};
-
 /**
  * @brief Sets 'x' to 0 if it is not a finite number.
  *
@@ -448,13 +433,13 @@ template <typename signal_t>
 static inline void ensureFinite(
     Stereo<signal_t>& x, signal_t def = signal_t(0)) noexcept {
   ensureFinite(x.l, def);
-  if constexpr (!isMono<Stereo<signal_t>>().v) { ensureFinite(x.r, def); }
+  ensureFinite(x.r, def);
 }
-
-template <typename signal_t>
-#ifdef NTFX_MONO
-using Audio = Mono<signal_t>;
-#else
-using Audio = Stereo<signal_t>;
-#endif
 } // namespace NtFx
+
+#ifdef NTFX_TESTING
+typedef double signal_t;
+#else
+typedef float signal_t;
+#endif
+using Audio = NtFx::Stereo<signal_t>;

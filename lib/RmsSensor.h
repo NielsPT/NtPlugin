@@ -168,9 +168,7 @@ struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
  * @tparam maxSampleDLineLen Maximum length of the sample delay line (default:
  * 192 * 8)
  */
-template <typename signal_t,
-    int maxT_ms           = 1000,
-    int maxSampleDLineLen = 192 * 8>
+template <int maxT_ms = 1000, int maxSampleDLineLen = 192 * 8>
 struct LongRmsSensorStereo
     : public AudioComponent<signal_t,
           LongRmsSensorMono<signal_t, maxT_ms, maxSampleDLineLen>> {
@@ -193,16 +191,10 @@ struct LongRmsSensorStereo
    *
    * @return The current RMS values for both channels
    */
-  Audio<signal_t> getRms() const noexcept {
+  Audio getRms() const noexcept {
     return { this->l.getRms(), this->r.getRms() };
   }
 };
-template <typename signal_t,
-    int maxT_ms           = 1000,
-    int maxSampleDLineLen = 192 * 8>
-#ifdef NTFX_MONO
-using LongRmsSensor = LongRmsSensorMono<signal_t, maxT_ms, maxSampleDLineLen>;
-#else
-using LongRmsSensor = LongRmsSensorStereo<signal_t, maxT_ms, maxSampleDLineLen>;
-#endif
+template <int maxT_ms = 1000, int maxSampleDLineLen = 192 * 8>
+using LongRmsSensor = LongRmsSensorStereo<maxT_ms, maxSampleDLineLen>;
 }

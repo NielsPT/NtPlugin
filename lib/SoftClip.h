@@ -29,30 +29,6 @@
 namespace NtFx {
 
 /**
- * @brief Third order soft clipper wrapped in a Component.
- *
- * @tparam signal_t Audio datatype.
- */
-template <typename signal_t>
-class SoftClip3 : public ComponentBase<Audio<signal_t>> {
-  virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
-    return softClip3rdStereo(x);
-  }
-};
-
-/**
- * @brief Fifth order soft clipper wrapped in a Component.
- *
- * @tparam signal_t Audio datatype.
- */
-template <typename signal_t>
-class SoftClip5 : public ComponentBase<Audio<signal_t>> {
-  virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
-    return softClip5thStereo(x);
-  }
-};
-
-/**
  * @brief Calculates coefficients for symmetrical soft clipper
  * at compile time.
  *
@@ -72,15 +48,12 @@ _calculateSoftClipCoeffs() noexcept {
   return a_n;
 }
 
-template <typename signal_t>
 constexpr std::array<signal_t, 4> _coeffsSeventh =
     _calculateSoftClipCoeffs<signal_t, 3>();
 
-template <typename signal_t>
 constexpr std::array<signal_t, 3> _coeffsFifth =
     _calculateSoftClipCoeffs<signal_t, 2>();
 
-template <typename signal_t>
 constexpr std::array<signal_t, 2> _coeffsThird =
     _calculateSoftClipCoeffs<signal_t, 1>();
 
@@ -91,14 +64,13 @@ constexpr std::array<signal_t, 2> _coeffsThird =
  * @param x Input sample.
  * @return signal_t Output sample.
  */
-template <typename signal_t>
 static inline signal_t softClip5thMono(signal_t x) noexcept {
-  signal_t x_ = x / _coeffsFifth<signal_t>[0];
+  signal_t x_ = x / _coeffsFifth[0];
   if (x_ > 1.0) { return signal_t(1.0); }
   if (x_ < -1.0) { return signal_t(-1.0); }
   auto x3 = x_ * x_ * x_;
   auto x5 = x3 * x_ * x_;
-  return x + _coeffsFifth<signal_t>[1] * x3 + _coeffsFifth<signal_t>[2] * x5;
+  return x + _coeffsFifth[1] * x3 + _coeffsFifth[2] * x5;
 }
 
 /**
@@ -109,9 +81,7 @@ static inline signal_t softClip5thMono(signal_t x) noexcept {
  * @param x Input sample.
  * @return signal_t Output sample.
  */
-template <typename signal_t>
-static inline Audio<signal_t> softClip5thStereo(Audio<signal_t> x) noexcept {
-  if constexpr (isMono<Audio<signal_t>>().v) { return softClip5thMono(x.l); }
+static inline Audio softClip5thStereo(Audio x) noexcept {
   return { softClip5thMono(x.l), softClip5thMono(x.r) };
 }
 
@@ -122,13 +92,12 @@ static inline Audio<signal_t> softClip5thStereo(Audio<signal_t> x) noexcept {
  * @param x Input sample.
  * @return signal_t Output sample.
  */
-template <typename signal_t>
 static inline signal_t softClip3rdMono(signal_t x) {
   if (x > 1.0) { return signal_t(1.0); }
   if (x < -1.0) { return signal_t(-1.0); }
-  auto x_ = x / _coeffsThird<signal_t>[0];
+  auto x_ = x / _coeffsThird[0];
   auto x3 = x_ * x_ * x_;
-  return x - _coeffsThird<signal_t>[1] * x3;
+  return x - _coeffsThird[1] * x3;
 }
 
 /**
@@ -139,9 +108,29 @@ static inline signal_t softClip3rdMono(signal_t x) {
  * @param x Input sample.
  * @return signal_t Output sample.
  */
-template <typename signal_t>
-static inline signal_t softClip3rdStereo(signal_t x) {
-  if constexpr (isMono<Audio<signal_t>>().v) { return softClip3rdMono(x.l); }
+static inline Audio softClip3rdStereo(Audio x) {
   return { softClip3rdMono(x.l), softClip3rdMono(x.r) };
 }
+
+/**
+ * @brief Third order soft clipper wrapped in a Component.
+ *
+ * @tparam signal_t Audio datatype.
+ */
+class SoftClip3 : public ComponentBase<Audio> {
+  virtual Audio process(Audio x) noexcept override {
+    return softClip3rdStereo(x);
+  }
+};
+
+/**
+ * @brief Fifth order soft clipper wrapped in a Component.
+ *
+ * @tparam signal_t Audio datatype.
+ */
+class SoftClip5 : public ComponentBase<Audio> {
+  virtual Audio process(Audio x) noexcept override {
+    return softClip5thStereo(x);
+  }
+};
 } // namespace NtFx

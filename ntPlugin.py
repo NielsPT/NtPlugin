@@ -102,8 +102,8 @@ def newPlugin(name: str) -> bool:
 #include "lib/Plugin.h"
 #include "lib/Audio.h"
 
-template <typename signal_t>
-struct {name} : NtFx::NtPlugin<signal_t> {{
+
+struct {name} : public NtFx::NtPlugin {{
   bool bypassEnable {{ false }};
   // TODO: Create some variables.
 
@@ -117,7 +117,7 @@ struct {name} : NtFx::NtPlugin<signal_t> {{
     this->updateDefaults();
   }}
 
-  NtFx::Audio<signal_t> process(NtFx::Audio<signal_t> x) noexcept override {{
+  Audio process(Audio x) noexcept override {{
     this->template updatePeakLevel<0>(x);
     if (this->bypassEnable) {{
       this->template updatePeakLevel<1>(x);
@@ -147,31 +147,6 @@ struct {name} : NtFx::NtPlugin<signal_t> {{
     return True
 
 
-def newPluginMono(name: str) -> bool:
-    """
-    Creates a new file in 'plugins' that builds as a mono version of a stereo
-    plugin. New mono plugin is named '[name]Mono'.
-
-    Args:
-        name: Name of stereoplugin.
-    """
-    template = f"""#pragma once
-
-#define NTFX_MONO
-
-#include "{name}.h"
-
-template <typename signal_t>
-using {name}Mono = {name}<signal_t>;
-
-    """
-    path = f"{REPO_BASE_DIR}/plugins/{name}Mono.h"
-    if not _writeFile(path, template):
-        return False
-    _openInVscode(path)
-    return True
-
-
 def newPluginTest(name: str):
     """
     Creates a new test file for a plugin plugin. If Vscode is installed, opens
@@ -189,10 +164,10 @@ def newPluginTest(name: str):
 NTFX_TEST_BEGIN
 
 NTFX_TEST() {{
-  auto bypass = {name}<double>();
+  auto bypass = {name}();
   bypass.bypassEnable = true;
   NTFX_ADD_TEST(bypass, "impulse");
-  auto defaults = {name}<double>();
+  auto defaults = {name}();
   NTFX_ADD_TEST(defaults, "impulse");
   // TODO: Add more tests.
   return NTFX_RUN_TESTS();
@@ -583,14 +558,6 @@ def createParser() -> argparse.ArgumentParser:
         action="store_true",
         help="Add test file to 'testWrapper/tests'.",
     )
-    newParser.add_argument(
-        "--mono",
-        "--add-mono",
-        "-m",
-        action="store_true",
-        help="Create a mono stub for the plugin. Builds a mono version of the "
-        "plugin. New mono-plugin is named [plugin name]Mono",
-    )
     return parser
 
 
@@ -608,8 +575,6 @@ def main(args: dict) -> bool:
     if args["task"] == "new":
         if "test" in args and args["test"]:
             newPluginTest(args["name"])
-        if "mono" in args and args["mono"]:
-            newPluginMono(args["name"])
         return newPlugin(args["name"])
     if args["task"] == "package":
         return package.main(args)

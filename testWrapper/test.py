@@ -199,6 +199,7 @@ def _buildTestProg(cppPath: str) -> bool:
         f"-I{os.path.abspath(FILE_DIR)}/../lib/gcem/include",
         "--std=c++20",
         "-DNTFX_FS=48e3f",
+        "-DNTFX_TESTING=1",
         "-O0",
     ]
     if platform.system() == "Windows":

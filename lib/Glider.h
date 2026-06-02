@@ -30,7 +30,7 @@
  *
  */
 namespace NtFx {
-template <typename signal_t>
+
 struct ExpGlider {
   signal_t ui = 0; ///< UI side input value.
   signal_t pr = 0; ///< Processing side output of glider.
@@ -74,7 +74,6 @@ struct ExpGlider {
  *
  * @tparam signal_t
  */
-template <typename signal_t>
 struct LinGlider {
   signal_t ui = 0.0;
   signal_t pr = 0.0;

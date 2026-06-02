@@ -33,8 +33,7 @@ enum Order : int {
   fourth,
 };
 
-template <typename signal_t>
-struct ntFilters : public NtFx::NtPlugin<signal_t> {
+struct ntFilters : public NtFx::NtPlugin {
   signal_t fHpf = 20;
   signal_t fLpf = 20000;
   signal_t qHpf = 0.707;
@@ -43,14 +42,13 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
   Order orderLpf;
   bool enableHpf = true;
   bool enableLpf = true;
-  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::hpf>
-      firstOrderHpf;
-  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::lpfZero>
+  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> firstOrderHpf;
+  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpfZero>
       firstOrderLpf;
-  NtFx::Biquad::EqBand<signal_t> bqLpf0;
-  NtFx::Biquad::EqBand<signal_t> bqLpf1;
-  NtFx::Biquad::EqBand<signal_t> bqHpf0;
-  NtFx::Biquad::EqBand<signal_t> bqHpf1;
+  NtFx::Biquad::EqBand bqLpf0;
+  NtFx::Biquad::EqBand bqLpf1;
+  NtFx::Biquad::EqBand bqHpf0;
+  NtFx::Biquad::EqBand bqHpf1;
   ntFilters() {
 
     this->primaryKnobs = {
@@ -120,7 +118,7 @@ struct ntFilters : public NtFx::NtPlugin<signal_t> {
     this->updateDefaults();
   }
 
-  NtFx::Audio<signal_t> process(NtFx::Audio<signal_t> x) noexcept override {
+  Audio process(Audio x) noexcept override {
     auto xBqHpf0 = x;
     if ((this->orderHpf + 1) % 2) { xBqHpf0 = this->firstOrderHpf.process(x); }
     auto yBqHpf0 = this->bqHpf0.process(xBqHpf0);

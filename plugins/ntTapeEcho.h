@@ -45,8 +45,7 @@ enum SubDev : int {
 // TODO: Dynamic alocation of delayline.
 constexpr int delayLineLength = 192e3 * 2 * 8 * 2 * 2;
 
-template <typename signal_t>
-struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
+struct ntTapeEcho : public NtFx::NtPlugin {
   signal_t tGui             = 0.5;
   signal_t fb_percent       = 20;
   signal_t modFreq          = 1.0;
@@ -63,25 +62,25 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
   bool bypass               = false;
   SubDev subDev             = SubDev::fourth;
   signal_t tempoScale       = 1;
-  NtFx::Biquad::EqBand<signal_t> hpf;
-  NtFx::Biquad::EqBand<signal_t> lpf;
-  NtFx::Audio<signal_t> fbState;
-  std::array<NtFx::Audio<signal_t>, delayLineLength> delayLine;
+  NtFx::Biquad::EqBand hpf;
+  NtFx::Biquad::EqBand lpf;
+  Audio fbState;
+  std::array<Audio, delayLineLength> delayLine;
   signal_t fb_lin    = 0.2;
   signal_t noise_lin = 0;
   signal_t tGlide    = 0.36;
-  // NtFx::LinGlider<signal_t> nDelay;
-  NtFx::ExpGlider<signal_t> nDelay;
+  // NtFx::LinGlider nDelay;
+  NtFx::ExpGlider nDelay;
   size_t iStore      = 0;
   signal_t aClip_lin = 1;
   size_t timeCounter = 0;
-  NtFx::ExpGlider<signal_t> nOffset;
+  NtFx::ExpGlider nOffset;
   // TODO: Mix should have -3 dB law.
   signal_t mix_lin = 1;
-  NtFx::ExpGlider<signal_t> modDepth;
+  NtFx::ExpGlider modDepth;
   // TODO: How in the world do we get mod to glide gracefully?
-  NtFx::ExpGlider<signal_t> thetaMod;
-  NtFx::ExpGlider<signal_t> thetaModPhase;
+  NtFx::ExpGlider thetaMod;
+  NtFx::ExpGlider thetaModPhase;
 
   ntTapeEcho() : modDepth(0.1) {
     this->primaryKnobs = {
@@ -133,8 +132,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     this->updateDefaults();
   }
 
-  virtual NtFx::Audio<signal_t> process(
-      NtFx::Audio<signal_t> x) noexcept override {
+  virtual Audio process(Audio x) noexcept override {
     this->nDelay.process();
     this->modDepth.process();
     this->thetaMod.process();
@@ -165,7 +163,7 @@ struct ntTapeEcho : public NtFx::NtPlugin<signal_t> {
     if (iLoadL < 0) { iLoadL += delayLineLength; }
     int iLoadR = this->iStore - gcem::round(nModR);
     if (iLoadR < 0) { iLoadR += delayLineLength; }
-    NtFx::Audio<signal_t> yDelay = {
+    Audio yDelay = {
       this->delayLine[iLoadL].l,
       this->delayLine[iLoadR].r,
     };

@@ -155,8 +155,7 @@ std::unique_ptr<T> NtPluginAudioProcessorEditor::_makeSmallToggleSet(
   return std::move(group);
 }
 
-void NtPluginAudioProcessorEditor::_initPrimaryKnob(
-    NtFx::KnobSpec<float>& spec) {
+void NtPluginAudioProcessorEditor::_initPrimaryKnob(NtFx::KnobSpec& spec) {
   auto p_knob  = std::make_unique<juce::Slider>(spec.name);
   auto p_label = this->_makeLabel(spec.name);
   this->_initKnob(spec, p_knob, p_label);
@@ -164,8 +163,7 @@ void NtPluginAudioProcessorEditor::_initPrimaryKnob(
   this->primaryKnobLabels.push_back(std::move(p_label));
 }
 
-void NtPluginAudioProcessorEditor::_initSecondaryKnob(
-    NtFx::KnobSpec<float>& spec) {
+void NtPluginAudioProcessorEditor::_initSecondaryKnob(NtFx::KnobSpec& spec) {
   std::string name = spec.name;
   auto p_knob      = std::make_unique<juce::Slider>(name);
   auto p_label     = this->_makeLabel(spec.name);
@@ -174,7 +172,7 @@ void NtPluginAudioProcessorEditor::_initSecondaryKnob(
   this->secondaryKnobLabels.push_back(std::move(p_label));
 }
 
-void NtPluginAudioProcessorEditor::_initKnob(NtFx::KnobSpec<float>& spec,
+void NtPluginAudioProcessorEditor::_initKnob(NtFx::KnobSpec& spec,
     std::unique_ptr<juce::Slider>& p_slider,
     std::unique_ptr<juce::Label>& p_label) {
   if (!spec.p_val) { return; }

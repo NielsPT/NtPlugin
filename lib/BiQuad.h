@@ -36,7 +36,6 @@ namespace Biquad {
     none
   };
 
-  template <typename signal_t>
   struct Settings {
     Shape shape { Shape::bell };
     signal_t fc_hz { 1000.0 };
@@ -44,35 +43,30 @@ namespace Biquad {
     signal_t q { 0.707 };
   };
 
-  template <typename signal_t>
   struct Coeffs6 {
     signal_t b[3] { 1, 0, 0 };
     signal_t a[3] { 1, 0, 0 };
   };
 
-  template <typename signal_t>
   struct Coeffs5 {
     signal_t b[3] { 1, 0, 0 };
     signal_t a[2] { 0, 0 };
   };
 
-  template <typename signal_t>
   struct State {
     signal_t x[2] { 0, 0 };
     signal_t y[2] { 0, 0 };
   };
 
-  template <typename signal_t>
   struct StereoState {
-    State<signal_t> l;
-    State<signal_t> r;
+    State l;
+    State r;
   };
 
-  template <typename signal_t>
   struct Biquad6 {
-    Coeffs6<signal_t>& coeffs;
-    State<signal_t> state;
-    Biquad6(Coeffs6<signal_t>& coeffs) : coeffs(coeffs) { }
+    Coeffs6& coeffs;
+    State state;
+    Biquad6(Coeffs6& coeffs) : coeffs(coeffs) { }
     inline signal_t process(signal_t x) {
       signal_t y = (this->coeffs.b[0] * x + this->coeffs.b[1] * this->state.x[0]
                        + this->coeffs.b[2] * this->state.x[1]
@@ -87,46 +81,8 @@ namespace Biquad {
     }
   };
 
-  template <typename signal_t>
-  struct EqBand6Stereo : public ComponentBase<Audio<signal_t>> {
-    Biquad6<signal_t> l;
-    Biquad6<signal_t> r;
-    Settings<signal_t> settings;
-    Coeffs6<signal_t> coeffs;
-    EqBand6Stereo() : l(coeffs), r(coeffs) { }
-    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
-      return { this->l.process(x.l), this->r.process(x.r) };
-    }
-    virtual void update() noexcept override {
-      this->coeffs = calcCoeffs6<signal_t>(settings, this->fs);
-    }
-    virtual void reset(float fs) noexcept override {
-      this->fs = fs;
-      this->update();
-    }
-  };
-
-  template <typename signal_t>
-  struct EqBand6Mono : public ComponentBase<Audio<signal_t>> {
-    Biquad6<signal_t> l;
-    Settings<signal_t> settings;
-    Coeffs6<signal_t> coeffs;
-    EqBand6Mono() : l(coeffs) { }
-    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
-      return this->l.process(x.l);
-    }
-    virtual void update() noexcept override {
-      this->coeffs = calcCoeffs6<signal_t>(settings, this->fs);
-    }
-    virtual void reset(float fs) noexcept override {
-      this->fs = fs;
-      this->update();
-    }
-  };
-
-  template <typename signal_t>
   inline static signal_t processBiquad5(
-      signal_t x, Coeffs5<signal_t>& coeffs, State<signal_t>& state) noexcept {
+      signal_t x, Coeffs5& coeffs, State& state) noexcept {
     signal_t y = coeffs.b[0] * x + coeffs.b[1] * state.x[0]
         + coeffs.b[2] * state.x[1] - coeffs.a[0] * state.y[0]
         - coeffs.a[1] * state.y[1];
@@ -137,92 +93,12 @@ namespace Biquad {
     return y;
   }
 
-  template <typename signal_t>
-  struct EqBandMono : public ComponentBase<Audio<signal_t>> {
-    Settings<signal_t> settings;
-    Coeffs5<signal_t> coeffs;
-    State<signal_t> state;
-
-    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
-      return processBiquad5(x.l, this->coeffs, this->state);
-    }
-    virtual void update() noexcept override {
-      this->coeffs = calcCoeffs5<signal_t>(this->settings, this->fs);
-    }
-    virtual void reset(float fs) noexcept override {
-      this->fs    = fs;
-      this->state = { { 0, 0 }, { 0, 0 } };
-      this->update();
-    }
-  };
-
-  template <typename signal_t>
-  struct EqBandStereo : public ComponentBase<Audio<signal_t>> {
-    Settings<signal_t> settings;
-    Coeffs5<signal_t> coeffs;
-    State<signal_t> stateL;
-    State<signal_t> stateR;
-
-    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
-      return { processBiquad5(x.l, this->coeffs, this->stateL),
-        processBiquad5(x.r, this->coeffs, this->stateR) };
-    }
-    virtual void update() noexcept override {
-      this->coeffs = calcCoeffs5<signal_t>(this->settings, this->fs);
-    }
-    virtual void reset(float fs) noexcept override {
-      this->fs     = fs;
-      this->stateL = { { 0, 0 }, { 0, 0 } };
-      this->stateR = { { 0, 0 }, { 0, 0 } };
-      this->update();
-    }
-  };
-
-  template <typename signal_t>
-  static inline Coeffs5<signal_t> normalizeCoeffs(Coeffs6<signal_t> coeffs6) {
-    Coeffs5<signal_t> coeffs5;
-    coeffs5.b[0] = coeffs6.b[0] / coeffs6.a[0];
-    coeffs5.b[1] = coeffs6.b[1] / coeffs6.a[0];
-    coeffs5.b[2] = coeffs6.b[2] / coeffs6.a[0];
-    coeffs5.a[0] = coeffs6.a[1] / coeffs6.a[0];
-    coeffs5.a[1] = coeffs6.a[2] / coeffs6.a[0];
-    return coeffs5;
-  }
-
-  template <typename signal_t>
-  static inline Coeffs5<signal_t> calcCoeffs5(
-      Settings<signal_t>& settings, signal_t fs) {
-    return calcCoeffs5<signal_t>(settings.shape,
-        fs,
-        settings.fc_hz,
-        settings.q,
-        gcem::pow(10, (settings.gain_db / 40)));
-  }
-
-  template <typename signal_t>
-  static inline Coeffs5<signal_t> calcCoeffs5(
-      Shape s, signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
-    auto coeffs6 = calcCoeffs6(s, fs, fc_hz, q, a);
-    return normalizeCoeffs(coeffs6);
-  }
-
-  template <typename signal_t>
-  static inline Coeffs6<signal_t> calcCoeffs6(
-      Settings<signal_t>& settings, signal_t fs) {
-    return calcCoeffs6<signal_t>(settings.shape,
-        fs,
-        settings.fc_hz,
-        settings.q,
-        gcem::pow(10, (settings.gain_db / 40)));
-  }
-
-  template <typename signal_t>
-  static inline Coeffs6<signal_t> calcCoeffsBell(
+  static inline Coeffs6 calcCoeffsBell(
       signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
     auto w0    = 2.0 * GCEM_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
-    Coeffs6<signal_t> c;
+    Coeffs6 c;
     c.b[0] = 1.0 + alpha * a;
     c.b[1] = -2.0 * cosW0;
     c.b[2] = 1.0 - alpha * a;
@@ -232,13 +108,12 @@ namespace Biquad {
     return c;
   }
 
-  template <typename signal_t>
-  static inline Coeffs6<signal_t> calcCoeffsLoShelf(
+  static inline Coeffs6 calcCoeffsLoShelf(
       signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
     auto w0    = 2.0 * GCEM_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
-    Coeffs6<signal_t> c;
+    Coeffs6 c;
     c.b[0] = a * ((a + 1.0) - (a - 1.0) * cosW0 + 2.0 * gcem::sqrt(a) * alpha);
     c.b[1] = 2.0 * a * ((a - 1.0) - (a + 1.0) * cosW0);
     c.b[2] = a * ((a + 1.0) - (a - 1.0) * cosW0 - 2.0 * gcem::sqrt(a) * alpha);
@@ -248,13 +123,12 @@ namespace Biquad {
     return c;
   }
 
-  template <typename signal_t>
-  static inline Coeffs6<signal_t> calcCoeffsHiShelf(
+  static inline Coeffs6 calcCoeffsHiShelf(
       signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
     auto w0    = 2.0 * GCEM_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
-    Coeffs6<signal_t> c;
+    Coeffs6 c;
     c.b[0] = a * ((a + 1.0) + (a - 1.0) * cosW0 + 2.0 * gcem::sqrt(a) * alpha);
     c.b[1] = -2.0 * a * ((a - 1.0) + (a + 1.0) * cosW0);
     c.b[2] = a * ((a + 1.0) + (a - 1.0) * cosW0 - 2.0 * gcem::sqrt(a) * alpha);
@@ -264,13 +138,11 @@ namespace Biquad {
     return c;
   }
 
-  template <typename signal_t>
-  static inline Coeffs6<signal_t> calcCoeffsHpf(
-      signal_t fs, signal_t fc_hz, signal_t q) {
+  static inline Coeffs6 calcCoeffsHpf(signal_t fs, signal_t fc_hz, signal_t q) {
     auto w0    = 2.0 * GCEM_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
-    Coeffs6<signal_t> c;
+    Coeffs6 c;
     c.b[0] = (1.0 + cosW0) / 2;
     c.b[1] = -(1.0 + cosW0);
     c.b[2] = (1.0 + cosW0) / 2;
@@ -280,13 +152,11 @@ namespace Biquad {
     return c;
   }
 
-  template <typename signal_t>
-  static inline Coeffs6<signal_t> calcCoeffsLpf(
-      signal_t fs, signal_t fc_hz, signal_t q) {
+  static inline Coeffs6 calcCoeffsLpf(signal_t fs, signal_t fc_hz, signal_t q) {
     auto w0    = 2.0 * GCEM_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
-    Coeffs6<signal_t> c;
+    Coeffs6 c;
     c.b[0] = (1.0 - cosW0) / 2;
     c.b[1] = 1.0 - cosW0;
     c.b[2] = (1.0 - cosW0) / 2;
@@ -296,13 +166,11 @@ namespace Biquad {
     return c;
   }
 
-  template <typename signal_t>
-  static inline Coeffs6<signal_t> calcCoeffsApf(
-      signal_t fs, signal_t fc_hz, signal_t q) {
+  static inline Coeffs6 calcCoeffsApf(signal_t fs, signal_t fc_hz, signal_t q) {
     auto w0    = 2.0 * GCEM_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
-    Coeffs6<signal_t> c;
+    Coeffs6 c;
     c.b[0] = 1.0 - alpha;
     c.b[1] = -2.0 * cosW0;
     c.b[2] = 1.0 + alpha;
@@ -312,13 +180,12 @@ namespace Biquad {
     return c;
   }
 
-  template <typename signal_t>
-  static inline Coeffs6<signal_t> calcCoeffsNotch(
+  static inline Coeffs6 calcCoeffsNotch(
       signal_t fs, signal_t fc_hz, signal_t q) {
     auto w0    = 2.0 * GCEM_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
-    Coeffs6<signal_t> c;
+    Coeffs6 c;
     c.b[0] = 1.0;
     c.b[1] = -2.0 * cosW0;
     c.b[2] = 1.0;
@@ -328,31 +195,30 @@ namespace Biquad {
     return c;
   }
 
-  template <typename signal_t>
-  static inline Coeffs6<signal_t> calcCoeffs6(
+  static inline Coeffs6 calcCoeffs6(
       Shape s, signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
-    Coeffs6<signal_t> c;
+    Coeffs6 c;
     switch (s) {
     case Shape::loShelf:
-      c = calcCoeffsLoShelf<signal_t>(fs, fc_hz, q, a);
+      c = calcCoeffsLoShelf(fs, fc_hz, q, a);
       break;
     case Shape::hiShelf:
-      c = calcCoeffsHiShelf<signal_t>(fs, fc_hz, q, a);
+      c = calcCoeffsHiShelf(fs, fc_hz, q, a);
       break;
     case Shape::bell:
-      c = calcCoeffsBell<signal_t>(fs, fc_hz, q, a);
+      c = calcCoeffsBell(fs, fc_hz, q, a);
       break;
     case Shape::lpf:
-      c = calcCoeffsLpf<signal_t>(fs, fc_hz, q);
+      c = calcCoeffsLpf(fs, fc_hz, q);
       break;
     case Shape::hpf:
-      c = calcCoeffsHpf<signal_t>(fs, fc_hz, q);
+      c = calcCoeffsHpf(fs, fc_hz, q);
       break;
     case Shape::apf:
-      c = calcCoeffsApf<signal_t>(fs, fc_hz, q);
+      c = calcCoeffsApf(fs, fc_hz, q);
       break;
     case Shape::notch:
-      c = calcCoeffsNotch<signal_t>(fs, fc_hz, q);
+      c = calcCoeffsNotch(fs, fc_hz, q);
       break;
     case Shape::none:
     case Shape::unknown:
@@ -363,17 +229,114 @@ namespace Biquad {
     return c;
   }
 
-#ifdef NTFX_MONO
-  template <typename signal_t>
-  using EqBand6 = EqBand6Mono<signal_t>;
-  template <typename signal_t>
-  using EqBand = EqBandMono<signal_t>;
-#else
-  template <typename signal_t>
-  using EqBand6 = EqBand6Stereo<signal_t>;
-  template <typename signal_t>
-  using EqBand = EqBandStereo<signal_t>;
-#endif
+  static inline Coeffs5 normalizeCoeffs(Coeffs6 coeffs6) {
+    Coeffs5 coeffs5;
+    coeffs5.b[0] = coeffs6.b[0] / coeffs6.a[0];
+    coeffs5.b[1] = coeffs6.b[1] / coeffs6.a[0];
+    coeffs5.b[2] = coeffs6.b[2] / coeffs6.a[0];
+    coeffs5.a[0] = coeffs6.a[1] / coeffs6.a[0];
+    coeffs5.a[1] = coeffs6.a[2] / coeffs6.a[0];
+    return coeffs5;
+  }
+
+  static inline Coeffs5 calcCoeffs5(
+      Shape s, signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
+    auto coeffs6 = calcCoeffs6(s, fs, fc_hz, q, a);
+    return normalizeCoeffs(coeffs6);
+  }
+
+  static inline Coeffs5 calcCoeffs5(Settings& settings, signal_t fs) {
+    return calcCoeffs5(settings.shape,
+        fs,
+        settings.fc_hz,
+        settings.q,
+        gcem::pow(10, (settings.gain_db / 40)));
+  }
+
+  static inline Coeffs6 calcCoeffs6(Settings& settings, signal_t fs) {
+    return calcCoeffs6(settings.shape,
+        fs,
+        settings.fc_hz,
+        settings.q,
+        gcem::pow(10, (settings.gain_db / 40)));
+  }
+
+  struct EqBandMono : public ComponentBase<Audio> {
+    Settings settings;
+    Coeffs5 coeffs;
+    State state;
+
+    virtual Audio process(Audio x) noexcept override {
+      return processBiquad5(x.l, this->coeffs, this->state);
+    }
+    virtual void update() noexcept override {
+      this->coeffs = calcCoeffs5(this->settings, this->fs);
+    }
+    virtual void reset(float fs) noexcept override {
+      this->fs    = fs;
+      this->state = { { 0, 0 }, { 0, 0 } };
+      this->update();
+    }
+  };
+
+  struct EqBand6Stereo : public ComponentBase<Audio> {
+    Biquad6 l;
+    Biquad6 r;
+    Settings settings;
+    Coeffs6 coeffs;
+    EqBand6Stereo() : l(coeffs), r(coeffs) { }
+    virtual Audio process(Audio x) noexcept override {
+      return { this->l.process(x.l), this->r.process(x.r) };
+    }
+    virtual void update() noexcept override {
+      this->coeffs = calcCoeffs6(settings, this->fs);
+    }
+    virtual void reset(float fs) noexcept override {
+      this->fs = fs;
+      this->update();
+    }
+  };
+
+  struct EqBand6Mono : public ComponentBase<Audio> {
+    Biquad6 l;
+    Settings settings;
+    Coeffs6 coeffs;
+    EqBand6Mono() : l(coeffs) { }
+    virtual Audio process(Audio x) noexcept override {
+      return this->l.process(x.l);
+    }
+    virtual void update() noexcept override {
+      this->coeffs = calcCoeffs6(settings, this->fs);
+    }
+    virtual void reset(float fs) noexcept override {
+      this->fs = fs;
+      this->update();
+    }
+  };
+
+  struct EqBandStereo : public ComponentBase<Audio> {
+    Settings settings;
+    Coeffs5 coeffs;
+    State stateL;
+    State stateR;
+
+    virtual Audio process(Audio x) noexcept override {
+      return { processBiquad5(x.l, this->coeffs, this->stateL),
+        processBiquad5(x.r, this->coeffs, this->stateR) };
+    }
+    virtual void update() noexcept override {
+      this->coeffs = calcCoeffs5(this->settings, this->fs);
+    }
+    virtual void reset(float fs) noexcept override {
+      this->fs     = fs;
+      this->stateL = { { 0, 0 }, { 0, 0 } };
+      this->stateR = { { 0, 0 }, { 0, 0 } };
+      this->update();
+    }
+  };
+
+  using EqBand6 = EqBand6Stereo;
+  using EqBand  = EqBandStereo;
 } // namespace Biquad
 } // namespace NtFx
 

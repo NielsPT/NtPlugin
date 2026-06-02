@@ -40,9 +40,8 @@ namespace DynamicFilter {
    *
    * @tparam signal_t
    */
-  template <typename signal_t>
-  struct Shelf : public ComponentBase<Audio<signal_t>> {
-    Biquad::EqBand6<signal_t> _flt;
+  struct Shelf : public ComponentBase<Audio> {
+    Biquad::EqBand6 _flt;
     signal_t fc_hz { 2000 }; ///< Cutoff frequency.
     signal_t gain_lin {
       1
@@ -54,7 +53,7 @@ namespace DynamicFilter {
     signal_t _beta1 { 0 };
     signal_t _beta2 { 0 };
 
-    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
+    virtual Audio process(Audio x) noexcept override {
       auto A4                = signal_t(4) * gain_lin;
       auto z                 = this->_beta2 * gcem::sqrt(this->gain_lin);
       this->_flt.coeffs.b[0] = this->_alphaSquared + z + A4;

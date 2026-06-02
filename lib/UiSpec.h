@@ -34,7 +34,6 @@ namespace NtFx {
  *
  * @tparam signal_t
  */
-template <typename signal_t>
 struct KnobSpec {
   signal_t* p_val { nullptr }; ///< Pointer to value the knob represents.
   // TODO: allow spaces in names and replace the other way around.

@@ -71,7 +71,7 @@ struct ComponentBase {
 
 /**
  * @brief Wraps two objects of type Component<signal_t> as a
- * Component<Audio<signal_t>> and calls through the both objects.
+ * Component<Audio> and calls through the both objects.
  *
  * @tparam signal_t Datatype for signal. Must be a floating point type.
  * @tparam component_t Type of Component to wrap.
@@ -98,7 +98,7 @@ struct StereoComponent : public ComponentBase<Stereo<signal_t>> {
 
 /**
  * @brief Wraps two objects of type Component<signal_t> as a
- * Component<Audio<signal_t>> and calls through the both objects.
+ * Component<Audio> and calls through the both objects.
  *
  * @tparam signal_t Datatype for signal. Must be a floating point type.
  * @tparam component_t Type of Component to wrap.
@@ -115,9 +115,5 @@ struct MonoComponent : public ComponentBase<Mono<signal_t>> {
 };
 
 template <typename signal_t, typename component_t>
-#ifdef NTFX_MONO
-using AudioComponent = MonoComponent<signal_t, component_t>;
-#else
 using AudioComponent = StereoComponent<signal_t, component_t>;
-#endif
 } // namespace NtFx

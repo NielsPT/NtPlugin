@@ -4,7 +4,7 @@
 NTFX_TEST_BEGIN
 
 NTFX_TEST() {
-  auto compressor_dB                     = ntCompressor<double>();
+  auto compressor_dB                     = ntCompressor();
   compressor_dB.scSettings.ratio_db      = 3;
   compressor_dB.scSettings.knee_db       = 0;
   compressor_dB.scSettings.thresh_db     = -6;
@@ -12,16 +12,16 @@ NTFX_TEST() {
   compressor_dB.scSettings.linkEnable    = false;
   compressor_dB.linEnable                = false;
   compressor_dB.clip                     = false;
-  auto compressor_lin                    = ntCompressor<double>();
+  auto compressor_lin                    = ntCompressor();
   compressor_lin.scSettings.thresh_db    = -20;
   compressor_lin.linEnable               = true;
   compressor_lin.clip                    = false;
-  auto compressor_lin_fb                 = ntCompressor<double>();
+  auto compressor_lin_fb                 = ntCompressor();
   compressor_lin_fb.scSettings.thresh_db = -20;
   compressor_lin_fb.linEnable            = true;
   compressor_lin_fb.scMode               = 1;
   compressor_lin_fb.clip                 = false;
-  auto compressor_dB_fb                  = ntCompressor<double>();
+  auto compressor_dB_fb                  = ntCompressor();
   compressor_dB_fb.scSettings.thresh_db  = -20;
   compressor_dB_fb.linEnable             = false;
   compressor_dB_fb.scMode                = 1;

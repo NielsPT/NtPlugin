@@ -29,15 +29,14 @@
 
 enum scMode { feedForward = 0, feedback, external };
 
-template <typename signal_t>
-struct ntCompressor : public NtFx::NtPlugin<signal_t> {
-  NtFx::Comp::ScSettings<signal_t> scSettings;
-  NtFx::Comp::PeakSideChainDb<signal_t> peakScDb;
-  NtFx::Comp::PeakSideChainLinear<signal_t> peakScLin;
-  NtFx::Comp::RmsSideChainDb<signal_t> rmsScDb;
-  NtFx::Comp::RmsSideChainLinear<signal_t> rmsScLin;
-  NtFx::Biquad::EqBand<signal_t> hpf;
-  NtFx::Biquad::EqBand<signal_t> boost;
+struct ntCompressor : public NtFx::NtPlugin {
+  NtFx::Comp::ScSettings scSettings;
+  NtFx::Comp::PeakSideChainDb peakScDb;
+  NtFx::Comp::PeakSideChainLinear peakScLin;
+  NtFx::Comp::RmsSideChainDb rmsScDb;
+  NtFx::Comp::RmsSideChainLinear rmsScLin;
+  NtFx::Biquad::EqBand hpf;
+  NtFx::Biquad::EqBand boost;
 
   signal_t makeup_db { signal_t(0.0) };
   signal_t mix_percent { signal_t(100.0) };
@@ -49,7 +48,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
   bool bypassEnable { false };
   signal_t mix_lin { signal_t(1.0) };
   signal_t makeup_lin { signal_t(1.0) };
-  NtFx::Audio<signal_t> fbState { signal_t(0.0) };
+  Audio fbState { signal_t(0.0) };
 
   bool dummy1;
   bool dummy2;
@@ -171,7 +170,7 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     this->updateDefaults();
   }
 
-  NtFx::Audio<signal_t> process(NtFx::Audio<signal_t> x) noexcept override {
+  Audio process(Audio x) noexcept override {
     this->template updatePeakLevel<0>(x);
     if (this->bypassEnable) {
       this->template updatePeakLevel<1>(x);
@@ -179,17 +178,17 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     }
     NtFx::ensureFinite(x);
     NtFx::ensureFinite(this->fbState);
-    NtFx::Audio<signal_t> xHpf = x;
+    Audio xHpf = x;
     if (this->scMode == scMode::feedback) {
       xHpf = this->fbState;
     } else if (this->scMode == scMode::external) {
       xHpf = this->xSc;
     }
 
-    NtFx::Audio<signal_t> xBoost = hpf.process(xHpf);
-    NtFx::Audio<signal_t> xSc    = boost.process(xBoost);
+    Audio xBoost = hpf.process(xHpf);
+    Audio xSc    = boost.process(xBoost);
 
-    NtFx::Audio<signal_t> gr;
+    Audio gr;
     if (this->linEnable) {
       if (this->rmsEnable) {
         gr = rmsScLin.process(xSc);
@@ -205,11 +204,11 @@ struct ntCompressor : public NtFx::NtPlugin<signal_t> {
     }
     this->template updatePeakLevel<2, true>(gr);
     NtFx::ensureFinite(gr, signal_t(1.0));
-    NtFx::Audio<signal_t> yComp = x * gr;
-    this->fbState               = yComp;
-    auto xClip                  = yComp * this->makeup_lin;
-    auto xMix                   = xClip;
-    if (this->clip) { xMix = NtFx::softClip5thStereo<signal_t>(xClip); }
+    Audio yComp   = x * gr;
+    this->fbState = yComp;
+    auto xClip    = yComp * this->makeup_lin;
+    auto xMix     = xClip;
+    if (this->clip) { xMix = NtFx::softClip5thStereo(xClip); }
     auto y = this->mix_lin * xMix + (1 - this->mix_lin) * x;
     this->template updatePeakLevel<1>(y);
     if (this->scListenEnable) { return xSc; }

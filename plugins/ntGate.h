@@ -32,14 +32,13 @@ enum ScMode { internal, external, ignore };
 
 constexpr int dlLookaheadLen = 192 * 8 * 10;
 
-template <typename signal_t>
-struct ntGate : NtFx::NtPlugin<signal_t> {
-  NtFx::Gate::Sc<signal_t> sc;
-  NtFx::Gate::Sc<signal_t> scHf;
-  NtFx::DynamicFilter::Shelf<signal_t> flt;
-  NtFx::Biquad::EqBand<signal_t> hpf;
-  NtFx::Biquad::EqBand<signal_t> lpf;
-  std::array<NtFx::Audio<signal_t>, dlLookaheadLen> dlLookahead;
+struct ntGate : public NtFx::NtPlugin {
+  NtFx::Gate::Sc sc;
+  NtFx::Gate::Sc scHf;
+  NtFx::DynamicFilter::Shelf flt;
+  NtFx::Biquad::EqBand hpf;
+  NtFx::Biquad::EqBand lpf;
+  std::array<Audio, dlLookaheadLen> dlLookahead;
   signal_t ignoreThresh_db { -20 };
   signal_t ignoreThresh_lin { 0.1 };
   signal_t tIgnore_ms { 6 };
@@ -175,7 +174,7 @@ struct ntGate : NtFx::NtPlugin<signal_t> {
     this->updateDefaults();
   }
 
-  NtFx::Audio<signal_t> process(NtFx::Audio<signal_t> x) noexcept override {
+  Audio process(Audio x) noexcept override {
     this->dlLookahead[this->iLookahead++] = x;
     if (this->iLookahead >= dlLookaheadLen) { this->iLookahead = 0; }
     this->template updatePeakLevel<0>(x);

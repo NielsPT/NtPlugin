@@ -26,8 +26,8 @@
 // Make a class the inherits from Plugin. This must be a template so we can keep
 // the whole thing in headers and swap the signal data type. I perfer using
 // structs so I don't need to consider private/public.
-template <typename signal_t>
-struct gainExample : NtFx::NtPlugin<signal_t> {
+
+struct gainExample : public NtFx::NtPlugin {
   // Make some variables.
   signal_t gain_db { 0 };
   signal_t gain_lin { 1 };
@@ -63,13 +63,13 @@ struct gainExample : NtFx::NtPlugin<signal_t> {
   }
 
   // Override the process method.
-  NtFx::Audio<signal_t> process(NtFx::Audio<signal_t> x) noexcept override {
+  Audio process(Audio x) noexcept override {
 
     // Update the input meter.
     this->template updatePeakLevel<0>(x);
 
     // Calculate gain
-    NtFx::Audio<signal_t> y = x * this->gain_lin;
+    Audio y = x * this->gain_lin;
 
     // Update output meter.
     this->template updatePeakLevel<1>(y);

@@ -32,21 +32,14 @@
 
 NtPluginAudioProcessor::NtPluginAudioProcessor()
     : AudioProcessor(BusesProperties()
-#ifdef NTFX_MONO
-              .withInput("Input", juce::AudioChannelSet::mono(), true)
-              .withOutput("Output", juce::AudioChannelSet::mono(), true)
-              .withInput("SideChain", juce::AudioChannelSet::mono(), true)),
-#else
               .withInput("Input", juce::AudioChannelSet::stereo(), true)
               .withOutput("Output", juce::AudioChannelSet::stereo(), true)
               .withInput("SideChain", juce::AudioChannelSet::mono(), true)),
-#endif
       paramLayout(*this,
           nullptr,
           juce::Identifier(JucePlugin_Name),
           createParameterLayout()),
-      src(plug) {
-}
+      src(plug) { }
 
 NtPluginAudioProcessor::~NtPluginAudioProcessor() { }
 
@@ -108,18 +101,15 @@ void NtPluginAudioProcessor::processBlock(
       this->plug.onTempoChanged();
     }
   }
-  auto p_l = buffer.getWritePointer(0);
-#ifndef NTFX_MONO
+  auto p_l   = buffer.getWritePointer(0);
   float* p_r = nullptr;
   if (buffer.getNumChannels() == 2) { p_r = buffer.getWritePointer(1); }
-#endif
   const float* p_xSc = nullptr;
   const auto& scBus  = this->getBusBuffer(buffer, true, 1);
   if (scBus.getNumChannels() > 0) { p_xSc = scBus.getReadPointer(0); }
   if (!p_l) { return; }
   for (size_t i = 0; i < buffer.getNumSamples(); i++) {
     float l = p_l[i];
-#ifndef NTFX_MONO
     float r = l;
     if (p_r) {
       r = p_r[i];
@@ -129,9 +119,6 @@ void NtPluginAudioProcessor::processBlock(
     }
 
     NtFx::Stereo<float> x { l, r };
-#else
-    NtFx::Mono<float> x { l };
-#endif
     if (p_xSc) { this->plug.xSc = p_xSc[i]; }
     auto y = this->src.process(x);
     if (this->plug.meters.size() >= 2) {
@@ -139,9 +126,7 @@ void NtPluginAudioProcessor::processBlock(
       if (this->plug.meters[1].addRms) { this->plug.xRms[1].process(y); }
     }
     p_l[i] = y.l;
-#ifndef NTFX_MONO
     if (p_r) { p_r[i] = y.r; }
-#endif
   }
 }
 

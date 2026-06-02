@@ -47,7 +47,7 @@
 
 namespace NtFx {
 struct Meter : public juce::Component {
-  PeakHoldSensor<float> peakSensor;
+  PeakHoldSensor<> peakSensor;
   MeterSpec& meterSpec;
   UiSpec& uiSpec;
   std::string label { "" };
@@ -291,79 +291,13 @@ struct StereoMeter : public juce::Component {
     this->l.setBounds(lArea);
     this->r.setBounds(area);
   }
-  template <typename signal_t>
-  void refresh(Audio<signal_t> xPeak, Audio<signal_t> xRms) {
+  void refresh(Audio xPeak, Audio xRms) {
     this->l.refresh(xPeak.l, xRms.l);
     this->r.refresh(xPeak.r, xRms.r);
   }
 };
 
-struct MonoMeterGroup : public juce::Component {
-  std::vector<std::unique_ptr<Meter>> meters;
-  std::vector<std::unique_ptr<MeterScale>> scales;
-  const int nChs { 1 };
-  void resized() override {
-    this->updateUi();
-    this->repaint();
-  }
-  virtual void setFontSize(int size) {
-    for (auto& m : this->meters) { m->fontSize = size; }
-  }
-  float uiScale { 1 };
-  MonoMeterGroup(UiSpec& uiSpec, std::vector<MeterSpec>& meterSpecs) {
-    size_t i = 0;
-    for (auto& spec : meterSpecs) {
-      auto meter = std::make_unique<Meter>(spec, uiSpec);
-      this->addAndMakeVisible(meter.get());
-      if (spec.hasScale) {
-        meter->hasScale = true;
-        auto scale      = std::make_unique<MeterScale>(*meter.get());
-        this->addAndMakeVisible(scale.get());
-        scales.push_back(std::move(scale));
-      }
-      meter->label = spec.name;
-      meters.push_back(std::move(meter));
-    }
-  }
-  template <typename signal_t>
-  void refresh(size_t idx, Audio<signal_t> xPeak, Audio<signal_t> xRms) {
-    this->meters[idx]->refresh(xPeak.l, xRms.l);
-  }
-  void updateUi() noexcept {
-    auto area       = this->getLocalBounds();
-    auto totalWidth = area.getWidth();
-    auto scaleWidth = totalWidth / (this->meters.size() + this->scales.size());
-    auto meterWidth = scaleWidth;
-    size_t iScale   = 0;
-    for (auto& m : this->meters) {
-      m->setBounds(area.removeFromLeft(meterWidth));
-      if (m->hasScale) {
-        auto scaleArea = area.removeFromLeft(scaleWidth);
-        this->scales[iScale++]->setBounds(scaleArea);
-      }
-    }
-  }
-  void setUiScale(float uiScale) { this->uiScale = uiScale; }
-  void updateRelease(float fs) {
-    for (auto& m : this->meters) {
-      m->updateRelease(fs, m->meterSpec.decay_s * 1000);
-    }
-  }
-  float getMinimalWidth() const noexcept {
-    if (!this->meters.size()) { return 0; }
-    return this->meters[0]->uiSpec.meterWidth
-        * (this->meters.size() * this->nChs + this->scales.size());
-  }
-  float getMinimalHeight() const noexcept {
-    if (!this->meters.size()) { return 0; }
-    auto& m = this->meters[0];
-    m->refresh(false);
-    return (m->uiSpec.labelHeight) * this->nChs + (m->nDots + 2) * m->dotDist
-        + m->pad;
-  }
-};
-
-struct StereoMeterGroup : public juce::Component {
+struct MeterGroup : public juce::Component {
   std::vector<std::unique_ptr<StereoMeter>> meters;
   std::vector<std::unique_ptr<MeterScale>> scales;
   int nChs { 2 };
@@ -374,7 +308,7 @@ struct StereoMeterGroup : public juce::Component {
   virtual void setFontSize(int size) {
     for (auto& m : this->meters) { m->fontSize = size; }
   }
-  StereoMeterGroup(UiSpec& uiSpec, std::vector<MeterSpec>& meterSpecs) {
+  MeterGroup(UiSpec& uiSpec, std::vector<MeterSpec>& meterSpecs) {
     size_t i = 0;
     for (auto& spec : meterSpecs) {
       auto meter = std::make_unique<StereoMeter>(spec, uiSpec);
@@ -388,8 +322,8 @@ struct StereoMeterGroup : public juce::Component {
       meters.push_back(std::move(meter));
     }
   }
-  template <typename signal_t>
-  void refresh(size_t idx, Audio<signal_t> xPeak, Audio<signal_t> xRms) {
+
+  void refresh(size_t idx, Audio xPeak, Audio xRms) {
     this->meters[idx]->refresh(xPeak, xRms);
   }
   void updateUi() noexcept {
@@ -434,10 +368,4 @@ struct StereoMeterGroup : public juce::Component {
         + m.pad;
   }
 };
-
-#ifdef NTFX_MONO
-using MeterGroup = MonoMeterGroup;
-#else
-using MeterGroup = StereoMeterGroup;
-#endif
 } // namespace NtFx

@@ -38,7 +38,6 @@ namespace Comp {
    *
    * @tparam signal_t The signal type (e.g., float, double)
    */
-  template <typename signal_t>
   struct ScSettings {
     signal_t thresh_db = signal_t(0);    ///< Threshold in dB
     signal_t ratio_db  = signal_t(2);    ///< Compression ratio
@@ -59,40 +58,32 @@ namespace Comp {
    *
    * @tparam signal_t The signal type (e.g., float, double)
    */
-  template <typename signal_t>
-  struct PeakSideChainDb : public ComponentBase<Audio<signal_t>> {
-    PeakSensorStereo<signal_t> peakSensor; ///< Peak sensor for stereo signals
-    signal_t alphaAtt = signal_t(0);       ///< Attack coefficient
-    signal_t alphaRel = signal_t(0);       ///< Release coefficient
+  struct PeakSideChainDb : public ComponentBase<Audio> {
+    PeakSensorStereo peakSensor;     ///< Peak sensor for stereo signals
+    signal_t alphaAtt = signal_t(0); ///< Attack coefficient
+    signal_t alphaRel = signal_t(0); ///< Release coefficient
 
-    ScSettings<signal_t>& settings; ///< Reference to side chain settings
-    Audio<signal_t> stateFilter =
-        signal_t(0.0); ///< State filter for gain computation
+    ScSettings& settings;              ///< Reference to side chain settings
+    Audio stateFilter = signal_t(0.0); ///< State filter for gain computation
 
     /**
      * @brief Constructor
      * @param settings Reference to side chain settings
      */
-    PeakSideChainDb(ScSettings<signal_t>& settings) : settings(settings) { }
+    PeakSideChainDb(ScSettings& settings) : settings(settings) { }
 
     /**
      * @brief Process stereo audio signal
      * @param x Input stereo signal
      * @return Gain reduction in linear domain.
      */
-    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
+    virtual Audio process(Audio x) noexcept override {
       auto ySens = this->peakSensor.process(x);
       ensureFinite(this->stateFilter);
-      Audio<signal_t> y;
-      if constexpr (isMono<Audio<signal_t>>().v) {
-        y = Audio<signal_t>(
-            this->_gainComputer_db(ySens.l, this->stateFilter.l));
-      } else {
-        y = Audio<signal_t>({
-            this->_gainComputer_db(ySens.l, this->stateFilter.l),
-            this->_gainComputer_db(ySens.r, this->stateFilter.r),
-        });
-      }
+      auto y = Audio({
+          this->_gainComputer_db(ySens.l, this->stateFilter.l),
+          this->_gainComputer_db(ySens.r, this->stateFilter.r),
+      });
       if (this->settings.linkEnable) {
         auto _y = y.absMin();
         return { _y, _y };
@@ -162,8 +153,7 @@ namespace Comp {
    *
    * @tparam signal_t The signal type (e.g., float, double)
    */
-  template <typename signal_t>
-  struct PeakSideChainLinear : public PeakSideChainDb<signal_t> {
+  struct PeakSideChainLinear : public PeakSideChainDb {
     signal_t thresh_lin = signal_t(1); ///< Threshold in linear domain
     signal_t ratio_lin  = signal_t(1); ///< Compression ratio in linear domain
     signal_t knee_lin   = signal_t(1); ///< Knee width in linear domain
@@ -172,8 +162,7 @@ namespace Comp {
      * @brief Constructor
      * @param settings Reference to side chain settings
      */
-    PeakSideChainLinear(ScSettings<signal_t>& settings)
-        : PeakSideChainDb<signal_t>(settings) { }
+    PeakSideChainLinear(ScSettings& settings) : PeakSideChainDb(settings) { }
 
     /**
      * @brief Process stereo audio signal
@@ -181,12 +170,9 @@ namespace Comp {
      * @return Result of side chain. Multiply your input by this to apply side
      * chain.
      */
-    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
+    virtual Audio process(Audio x) noexcept override {
       auto ySens = this->peakSensor.process(x);
       ensureFinite(this->stateFilter);
-      if constexpr (isMono<Audio<signal_t>>().v) {
-        return this->_gainComputer_lin(ySens.l, this->stateFilter.l);
-      }
       return {
         this->_gainComputer_lin(ySens.l, this->stateFilter.l),
         this->_gainComputer_lin(ySens.r, this->stateFilter.r),
@@ -197,7 +183,7 @@ namespace Comp {
      * @brief Update component coefficients
      */
     virtual void update() noexcept override {
-      this->PeakSideChainDb<signal_t>::update();
+      this->PeakSideChainDb::update();
       this->thresh_lin            = invDb(this->settings.thresh_db);
       this->knee_lin              = invDb(this->settings.knee_db);
       const signal_t oneOverSqrt2 = 1.0 / gcem::sqrt(2.0);
@@ -241,29 +227,20 @@ namespace Comp {
    *
    * @tparam signal_t The signal type (e.g., float, double)
    */
-  template <typename signal_t>
-  struct RmsSideChainDb : public PeakSideChainDb<signal_t> {
-    LongRmsSensor<signal_t> rmsSensor; ///< RMS sensor for stereo signals
+  struct RmsSideChainDb : public PeakSideChainDb {
+    LongRmsSensor<> rmsSensor; ///< RMS sensor for stereo signals
 
-    /**
-     * @brief Constructor
-     * @param settings Reference to side chain settings
-     */
-    RmsSideChainDb(ScSettings<signal_t>& settings)
-        : PeakSideChainDb<signal_t>(settings) { }
+    RmsSideChainDb(ScSettings& settings) : PeakSideChainDb(settings) { }
 
     /**
      * @brief Process stereo audio signal
      * @param x Input stereo signal
      * @return Processed stereo signal with gain reduction applied
      */
-    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
+    virtual Audio process(Audio x) noexcept override {
       auto ySens = rmsSensor.process(x);
 
       ensureFinite(this->stateFilter);
-      if constexpr (isMono<Audio<signal_t>>().v) {
-        return this->_gainComputer_db(ySens.l, this->stateFilter.l);
-      }
       return {
         this->_gainComputer_db(ySens.l, this->stateFilter.l),
         this->_gainComputer_db(ySens.r, this->stateFilter.r),
@@ -276,7 +253,7 @@ namespace Comp {
     virtual void update() noexcept override {
       this->rmsSensor.setT_ms(this->settings.tRms_ms);
       this->rmsSensor.update();
-      this->PeakSideChainDb<signal_t>::update();
+      this->PeakSideChainDb::update();
     }
 
     /**
@@ -285,7 +262,7 @@ namespace Comp {
      */
     virtual void reset(float fs) noexcept override {
       this->rmsSensor.reset(fs);
-      this->PeakSideChainDb<signal_t>::reset(fs);
+      this->PeakSideChainDb::reset(fs);
     }
   };
 
@@ -298,28 +275,23 @@ namespace Comp {
    *
    * @tparam signal_t The signal type (e.g., float, double)
    */
-  template <typename signal_t>
-  struct RmsSideChainLinear : public PeakSideChainLinear<signal_t> {
-    LongRmsSensor<signal_t> rmsSensor; ///< RMS sensor for stereo signals
+  struct RmsSideChainLinear : public PeakSideChainLinear {
+    LongRmsSensor<> rmsSensor; ///< RMS sensor for stereo signals
 
     /**
      * @brief Constructor
      * @param settings Reference to side chain settings
      */
-    RmsSideChainLinear(ScSettings<signal_t>& settings)
-        : PeakSideChainLinear<signal_t>(settings) { }
+    RmsSideChainLinear(ScSettings& settings) : PeakSideChainLinear(settings) { }
 
     /**
      * @brief Process stereo audio signal
      * @param x Input stereo signal
      * @return Processed stereo signal with gain reduction applied
      */
-    virtual Audio<signal_t> process(Audio<signal_t> x) noexcept override {
+    virtual Audio process(Audio x) noexcept override {
       auto ySens = rmsSensor.process(x);
       ensureFinite(this->stateFilter);
-      if constexpr (isMono<Audio<signal_t>>().v) {
-        return this->_gainComputer_lin(ySens.l, this->stateFilter.l);
-      }
       return {
         this->_gainComputer_lin(ySens.l, this->stateFilter.l),
         this->_gainComputer_lin(ySens.r, this->stateFilter.r),
@@ -332,7 +304,7 @@ namespace Comp {
     virtual void update() noexcept override {
       this->rmsSensor.setT_ms(this->settings.tRms_ms);
       this->rmsSensor.update();
-      this->PeakSideChainLinear<signal_t>::update();
+      this->PeakSideChainLinear::update();
     }
 
     /**
@@ -341,7 +313,7 @@ namespace Comp {
      */
     virtual void reset(float fs) noexcept override {
       this->rmsSensor.reset(fs);
-      this->PeakSideChainLinear<signal_t>::reset(fs);
+      this->PeakSideChainLinear::reset(fs);
     }
   };
 } // namespace NtFx

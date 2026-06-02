@@ -41,7 +41,6 @@ namespace NtFx {
  *
  * @tparam signal_t The type of the audio signal (e.g., float, double).
  */
-template <typename signal_t>
 struct PeakSensor : public ComponentBase<signal_t> {
   signal_t tPeak_ms {
     1
@@ -112,9 +111,7 @@ struct PeakSensor : public ComponentBase<signal_t> {
  *
  * @tparam signal_t The type of the audio signal (e.g., float, double).
  */
-template <typename signal_t>
-struct PeakSensorStereo
-    : public AudioComponent<signal_t, PeakSensor<signal_t>> {
+struct PeakSensorStereo : public AudioComponent<signal_t, PeakSensor> {
   /**
    * @brief Sets the time constant for peak detection in milliseconds.
    *
@@ -124,7 +121,7 @@ struct PeakSensorStereo
    */
   void setT_ms(signal_t t_ms) {
     this->l.tPeak_ms = t_ms;
-    if constexpr (!isMono<Audio<signal_t>>().v) { this->r.tPeak_ms = t_ms; }
+    this->r.tPeak_ms = t_ms;
   }
 };
 
@@ -138,9 +135,8 @@ constexpr int defaultPeakSensorDelayLineLength = 192 * 10 * 8;
  * @tparam signal_t Audio signal type.
  * @tparam delayLineLength Maximum delay time.
  */
-template <typename signal_t,
-    int delayLineLength = defaultPeakSensorDelayLineLength>
-struct PeakHoldSensor : public PeakSensor<signal_t> {
+template <int delayLineLength = defaultPeakSensorDelayLineLength>
+struct PeakHoldSensor : public PeakSensor {
   std::array<signal_t, delayLineLength> _dl;
   signal_t tHold_ms { 10 };
   signal_t _xMax { 0 };
@@ -180,14 +176,13 @@ struct PeakHoldSensor : public PeakSensor<signal_t> {
     this->_nHold = this->tHold_ms * this->fs / 1000;
     this->_nHold =
         (this->_nHold >= delayLineLength ? delayLineLength - 1 : this->_nHold);
-    this->PeakSensor<signal_t>::update();
+    this->PeakSensor::update();
   }
 };
 
-template <typename signal_t,
-    int delayLineLength = defaultPeakSensorDelayLineLength>
-struct PeakHoldSensorStereo : public AudioComponent<signal_t,
-                                  PeakHoldSensor<signal_t, delayLineLength>> {
+template <int delayLineLength = defaultPeakSensorDelayLineLength>
+struct PeakHoldSensorStereo
+    : public AudioComponent<signal_t, PeakHoldSensor<delayLineLength>> {
   /**
    * @brief Sets the time constant for peak detection in milliseconds.
    *
@@ -197,7 +192,7 @@ struct PeakHoldSensorStereo : public AudioComponent<signal_t,
    */
   void setT_ms(signal_t t_ms) {
     this->l.tPeak_ms = t_ms;
-    if constexpr (!isMono<Audio<signal_t>>().v) { this->r.tPeak_ms = t_ms; }
+    this->r.tPeak_ms = t_ms;
   }
 
   /**
@@ -207,7 +202,7 @@ struct PeakHoldSensorStereo : public AudioComponent<signal_t,
    */
   void setTHold_ms(signal_t tHold_ms) {
     this->l.tHold_ms = tHold_ms;
-    if constexpr (!isMono<Audio<signal_t>>().v) { this->r.tHold_ms = tHold_ms; }
+    this->r.tHold_ms = tHold_ms;
   }
 };
 }

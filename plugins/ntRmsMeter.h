@@ -21,14 +21,13 @@
 #include "lib/Plugin.h"
 #include "lib/RmsSensor.h"
 
-template <typename signal_t>
-struct ntRmsMeter : NtFx::NtPlugin<signal_t> {
+struct ntRmsMeter : public NtFx::NtPlugin {
   enum Meter {
     Peak,
     RMS,
   };
 
-  NtFx::LongRmsSensorStereo<signal_t> msSensor;
+  NtFx::LongRmsSensor<> msSensor;
   signal_t decay_s = 0.1;
   signal_t hold_s  = 2;
   signal_t tRms_ms = 10;
@@ -49,8 +48,7 @@ struct ntRmsMeter : NtFx::NtPlugin<signal_t> {
     this->updateDefaults();
   }
 
-  virtual NtFx::Audio<signal_t> process(
-      NtFx::Audio<signal_t> x) noexcept override {
+  virtual Audio process(Audio x) noexcept override {
     this->template updatePeakLevel<Peak>(x);
     this->template updatePeakLevel<RMS>(msSensor.process(x));
     return x;

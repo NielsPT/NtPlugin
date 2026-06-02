@@ -36,8 +36,7 @@
 
 enum Bands { hi, mid, lo, n };
 
-template <typename signal_t>
-struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
+struct ntMultiband3 : public NtFx::NtPlugin {
   signal_t xOverLo_hz { 200 };
   signal_t xOverHi_hz { 4000 };
   signal_t ouputGain_db { 0 };
@@ -51,19 +50,17 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
   std::array<bool, Bands::n> mutesUi = { false, false, false };
   std::array<bool, Bands::n> mutes   = { false, false, false };
 
-  std::array<NtFx::Comp::ScSettings<signal_t>, 3> scSettings;
-  std::array<NtFx::Comp::PeakSideChainLinear<signal_t>, 3> sc;
+  std::array<NtFx::Comp::ScSettings, 3> scSettings;
+  std::array<NtFx::Comp::PeakSideChainLinear, 3> sc;
   // TODO: Add makeup gain to sidechain?
   std::array<signal_t, Bands::n> makeup_db;
   std::array<signal_t, Bands::n> makeup_lin;
-  std::array<NtFx::Audio<signal_t>, Bands::n> fbState;
+  std::array<Audio, Bands::n> fbState;
   const std::array<std::string, Bands::n> BandNames = { "High", "Mid", "Low" };
-  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::lpf> loFlt;
-  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::hpf>
-      loMidFlt;
-  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::lpf>
-      hiMidFlt;
-  NtFx::FirstOrder::StereoFilter<signal_t, NtFx::FirstOrder::Shape::hpf> hiFlt;
+  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> loFlt;
+  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> loMidFlt;
+  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> hiMidFlt;
+  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> hiFlt;
   ntMultiband3() : sc { scSettings[0], scSettings[1], scSettings[2] } {
     this->uiSpec.maxColumns = 5;
     this->uiSpec.maxRows    = Bands::n;
@@ -167,25 +164,25 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
     this->updateDefaults();
   }
 
-  NtFx::Audio<signal_t> process(NtFx::Audio<signal_t> x) noexcept override {
+  Audio process(Audio x) noexcept override {
     if (this->bypassEnable) { return x; }
-    std::array<NtFx::Audio<signal_t>, 3> xComp;
+    std::array<Audio, 3> xComp;
     xComp[Bands::hi]  = this->hiFlt.process(x);
     auto xLoMidFlt    = this->hiMidFlt.process(x);
     xComp[Bands::mid] = this->loMidFlt.process(xLoMidFlt);
     xComp[Bands::lo]  = this->loFlt.process(x);
-    std::array<NtFx::Audio<signal_t>, 3> xSc;
+    std::array<Audio, 3> xSc;
     if (this->feedbackEnable) {
       for (size_t i = 0; i < Bands::n; i++) { xSc[i] = this->fbState[i]; }
     } else {
       for (size_t i = 0; i < Bands::n; i++) { xSc[i] = xComp[i]; }
     }
-    std::array<NtFx::Audio<signal_t>, Bands::n> gr;
+    std::array<Audio, Bands::n> gr;
     for (size_t i = 0; i < Bands::n; i++) {
       gr[i] = this->sc[i].process(xSc[i]);
       if (this->linkEnable) { gr[i] = gr[i].absMin(); }
     }
-    NtFx::Audio<signal_t> yComp;
+    Audio yComp;
     for (size_t i = 0; i < Bands::n; i++) {
       auto tmp         = xComp[i] * gr[i];
       this->fbState[i] = tmp;
@@ -197,7 +194,7 @@ struct ntMultiband3 : public NtFx::NtPlugin<signal_t> {
     this->template updatePeakLevel<2, true>(gr[Bands::lo]);
     this->template updatePeakLevel<3, true>(gr[Bands::mid]);
     this->template updatePeakLevel<4, true>(gr[Bands::hi]);
-    // if (this->noise) { return NtFx::rand<signal_t>() * 0.125; }
+    // if (this->noise) { return NtFx::rand() * 0.125; }
     return y;
   }
 

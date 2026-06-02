@@ -113,9 +113,9 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   juce::Label pluginNameLabel;
 
   // Initializers.
-  void _initPrimaryKnob(NtFx::KnobSpec<float>& p_spec);
-  void _initSecondaryKnob(NtFx::KnobSpec<float>& p_spec);
-  void _initKnob(NtFx::KnobSpec<float>& p_spec,
+  void _initPrimaryKnob(NtFx::KnobSpec& p_spec);
+  void _initSecondaryKnob(NtFx::KnobSpec& p_spec);
+  void _initKnob(NtFx::KnobSpec& p_spec,
       std::unique_ptr<juce::Slider>& p_slider,
       std::unique_ptr<juce::Label>& p_label);
   void _initToggle(NtFx::ToggleSpec& spec);
