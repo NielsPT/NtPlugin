@@ -358,6 +358,7 @@ void NtPluginAudioProcessorEditor::_updateTitleBar(juce::Rectangle<int>& area) {
 }
 
 void NtPluginAudioProcessorEditor::_updateMeters(juce::Rectangle<int>& area) {
+  this->meters.setOnlyShowLeft(this->proc.monoMode);
   auto meterArea =
       area.removeFromLeft(this->meters.getMinimalWidth() * this->uiScale);
   this->meters.setFontSize(

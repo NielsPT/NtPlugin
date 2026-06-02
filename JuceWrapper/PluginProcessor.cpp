@@ -101,46 +101,46 @@ void NtPluginAudioProcessor::processBlock(
   }
   auto p_playHead = this->getPlayHead();
   auto p_posInfo  = p_playHead->getPosition();
-
   if (p_posInfo) {
-    auto tempo = p_posInfo->getBpm();
-    if (tempo && tempo != this->plug.tempo) {
-      this->plug.tempo = *tempo;
+    auto p_tempo = p_posInfo->getBpm();
+    if (p_tempo && p_tempo != this->plug.tempo) {
+      this->plug.tempo = *p_tempo;
       this->plug.onTempoChanged();
     }
   }
-  auto leftBuffer = buffer.getWritePointer(0);
+  auto p_l = buffer.getWritePointer(0);
 #ifndef NTFX_MONO
-  float* rightBuffer = nullptr;
-  if (buffer.getNumChannels() == 2) { rightBuffer = buffer.getWritePointer(1); }
+  float* p_r = nullptr;
+  if (buffer.getNumChannels() == 2) { p_r = buffer.getWritePointer(1); }
 #endif
-  const float* scBuffer    = nullptr;
-  const auto& sidechainBus = this->getBusBuffer(buffer, true, 1);
-  if (sidechainBus.getNumChannels() > 0) {
-    scBuffer = sidechainBus.getReadPointer(0);
-  }
-  if (!leftBuffer) { return; }
-  // #ifndef NTFX_MONO
-  // if (!rightBuffer) { return; }
-  // #endif
+  const float* p_xSc = nullptr;
+  const auto& scBus  = this->getBusBuffer(buffer, true, 1);
+  if (scBus.getNumChannels() > 0) { p_xSc = scBus.getReadPointer(0); }
+  if (!p_l) { return; }
   for (size_t i = 0; i < buffer.getNumSamples(); i++) {
-    float l = leftBuffer[i];
+    float l = p_l[i];
 #ifndef NTFX_MONO
-    float r = 0;
-    if (rightBuffer) { r = rightBuffer[i]; }
-    NtFx::Audio<float> x { l, r };
+    float r = l;
+    if (p_r) {
+      r = p_r[i];
+    } else if (!this->monoMode) {
+      this->monoMode           = true;
+      this->plug.uiNeedsUpdate = true;
+    }
+
+    NtFx::Stereo<float> x { l, r };
 #else
-    NtFx::Audio<float> x { l };
+    NtFx::Mono<float> x { l };
 #endif
-    if (scBuffer) { this->plug.xSc = scBuffer[i]; }
+    if (p_xSc) { this->plug.xSc = p_xSc[i]; }
     auto y = this->src.process(x);
     if (this->plug.meters.size() >= 2) {
       if (this->plug.meters[0].addRms) { this->plug.xRms[0].process(x); }
       if (this->plug.meters[1].addRms) { this->plug.xRms[1].process(y); }
     }
-    leftBuffer[i] = y.l;
+    p_l[i] = y.l;
 #ifndef NTFX_MONO
-    if (rightBuffer) { rightBuffer[i] = y.r; }
+    if (p_r) { p_r[i] = y.r; }
 #endif
   }
 }

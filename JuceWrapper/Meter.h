@@ -41,11 +41,12 @@
 
 #include <cstddef>
 #include <memory>
+#include <simd/packed.h>
 #include <string>
 #include <vector>
 
 namespace NtFx {
-struct MonoMeter : public juce::Component {
+struct Meter : public juce::Component {
   PeakHoldSensor<float> peakSensor;
   MeterSpec& meterSpec;
   UiSpec& uiSpec;
@@ -69,14 +70,14 @@ struct MonoMeter : public juce::Component {
   int iHoldDot { 0 };
   bool hasScale { false };
 
-  MonoMeter(MeterSpec& meterSpec, UiSpec& uiSpec)
+  Meter(MeterSpec& meterSpec, UiSpec& uiSpec)
       : meterSpec(meterSpec), uiSpec(uiSpec), nDots(uiSpec.meterHeight_dots) {
     // TODO: We need to be able to set these from the plugin.
     this->updateRelease(48000, 250, 100);
     this->refresh();
     this->isInitialized = true;
   };
-  ~MonoMeter() = default;
+  ~Meter() = default;
 
   void paint(juce::Graphics& g) override {
     if (!this->isInitialized) { return; }
@@ -231,8 +232,8 @@ struct MonoMeter : public juce::Component {
 };
 
 struct MeterScale : public juce::Component {
-  MonoMeter& meter;
-  MeterScale(MonoMeter& m) : meter(m) { }
+  Meter& meter;
+  MeterScale(Meter& m) : meter(m) { }
   void paint(juce::Graphics& g) override {
     auto offset = this->meter.pad + this->meter.dotDist;
     g.setColour(juce::Colour(meter.uiSpec.foregroundColour));
@@ -250,13 +251,14 @@ struct MeterScale : public juce::Component {
 };
 
 struct StereoMeter : public juce::Component {
-  MonoMeter l;
-  MonoMeter r;
+  Meter l;
+  Meter r;
   UiSpec& spec;
   juce::Label label;
   int fontSize { 0 };
   float uiScale { 1 };
   bool hasScale { false };
+  bool onlyShowLeft { false };
 
   StereoMeter(MeterSpec& meterSpec, UiSpec& uiSpec)
       : l(meterSpec, uiSpec), r(meterSpec, uiSpec), spec(uiSpec),
@@ -275,6 +277,11 @@ struct StereoMeter : public juce::Component {
     this->l.fontSize = this->fontSize;
     this->r.fontSize = this->fontSize;
     auto area        = getLocalBounds();
+    if (this->onlyShowLeft) {
+      this->l.setBounds(area);
+      this->l.label = this->l.meterSpec.name;
+      return;
+    }
     auto labelArea =
         area.removeFromTop(this->l.uiSpec.labelHeight * this->uiScale);
     this->label.setFont(juce::FontOptions(this->fontSize));
@@ -282,7 +289,6 @@ struct StereoMeter : public juce::Component {
     this->label.setJustificationType(juce::Justification::centredBottom);
     auto lArea = area.removeFromLeft(area.getWidth() / 2.0);
     this->l.setBounds(lArea);
-    area.setWidth(lArea.getWidth());
     this->r.setBounds(area);
   }
   template <typename signal_t>
@@ -293,7 +299,7 @@ struct StereoMeter : public juce::Component {
 };
 
 struct MonoMeterGroup : public juce::Component {
-  std::vector<std::unique_ptr<MonoMeter>> meters;
+  std::vector<std::unique_ptr<Meter>> meters;
   std::vector<std::unique_ptr<MeterScale>> scales;
   const int nChs { 1 };
   void resized() override {
@@ -307,7 +313,7 @@ struct MonoMeterGroup : public juce::Component {
   MonoMeterGroup(UiSpec& uiSpec, std::vector<MeterSpec>& meterSpecs) {
     size_t i = 0;
     for (auto& spec : meterSpecs) {
-      auto meter = std::make_unique<MonoMeter>(spec, uiSpec);
+      auto meter = std::make_unique<Meter>(spec, uiSpec);
       this->addAndMakeVisible(meter.get());
       if (spec.hasScale) {
         meter->hasScale = true;
@@ -360,7 +366,7 @@ struct MonoMeterGroup : public juce::Component {
 struct StereoMeterGroup : public juce::Component {
   std::vector<std::unique_ptr<StereoMeter>> meters;
   std::vector<std::unique_ptr<MeterScale>> scales;
-  const int nChs { 2 };
+  int nChs { 2 };
   void resized() override {
     this->updateUi();
     this->repaint();
@@ -404,6 +410,10 @@ struct StereoMeterGroup : public juce::Component {
   }
   void setUiScale(float uiScale) {
     for (auto& m : meters) { m->uiScale = uiScale; }
+  }
+  void setOnlyShowLeft(bool onlyShowLeft) {
+    for (auto& m : meters) { m->onlyShowLeft = onlyShowLeft; }
+    if (onlyShowLeft) { this->nChs = 1; }
   }
   void updateRelease(float fs) {
     for (auto& m : this->meters) {
