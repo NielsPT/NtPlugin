@@ -111,18 +111,26 @@ void NtPluginAudioProcessor::processBlock(
   }
   auto leftBuffer = buffer.getWritePointer(0);
 #ifndef NTFX_MONO
-  auto rightBuffer = buffer.getWritePointer(1);
+  float* rightBuffer = nullptr;
+  if (buffer.getNumChannels() == 2) { rightBuffer = buffer.getWritePointer(1); }
 #endif
   const float* scBuffer    = nullptr;
   const auto& sidechainBus = this->getBusBuffer(buffer, true, 1);
   if (sidechainBus.getNumChannels() > 0) {
     scBuffer = sidechainBus.getReadPointer(0);
   }
+  if (!leftBuffer) { return; }
+  // #ifndef NTFX_MONO
+  // if (!rightBuffer) { return; }
+  // #endif
   for (size_t i = 0; i < buffer.getNumSamples(); i++) {
+    float l = leftBuffer[i];
 #ifndef NTFX_MONO
-    NtFx::Audio<float> x { leftBuffer[i], rightBuffer[i] };
+    float r = 0;
+    if (rightBuffer) { r = rightBuffer[i]; }
+    NtFx::Audio<float> x { l, r };
 #else
-    NtFx::Audio<float> x { leftBuffer[i] };
+    NtFx::Audio<float> x { l };
 #endif
     if (scBuffer) { this->plug.xSc = scBuffer[i]; }
     auto y = this->src.process(x);
@@ -132,7 +140,7 @@ void NtPluginAudioProcessor::processBlock(
     }
     leftBuffer[i] = y.l;
 #ifndef NTFX_MONO
-    rightBuffer[i] = y.r;
+    if (rightBuffer) { rightBuffer[i] = y.r; }
 #endif
   }
 }

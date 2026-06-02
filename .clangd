@@ -1,6 +1,6 @@
 CompileFlags:
   Add:
     - "-DNTFX_FS=48e3"
-    - "-DNTFX_MONO=1"
+    # - "-DNTFX_MONO=1"
     - -Ilib
     - -Ilib/gcem/include

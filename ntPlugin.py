@@ -273,18 +273,19 @@ def configure(
             f"{BLUE}Reusing existing plugin id for {plugin}: "
             f"{info[ID].strip()}.{BLACK}"
         )
-        if not category and len(info) > 2:
+        if not category and len(info) > 1:
             args += [f"-DNTFX_VST3_CATEGORY={info[VST3_CAT].strip()}"]
             print(
                 f"{BLUE}Reusing VST3 category: {info[VST3_CAT].strip()}.{BLACK}"
             )
-        if not category and len(info) > 3:
+        if not category and len(info) > 2:
             args += [f"-DNTFX_AAX_CATEGORY={info[AAX_CAT].strip()}"]
             print(
                 f"{BLUE}Reusing AAX category: {info[AAX_CAT].strip()}.{BLACK}"
             )
 
-    print(f"{BLUE}Running cmake for plugin {plugin}.{BLACK}")
+    print(f"{BLUE}Running cmake for plugin '{plugin}'.{BLACK}")
+    print(f"{" ".join(args)}")
     res = subprocess.run(
         args, check=False, capture_output=True, env=os.environ.copy()
     )
@@ -297,8 +298,9 @@ def configure(
         if not addNewPluginId(plugin, cmakeOut, category):
             return False
     elif len(pluginIds[plugin]) < 2 or pluginIds[plugin][VST3_CAT] != category:
-        if not updatePluginId(plugin, category):
-            return False
+        if category:
+            if not updatePluginId(plugin, category):
+                return False
     return True
 
 
