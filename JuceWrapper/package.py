@@ -541,7 +541,7 @@ def findVersion(args: dict, secrets: dict) -> str:
                     return ""
         version = args["version"]
         secrets["version"] = version
-    elif secrets["version"]:
+    elif "version" in secrets and secrets["version"]:
         version = incrementMinorMonirVersion(secrets["version"])
     return version
 
