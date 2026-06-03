@@ -52,7 +52,6 @@ struct ntMultiband3 : public NtFx::NtPlugin {
 
   std::array<NtFx::Comp::ScSettings, 3> scSettings;
   std::array<NtFx::Comp::PeakSideChainLinear, 3> sc;
-  // TODO: Add makeup gain to sidechain?
   std::array<signal_t, Bands::n> makeup_db { 0, 0, 0 };
   std::array<signal_t, Bands::n> makeup_lin { 1, 1, 1 };
   std::array<Audio, Bands::n> fbState { 0, 0, 0 };

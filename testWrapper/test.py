@@ -270,39 +270,61 @@ def plotImpulse(
     plotFrequencyDomain(
         xPhase,
         fs,
-        filename.replace(f"{SEPARATOR}frequency.png", f"{SEPARATOR}phase.png"),
+        filename.replace(f"{SEPARATOR}magnitude.png", f"{SEPARATOR}phase.png"),
         legends,
         [-np.pi, np.pi],
         "Phase / radians",
     )
+    plotTimeDomain(
+        x,
+        fs,
+        filename.replace(f"{SEPARATOR}magnitude.png", f"{SEPARATOR}time.png"),
+        legends,
+    )
 
 
-def plotSpectrum(
+def plotTimeDomain(
     x: np.ndarray,
     fs: float,
     filename: str,
-):
+    legends: list | None = None,
+    ylim: list | None = None,
+    ylabel: str | None = None,
+) -> None:
     """
-    Plots a spectrum of a sweep result.
+    Plots signal in time domain.
 
     Args:
-        x (np.ndarray): Sweep to plot.
+        x (np.ndarray): Data to plot.
         fs (float): Sample rate.
-        filename (str): Path to store at.
+        filename (str): Output file name.
+        legends (list | None, optional): Legends to add to plot. Defaults to None.
+        ylim (list | None, optional): Y axis limits. Defaults to None.
+        ylabel (str | None, optional): Lable for Y axis. Defaults to None.
     """
-    _x = x
-    if x.shape[0] < 5:
-        if x.shape[0] > 2:
-            _x = x[3, :]
-        else:
-            _x = x[0, :]
-    p.specgram(_x, Fs=fs)
+    try:
+        n = x.shape[1]
+        t = 1000 * n / fs
+        tAx = np.linspace(0, t, n)
+        for i, v in enumerate(x):
+            p.plot(tAx, v, linestyle=_idxToLineStyle(i))
+    except IndexError:
+        n = x.shape[0]
+        t = 1000 * n / fs
+        tAx = np.linspace(0, t, n)
+        p.semilogx(tAx, x)
+    if ylim:
+        p.ylim(ylim)
     p.grid(True)
-    p.xlabel("Time / s")
-    p.ylabel("Frequency / Hz")
+    if legends:
+        p.legend(legends, loc=(1.04, 0))
+    p.xlabel("Time / ms")
+    p.ylabel("Amplitude / linear")
+    if ylabel:
+        p.ylabel(ylabel)
     p.title(
         os.path.basename(filename).replace(".png", "").replace(SEPARATOR, " ")
-        + " spectrum"
+        + " response"
     )
     p.savefig(filename, dpi=300, bbox_inches="tight")
     p.clf()
@@ -315,7 +337,7 @@ def plotFrequencyDomain(
     legends: list | None = None,
     ylim: list | None = None,
     ylabel: str | None = None,
-):
+) -> None:
     """
     Plots signal in frequency domain.
 
@@ -361,13 +383,44 @@ def plotFrequencyDomain(
     p.clf()
 
 
+def plotSpectrum(
+    x: np.ndarray,
+    fs: float,
+    filename: str,
+) -> None:
+    """
+    Plots a spectrum of a sweep result.
+
+    Args:
+        x (np.ndarray): Sweep to plot.
+        fs (float): Sample rate.
+        filename (str): Path to store at.
+    """
+    _x = x
+    if x.shape[0] < 5:
+        if x.shape[0] > 2:
+            _x = x[3, :]
+        else:
+            _x = x[0, :]
+    p.specgram(_x, Fs=fs)
+    p.grid(True)
+    p.xlabel("Time / s")
+    p.ylabel("Frequency / Hz")
+    p.title(
+        os.path.basename(filename).replace(".png", "").replace(SEPARATOR, " ")
+        + " spectrum"
+    )
+    p.savefig(filename, dpi=300, bbox_inches="tight")
+    p.clf()
+
+
 def plotDynamic(
     x: np.ndarray,
     fs: float,
     filename: str,
     legends: list | None = None,
     zoom: int = 1,
-):
+) -> None:
     """
     Plots a dynamic response.
 
@@ -511,7 +564,7 @@ def _plotResults(
         plotImpulse(
             np.concatenate(results["impulse"]),
             fs,
-            f"{FILE_DIR}/img/{testFileName}{SEPARATOR}frequency.png",
+            f"{FILE_DIR}/img/{testFileName}{SEPARATOR}magnitude.png",
             legends["impulse"],
         )
     if "linearSweep" in results and results["linearSweep"]:

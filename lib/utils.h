@@ -129,6 +129,6 @@ static inline unsigned long _KISS() noexcept {
  */
 template <typename T>
 static inline T rand() noexcept {
-  return (_KISS() - (LONG_MAX >> 1)) / static_cast<T>(LONG_MAX);
+  return T(_KISS() - (LONG_MAX >> 1)) / T(LONG_MAX) - T(1);
 }
 }
