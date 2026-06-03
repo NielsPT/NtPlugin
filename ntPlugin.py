@@ -63,6 +63,8 @@ CATEGORY_MAP = {
 
 
 def _artefactExists(plugin: str, target: str) -> bool:
+    if sys.platform != "darwin":
+        return True
     if os.path.exists(
         f"{BUILD_DIR}/{plugin}_artefacts/Release/{target}/"
         f"{plugin}.{package.TARGET_EXT_MAP[target]}"
@@ -462,10 +464,9 @@ def process(args: dict) -> bool:
             return False
         if doTest:
             for _ in range(30):
-                if _artefactExists(plugin, "AU"):
-                    if _artefactExists(plugin, "VST3"):
+                if _artefactExists(plugin, "VST3"):
+                    if _artefactExists(plugin, "AU"):
                         break
-                print(f"{RED}Test files not found.{BLACK}")
                 time.sleep(1)
             if not runCtest():
                 return False
