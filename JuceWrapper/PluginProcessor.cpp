@@ -103,7 +103,7 @@ void NtPluginAudioProcessor::processBlock(
   }
   auto p_l   = buffer.getWritePointer(0);
   float* p_r = nullptr;
-  if (buffer.getNumChannels() == 2) { p_r = buffer.getWritePointer(1); }
+  if (buffer.getNumChannels() >= 2) { p_r = buffer.getWritePointer(1); }
   const float* p_xSc = nullptr;
   const auto& scBus  = this->getBusBuffer(buffer, true, 1);
   if (scBus.getNumChannels() > 0) { p_xSc = scBus.getReadPointer(0); }

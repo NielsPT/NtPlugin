@@ -71,11 +71,11 @@ namespace Src {
     /**
      * @brief Index for storing input samples
      */
-    size_t iStoreIn;
+    size_t iStoreIn { 0 };
     /**
      * @brief Index for storing output samples
      */
-    size_t iStoreOut;
+    size_t iStoreOut { 0 };
     /**
      * @brief Delay line for interpolation filter (at base sample rate).
      */
