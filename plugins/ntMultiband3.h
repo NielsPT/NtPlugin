@@ -73,7 +73,7 @@ struct ntMultiband3 : public NtFx::NtPlugin {
           .maxVal = 0,
       });
       this->primaryKnobs.push_back({
-          .p_val    = &this->scSettings[i].ratio_db,
+          .p_val    = &this->scSettings[i].ratio,
           .name     = this->BandNames[i] + "_Ratio",
           .suffix   = "",
           .minVal   = 1.0,
