@@ -41,7 +41,6 @@
 
 #include <cstddef>
 #include <memory>
-#include <simd/packed.h>
 #include <string>
 #include <vector>
 
