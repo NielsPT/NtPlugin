@@ -19,6 +19,8 @@
 #include "gcem.hpp"
 #include <climits>
 #include <cmath>
+#include <cstdint>
+#include <limits>
 #include <vector>
 
 namespace NtFx {
@@ -109,14 +111,13 @@ static inline T saw(T x) {
  *
  * @return unsigned long
  */
-static inline unsigned long _KISS() noexcept {
-  static unsigned long x = 123456789, y = 362436000, z = 521288629, c = 7654321;
-  unsigned long long t;
+static inline uint64_t _KISS() noexcept {
+  static uint64_t x = 123456789, y = 362436000, z = 521288629, c = 7654321, t;
   x = 69069 * x + 12345;
   y ^= y << 13;
   y ^= y >> 17;
   y ^= y << 5;
-  t = 698769069LL * z + c;
+  t = 698769069ULL * z + c;
   c = t >> 32;
   return x + y + (z = t);
 }
@@ -129,6 +130,7 @@ static inline unsigned long _KISS() noexcept {
  */
 template <typename T>
 static inline T rand() noexcept {
-  return T(_KISS() - (LONG_MAX >> 1)) / T(LONG_MAX) - T(1);
+  const uint64_t uintMax = std::numeric_limits<uint64_t>::max();
+  return T(_KISS() - (uintMax >> 1)) / T(uintMax) * 2 - 1;
 }
 }
