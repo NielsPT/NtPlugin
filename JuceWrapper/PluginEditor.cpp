@@ -521,7 +521,7 @@ void NtPluginAudioProcessorEditor::_updateColours() {
   this->knobLookAndFeel.backgroundColour =
       this->proc.plug.uiSpec.backgroundColour;
   this->knobLookAndFeel.foregroundColour =
-      this->proc.plug.uiSpec.foregroundColour; // & 0x00FFFFFF | 0xDD000000;
+      this->proc.plug.uiSpec.foregroundColour;
   this->knobLookAndFeel.setColour(
       juce::Slider::ColourIds::textBoxBackgroundColourId,
       juce::Colour(this->proc.plug.uiSpec.backgroundColour));

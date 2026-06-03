@@ -53,9 +53,9 @@ struct ntMultiband3 : public NtFx::NtPlugin {
   std::array<NtFx::Comp::ScSettings, 3> scSettings;
   std::array<NtFx::Comp::PeakSideChainLinear, 3> sc;
   // TODO: Add makeup gain to sidechain?
-  std::array<signal_t, Bands::n> makeup_db;
-  std::array<signal_t, Bands::n> makeup_lin;
-  std::array<Audio, Bands::n> fbState;
+  std::array<signal_t, Bands::n> makeup_db { 0, 0, 0 };
+  std::array<signal_t, Bands::n> makeup_lin { 1, 1, 1 };
+  std::array<Audio, Bands::n> fbState { 0, 0, 0 };
   const std::array<std::string, Bands::n> BandNames = { "High", "Mid", "Low" };
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> loFlt;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> loMidFlt;
@@ -222,6 +222,9 @@ struct ntMultiband3 : public NtFx::NtPlugin {
     this->loMidFlt.reset(this->fs);
     this->loFlt.reset(this->fs);
     for (size_t i = 0; i < Bands::n; i++) { this->sc[i].reset(this->fs); }
+    for (size_t i = 0; i < Bands::n; i++) { this->makeup_db[i] = 0; }
+    for (size_t i = 0; i < Bands::n; i++) { this->makeup_lin[i] = 1; }
+    for (size_t i = 0; i < Bands::n; i++) { this->fbState[i] = 0; }
     this->update();
   }
 
