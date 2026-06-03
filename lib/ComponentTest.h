@@ -304,7 +304,7 @@ struct ComponentTest {
                 << " e: " << e.size() << ", y: " << y.size() << "\n";
       return false;
     }
-    signal_t acceptedDiff = 0.001;
+    signal_t acceptedDiff = 0.0001;
     for (size_t i = 0; i < y.size(); i++) {
       auto diff = gcem::abs(y[i] - e[i]);
       if (diff > acceptedDiff) {

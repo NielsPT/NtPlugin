@@ -211,6 +211,7 @@ def _buildTestProg(cppPath: str) -> bool:
             f"/I{os.path.abspath(FILE_DIR)}{os.sep}..{os.sep}lib{os.sep}gcem{os.sep}include",
             "/std:c++20",
             "/DNTFX_FS=48e3f",
+            "/DNTFX_TESTING=1",
             "/EHsc",
         ]
     res = sp.run(
