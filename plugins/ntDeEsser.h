@@ -41,7 +41,7 @@ struct ntDeEsser : public NtFx::NtPlugin {
           .maxVal = 1,
       },
       // {
-      //     .p_val    = &this->scSettings.ratio_db,
+      //     .p_val    = &this->scSettings.ratio,
       //     .name     = "Ratio",
       //     .suffix   = "",
       //     .minVal   = 1.0,
@@ -68,9 +68,9 @@ struct ntDeEsser : public NtFx::NtPlugin {
       { .p_val = &this->scListenEnable, .name = "SC_Listen" },
     };
     this->meters.push_back({ .name = "GR", .invert = true });
-    this->scSettings.ratio_db = 10;
-    this->scSettings.knee_db  = 3;
-    this->scSettings.tAtt_ms  = 0.01;
+    this->scSettings.ratio   = 10;
+    this->scSettings.knee_db = 3;
+    this->scSettings.tAtt_ms = 0.01;
     this->updateDefaults();
   }
 

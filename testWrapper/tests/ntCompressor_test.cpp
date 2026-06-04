@@ -5,7 +5,7 @@ NTFX_TEST_BEGIN
 
 NTFX_TEST() {
   auto compressor_dB                     = ntCompressor();
-  compressor_dB.scSettings.ratio_db      = 3;
+  compressor_dB.scSettings.ratio         = 3;
   compressor_dB.scSettings.knee_db       = 0;
   compressor_dB.scSettings.thresh_db     = -6;
   compressor_dB.scSettings.tRel_ms       = 20;

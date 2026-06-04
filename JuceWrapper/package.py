@@ -308,7 +308,7 @@ def staple(path: str) -> bool:
     return True
 
 
-def zipPackage(plugins: list[str], targets: list[str]) -> bool:
+def zipPackage(plugins: list[str], targets: list[str], version: str) -> bool:
     """
     Zips selected plugins in a single package for 'manual install' distribution.
 
@@ -329,7 +329,7 @@ def zipPackage(plugins: list[str], targets: list[str]) -> bool:
     zipFileName = PACKAGE_ARTIFACT
     if len(plugins) == 1:
         zipFileName = plugins[0]
-    outPath = f"{ARTIFACTS_DIR}/{zipFileName}.zip"
+    outPath = f"{ARTIFACTS_DIR}/{zipFileName}_{version}.zip"
     res = subprocess.run(
         ["zip", "-r", outPath] + files,
         check=False,
@@ -598,16 +598,16 @@ def main(args: dict) -> bool:
         if "no_staple" not in args or not args["no_staple"]:
             if not staplePlugins(plugins, targets):
                 return False
-        if not zipPackage(plugins, targets):
+        if not zipPackage(plugins, targets, version):
             return False
         return True
     if not makePluginPkgs(plugins, targets, secrets["company"]):
         return False
     if not makeDistributionXml(plugins, targets, secrets["company"]):
         return False
-    path = f"{ARTIFACTS_DIR}/{PACKAGE_ARTIFACT}.pkg"
+    path = f"{ARTIFACTS_DIR}/{PACKAGE_ARTIFACT}_{version}.pkg"
     if len(plugins) == 1:
-        path = f"{ARTIFACTS_DIR}/{plugins[0]}.pkg"
+        path = f"{ARTIFACTS_DIR}/{plugins[0]}_{version}.pkg"
     if not makeInstallerPkg(secrets["installerId"], path):
         return False
     if "no_notarize" not in args or not args["no_notarize"]:

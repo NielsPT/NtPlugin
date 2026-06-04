@@ -66,7 +66,7 @@ struct ntCompressor : public NtFx::NtPlugin {
           .maxVal = 0.0,
       },
       {
-          .p_val    = &this->scSettings.ratio_db,
+          .p_val    = &this->scSettings.ratio,
           .name     = "Ratio",
           .suffix   = "",
           .minVal   = 1.0,
