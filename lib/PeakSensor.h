@@ -138,7 +138,7 @@ constexpr int defaultPeakSensorDelayLineLength = 192 * 10 * 8;
 template <int delayLineLength = defaultPeakSensorDelayLineLength>
 struct PeakHoldSensor : public PeakSensor {
   std::array<signal_t, delayLineLength> _dl;
-  signal_t tHold_ms { 10 };
+  signal_t tHold_ms { 0 };
   signal_t _xMax { 0 };
   int _idx { 0 };
   int _nHold { 0 };

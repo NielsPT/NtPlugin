@@ -184,17 +184,7 @@ struct ntGate : public NtFx::NtPlugin {
     if (this->scMode == ScMode::external) {
       xSc = this->xSc;
     } else if (this->scMode == ScMode::ignore) {
-      // auto xAbs = gcem::abs(this->xSc);
-      // if (xAbs >= this->ignorePeak) {
-      //   this->ignorePeak  = xAbs;
-      //   this->ignoreCount = 0;
-      // }
-      // if (this->ignoreCount++ > this->nIgnore) { this->ignorePeak = 0; }
-      // if (this->ignorePeak > this->ignoreThresh_lin
-      //     && this->sc.state != NtFx::Gate::State::open) {
-      //   xSc = x / signal_t(4);
-      // }
-      xSc = this->ignoreSc.process(x) * x;
+      xSc = this->ignoreSc.process(this->xSc) * x;
     }
     NtFx::ensureFinite(xSc);
     auto yHpf = this->hpf.process(xSc);
@@ -270,10 +260,11 @@ struct ntGate : public NtFx::NtPlugin {
     this->lpf.settings.shape = NtFx::Biquad::Shape::lpf;
     this->lpf.reset(fs);
     this->flt.reset(fs);
-    this->ignoreScSettings.knee_db = 3;
-    this->ignoreScSettings.ratio   = 20;
-    this->ignoreScSettings.tAtt_ms = 0.01;
-    this->ignoreScSettings.tRel_ms = 100;
+    this->ignoreScSettings.knee_db      = 3;
+    this->ignoreScSettings.ratio        = 20;
+    this->ignoreScSettings.tAtt_ms      = 0.1;
+    this->ignoreScSettings.tRel_ms      = 20;
+    this->ignoreScSettings.tPeakHold_ms = 10;
     this->ignoreSc.reset(fs);
     this->update();
   }
