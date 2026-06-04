@@ -50,10 +50,6 @@ struct ntCompressor : public NtFx::NtPlugin {
   signal_t makeup_lin { signal_t(1.0) };
   Audio fbState { signal_t(0.0) };
 
-  bool dummy1;
-  bool dummy2;
-  bool dummy3;
-
   ntCompressor()
       : peakScDb(scSettings), peakScLin(scSettings), rmsScDb(scSettings),
         rmsScLin(scSettings) {
@@ -77,7 +73,7 @@ struct ntCompressor : public NtFx::NtPlugin {
           .p_val  = &this->scSettings.tAtt_ms,
           .name   = "Attack",
           .suffix = " ms",
-          .minVal = 0.01,
+          .minVal = 0.1,
           .maxVal = 50.0,
       },
       {
