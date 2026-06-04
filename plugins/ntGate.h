@@ -168,6 +168,7 @@ struct ntGate : public NtFx::NtPlugin {
       { .name = "GR", .invert = true },
       { .name = "HF GR", .invert = true, .hasScale = true },
     };
+    this->sc.settings.tAtt_ms = 0.1;
     this->updateDefaults();
   }
 
