@@ -100,7 +100,7 @@ struct NtPlugin : public ComponentBase<Audio> {
   /**
    * @brief Session tempo. Automatically updated by wrapper.
    */
-  signal_t tempo = 0;
+  signal_t tempo { 0 };
 
   /**
    * @brief Updated at base sample rate and can be used in process() for exenal
@@ -111,16 +111,21 @@ struct NtPlugin : public ComponentBase<Audio> {
   /**
    * @brief Set this to true if you want to force an update of the UI
    */
-  bool uiNeedsUpdate = false;
+  bool uiNeedsUpdate { false };
 
   /**
    * @brief True if plugin in fully initialized. Must be set by child plugin.
    */
-  bool isInitialized = false;
+  bool isInitialized { false };
+
+  /**
+   * @brief Latency in measured in samples. Reported to the host for latency
+   * compensation.
+   */
+  int latency { 0 };
 
   /**
    * @brief Called by the wrapper whenever the tempo changes.
-   *
    */
   virtual void onTempoChanged() noexcept { }
 
@@ -166,6 +171,12 @@ struct NtPlugin : public ComponentBase<Audio> {
     return nullptr;
   }
 
+  /**
+   * @brief Activates or deactivates paramter in UI.
+   *
+   * @param name Name of parameter.
+   * @param val True for active, false of not.
+   */
   void setParameterActive(std::string name, bool val) {
     for (auto& param : this->primaryKnobs) {
       if (param.name == name) {

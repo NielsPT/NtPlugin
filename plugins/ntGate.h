@@ -26,7 +26,6 @@
 #include "lib/DynamicFilter.h"
 #include "lib/GateSc.h"
 #include "lib/Plugin.h"
-#include "lib/utils.h"
 #include <array>
 
 enum ScMode { internal, external, ignore };
@@ -50,6 +49,7 @@ struct ntGate : public NtFx::NtPlugin {
   bool scListenEnable { false };
   bool hfAccelEnable { false };
   bool lookaheadEnable { true };
+  bool latencyCompEnable { true };
 
   ntGate() : ignoreSc(ignoreScSettings) {
     this->primaryKnobs = {
@@ -68,25 +68,28 @@ struct ntGate : public NtFx::NtPlugin {
           .maxVal = -0.0,
       },
       {
-          .p_val  = &this->sc.settings.tAtt_ms,
-          .name   = "Attack",
-          .suffix = " ms",
-          .minVal = 0.01,
-          .maxVal = 50.0,
+          .p_val    = &this->sc.settings.tAtt_ms,
+          .name     = "Attack",
+          .suffix   = " ms",
+          .minVal   = 0.01,
+          .maxVal   = 100,
+          .midPoint = 10,
       },
       {
-          .p_val  = &this->sc.settings.tHold_ms,
-          .name   = "Hold",
-          .suffix = " ms",
-          .minVal = 0.01,
-          .maxVal = 1000.0,
+          .p_val    = &this->sc.settings.tHold_ms,
+          .name     = "Hold",
+          .suffix   = " ms",
+          .minVal   = 0.01,
+          .maxVal   = 1000.0,
+          .midPoint = 100,
       },
       {
-          .p_val  = &this->sc.settings.tRel_ms,
-          .name   = "Release",
-          .suffix = " ms",
-          .minVal = 10.0,
-          .maxVal = 1000.0,
+          .p_val    = &this->sc.settings.tRel_ms,
+          .name     = "Release",
+          .suffix   = " ms",
+          .minVal   = 10.0,
+          .maxVal   = 1000.0,
+          .midPoint = 100,
       },
     };
     this->hpf.settings.fc_hz = 20;
@@ -124,6 +127,7 @@ struct ntGate : public NtFx::NtPlugin {
           .minVal   = 0.1,
           .maxVal   = 1000,
           .isActive = false,
+          .midPoint = 100,
       },
       {
           .p_val    = &this->scHf.settings.tRel_ms,
@@ -132,6 +136,7 @@ struct ntGate : public NtFx::NtPlugin {
           .minVal   = 0.1,
           .maxVal   = 1000,
           .isActive = false,
+          .midPoint = 100,
       },
       {
           .p_val    = &this->ignoreScSettings.thresh_db,
@@ -152,7 +157,8 @@ struct ntGate : public NtFx::NtPlugin {
     this->toggles = {
       { .p_val = &this->scListenEnable, .name = "SC_Listen" },
       { .p_val = &this->hfAccelEnable, .name = "Dual_Band" },
-      // { .p_val = &this->lookaheadEnable, .name = "Lookahead" },
+      { .p_val = &this->lookaheadEnable, .name = "Lookahead_on" },
+      { .p_val = &this->latencyCompEnable, .name = "Latency_comp" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
     this->radioButtons = {
@@ -197,7 +203,7 @@ struct ntGate : public NtFx::NtPlugin {
     auto gr   = this->sc.process(yLpf);
     auto grHf = gr;
     auto xGr  = x;
-    if (this->lookaheadEnable) {
+    if (this->lookaheadEnable && this->nLookahead) {
       // TODO: delayline class.
       auto i = this->iLookahead - this->nLookahead;
       if (i < 0) { i += dlLookaheadLen; }
@@ -231,10 +237,20 @@ struct ntGate : public NtFx::NtPlugin {
     } else {
       this->deactivateParameter("Ignore_Sens");
     }
-    this->lookaheadEnable = (this->tLookahead_ms > 0);
-    this->nLookahead      = this->tLookahead_ms * 0.001 * this->fs;
-    this->flt.q1          = 0.6;
-    this->flt.q2          = 0.6;
+    if (this->lookaheadEnable) {
+      this->activateParameter("Lookahead");
+    } else {
+      this->deactivateParameter("Lookahead");
+    }
+    // this->lookaheadEnable = (this->tLookahead_ms > 0);
+    this->nLookahead = int(this->tLookahead_ms * 0.001 * this->fs);
+    if (this->latencyCompEnable && this->nLookahead) {
+      this->latency = this->nLookahead;
+    } else {
+      this->latency = 0;
+    }
+    this->flt.q1 = 0.6;
+    this->flt.q2 = 0.6;
     this->flt.update();
     this->lpf.update();
     this->hpf.update();
