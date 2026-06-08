@@ -122,9 +122,8 @@ void NtPluginAudioProcessor::processBlock(
     }
   }
 
-  if (this->plug.latency != this->getLatencySamples()) {
-    this->setLatencySamples(this->plug.latency);
-  }
+  this->setLatencySamples(this->plug.latency / this->src.coeffs.osFactor
+      + this->src.coeffs.osFirLenMult - 2);
 
   for (size_t i = 0; i < buffer.getNumSamples(); i++) {
     if (p_xSc) { this->plug.xSc = p_xSc[i]; }
