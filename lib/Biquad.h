@@ -33,6 +33,7 @@ namespace Biquad {
     hpf,
     lpf,
     apf,
+    bpf,
     none
   };
 
@@ -180,6 +181,20 @@ namespace Biquad {
     return c;
   }
 
+  static inline Coeffs6 calcCoeffsBpf(signal_t fs, signal_t fc_hz, signal_t q) {
+    auto w0    = 2.0 * GCEM_PI * fc_hz / fs;
+    auto cosW0 = gcem::cos(w0);
+    auto alpha = gcem::sin(w0) / (2.0 * q);
+    Coeffs6 c;
+    c.b[0] = q * alpha;
+    c.b[1] = 0;
+    c.b[2] = -q * alpha;
+    c.a[0] = 1.0 + alpha;
+    c.a[1] = -2.0 * cosW0;
+    c.a[2] = 1.0 - alpha;
+    return c;
+  }
+
   static inline Coeffs6 calcCoeffsNotch(
       signal_t fs, signal_t fc_hz, signal_t q) {
     auto w0    = 2.0 * GCEM_PI * fc_hz / fs;
@@ -216,6 +231,9 @@ namespace Biquad {
       break;
     case Shape::apf:
       c = calcCoeffsApf(fs, fc_hz, q);
+      break;
+    case Shape::bpf:
+      c = calcCoeffsBpf(fs, fc_hz, q);
       break;
     case Shape::notch:
       c = calcCoeffsNotch(fs, fc_hz, q);

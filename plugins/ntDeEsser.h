@@ -10,15 +10,19 @@
 
 // 1 ms lookahead max
 constexpr int dlLookaheadLen = 192 * 8;
+enum Mode { wide, shelf, bell };
 
 struct ntDeEsser : public NtFx::NtPlugin {
   NtFx::Comp::PeakSideChainLinear sc;
-  NtFx::Biquad::EqBand scFlt;
-  NtFx::DynamicFilter::Shelf flt;
+  NtFx::Biquad::EqBand scHpf;
+  NtFx::Biquad::EqBand scBpf;
+  NtFx::DynamicFilter::Shelf shelf;
+  NtFx::Biquad::EqBand bpf;
   NtFx::Comp::ScSettings scSettings;
   NtFx::Delay::ShortDelayLine<dlLookaheadLen> dl;
   signal_t q { 0.6 };
   signal_t fc_hz { 4e3 };
+  Mode mode;
   bool lookaheadEnable { false };
   bool bypassEnable { false };
   bool scListenEnable { false };
@@ -45,7 +49,7 @@ struct ntDeEsser : public NtFx::NtPlugin {
           .p_val  = &this->q,
           .name   = "Q",
           .minVal = 0.4,
-          .maxVal = 0.8,
+          .maxVal = 2,
       },
       {
           .p_val  = &this->dl.t_ms,
@@ -77,6 +81,13 @@ struct ntDeEsser : public NtFx::NtPlugin {
           .maxVal = 100.0,
       },
     };
+    this->radioButtons = {
+      {
+          .p_val   = (int*)&this->mode,
+          .name    = "Mode",
+          .options = { "Wideband", "Shelf", "Bell" },
+      },
+    };
     this->toggles = {
       { .p_val = &this->lookaheadEnable, .name = "Lookahead_enable" },
       { .p_val = &this->scListenEnable, .name = "SC_Listen" },
@@ -89,6 +100,8 @@ struct ntDeEsser : public NtFx::NtPlugin {
     this->scSettings.tPeakHold_ms = 0.25;
     this->dl.t_ms                 = 0.25;
     this->scSettings.tRel_ms      = 20;
+    this->bpf.settings.shape      = NtFx::Biquad::Shape::bpf;
+    this->scBpf.settings.shape    = NtFx::Biquad::Shape::bpf;
     this->updateDefaults();
   }
 
@@ -101,10 +114,21 @@ struct ntDeEsser : public NtFx::NtPlugin {
     }
     auto xFlt = x;
     if (this->lookaheadEnable) { xFlt = xDl; }
-    auto yScFlt        = scFlt.process(x);
-    auto ySc           = sc.process(yScFlt);
-    this->flt.gain_lin = ySc.absMin();
-    auto y             = flt.process(xFlt);
+    Audio yScFlt, ySc, y;
+    if (this->mode == Mode::wide) {
+      yScFlt = this->scBpf.process(x);
+      ySc    = sc.process(yScFlt);
+      y      = xFlt * ySc;
+    } else if (this->mode == Mode::shelf) {
+      yScFlt               = scHpf.process(x);
+      ySc                  = sc.process(yScFlt);
+      this->shelf.gain_lin = ySc.absMin();
+      y                    = shelf.process(xFlt);
+    } else if (this->mode == Mode::bell) {
+      yScFlt = this->scBpf.process(x);
+      ySc    = sc.process(yScFlt);
+      y      = xFlt - this->bpf.process(xFlt) * (Audio(1) - ySc) / this->q;
+    }
     this->template updatePeakLevel<1>(y);
     this->template updatePeakLevel<2, true>(ySc);
     if (this->scListenEnable) { return yScFlt; }
@@ -116,15 +140,23 @@ struct ntDeEsser : public NtFx::NtPlugin {
     this->scSettings.tAtt_ms      = this->dl.t_ms;
     this->sc.update();
 
-    this->scFlt.settings.shape = NtFx::Biquad::Shape::hpf;
-    this->scFlt.settings.q     = this->q;
-    this->scFlt.settings.fc_hz = this->fc_hz;
-    this->scFlt.update();
+    this->scHpf.settings.shape = NtFx::Biquad::Shape::hpf;
+    this->scHpf.settings.q     = this->q;
+    this->scHpf.settings.fc_hz = this->fc_hz;
+    this->scHpf.update();
 
-    this->flt.q1    = this->q;
-    this->flt.q2    = this->q;
-    this->flt.fc_hz = this->fc_hz;
-    this->flt.update();
+    this->shelf.q1    = this->q;
+    this->shelf.q2    = this->q;
+    this->shelf.fc_hz = this->fc_hz;
+    this->shelf.update();
+
+    this->bpf.settings.fc_hz = this->fc_hz;
+    this->bpf.settings.q     = this->q;
+    this->bpf.update();
+
+    this->scBpf.settings.fc_hz = this->fc_hz;
+    this->scBpf.settings.q     = this->q;
+    this->scBpf.update();
 
     this->dl.update();
     // this->scSettings.tAtt_ms   = signal_t(1e3) / this->fc_hz;
@@ -138,8 +170,10 @@ struct ntDeEsser : public NtFx::NtPlugin {
 
   void reset(float fs) noexcept override {
     this->sc.reset(fs);
-    this->scFlt.reset(fs);
-    this->flt.reset(fs);
+    this->scHpf.reset(fs);
+    this->shelf.reset(fs);
+    this->scBpf.reset(fs);
+    this->bpf.reset(fs);
     this->fs = fs;
     this->update();
   }
