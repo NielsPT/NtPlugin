@@ -31,7 +31,7 @@ namespace Gate {
     signal_t thresh_db { 0 };
     signal_t range_db { 0 };
     signal_t tAtt_ms { 0.01 };
-    signal_t tHold_ms { 10 };
+    signal_t tHold_ms { 50 };
     signal_t tRel_ms { 200 };
   };
 

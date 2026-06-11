@@ -5,7 +5,7 @@ NTFX_TEST_BEGIN
 
 NTFX_TEST() {
   auto sharedSettings      = NtFx::Comp::ScSettings();
-  sharedSettings.ratio_db  = 3;
+  sharedSettings.ratio     = 3;
   sharedSettings.knee_db   = 0;
   sharedSettings.thresh_db = -6;
   sharedSettings.tRel_ms   = 20;

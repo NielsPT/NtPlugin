@@ -40,13 +40,14 @@ namespace Comp {
    */
   struct ScSettings {
     signal_t thresh_db = signal_t(0);    ///< Threshold in dB
-    signal_t ratio_db  = signal_t(2);    ///< Compression ratio
+    signal_t ratio     = signal_t(2);    ///< Compression ratio
     signal_t knee_db   = signal_t(12);   ///< Knee width in dB
-    signal_t tAtt_ms   = signal_t(1);    ///< Attack time in milliseconds
+    signal_t tAtt_ms   = signal_t(0.1);  ///< Attack time in milliseconds
     signal_t tRel_ms   = signal_t(100);  ///< Release time in milliseconds
     signal_t tRms_ms   = signal_t(80);   ///< RMS time constant in milliseconds
-    signal_t tPeak_ms  = signal_t(20.0); ///< Peak time constant in milliseconds
-    bool linkEnable    = false;
+    signal_t tPeak_ms  = signal_t(20);   ///< Peak time constant in milliseconds
+    signal_t tPeakHold_ms = signal_t(0); ///< Peak sensor hold time.
+    bool linkEnable       = false;
   };
 
   /**
@@ -59,9 +60,9 @@ namespace Comp {
    * @tparam signal_t The signal type (e.g., float, double)
    */
   struct PeakSideChainDb : public ComponentBase<Audio> {
-    PeakSensorStereo peakSensor;     ///< Peak sensor for stereo signals
-    signal_t alphaAtt = signal_t(0); ///< Attack coefficient
-    signal_t alphaRel = signal_t(0); ///< Release coefficient
+    PeakHoldSensorStereo<> peakSensor; ///< Peak sensor for stereo signals
+    signal_t alphaAtt = signal_t(0);   ///< Attack coefficient
+    signal_t alphaRel = signal_t(0);   ///< Release coefficient
 
     ScSettings& settings;              ///< Reference to side chain settings
     Audio stateFilter = signal_t(0.0); ///< State filter for gain computation
@@ -99,6 +100,7 @@ namespace Comp {
       this->alphaRel = gcem::exp(-2200.0 / (this->settings.tRel_ms * this->fs));
       if (this->alphaRel < this->alphaAtt) { this->alphaRel = this->alphaAtt; }
       this->peakSensor.setT_ms(this->settings.tPeak_ms);
+      this->peakSensor.setTHold_ms(this->settings.tPeakHold_ms);
       this->peakSensor.update();
     }
 
@@ -123,7 +125,7 @@ namespace Comp {
       signal_t y_db;
       if ((x_db - this->settings.thresh_db) > (this->settings.knee_db / 2)) {
         y_db = this->settings.thresh_db
-            + (x_db - this->settings.thresh_db) / this->settings.ratio_db;
+            + (x_db - this->settings.thresh_db) / this->settings.ratio;
       } else if ((x_db - this->settings.thresh_db)
           < -(this->settings.knee_db / 2)) {
         y_db = x_db;
@@ -131,7 +133,7 @@ namespace Comp {
         signal_t tmp =
             (x_db - this->settings.thresh_db + this->settings.knee_db / 2);
         y_db = x_db
-            + (1 / this->settings.ratio_db - 1) * tmp * tmp
+            + (1 / this->settings.ratio - 1) * tmp * tmp
                 / (2 * this->settings.knee_db);
       }
       signal_t target = x_db - y_db;
@@ -188,9 +190,8 @@ namespace Comp {
       this->knee_lin              = invDb(this->settings.knee_db);
       const signal_t oneOverSqrt2 = 1.0 / gcem::sqrt(2.0);
       const signal_t tmp          = oneOverSqrt2
-          - (this->settings.ratio_db - signal_t(3.0)) / signal_t(18.0);
-      this->ratio_lin =
-          (signal_t(1.0) - signal_t(1.0) / this->settings.ratio_db)
+          - (this->settings.ratio - signal_t(3.0)) / signal_t(18.0);
+      this->ratio_lin = (signal_t(1.0) - signal_t(1.0) / this->settings.ratio)
           * (oneOverSqrt2 - tmp * tmp * tmp * tmp * tmp);
     }
 

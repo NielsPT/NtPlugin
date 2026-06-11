@@ -92,6 +92,26 @@ void NtPluginAudioProcessor::processBlock(
   for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i) {
     buffer.clear(i, 0, buffer.getNumSamples());
   }
+
+  auto p_l = buffer.getWritePointer(0);
+  if (!p_l) [[unlikely]] {
+    for (auto i = 0; i < buffer.getNumChannels(); i++) {
+      buffer.clear(i, 0, buffer.getNumSamples());
+    }
+    return;
+  }
+
+  float* p_r = nullptr;
+  if (buffer.getNumChannels() >= 2) { p_r = buffer.getWritePointer(1); }
+  if (!p_r && !this->monoMode) {
+    this->monoMode           = true;
+    this->plug.uiNeedsUpdate = true;
+  }
+
+  const float* p_xSc = nullptr;
+  const auto& scBus  = this->getBusBuffer(buffer, true, 1);
+  if (scBus.getNumChannels() > 0) { p_xSc = scBus.getReadPointer(0); }
+
   auto p_playHead = this->getPlayHead();
   auto p_posInfo  = p_playHead->getPosition();
   if (p_posInfo) {
@@ -101,25 +121,16 @@ void NtPluginAudioProcessor::processBlock(
       this->plug.onTempoChanged();
     }
   }
-  auto p_l   = buffer.getWritePointer(0);
-  float* p_r = nullptr;
-  if (buffer.getNumChannels() >= 2) { p_r = buffer.getWritePointer(1); }
-  const float* p_xSc = nullptr;
-  const auto& scBus  = this->getBusBuffer(buffer, true, 1);
-  if (scBus.getNumChannels() > 0) { p_xSc = scBus.getReadPointer(0); }
-  if (!p_l) { return; }
+
+  this->setLatencySamples(this->plug.latency / this->src.coeffs.osFactor
+      + this->src.coeffs.osFirLenMult - 2);
+
   for (size_t i = 0; i < buffer.getNumSamples(); i++) {
+    if (p_xSc) { this->plug.xSc = p_xSc[i]; }
     float l = p_l[i];
     float r = l;
-    if (p_r) {
-      r = p_r[i];
-    } else if (!this->monoMode) {
-      this->monoMode           = true;
-      this->plug.uiNeedsUpdate = true;
-    }
-
+    if (p_r) { r = p_r[i]; }
     NtFx::Stereo<float> x { l, r };
-    if (p_xSc) { this->plug.xSc = p_xSc[i]; }
     auto y = this->src.process(x);
     if (this->plug.meters.size() >= 2) {
       if (this->plug.meters[0].addRms) { this->plug.xRms[0].process(x); }

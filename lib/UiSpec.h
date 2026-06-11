@@ -24,6 +24,7 @@
  */
 
 #include "gcem.hpp"
+#include "lib/Audio.h"
 #include <cstdint>
 #include <string>
 #include <vector>
