@@ -23,10 +23,10 @@
 #include "lib/Audio.h"
 #include "lib/Biquad.h"
 #include "lib/Comp.h"
+#include "lib/DelayLine.h"
 #include "lib/DynamicFilter.h"
 #include "lib/GateSc.h"
 #include "lib/Plugin.h"
-#include <array>
 
 enum ScMode { internal, external, ignore };
 
@@ -40,11 +40,8 @@ struct ntGate : public NtFx::NtPlugin {
   NtFx::DynamicFilter::Shelf flt;
   NtFx::Biquad::EqBand hpf;
   NtFx::Biquad::EqBand lpf;
-  std::array<Audio, dlLookaheadLen> dlLookahead;
-  signal_t tLookahead_ms { 0.2 };
+  NtFx::Delay::ShortDelayLine<dlLookaheadLen> dl;
   int scMode { 0 };
-  int nLookahead { 4 };
-  int iLookahead { 0 };
   bool bypassEnable { false };
   bool scListenEnable { false };
   bool hfAccelEnable { false };
@@ -147,7 +144,7 @@ struct ntGate : public NtFx::NtPlugin {
           .isActive = false,
       },
       {
-          .p_val  = &this->tLookahead_ms,
+          .p_val  = &this->dl.t_ms,
           .name   = "Lookahead",
           .suffix = " ms",
           .minVal = 0,
@@ -179,8 +176,7 @@ struct ntGate : public NtFx::NtPlugin {
   }
 
   Audio process(Audio x) noexcept override {
-    this->dlLookahead[this->iLookahead++] = x;
-    if (this->iLookahead >= dlLookaheadLen) { this->iLookahead = 0; }
+    auto xDl = dl.process(x);
     this->template updatePeakLevel<0>(x);
     if (this->bypassEnable) {
       this->template updatePeakLevel<1>(x);
@@ -203,12 +199,7 @@ struct ntGate : public NtFx::NtPlugin {
     auto gr   = this->sc.process(yLpf);
     auto grHf = gr;
     auto xGr  = x;
-    if (this->lookaheadEnable && this->nLookahead) {
-      // TODO: delayline class.
-      auto i = this->iLookahead - this->nLookahead;
-      if (i < 0) { i += dlLookaheadLen; }
-      xGr = this->dlLookahead[i];
-    }
+    if (this->lookaheadEnable) { xGr = xDl; }
     auto y = xGr * gr;
     if (this->hfAccelEnable) {
       grHf         = this->scHf.process(yLpf);
@@ -243,9 +234,9 @@ struct ntGate : public NtFx::NtPlugin {
       this->deactivateParameter("Lookahead");
     }
     // this->lookaheadEnable = (this->tLookahead_ms > 0);
-    this->nLookahead = int(this->tLookahead_ms * 0.001 * this->fs);
-    if (this->latencyCompEnable && this->nLookahead) {
-      this->latency = this->nLookahead;
+    this->dl.update();
+    if (this->latencyCompEnable) {
+      this->latency = this->dl.n;
     } else {
       this->latency = 0;
     }

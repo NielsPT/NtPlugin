@@ -3,6 +3,7 @@
 #include "lib/Audio.h"
 #include "lib/Biquad.h"
 #include "lib/Comp.h"
+#include "lib/DelayLine.h"
 #include "lib/DynamicFilter.h"
 #include "lib/Plugin.h"
 #include <algorithm>
@@ -15,15 +16,12 @@ struct ntDeEsser : public NtFx::NtPlugin {
   NtFx::Biquad::EqBand scFlt;
   NtFx::DynamicFilter::Shelf flt;
   NtFx::Comp::ScSettings scSettings;
-  signal_t tLookahead_ms { 0.25 };
-  int nLookahead { 4 };
-  int iLookahead { 0 };
+  NtFx::Delay::ShortDelayLine<dlLookaheadLen> dl;
   signal_t q { 0.6 };
   signal_t fc_hz { 4e3 };
   bool lookaheadEnable { false };
   bool bypassEnable { false };
   bool scListenEnable { false };
-  std::array<Audio, dlLookaheadLen> dlLookahead;
   ntDeEsser() : sc(scSettings) {
     this->primaryKnobs = {
       {
@@ -50,7 +48,7 @@ struct ntDeEsser : public NtFx::NtPlugin {
           .maxVal = 0.8,
       },
       {
-          .p_val  = &this->tLookahead_ms,
+          .p_val  = &this->dl.t_ms,
           .name   = "Lookahead",
           .suffix = " ms",
           .minVal = 0,
@@ -89,26 +87,20 @@ struct ntDeEsser : public NtFx::NtPlugin {
     this->scSettings.knee_db      = 3;
     this->scSettings.tAtt_ms      = 0.25;
     this->scSettings.tPeakHold_ms = 0.25;
-    this->tLookahead_ms           = 0.25;
+    this->dl.t_ms                 = 0.25;
     this->scSettings.tRel_ms      = 20;
     this->updateDefaults();
   }
 
   Audio process(Audio x) noexcept override {
-    this->dlLookahead[this->iLookahead++] = x;
-    if (this->iLookahead >= dlLookaheadLen) { this->iLookahead = 0; }
+    auto xDl = this->dl.process(x);
     this->template updatePeakLevel<0>(x);
     if (this->bypassEnable) {
       this->template updatePeakLevel<1>(x);
       return x;
     }
     auto xFlt = x;
-    if (this->lookaheadEnable && this->nLookahead > 0) {
-      // TODO: delayline class.
-      auto i = this->iLookahead - this->nLookahead;
-      if (i < 0) { i += dlLookaheadLen; }
-      xFlt = this->dlLookahead[i];
-    }
+    if (this->lookaheadEnable) { xFlt = xDl; }
     auto yScFlt        = scFlt.process(x);
     auto ySc           = sc.process(yScFlt);
     this->flt.gain_lin = ySc.absMin();
@@ -120,8 +112,8 @@ struct ntDeEsser : public NtFx::NtPlugin {
   }
 
   void update() noexcept override {
-    this->scSettings.tPeakHold_ms = this->tLookahead_ms;
-    this->scSettings.tAtt_ms      = this->tLookahead_ms;
+    this->scSettings.tPeakHold_ms = this->dl.t_ms;
+    this->scSettings.tAtt_ms      = this->dl.t_ms;
     this->sc.update();
 
     this->scFlt.settings.shape = NtFx::Biquad::Shape::hpf;
@@ -133,11 +125,12 @@ struct ntDeEsser : public NtFx::NtPlugin {
     this->flt.q2    = this->q;
     this->flt.fc_hz = this->fc_hz;
     this->flt.update();
+
+    this->dl.update();
     // this->scSettings.tAtt_ms   = signal_t(1e3) / this->fc_hz;
     // this->scSettings.tRel_ms   = this->scSettings.tAtt_ms * 10;
-    this->nLookahead = int(this->tLookahead_ms * 0.001 * this->fs);
     if (this->lookaheadEnable) {
-      this->latency = this->nLookahead;
+      this->latency = this->dl.n;
     } else {
       this->latency = 0;
     }
@@ -148,7 +141,6 @@ struct ntDeEsser : public NtFx::NtPlugin {
     this->scFlt.reset(fs);
     this->flt.reset(fs);
     this->fs = fs;
-    std::fill(this->dlLookahead.begin(), this->dlLookahead.end(), 0);
     this->update();
   }
 };
