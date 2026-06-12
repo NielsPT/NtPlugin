@@ -22,7 +22,7 @@ struct ntDeEsser : public NtFx::NtPlugin {
   NtFx::Delay::ShortDelayLine<dlLookaheadLen> dl;
   signal_t q { 0.6 };
   signal_t fc_hz { 4e3 };
-  Mode mode;
+  Mode mode { Mode::bell };
   bool lookaheadEnable { false };
   bool bypassEnable { false };
   bool scListenEnable { false };
@@ -43,6 +43,14 @@ struct ntDeEsser : public NtFx::NtPlugin {
           .minVal = -60,
           .maxVal = 0,
       },
+      // {
+      //     .p_val    = &this->scSettings.ratio,
+      //     .name     = "Ratio",
+      //     .suffix   = "",
+      //     .minVal   = 1.0,
+      //     .maxVal   = 20.0,
+      //     .midPoint = 2.0,
+      // },
     };
     this->secondaryKnobs = {
       {
@@ -58,21 +66,7 @@ struct ntDeEsser : public NtFx::NtPlugin {
           .minVal = 0,
           .maxVal = 1,
       },
-      // {
-      //     .p_val    = &this->scSettings.ratio,
-      //     .name     = "Ratio",
-      //     .suffix   = "",
-      //     .minVal   = 1.0,
-      //     .maxVal   = 20.0,
-      //     .midPoint = 2.0,
-      // },
-      // {
-      //     .p_val  = &this->scSettings.tAtt_ms,
-      //     .name   = "Attack",
-      //     .suffix = " ms",
-      //     .minVal = 0.01,
-      //     .maxVal = 50.0,
-      // },
+
       {
           .p_val  = &this->scSettings.tRel_ms,
           .name   = "Release",
@@ -89,31 +83,30 @@ struct ntDeEsser : public NtFx::NtPlugin {
       },
     };
     this->toggles = {
-      { .p_val = &this->lookaheadEnable, .name = "Lookahead_enable" },
+      // { .p_val = &this->lookaheadEnable, .name = "Lookahead_enable" },
       { .p_val = &this->scListenEnable, .name = "SC_Listen" },
+      { .p_val = &this->sc.settings.linkEnable, .name = "Link" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
     this->meters.push_back({ .name = "GR", .invert = true });
-    this->scSettings.ratio        = 10;
-    this->scSettings.knee_db      = 3;
-    this->scSettings.tAtt_ms      = 0.25;
-    this->scSettings.tPeakHold_ms = 0.25;
-    this->dl.t_ms                 = 0.25;
-    this->scSettings.tRel_ms      = 20;
-    this->bpf.settings.shape      = NtFx::Biquad::Shape::bpf;
-    this->scBpf.settings.shape    = NtFx::Biquad::Shape::bpf;
+    this->scSettings.ratio     = 20;
+    this->scSettings.knee_db   = 3;
+    this->dl.t_ms              = 0.25;
+    this->scSettings.tRel_ms   = 20;
+    this->bpf.settings.shape   = NtFx::Biquad::Shape::bpf;
+    this->scBpf.settings.shape = NtFx::Biquad::Shape::bpf;
     this->updateDefaults();
   }
 
   Audio process(Audio x) noexcept override {
-    auto xDl = this->dl.process(x);
+    auto yDl = this->dl.process(x);
     this->template updatePeakLevel<0>(x);
     if (this->bypassEnable) {
       this->template updatePeakLevel<1>(x);
       return x;
     }
     auto xFlt = x;
-    if (this->lookaheadEnable) { xFlt = xDl; }
+    if (this->lookaheadEnable) { xFlt = yDl; }
     Audio yScFlt, ySc, y;
     if (this->mode == Mode::wide) {
       yScFlt = this->scBpf.process(x);
@@ -126,7 +119,7 @@ struct ntDeEsser : public NtFx::NtPlugin {
       y                    = shelf.process(xFlt);
     } else if (this->mode == Mode::bell) {
       yScFlt = this->scBpf.process(x);
-      ySc    = sc.process(yScFlt);
+      ySc    = sc.process(yScFlt / this->q);
       y      = xFlt - this->bpf.process(xFlt) * (Audio(1) - ySc) / this->q;
     }
     this->template updatePeakLevel<1>(y);
@@ -137,7 +130,7 @@ struct ntDeEsser : public NtFx::NtPlugin {
 
   void update() noexcept override {
     this->scSettings.tPeakHold_ms = this->dl.t_ms;
-    this->scSettings.tAtt_ms      = this->dl.t_ms;
+    this->scSettings.tAtt_ms      = gcem::max(this->dl.t_ms, 0.1);
     this->sc.update();
 
     this->scHpf.settings.shape = NtFx::Biquad::Shape::hpf;

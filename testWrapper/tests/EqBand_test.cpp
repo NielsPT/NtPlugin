@@ -26,5 +26,15 @@ NTFX_TEST() {
   hiShelf.settings.shape   = NtFx::Biquad::Shape::hiShelf;
   hiShelf.settings.gain_db = 12;
   NTFX_ADD_TEST(hiShelf, "impulse");
+  auto bandpass           = NtFx::Biquad::EqBand();
+  bandpass.settings.shape = NtFx::Biquad::Shape::bpf;
+  NTFX_ADD_TEST(bandpass, "impulse");
+  auto bandpass_q1           = NtFx::Biquad::EqBand();
+  bandpass_q1.settings.shape = NtFx::Biquad::Shape::bpf;
+  bandpass_q1.settings.q     = 1;
+  NTFX_ADD_TEST(bandpass_q1, "impulse");
+  auto notch           = NtFx::Biquad::EqBand();
+  notch.settings.shape = NtFx::Biquad::Shape::notch;
+  NTFX_ADD_TEST(notch, "impulse");
   return NTFX_RUN_TESTS();
 }

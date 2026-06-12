@@ -175,6 +175,7 @@ NTFX_TEST() {{
   return NTFX_RUN_TESTS();
 }}
 """
+    # TODO: use _writeFile
     path = f"{REPO_BASE_DIR}/testWrapper/tests/{name}_test.cpp"
     if os.path.exists(path):
         print(f"{YELLOW}'{path}' already exists.{BLACK}")
