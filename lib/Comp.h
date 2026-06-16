@@ -175,10 +175,15 @@ namespace Comp {
     virtual Audio process(Audio x) noexcept override {
       auto ySens = this->peakSensor.process(x);
       ensureFinite(this->stateFilter);
-      return {
+      Audio y {
         this->_gainComputer_lin(ySens.l, this->stateFilter.l),
         this->_gainComputer_lin(ySens.r, this->stateFilter.r),
       };
+      if (this->settings.linkEnable) {
+        auto _y = y.absMin();
+        return { _y, _y };
+      }
+      return y;
     }
 
     /**

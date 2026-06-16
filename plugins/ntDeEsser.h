@@ -8,8 +8,8 @@
 #include "lib/Plugin.h"
 #include <algorithm>
 
-// 1 ms lookahead max
-constexpr int dlLookaheadLen = 192 * 8;
+// 10 ms lookahead max
+constexpr int dlLookaheadLen = 192 * 8 * 10;
 enum Mode { wide, shelf, bell };
 
 struct ntDeEsser : public NtFx::NtPlugin {
@@ -23,7 +23,7 @@ struct ntDeEsser : public NtFx::NtPlugin {
   signal_t q { 0.6 };
   signal_t fc_hz { 4e3 };
   Mode mode { Mode::bell };
-  bool lookaheadEnable { false };
+  bool lookaheadEnable { true };
   bool bypassEnable { false };
   bool scListenEnable { false };
   ntDeEsser() : sc(scSettings) {
@@ -64,7 +64,7 @@ struct ntDeEsser : public NtFx::NtPlugin {
           .name   = "Lookahead",
           .suffix = " ms",
           .minVal = 0,
-          .maxVal = 1,
+          .maxVal = 10,
       },
 
       {
@@ -85,16 +85,19 @@ struct ntDeEsser : public NtFx::NtPlugin {
     this->toggles = {
       // { .p_val = &this->lookaheadEnable, .name = "Lookahead_enable" },
       { .p_val = &this->scListenEnable, .name = "SC_Listen" },
-      { .p_val = &this->sc.settings.linkEnable, .name = "Link" },
+      { .p_val = &this->scSettings.linkEnable, .name = "Link" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
     this->meters.push_back({ .name = "GR", .invert = true });
-    this->scSettings.ratio     = 20;
-    this->scSettings.knee_db   = 3;
-    this->dl.t_ms              = 0.25;
-    this->scSettings.tRel_ms   = 20;
+    this->scSettings.ratio   = 20;
+    this->scSettings.knee_db = 3;
+    this->dl.t_ms            = 5;
+    this->scSettings.tRel_ms = 30;
+    // TODO: only one bpf.
     this->bpf.settings.shape   = NtFx::Biquad::Shape::bpf;
     this->scBpf.settings.shape = NtFx::Biquad::Shape::bpf;
+    this->scHpf.settings.shape = NtFx::Biquad::Shape::hpf;
+    // this->shelf._flt.settings.shape = NtFx::Biquad::Shape::hiShelf;
     this->updateDefaults();
   }
 
@@ -109,7 +112,7 @@ struct ntDeEsser : public NtFx::NtPlugin {
     if (this->lookaheadEnable) { xFlt = yDl; }
     Audio yScFlt, ySc, y;
     if (this->mode == Mode::wide) {
-      yScFlt = this->scBpf.process(x);
+      yScFlt = this->scBpf.process(x / this->q);
       ySc    = sc.process(yScFlt);
       y      = xFlt * ySc;
     } else if (this->mode == Mode::shelf) {
@@ -118,8 +121,8 @@ struct ntDeEsser : public NtFx::NtPlugin {
       this->shelf.gain_lin = ySc.absMin();
       y                    = shelf.process(xFlt);
     } else if (this->mode == Mode::bell) {
-      yScFlt = this->scBpf.process(x);
-      ySc    = sc.process(yScFlt / this->q);
+      yScFlt = this->scBpf.process(x / this->q);
+      ySc    = sc.process(yScFlt);
       y      = xFlt - this->bpf.process(xFlt) * (Audio(1) - ySc) / this->q;
     }
     this->template updatePeakLevel<1>(y);
