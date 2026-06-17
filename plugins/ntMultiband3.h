@@ -46,9 +46,10 @@ struct ntMultiband3 : public NtFx::NtPlugin {
   bool bypassEnable { false };
   // bool noise { false };
 
-  std::array<bool, Bands::n> solos   = { false, false, false };
-  std::array<bool, Bands::n> mutesUi = { false, false, false };
-  std::array<bool, Bands::n> mutes   = { false, false, false };
+  std::array<bool, Bands::n> solos        = { false, false, false };
+  std::array<bool, Bands::n> mutesUi      = { false, false, false };
+  std::array<bool, Bands::n> mutes        = { false, false, false };
+  std::array<bool, Bands::n> compDisables = { false, false, false };
 
   std::array<NtFx::Comp::ScSettings, 3> scSettings;
   std::array<NtFx::Comp::PeakSideChainLinear, 3> sc;
@@ -139,6 +140,7 @@ struct ntMultiband3 : public NtFx::NtPlugin {
     this->toggleSets = {
       { "Solo", { } },
       { "Mute", { } },
+      { "Comp_Off", { } },
     };
     for (size_t i = 0; i < Bands::n; i++) {
       this->toggleSets[0].toggles.push_back({
@@ -147,6 +149,10 @@ struct ntMultiband3 : public NtFx::NtPlugin {
       });
       this->toggleSets[1].toggles.push_back({
           .p_val = &this->mutesUi[i],
+          .name  = BandNames[i],
+      });
+      this->toggleSets[2].toggles.push_back({
+          .p_val = &this->compDisables[i],
           .name  = BandNames[i],
       });
     }
@@ -178,6 +184,10 @@ struct ntMultiband3 : public NtFx::NtPlugin {
     }
     std::array<Audio, Bands::n> gr;
     for (size_t i = 0; i < Bands::n; i++) {
+      if (this->compDisables[i]) {
+        gr[i] = 1;
+        continue;
+      }
       gr[i] = this->sc[i].process(xSc[i]);
       if (this->linkEnable) { gr[i] = gr[i].absMin(); }
     }
@@ -221,9 +231,6 @@ struct ntMultiband3 : public NtFx::NtPlugin {
     this->loMidFlt.reset(this->fs);
     this->loFlt.reset(this->fs);
     for (size_t i = 0; i < Bands::n; i++) { this->sc[i].reset(this->fs); }
-    for (size_t i = 0; i < Bands::n; i++) { this->makeup_db[i] = 0; }
-    for (size_t i = 0; i < Bands::n; i++) { this->makeup_lin[i] = 1; }
-    for (size_t i = 0; i < Bands::n; i++) { this->fbState[i] = 0; }
     this->update();
   }
 

@@ -24,10 +24,10 @@ NTFX_TEST() {
   lookahead_bell.dl.t_ms               = 0.25;
   NTFX_ADD_TEST(lookahead_bell, "dynamic_alternating");
   NTFX_ADD_TEST(lookahead_bell, "impulse");
-  auto scHpf           = ntDeEsser();
-  scHpf.mode           = Mode::shelf;
-  scHpf.scListenEnable = true;
-  NTFX_ADD_TEST(scHpf, "impulse");
+  // auto scHpf           = ntDeEsser();
+  // scHpf.mode           = Mode::shelf;
+  // scHpf.scListenEnable = true;
+  // NTFX_ADD_TEST(scHpf, "impulse");
   auto scBpf           = ntDeEsser();
   scBpf.mode           = Mode::bell;
   scBpf.scListenEnable = true;

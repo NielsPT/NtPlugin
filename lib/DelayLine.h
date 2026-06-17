@@ -29,7 +29,7 @@ namespace Delay {
   template <int dlLen>
   struct ShortDelayLine : public ComponentBase<Audio> {
     signal_t t_ms { 0.25 };
-    int n { 1 };
+    int n { 0 };
     int i { 0 };
     std::array<Audio, dlLen> dl;
     ShortDelayLine() { }

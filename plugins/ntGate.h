@@ -37,7 +37,7 @@ struct ntGate : public NtFx::NtPlugin {
   NtFx::Gate::Sc scHf;
   NtFx::Comp::ScSettings ignoreScSettings;
   NtFx::Comp::PeakSideChainLinear ignoreSc;
-  NtFx::DynamicFilter::Shelf flt;
+  NtFx::DynamicFilter::ShelfFixedPoles flt;
   NtFx::Biquad::EqBand hpf;
   NtFx::Biquad::EqBand lpf;
   NtFx::Delay::ShortDelayLine<dlLookaheadLen> dl;

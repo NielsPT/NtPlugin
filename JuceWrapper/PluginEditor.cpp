@@ -628,7 +628,9 @@ void NtPluginAudioProcessorEditor::_updateUiScale() {
 
 void NtPluginAudioProcessorEditor::_updateOversampling() {
   auto p_box = this->titleBarDropDowns[e_oversampling].get();
-  this->proc.updateOversampling(p_box->getSelectedId());
+  auto mode  = p_box->getSelectedId();
+  if (this->proc.src.mode == mode) { return; }
+  this->proc.updateOversampling(mode);
 }
 
 void NtPluginAudioProcessorEditor::_updateTheme() {
