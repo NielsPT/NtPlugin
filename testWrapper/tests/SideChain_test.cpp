@@ -8,6 +8,7 @@ NTFX_TEST() {
   sharedSettings.ratio     = 3;
   sharedSettings.knee_db   = 0;
   sharedSettings.thresh_db = -6;
+  sharedSettings.tAtt_ms   = 1;
   sharedSettings.tRel_ms   = 20;
   auto peakDbSc            = NtFx::Comp::PeakSideChainDb(sharedSettings);
   NTFX_ADD_TEST(peakDbSc, "dynamic_alternating");

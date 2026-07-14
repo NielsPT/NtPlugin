@@ -28,7 +28,7 @@ namespace NtFx {
 namespace Delay {
   template <int dlLen>
   struct ShortDelayLine : public ComponentBase<Audio> {
-    signal_t t_ms { 0.25 };
+    signal_t t_ms { 0 };
     int n { 0 };
     int i { 0 };
     std::array<Audio, dlLen> dl;
@@ -36,6 +36,7 @@ namespace Delay {
     virtual Audio process(Audio x) noexcept override {
       this->dl[this->i++] = x;
       if (this->i >= dlLen) { this->i = 0; }
+      if (this->n == 0) { return x; }
       auto _i = this->i - this->n;
       if (_i < 0) { _i += dlLen; }
       return this->dl[_i];

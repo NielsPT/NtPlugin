@@ -18,12 +18,12 @@
 #pragma once
 
 #include "gcem.hpp"
-#include "juce_core/system/juce_PlatformDefs.h"
 #include "lib/Audio.h"
 #include "lib/PeakSensor.h"
 #include "lib/UiSpec.h"
 #include "lib/utils.h"
 
+#include "juce_core/system/juce_PlatformDefs.h"
 #include <cstdint>
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_devices/juce_audio_devices.h>

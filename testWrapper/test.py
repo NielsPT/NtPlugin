@@ -39,6 +39,11 @@ STIMULI = [
 ]
 FILE_DIR = os.path.dirname(__file__)
 
+BLACK = "\033[0m"
+RED = "\033[31m"
+GREEN = "\033[32m"
+YELLOW = "\033[33m"
+BLUE = "\033[34m"
 
 def generateImpulse(n: int) -> np.ndarray:
     """
@@ -189,7 +194,7 @@ def generateTestVectors(
 def _buildTestProg(cppPath: str) -> bool:
     os.makedirs(f"{FILE_DIR}/{TMP_DIR}", exist_ok=True)
     args = ["g++"]
-    if platform.system() == "macOS":
+    if platform.system() == "Darwin":
         args = ["clang++"]
     args += [
         cppPath,
@@ -200,7 +205,7 @@ def _buildTestProg(cppPath: str) -> bool:
         "--std=c++20",
         "-DNTFX_FS=48e3f",
         "-DNTFX_TESTING=1",
-        "-O0",
+        "-O0", 
     ]
     if platform.system() == "Windows":
         args = [
@@ -229,6 +234,8 @@ def _runTestProg() -> int:
         [f"{FILE_DIR}/{TMP_DIR}/main"],
         check=False,
     )
+    if res.returncode < 0:
+        print(f"{RED}Return code: {res.returncode}.{BLACK}")
     return res.returncode
 
 
@@ -584,16 +591,24 @@ def _plotDynamic(
     testFileName: str,
     legends: dict[str, list[str]],
     fs: float,
-):
-    if name in results and results[name]:
-        for i in range(3):
-            plotDynamic(
-                np.concatenate(results[name]),
-                fs,
-                f"{FILE_DIR}/img/{testFileName}{SEPARATOR}{name}{SEPARATOR}{i}.png",
-                legends[name],
-                i,
-            )
+)->bool:
+    if not (name in results and results[name]):
+        return False
+    try:
+        data = np.concatenate(results[name])
+    except ValueError as e:
+        print(f"{RED}Failed to read test result data for '{testFileName}': {e}{BLACK}")
+        return False
+    for i in range(3):
+        plotDynamic(
+            data,
+            fs,
+            f"{FILE_DIR}/img/{testFileName}{SEPARATOR}{name}{SEPARATOR}{i}.png",
+            legends[name],
+            i,
+        )
+    return True
+    
 
 
 def _readAndPlotTestResults(testFileName: str, fs: float):
@@ -754,7 +769,7 @@ def run(args: dict):
     if not results:
         return True
     print(
-        f"Ran {results["nTests"]} tests on {results["nObjects"]} objects "
+        f"Ran {results["nTests"]} tests "
         f"in {results["nFiles"]} test files. "
         f"{results["nSuccessful"]} succeeded. "
         f"({100.0 * results["nSuccessful"] /  results["nTests"]:.2f} %)"

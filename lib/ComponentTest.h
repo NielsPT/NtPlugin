@@ -138,11 +138,16 @@ struct ComponentTestSet {
    * @return false If any test failed. Missing expected vector is a failure.
    */
   bool getResults() {
+    auto success = nSuccessful == this->nTests && this->nTests > 0;
     std::cout << std::fixed << std::setprecision(2);
-    if (nSuccessful == this->nTests) {
+    if (success) {
       std::cout << "\033[32m";
     } else {
       std::cout << "\033[31m";
+    }
+    if (!this->nTests) {
+      std::cout << "No tests.\033[0m\n";
+      return false;
     }
     std::cout << "Ran a total of " << this->nTests << " test on "
               << this->tests.size() << " objects. " << this->nSuccessful
@@ -153,7 +158,7 @@ struct ComponentTestSet {
     auto f = std::ofstream("testWrapper/out/results.txt", std::ios_base::app);
     f << this->name << "," << this->nTests << "," << this->tests.size() << ","
       << this->nSuccessful << "\n";
-    return nSuccessful == nTests;
+    return success;
   }
 
   /**
@@ -286,7 +291,7 @@ struct ComponentTest {
     std::string line;
     while (std::getline(eFile, line)) {
       std::istringstream iss(line);
-      float l, r;
+      signal_t l, r;
       if (iss >> l >> r) {
         e.push_back({ l, r });
       } else {

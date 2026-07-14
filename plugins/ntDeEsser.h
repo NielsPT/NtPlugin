@@ -12,12 +12,12 @@ constexpr int dlLookaheadLen = 192 * 8 * 10;
 enum Mode { wide, shelf, bell };
 
 struct ntDeEsser : public NtFx::NtPlugin {
+  NtFx::Delay::ShortDelayLine<dlLookaheadLen> dl;
   NtFx::Comp::PeakSideChainLinear sc;
   NtFx::Biquad::EqBand scBpf;
   NtFx::DynamicFilter::ShelfFixedZeros shelf;
   NtFx::Biquad::EqBand bpf;
   NtFx::Comp::ScSettings scSettings;
-  NtFx::Delay::ShortDelayLine<dlLookaheadLen> dl;
   signal_t q { 1.0 };
   signal_t fc_hz { 4e3 };
   Mode mode { Mode::bell };

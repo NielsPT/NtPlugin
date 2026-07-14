@@ -17,14 +17,14 @@
  * Modified from JUCE template.
  **/
 
-#include "PluginProcessor.h"
-#include "PluginEditor.h"
-#include "juce_audio_basics/juce_audio_basics.h"
-#include "juce_core/system/juce_PlatformDefs.h"
 #include "lib/Audio.h"
 #include "lib/SampleRateConverter.h"
 #include "lib/UiSpec.h"
 
+#include "PluginEditor.h"
+#include "PluginProcessor.h"
+#include "juce_audio_basics/juce_audio_basics.h"
+#include "juce_core/system/juce_PlatformDefs.h"
 #include <cstddef>
 #include <string>
 #include <type_traits>
