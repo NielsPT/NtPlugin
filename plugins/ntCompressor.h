@@ -23,6 +23,7 @@
 #include "lib/Audio.h"
 #include "lib/Biquad.h"
 #include "lib/Comp.h"
+#include "lib/DelayLine.h"
 #include "lib/Plugin.h"
 #include "lib/SoftClip.h"
 #include "lib/utils.h"
@@ -30,6 +31,7 @@
 enum scMode { feedForward = 0, feedback, external };
 
 struct ntCompressor : public NtFx::NtPlugin {
+  NtFx::Delay::ShortDelayLine<192 * 8 * 10> dl;
   NtFx::Comp::ScSettings scSettings;
   NtFx::Comp::PeakSideChainDb peakScDb;
   NtFx::Comp::PeakSideChainLinear peakScLin;
@@ -101,8 +103,22 @@ struct ntCompressor : public NtFx::NtPlugin {
           .maxVal = 24.0,
       },
       {
+          .p_val  = &this->dl.t_ms,
+          .name   = "Lookahead",
+          .suffix = " ms",
+          .minVal = 0,
+          .maxVal = 10,
+      },
+      {
+          .p_val  = &this->scSettings.tPeakHold_ms,
+          .name   = "Peak_Hold",
+          .suffix = " ms",
+          .minVal = 0,
+          .maxVal = 10,
+      },
+      {
           .p_val  = &this->scSettings.tRms_ms,
-          .name   = "RMS_time",
+          .name   = "RMS_Time",
           .suffix = " ms",
           .minVal = 1.0,
           .maxVal = 250.0,
@@ -117,10 +133,18 @@ struct ntCompressor : public NtFx::NtPlugin {
       },
       {
           .p_val  = &this->boost.settings.gain_db,
-          .name   = "SC_Boost",
+          .name   = "SC_Boost_Gain",
           .suffix = " dB",
           .minVal = 0.0,
           .maxVal = 24.0,
+      },
+      {
+          .p_val    = &this->boost.settings.fc_hz,
+          .name     = "SC_Boost_Freq",
+          .suffix   = " Hz",
+          .minVal   = 20,
+          .maxVal   = 20e3,
+          .midPoint = 2e3,
       },
       {
           .p_val  = &this->mix_percent,
@@ -174,16 +198,15 @@ struct ntCompressor : public NtFx::NtPlugin {
     }
     NtFx::ensureFinite(x);
     NtFx::ensureFinite(this->fbState);
+    auto yDl   = this->dl.process(x);
     Audio xHpf = x;
     if (this->scMode == scMode::feedback) {
       xHpf = this->fbState;
     } else if (this->scMode == scMode::external) {
       xHpf = this->xSc;
     }
-
-    Audio xBoost = hpf.process(xHpf);
-    Audio xSc    = boost.process(xBoost);
-
+    auto xBoost = hpf.process(xHpf);
+    auto xSc    = boost.process(xBoost);
     Audio gr;
     if (this->linEnable) {
       if (this->rmsEnable) {
@@ -200,12 +223,13 @@ struct ntCompressor : public NtFx::NtPlugin {
     }
     this->template updatePeakLevel<2, true>(gr);
     NtFx::ensureFinite(gr, signal_t(1.0));
-    Audio yComp   = x * gr;
-    this->fbState = yComp;
+    auto xComp    = yDl;
+    auto yComp    = xComp * gr;
+    this->fbState = x * gr;
     auto xClip    = yComp * this->makeup_lin;
     auto xMix     = xClip;
     if (this->clip) { xMix = NtFx::softClip5thStereo(xClip); }
-    auto y = this->mix_lin * xMix + (1 - this->mix_lin) * x;
+    auto y = this->mix_lin * xMix + (1 - this->mix_lin) * xComp;
     this->template updatePeakLevel<1>(y);
     if (this->scListenEnable) { return xSc; }
     return y;
@@ -223,6 +247,8 @@ struct ntCompressor : public NtFx::NtPlugin {
     this->peakScLin.update();
     this->rmsScDb.update();
     this->rmsScLin.update();
+    this->dl.update();
+    this->latency    = this->dl.n;
     this->makeup_lin = NtFx::invDb(this->makeup_db);
     this->mix_lin    = this->mix_percent / 100.0;
   }
@@ -236,6 +262,7 @@ struct ntCompressor : public NtFx::NtPlugin {
     this->rmsScLin.reset(this->fs);
     this->hpf.reset(this->fs);
     this->boost.reset(this->fs);
+    this->dl.reset(this->fs);
     this->update();
   }
 };
