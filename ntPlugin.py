@@ -125,7 +125,7 @@ struct {name} : public NtFx::NtPlugin {{
       this->template updatePeakLevel<1>(x);
       return x;
     }}
-    auto y = {{ 0, 0 }};
+    Audio y = {{ 0, 0 }};
     // TODO: processing.
     this->template updatePeakLevel<1>(y);
     return y;
