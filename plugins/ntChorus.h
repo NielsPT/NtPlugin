@@ -21,15 +21,15 @@
 #pragma once
 
 #include "lib/Audio.h"
+#include "lib/DelayLine.h"
 #include "lib/Plugin.h"
 #include "lib/utils.h"
-#include "plugins/ntDeEsser.h"
 
 constexpr int tDlMax = 100;
 
 struct ntChorus : public NtFx::NtPlugin {
-  NtFx::Delay::ShortDelayLine<192 * 8 * tDlMax, signal_t> dlL;
-  NtFx::Delay::ShortDelayLine<192 * 8 * tDlMax, signal_t> dlR;
+  NtFx::Delay::FractDelayLine<192 * 8 * tDlMax, signal_t, 4> dlL;
+  NtFx::Delay::FractDelayLine<192 * 8 * tDlMax, signal_t, 4> dlR;
   NtFx::Delay::ShortDelayLine<192 * 8 * tDlMax, Audio> dlWet;
   signal_t tDelayMod_ms { 10 };
   signal_t tDelayMod_s { 0.025 };
