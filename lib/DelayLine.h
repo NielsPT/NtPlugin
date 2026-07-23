@@ -26,14 +26,14 @@
 #include "lib/Component.h"
 namespace NtFx {
 namespace Delay {
-  template <int dlLen>
-  struct ShortDelayLine : public ComponentBase<Audio> {
+  template <int dlLen, typename T = Audio>
+  struct ShortDelayLine : public ComponentBase<T> {
     signal_t t_ms { 0 };
     int n { 0 };
     int i { 0 };
-    std::array<Audio, dlLen> dl;
+    std::array<T, dlLen> dl;
     ShortDelayLine() { }
-    virtual Audio process(Audio x) noexcept override {
+    virtual T process(T x) noexcept override {
       this->dl[this->i++] = x;
       if (this->i >= dlLen) { this->i = 0; }
       if (this->n == 0) { return x; }

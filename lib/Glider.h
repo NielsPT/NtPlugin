@@ -22,6 +22,7 @@
  */
 
 #include "gcem.hpp"
+#include "lib/Audio.h"
 
 // TODO: Make this a Component.
 /**
