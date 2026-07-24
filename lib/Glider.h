@@ -60,13 +60,13 @@ struct ExpGlider {
    * @param fs Sample rate
    * @param tSmooth Smoothing time constant.
    */
-  inline void update(signal_t fs, signal_t tSmooth) noexcept {
-    if (tSmooth <= 0) {
+  inline void update(signal_t fs, signal_t tSmooth_s = 0.1) noexcept {
+    if (tSmooth_s <= 0) {
       this->_a = 0;
       this->pr = this->ui;
       return;
     }
-    this->_a = 1.0 - gcem::exp(-1.0 / (fs * tSmooth));
+    this->_a = 1.0 - gcem::exp(-1.0 / (fs * tSmooth_s));
   }
 };
 

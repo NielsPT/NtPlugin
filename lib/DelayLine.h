@@ -24,12 +24,14 @@
  */
 #include "lib/Audio.h"
 #include "lib/Component.h"
+#include "lib/Glider.h"
 #include <array>
 namespace NtFx {
 namespace Delay {
   template <int dlLen, typename T = Audio>
   struct ShortDelayLine : public ComponentBase<T> {
     std::array<T, dlLen> dl;
+    // TODO: Glide delay time. Separate class? Or just the way it is?
     signal_t t_ms { 0 };
     int n { 0 };
     int i { 0 };
@@ -45,6 +47,38 @@ namespace Delay {
 
     virtual void update() noexcept override {
       this->n = int(this->t_ms * 0.001 * this->fs);
+      if (this->n >= dlLen) { this->n = dlLen; }
+    }
+
+    virtual void reset(float fs) noexcept override {
+      this->fs = fs;
+      std::fill(this->dl.begin(), this->dl.end(), 0);
+      this->update();
+    }
+  };
+
+  template <int dlLen, typename T = Audio>
+  struct ShortGlideDelayLine : public ComponentBase<T> {
+    std::array<T, dlLen> dl;
+    // TODO: Glide delay time. Separate class? Or just the way it is?
+    ExpGlider t_ms { 0 };
+    int i { 0 };
+
+    virtual T process(T x) noexcept override {
+      this->t_ms.process();
+      this->dl[this->i++] = x;
+      if (this->i >= dlLen) { this->i = 0; }
+      int n { 0 };
+      n = int(this->t_ms.pr * 0.001 * this->fs);
+      if (n == 0) { return x; }
+      auto _i = this->i - n;
+      if (_i < 0) { _i += dlLen; }
+      return this->dl[_i];
+    }
+
+    virtual void update() noexcept override {
+      this->t_ms.update(this->fs);
+      this->t_ms.process();
       if (this->n >= dlLen) { this->n = dlLen; }
     }
 
