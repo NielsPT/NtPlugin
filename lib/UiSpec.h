@@ -46,6 +46,7 @@ struct KnobSpec {
   signal_t maxVal { 1.0 };   ///< End level of knob,
   bool logScale { false };   ///< Call setLogScale at construction.
   bool isActive { true };    ///< Gray out knob and make it unresponsive.
+  // TODO: Put midpoint back in the correct place.
   signal_t midPoint { 0.0 }; ///< Sets the middel of the knob. 0 for don't care.
   signal_t _defaultVal;      ///< Default value. Set by updateDefaults().
   void setLogScale() {       ///< Sets midPoint for logarithmic scale.
