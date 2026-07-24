@@ -26,7 +26,7 @@
 #include "lib/Plugin.h"
 #include "lib/utils.h"
 
-constexpr int tDlMax = 100;
+constexpr int tDlMax = 40;
 
 struct ntChorus : public NtFx::NtPlugin {
   NtFx::Delay::FractDelayLine<192 * 8 * tDlMax, signal_t, 4> dlL;
@@ -34,13 +34,9 @@ struct ntChorus : public NtFx::NtPlugin {
   NtFx::Delay::ShortGlideDelayLine<192 * 8 * tDlMax, Audio> dlWet;
   NtFx::ExpGlider tDelayMod_s;
   NtFx::ExpGlider phaseMod_rad;
-  // NtFx::ExpGlider depth_lin;
   NtFx::ExpGlider fMod_hz { 0.25 };
   signal_t tDelayMod_ms { 10 };
   signal_t phaseMod_deg { 90 };
-  signal_t depth_p { 25 };
-  // signal_t mix_p { 50 };
-  // signal_t mix_lin { 0.5 };
   signal_t gWet_db { -3 };
   signal_t gDry_db { -3 };
   signal_t gWet_lin { 1 };
@@ -55,24 +51,23 @@ struct ntChorus : public NtFx::NtPlugin {
       { &this->fMod_hz.ui, "Rate", " Hz", 0.1, 10, 1 },
       { &this->dlWet.t_ms.ui, "Delay", " ms", 0, tDlMax },
       { &this->tDelayMod_ms, "Depth", " ms", 0, tDlMax / 2.0 },
-      // { &this->depth_p, "Depth", " %", 0, 100 },
       { &this->phaseMod_deg, "Mod_phase", " deg", 0, 180 },
     };
     this->secondaryKnobs = {
       { &this->gDry_db, "Dry", " dB", -100, 0 },
       { &this->gWet_db, "Wet", " dB", -100, 0 },
-      // { &this->mix_p, "Mix", " %", 0, 100 },
     };
     this->toggles = {
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
+    this->dlWet.t_ms.ui = 10;
+    this->dlWet.t_ms.pr = 10;
     this->updateDefaults();
   }
 
   Audio process(Audio x) noexcept override {
     this->tDelayMod_s.process();
     this->phaseMod_rad.process();
-    // this->depth_lin.process();
     this->fMod_hz.process();
     this->template updatePeakLevel<0>(x);
     if (this->bypassEnable) {
@@ -82,14 +77,12 @@ struct ntChorus : public NtFx::NtPlugin {
     signal_t omegaT_rad = 2 * GCEM_PI * this->fMod_hz.pr * this->_t;
     this->_t += this->tSample;
     if (this->_t >= 1 / this->fMod_hz.pr) { this->_t = 0; }
-    // TODO: modDelayLine. Inherits InterSampleDelayLine.
     this->dlL.t_ms =
-        (gcem::sin(omegaT_rad) * this->tDelayMod_s.pr // * this->depth_lin.pr
-            + this->tDelayMod_s.pr)
+        (gcem::sin(omegaT_rad) * this->tDelayMod_s.pr + this->tDelayMod_s.pr)
         * 1000;
-    this->dlR.t_ms = (gcem::sin(omegaT_rad + this->phaseMod_rad.pr)
-                             * this->tDelayMod_s.pr // * this->depth_lin.pr
-                         + this->tDelayMod_s.pr)
+    this->dlR.t_ms =
+        (gcem::sin(omegaT_rad + this->phaseMod_rad.pr) * this->tDelayMod_s.pr
+            + this->tDelayMod_s.pr)
         * 1000;
     this->dlL.update();
     this->dlR.update();
@@ -97,24 +90,19 @@ struct ntChorus : public NtFx::NtPlugin {
     Audio xDlWet = { this->dlL.process(x.l), this->dlR.process(x.r) };
     Audio xMix   = this->dlWet.process(xDlWet);
     Audio y      = xMix * gWet_lin + x * gDry_lin;
-    // y          = xMix * this->mix_lin + x * (1 - this->mix_lin);
-    // y *= (2 - gcem::abs(this->mix_lin * 2 - 1));
     this->template updatePeakLevel<1>(y);
     return y;
   }
 
   void update() noexcept override {
-    // this->mix_lin      = mix_p / 100;
-    this->tDelayMod_s.update(this->fs);
-    this->phaseMod_rad.update(this->fs);
-    // this->depth_lin.update(this->fs);
-    this->fMod_hz.update(this->fs);
-    this->gWet_lin = NtFx::invDb(this->gWet_db);
-    this->gDry_lin = NtFx::invDb(this->gDry_db);
-    // this->depth_lin.ui    = depth_p / 100;
+    this->gWet_lin        = NtFx::invDb(this->gWet_db);
+    this->gDry_lin        = NtFx::invDb(this->gDry_db);
     this->tDelayMod_s.ui  = this->tDelayMod_ms / 2000;
     this->phaseMod_rad.ui = this->phaseMod_deg * GCEM_PI / 180;
     this->tSample         = 1 / this->fs;
+    this->fMod_hz.update(this->fs);
+    this->phaseMod_rad.update(this->fs);
+    this->tDelayMod_s.update(this->fs);
     this->dlWet.update();
   }
 

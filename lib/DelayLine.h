@@ -71,6 +71,7 @@ namespace Delay {
       int n { 0 };
       n = int(this->t_ms.pr * 0.001 * this->fs);
       if (n == 0) { return x; }
+      if (n >= dlLen) { n = dlLen; }
       auto _i = this->i - n;
       if (_i < 0) { _i += dlLen; }
       return this->dl[_i];
@@ -79,7 +80,6 @@ namespace Delay {
     virtual void update() noexcept override {
       this->t_ms.update(this->fs);
       this->t_ms.process();
-      if (this->n >= dlLen) { this->n = dlLen; }
     }
 
     virtual void reset(float fs) noexcept override {
