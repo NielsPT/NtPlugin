@@ -81,6 +81,9 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   std::vector<std::unique_ptr<juce::Label>> primaryKnobLabels;
   std::vector<std::unique_ptr<juce::Slider>> secondaryKnobs;
   std::vector<std::unique_ptr<juce::Label>> secondaryKnobLabels;
+  std::vector<std::unique_ptr<juce::Label>> knobGroupLabels;
+  std::vector<std::vector<std::unique_ptr<juce::Slider>>> knobGroups;
+  std::vector<std::vector<std::unique_ptr<juce::Label>>> groupKnobLabels;
   std::vector<std::unique_ptr<NtFx::Toggle>> toggles;
   std::vector<std::unique_ptr<juce::ComboBox>> dropDowns;
   std::vector<std::unique_ptr<juce::Label>> dropDownLabels;
@@ -115,6 +118,8 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   // Initializers.
   void _initPrimaryKnob(NtFx::KnobSpec& p_spec);
   void _initSecondaryKnob(NtFx::KnobSpec& p_spec);
+  void _initKnobGroup(int iGroup, NtFx::KnobGroupSpec& p_group);
+  void _initGroupKnob(int iGroup, NtFx::KnobSpec& p_spec);
   void _initKnob(NtFx::KnobSpec& p_spec,
       std::unique_ptr<juce::Slider>& p_slider,
       std::unique_ptr<juce::Label>& p_label);
@@ -126,6 +131,7 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
 
   // UI update.
   void _updateUi();
+  void _updateKnobGroups(juce::Rectangle<int>& area);
   void _updateTitleBar(juce::Rectangle<int>& area);
   void _updateMeters(juce::Rectangle<int>& area);
   void _updateSecondaryKnobs(juce::Rectangle<int>& area);

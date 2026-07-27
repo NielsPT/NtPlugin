@@ -60,8 +60,22 @@ struct ntChorus : public NtFx::NtPlugin {
     };
     this->secondaryKnobs = {
       { &this->phaseMod_deg, "Mod_phase", " deg", 0, 180 },
-      { &this->fcHpf_hz, "HPF", " Hz", 20, 20e3, .midPoint = 2e3 },
-      { &this->fcLpf_hz, "LPF", " Hz", 20, 20e3, .midPoint = 2e3 },
+      {
+          .p_val    = &this->fcHpf_hz,
+          .name     = "HPF",
+          .suffix   = " Hz",
+          .minVal   = 20,
+          .maxVal   = 20e3,
+          .midPoint = 2e3,
+      },
+      {
+          .p_val    = &this->fcLpf_hz,
+          .name     = "LPF",
+          .suffix   = " Hz",
+          .minVal   = 20,
+          .maxVal   = 20e3,
+          .midPoint = 2e3,
+      },
       { &this->gDry_db, "Dry", " dB", -100, 0 },
       { &this->gWet_db, "Wet", " dB", -100, 0 },
     };

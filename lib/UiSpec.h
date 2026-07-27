@@ -55,6 +55,16 @@ struct KnobSpec {
 };
 
 /**
+ * @brief Spec for a group of knobs.
+ *
+ */
+struct KnobGroupSpec {
+  std::string name;
+  std::vector<KnobSpec> primaryKnobs;
+  std::vector<KnobSpec> secondaryKnobs;
+};
+
+/**
  * @brief Specification for toggles in UI.
  *
  */

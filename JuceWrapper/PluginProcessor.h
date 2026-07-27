@@ -88,6 +88,7 @@ struct NtPluginAudioProcessor : public juce::AudioProcessor {
   void loadParameter(std::vector<T>& v);
   void loadRadioButtons(std::vector<NtFx::RadioButtonSetSpec>& v);
   void loadToggleSets(std::vector<NtFx::ToggleSetSpec>& v);
+  void loadGroupKnobs(std::vector<NtFx::KnobSpec>& v, std::string groupName);
 
   template <typename t_val, typename t_spec>
   void createParameters(std::vector<t_spec>& vParams,

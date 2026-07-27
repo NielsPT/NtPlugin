@@ -160,6 +160,10 @@ void NtPluginAudioProcessor::setStateInformation(
   if (xmlState.get() == nullptr) { return; }
   if (!xmlState->hasTagName(this->paramLayout.state.getType())) { return; }
   this->paramLayout.replaceState(juce::ValueTree::fromXml(*xmlState));
+  for (auto& g : this->plug.knobGroups) {
+    this->loadGroupKnobs(g.primaryKnobs, g.name);
+    this->loadGroupKnobs(g.secondaryKnobs, g.name);
+  }
   this->loadParameter(this->plug.primaryKnobs);
   this->loadParameter(this->plug.secondaryKnobs);
   this->loadParameter(this->plug.toggles);
@@ -202,12 +206,23 @@ void NtPluginAudioProcessor::loadToggleSets(
     std::vector<NtFx::ToggleSetSpec>& v) {
   for (auto& p : v) {
     for (size_t i = 0; i < p.toggles.size(); i++) {
+      // TODO: What if we store the mangled name as well?
       auto mangledName =
           NtFx::makeTmpToggle(p.name, p.toggles[i].name, "toggleGroup").name;
       auto par            = this->paramLayout.getParameterAsValue(mangledName);
       *p.toggles[i].p_val = par.getValue();
       DBG("Loaded '" << mangledName << "': " << float(*p.toggles[i].p_val));
     }
+  }
+}
+
+void NtPluginAudioProcessor::loadGroupKnobs(
+    std::vector<NtFx::KnobSpec>& v, std::string groupName) {
+  for (auto& p : v) {
+    auto mangledName = "knobGroup:" + groupName + ":" + p.name;
+    auto par         = this->paramLayout.getParameterAsValue(mangledName);
+    *p.p_val         = par.getValue();
+    DBG("Loaded '" << mangledName << "': " << float(*p.p_val));
   }
 }
 
@@ -226,6 +241,25 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 NtPluginAudioProcessor::createParameterLayout() {
   int i = 1;
   juce::AudioProcessorValueTreeState::ParameterLayout parameters;
+
+  std::vector<NtFx::KnobSpec> vTmpKnobs;
+  // TODO: Make this a function. DRY!
+  for (auto& g : this->plug.knobGroups) {
+    vTmpKnobs.clear();
+    for (auto& k : g.primaryKnobs) {
+      NtFx::KnobSpec _k = k;
+      _k.name           = "knobGroup:" + g.name + ":" + k.name;
+      vTmpKnobs.push_back(_k);
+    }
+    this->createParameters<float>(vTmpKnobs, parameters, i);
+    vTmpKnobs.clear();
+    for (auto& k : g.secondaryKnobs) {
+      NtFx::KnobSpec _k = k;
+      _k.name           = "knobGroup:" + g.name + ":" + k.name;
+      vTmpKnobs.push_back(_k);
+    }
+    this->createParameters<float>(vTmpKnobs, parameters, i);
+  }
   this->createParameters<float>(this->plug.primaryKnobs, parameters, i);
   this->createParameters<float>(this->plug.secondaryKnobs, parameters, i);
   this->createParameters<bool>(this->plug.toggles, parameters, i);

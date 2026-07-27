@@ -37,6 +37,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 // TODO: Major refactor. There are SO many repitions in this file.
 enum TitleBarDropDowns { e_uiScale, e_theme, e_oversampling };
@@ -50,6 +51,9 @@ NtPluginAudioProcessorEditor::NtPluginAudioProcessorEditor(
   for (auto& k : this->proc.plug.primaryKnobs) { this->_initPrimaryKnob(k); }
   for (auto& k : this->proc.plug.secondaryKnobs) {
     this->_initSecondaryKnob(k);
+  }
+  for (size_t i = 0; i < this->proc.plug.knobGroups.size(); i++) {
+    this->_initKnobGroup(i, this->proc.plug.knobGroups[i]);
   }
   for (auto& t : this->proc.plug.toggles) { this->_initToggle(t); }
   for (auto& g : this->proc.plug.toggleSets) { this->_initToggleGroup(g); }
@@ -163,31 +167,52 @@ void NtPluginAudioProcessorEditor::_initPrimaryKnob(NtFx::KnobSpec& spec) {
   this->primaryKnobLabels.push_back(std::move(p_label));
 }
 
-void NtPluginAudioProcessorEditor::_initSecondaryKnob(NtFx::KnobSpec& spec) {
-  std::string name = spec.name;
+void NtPluginAudioProcessorEditor::_initSecondaryKnob(NtFx::KnobSpec& r_spec) {
+  std::string name = r_spec.name;
   auto p_knob      = std::make_unique<juce::Slider>(name);
-  auto p_label     = this->_makeLabel(spec.name);
-  this->_initKnob(spec, p_knob, p_label);
+  auto p_label     = this->_makeLabel(r_spec.name);
+  this->_initKnob(r_spec, p_knob, p_label);
   this->secondaryKnobs.push_back(std::move(p_knob));
   this->secondaryKnobLabels.push_back(std::move(p_label));
 }
 
+void NtPluginAudioProcessorEditor::_initKnobGroup(
+    int iGroup, NtFx::KnobGroupSpec& r_spec) {
+  this->knobGroups.push_back({ });
+  this->groupKnobLabels.push_back({ });
+  auto p_label = this->_makeLabel(r_spec.name);
+  this->knobGroupLabels.push_back(std::move(p_label));
+  for (int i = 0; i < r_spec.primaryKnobs.size(); i++) {
+    this->_initGroupKnob(iGroup, r_spec.primaryKnobs[i]);
+  }
+}
+
+void NtPluginAudioProcessorEditor::_initGroupKnob(
+    int iGroup, NtFx::KnobSpec& r_spec) {
+  auto p_knob  = std::make_unique<juce::Slider>("knobGroup:"
+      + this->proc.plug.knobGroups[iGroup].name + ":" + r_spec.name);
+  auto p_label = this->_makeLabel(r_spec.name);
+  this->_initKnob(r_spec, p_knob, p_label);
+  this->knobGroups[iGroup].push_back(std::move(p_knob));
+  this->groupKnobLabels[iGroup].push_back(std::move(p_label));
+}
+
 void NtPluginAudioProcessorEditor::_initKnob(NtFx::KnobSpec& spec,
-    std::unique_ptr<juce::Slider>& p_slider,
-    std::unique_ptr<juce::Label>& p_label) {
+    std::unique_ptr<juce::Slider>& r_slider,
+    std::unique_ptr<juce::Label>& r_label) {
   if (!spec.p_val) { return; }
-  p_slider->setLookAndFeel(&this->knobLookAndFeel);
+  r_slider->setLookAndFeel(&this->knobLookAndFeel);
   std::string name(spec.name);
   std::replace(name.begin(), name.end(), '_', ' ');
-  p_slider->setTextValueSuffix(spec.suffix);
-  p_slider->setSliderStyle(juce::Slider::SliderStyle::Rotary);
-  p_slider->addListener(this);
-  this->addAndMakeVisible(p_slider.get());
+  r_slider->setTextValueSuffix(spec.suffix);
+  r_slider->setSliderStyle(juce::Slider::SliderStyle::Rotary);
+  r_slider->addListener(this);
+  this->addAndMakeVisible(r_slider.get());
   this->knobAttachments.emplace_back(
       new juce::AudioProcessorValueTreeState::SliderAttachment(
-          this->proc.paramLayout, spec.name, *p_slider));
-  p_slider->setRange(spec.minVal, spec.maxVal);
-  if (spec.midPoint) { p_slider->setSkewFactorFromMidPoint(spec.midPoint); }
+          this->proc.paramLayout, r_slider->getName(), *r_slider));
+  r_slider->setRange(spec.minVal, spec.maxVal);
+  if (spec.midPoint) { r_slider->setSkewFactorFromMidPoint(spec.midPoint); }
 }
 
 void NtPluginAudioProcessorEditor::_initToggle(NtFx::ToggleSpec& spec) {
@@ -226,17 +251,30 @@ void NtPluginAudioProcessorEditor::_initWindowSize() {
     width += this->proc.plug.uiSpec.radioButtonAreaWidth;
   }
   width += nCols * this->proc.plug.uiSpec.knobWidth;
+  // TODO: Magic number. Put in UI Spec.
+  width += this->proc.plug.knobGroups.size() * 200 + 20;
   this->unscaledWindowWidth = width;
   auto height               = 0;
   if (this->proc.plug.uiSpec.includeTitleBar) {
     height += this->proc.plug.uiSpec.titleBarHeight;
   }
-  height += nRows * this->proc.plug.uiSpec.knobHeight;
+  auto primHeight = nRows * this->proc.plug.uiSpec.knobHeight;
+  height += primHeight;
   if (this->proc.plug.secondaryKnobs.size() != 0) {
     height += this->proc.plug.uiSpec.secondaryKnobHeight;
   }
   if (this->proc.plug.toggles.size() != 0) {
     height += this->proc.plug.uiSpec.toggleHeight;
+  }
+  if (this->proc.plug.knobGroups.size()) {
+    height += this->proc.plug.uiSpec.labelHeight;
+    int max = 0;
+    for (auto& g : this->proc.plug.knobGroups) {
+      if (g.primaryKnobs.size() > max) { max = g.primaryKnobs.size(); }
+    }
+    // TODO: more magic numbers.
+    auto groupsHeight = (120 + 10) * (max % 2 + max / 2) + 40 * max % 2;
+    if (groupsHeight > primHeight) { height += groupsHeight - primHeight; }
   }
   if (this->proc.plug.uiSpec.includeMeters) {
     auto minHeight = this->meters.getMinimalHeight();
@@ -318,6 +356,7 @@ void NtPluginAudioProcessorEditor::_updateUi() {
       && this->proc.plug.secondaryKnobs.size()) {
     this->_updateSecondaryKnobs(area);
   }
+  if (this->proc.plug.knobGroups.size()) { this->_updateKnobGroups(area); }
   if (this->proc.plug.primaryKnobs.size()) { this->_updatePrimaryKnobs(area); }
   this->repaint();
 }
@@ -470,6 +509,66 @@ void NtPluginAudioProcessorEditor::_updateSecondaryKnobs(
   }
 }
 
+void NtPluginAudioProcessorEditor::_updateKnobGroups(
+    juce::Rectangle<int>& area) {
+  const int groupWidth = 200;
+  const int rOffset    = 40;
+  const int knobWidth  = groupWidth / 2;
+  const int knobHeight = 120;
+  for (int i = 0; i < this->proc.plug.knobGroups.size(); i++) {
+    auto groupArea = area.removeFromLeft(groupWidth);
+    this->borderedAreas.push_back(groupArea);
+    auto groupLableArea =
+        groupArea.removeFromTop(this->proc.plug.uiSpec.labelHeight);
+    this->knobGroupLabels[i]->setBounds(groupLableArea);
+    std::vector<NtFx::KnobSpec> lhs;
+    std::vector<NtFx::KnobSpec> rhs;
+    auto& g = this->proc.plug.knobGroups[i];
+    for (size_t j = 0; j < g.primaryKnobs.size(); j++) {
+      if (!(j % 2)) {
+        lhs.push_back(g.primaryKnobs[j]);
+      } else {
+        rhs.push_back(g.primaryKnobs[j]);
+      }
+    }
+    auto lArea = groupArea.removeFromLeft(knobWidth * this->uiScale);
+    for (size_t j = 0; j < lhs.size(); j++) {
+      auto kArea = lArea.removeFromTop(knobHeight * this->uiScale);
+      // TODO: Store padding somewhere.
+      kArea.removeFromTop(10 * this->uiScale);
+      auto labelArea = kArea.removeFromTop(
+          this->proc.plug.uiSpec.labelHeight * this->uiScale);
+      this->groupKnobLabels[i][j * 2]->setBounds(labelArea);
+      this->knobGroups[i][j * 2]->setBounds(kArea);
+      this->groupKnobLabels[i][j * 2]->setFont(juce::FontOptions(
+          this->proc.plug.uiSpec.defaultFontSize * this->uiScale));
+      this->knobGroups[i][j * 2]->setTextBoxStyle(juce::Slider::TextBoxBelow,
+          false,
+          80 * this->uiScale,
+          this->proc.plug.uiSpec.labelHeight * this->uiScale);
+    }
+    // TODO: DRY!
+    groupArea.removeFromTop(rOffset * this->uiScale);
+    for (size_t j = 0; j < rhs.size(); j++) {
+      auto kArea = groupArea.removeFromTop(knobHeight * this->uiScale);
+      kArea.removeFromTop(10 * this->uiScale);
+      auto labelArea = kArea.removeFromTop(
+          this->proc.plug.uiSpec.labelHeight * this->uiScale);
+      if (this->groupKnobLabels[i][j * 2 + 1]) {
+        this->groupKnobLabels[i][j * 2 + 1]->setBounds(labelArea);
+        this->knobGroups[i][j * 2 + 1]->setBounds(kArea);
+        this->groupKnobLabels[i][j * 2 + 1]->setFont(juce::FontOptions(
+            this->proc.plug.uiSpec.defaultFontSize * this->uiScale));
+        this->knobGroups[i][j * 2 + 1]->setTextBoxStyle(
+            juce::Slider::TextBoxBelow,
+            false,
+            80 * this->uiScale,
+            this->proc.plug.uiSpec.labelHeight * this->uiScale);
+      }
+    }
+  }
+}
+
 void NtPluginAudioProcessorEditor::_updatePrimaryKnobs(
     juce::Rectangle<int>& area) {
   auto pad    = 10 * this->uiScale;
@@ -557,7 +656,7 @@ void NtPluginAudioProcessorEditor::sliderValueChanged(juce::Slider* p_slider) {
   auto name   = p_slider->getName().toStdString();
   auto* p_val = this->proc.plug.getKnobValuePtr(name);
   if (!p_val) {
-    DBG("Knob name in UI not found in plugin knobs.");
+    DBG("Knob name in UI not found in plugin knobs: '" + name + '.');
     return;
   }
   *p_val = p_slider->getValue();

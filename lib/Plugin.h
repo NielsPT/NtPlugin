@@ -57,6 +57,9 @@ struct NtPlugin : public ComponentBase<Audio> {
    */
   UiSpec uiSpec;
 
+  // TODO: A proper class for this with name and primary and secondary knobs.
+  std::vector<KnobGroupSpec> knobGroups;
+
   /**
    * @brief vector of primary knobs. Add your number paramters to this to
    * display them in the UI.
@@ -141,6 +144,19 @@ struct NtPlugin : public ComponentBase<Audio> {
     }
     for (auto param : this->secondaryKnobs) {
       if (param.name == name) { return param.p_val; }
+    }
+    for (auto& g : this->knobGroups) {
+      for (auto param : g.primaryKnobs) {
+        // TODO: More generalized name mangling.
+        if (name == "knobGroup:" + g.name + ":" + param.name) {
+          return param.p_val;
+        }
+      }
+      for (auto param : g.secondaryKnobs) {
+        if (name == "knobGroup:" + g.name + ":" + param.name) {
+          return param.p_val;
+        }
+      }
     }
     return nullptr;
   }
@@ -238,6 +254,12 @@ struct NtPlugin : public ComponentBase<Audio> {
    *
    */
   constexpr void updateDefaults() noexcept {
+    for (auto& g : this->knobGroups) {
+      for (auto& k : g.primaryKnobs) {
+        if (k.p_val) { k._defaultVal = *k.p_val; }
+        if (k.logScale) { k.setLogScale(); }
+      }
+    }
     for (auto& k : this->primaryKnobs) {
       if (k.p_val) { k._defaultVal = *k.p_val; }
       if (k.logScale) { k.setLogScale(); }

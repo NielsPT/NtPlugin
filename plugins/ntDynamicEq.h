@@ -30,87 +30,84 @@ struct ntDynamicEq : public NtFx::NtPlugin {
             scSettings[3],
         }) {
     for (size_t i = 0; i < Bands::n; i++) {
-      this->primaryKnobs.push_back({
+      this->knobGroups.push_back({ .name = bandNames[i] });
+    }
+    for (size_t i = 0; i < Bands::n; i++) {
+      this->knobGroups[i].primaryKnobs.push_back({
           .p_val  = &this->bands[i].settings.gain_db,
-          .name   = bandNames[i] + "_Gain",
+          .name   = "Gain",
           .suffix = " dB",
           .minVal = -20,
           .maxVal = 20,
       });
-    }
-    for (size_t i = 0; i < Bands::n; i++) {
-      this->primaryKnobs.push_back({
+
+      this->knobGroups[i].primaryKnobs.push_back({
           .p_val    = &this->bands[i].settings.fc_hz,
-          .name     = bandNames[i] + "_Freq",
+          .name     = "Freq",
           .suffix   = " Hz",
           .minVal   = 20,
           .maxVal   = 20e3,
           .midPoint = 2e3,
       });
-    }
-    for (size_t i = 0; i < Bands::n; i++) {
-      this->primaryKnobs.push_back({
+
+      this->knobGroups[i].primaryKnobs.push_back({
           .p_val    = &this->bands[i].settings.q,
-          .name     = bandNames[i] + "_Q",
+          .name     = "Q",
           .minVal   = 0.5,
           .maxVal   = 10,
           .midPoint = 1,
       });
-    }
-    for (size_t i = 0; i < Bands::n; i++) {
-      this->primaryKnobs.push_back({
+
+      this->knobGroups[i].primaryKnobs.push_back({
           .p_val  = &this->scSettings[i].thresh_db,
-          .name   = bandNames[i] + "_Thresh",
+          .name   = "Thresh",
           .suffix = " dB",
           .minVal = -60,
           .maxVal = 0,
       });
-    }
-    for (size_t i = 0; i < Bands::n; i++) {
-      this->primaryKnobs.push_back({
+
+      this->knobGroups[i].primaryKnobs.push_back({
           .p_val    = &this->scSettings[i].ratio,
-          .name     = bandNames[i] + "_Ratio",
+          .name     = "Ratio",
           .minVal   = 1,
           .maxVal   = 20,
           .midPoint = 2,
       });
-    }
-    // for (size_t i = 0; i < Bands::n; i++) {
-    //   this->primaryKnobs.push_back({
-    //       .p_val    = &this->scSettings[i].tAtt_ms,
-    //       .name     = bandNames[i] + "_Attack",
-    //       .suffix   = " ms",
-    //       .minVal   = 0.01,
-    //       .maxVal   = 50.0,
-    //       .midPoint = 5,
-    //   });
-    // }
-    // for (size_t i = 0; i < Bands::n; i++) {
-    //   this->primaryKnobs.push_back({
-    //       .p_val    = &this->scSettings[i].tRel_ms,
-    //       .name     = this->bandNames[i] + "_Release",
-    //       .suffix   = " ms",
-    //       .minVal   = 10.0,
-    //       .maxVal   = 1000.0,
-    //       .midPoint = 100.0,
-    //   });
-    // }
-    this->secondaryKnobs = {
-      {
-          .p_val    = &this->attScale,
+
+      this->knobGroups[i].primaryKnobs.push_back({
+          .p_val    = &this->scSettings[i].tAtt_ms,
           .name     = "Attack",
-          .minVal   = 1.0 / 16.0,
-          .maxVal   = 4.0,
-          .midPoint = 1.0 / 4.0,
-      },
-      {
-          .p_val    = &this->relScale,
+          .suffix   = " ms",
+          .minVal   = 0.01,
+          .maxVal   = 50.0,
+          .midPoint = 5,
+      });
+
+      this->knobGroups[i].primaryKnobs.push_back({
+          .p_val    = &this->scSettings[i].tRel_ms,
           .name     = "Release",
-          .minVal   = 1.0,
-          .maxVal   = 16.0,
-          .midPoint = 4.0,
-      },
-    };
+          .suffix   = " ms",
+          .minVal   = 10.0,
+          .maxVal   = 1000.0,
+          .midPoint = 100.0,
+      });
+    }
+    // this->secondaryKnobs = {
+    //   {
+    //       .p_val    = &this->attScale,
+    //       .name     = "Attack",
+    //       .minVal   = 1.0 / 16.0,
+    //       .maxVal   = 4.0,
+    //       .midPoint = 1.0 / 4.0,
+    //   },
+    //   {
+    //       .p_val    = &this->relScale,
+    //       .name     = "Release",
+    //       .minVal   = 1.0,
+    //       .maxVal   = 16.0,
+    //       .midPoint = 4.0,
+    //   },
+    // };
     this->toggles = {
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
@@ -156,9 +153,9 @@ struct ntDynamicEq : public NtFx::NtPlugin {
   void update() noexcept override {
     for (size_t i = 0; i < Bands::n; i++) {
       this->gain_lin[i] = NtFx::invDb(this->bands[i].settings.gain_db);
-      auto tau          = signal_t(1) / this->bands[i].settings.fc_hz;
-      this->scSettings[i].tAtt_ms = tau * this->attScale;
-      this->scSettings[i].tRel_ms = tau * this->relScale;
+      // auto tau          = signal_t(1) / this->bands[i].settings.fc_hz;
+      // this->scSettings[i].tAtt_ms = tau * this->attScale;
+      // this->scSettings[i].tRel_ms = tau * this->relScale;
       this->scs[i].update();
       this->bands[i].update();
     }
