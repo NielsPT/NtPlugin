@@ -12,15 +12,19 @@ enum Bands { lf, loMid, hiMid, hf, n };
 
 struct ntDynamicEq : public NtFx::NtPlugin {
   const std::array<std::string, Bands::n> bandNames {
-    "Low", "Low_Mid", "High_Mid", "High"
+    "Low", "Low Mid", "High Mid", "High"
   };
   std::array<NtFx::Biquad::EqBand, Bands::n> bands;
   std::array<NtFx::Comp::ScSettings, Bands::n> scSettings;
   std::array<NtFx::Comp::PeakSideChainLinear, Bands::n> scs;
   std::array<signal_t, Bands::n> gain_lin;
+  std::array<bool, Bands::n> solos = { false, false, false, false };
+  std::array<bool, Bands::n> mutes = { false, false, false, false };
+  // std::array<bool, Bands::n> compDisables = { false, false, false, false };
   signal_t attScale { 0.25 };
   signal_t relScale { 4 };
   bool bypassEnable { false };
+  bool soloAny { false };
 
   ntDynamicEq()
       : scs({
@@ -108,6 +112,25 @@ struct ntDynamicEq : public NtFx::NtPlugin {
     //       .midPoint = 4.0,
     //   },
     // };
+    this->toggleSets = {
+      { "Solo", { } },
+      { "Bypass", { } },
+      // { "Comp Off", { } },
+    };
+    for (size_t i = 0; i < Bands::n; i++) {
+      this->toggleSets[0].toggles.push_back({
+          .p_val = &this->solos[i],
+          .name  = bandNames[i],
+      });
+      this->toggleSets[1].toggles.push_back({
+          .p_val = &this->mutes[i],
+          .name  = bandNames[i],
+      });
+      // this->toggleSets[2].toggles.push_back({
+      //     .p_val = &this->compDisables[i],
+      //     .name  = bandNames[i],
+      // });
+    }
     this->toggles = {
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
@@ -135,19 +158,22 @@ struct ntDynamicEq : public NtFx::NtPlugin {
       this->template updatePeakLevel<1>(x);
       return x;
     }
-    Audio y = x;
-    std::array<Audio, Bands::n> gr;
+    Audio acc { 0, 0 };
+    if (!this->soloAny) { acc = x; }
+    std::array<Audio, Bands::n> gr { 1, 1, 1, 1 };
     for (size_t i = 0; i < Bands::n; i++) {
       auto yFlt = this->bands[i].process(x);
-      gr[i]     = this->scs[i].process(yFlt);
-      y += yFlt * (gr[i] * this->gain_lin[i] - 1) / this->bands[i].settings.q;
+      if (this->mutes[i]) { continue; }
+      gr[i] = this->scs[i].process(yFlt);
+      acc += yFlt * !(this->soloAny ^ this->solos[i])
+          * (gr[i] * this->gain_lin[i] - 1) / this->bands[i].settings.q;
     }
     this->template updatePeakLevel<2, true>(gr[0]);
     this->template updatePeakLevel<3, true>(gr[1]);
     this->template updatePeakLevel<4, true>(gr[2]);
     this->template updatePeakLevel<5, true>(gr[3]);
-    this->template updatePeakLevel<1>(y);
-    return y;
+    this->template updatePeakLevel<1>(acc);
+    return acc;
   }
 
   void update() noexcept override {
@@ -159,6 +185,7 @@ struct ntDynamicEq : public NtFx::NtPlugin {
       this->scs[i].update();
       this->bands[i].update();
     }
+    this->_updateMutes();
   }
 
   void reset(float fs) noexcept override {
@@ -169,5 +196,12 @@ struct ntDynamicEq : public NtFx::NtPlugin {
       this->bands[i].reset(fs);
     }
     this->update();
+  }
+
+  void _updateMutes() {
+    this->soloAny = false;
+    for (size_t i = 0; i < Bands::n; i++) {
+      if (this->solos[i]) { this->soloAny = true; }
+    }
   }
 };

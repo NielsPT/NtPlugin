@@ -91,6 +91,7 @@ void NtPluginAudioProcessorEditor::_initDropDown(
   p_box->setTitle(spec.name);
   for (size_t i = 0; i < spec.options.size(); i++) {
     std::string option = spec.options[i];
+    // TODO: Do we still need this line?
     std::replace(option.begin(), option.end(), '_', ' ');
     std::transform(option.begin(), option.end(), option.begin(), ::toupper);
     p_box->addItem(option, i + 1);
@@ -100,10 +101,12 @@ void NtPluginAudioProcessorEditor::_initDropDown(
   p_box->addListener(this);
   p_box->setSelectedItemIndex(2, juce::NotificationType::dontSendNotification);
   this->addAndMakeVisible(*p_box);
-  auto p_label = this->_makeLabel(spec.name);
+  auto p_label     = this->_makeLabel(spec.name);
+  auto mangledName = spec.name;
+  std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
   this->dropDownAttachments.emplace_back(
       new juce::AudioProcessorValueTreeState::ComboBoxAttachment(
-          this->proc.paramLayout, spec.name, *p_box));
+          this->proc.paramLayout, mangledName, *p_box));
   if (addToTitleBar) {
     p_box->setColour(
         juce::ComboBox::ColourIds::backgroundColourId, juce::Colours::darkgrey);
@@ -133,12 +136,17 @@ void NtPluginAudioProcessorEditor::_initRadioButton(
 }
 
 void NtPluginAudioProcessorEditor::_initToggleGroup(NtFx::ToggleSetSpec& spec) {
-  auto group = this->_makeSmallToggleSet<NtFx::ToggleSet>(spec);
+  auto group            = this->_makeSmallToggleSet<NtFx::ToggleSet>(spec);
+  auto mangledGroupName = spec.name;
+  std::replace(mangledGroupName.begin(), mangledGroupName.end(), ' ', '_');
   for (size_t i = 0; i < spec.toggles.size(); i++) {
+    auto mangledToggleName = spec.toggles[i].name;
+    std::replace(mangledToggleName.begin(), mangledToggleName.end(), ' ', '_');
     this->toggleAttachments.emplace_back(
         new juce::AudioProcessorValueTreeState::ButtonAttachment(
             this->proc.paramLayout,
-            NtFx::makeTmpToggle(spec.name, spec.toggles[i].name, "toggleGroup")
+            NtFx::makeTmpToggle(
+                mangledGroupName, mangledToggleName, "toggleGroup")
                 .name,
             *group->toggles[i].get()));
   }
@@ -189,35 +197,38 @@ void NtPluginAudioProcessorEditor::_initKnobGroup(
 
 void NtPluginAudioProcessorEditor::_initGroupKnob(
     int iGroup, NtFx::KnobSpec& r_spec) {
-  auto p_knob  = std::make_unique<juce::Slider>("knobGroup:"
-      + this->proc.plug.knobGroups[iGroup].name + ":" + r_spec.name);
+  std::string mangledName("knobGroup:" + this->proc.plug.knobGroups[iGroup].name
+      + ":" + r_spec.name);
+  std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
+  auto p_knob  = std::make_unique<juce::Slider>(mangledName);
   auto p_label = this->_makeLabel(r_spec.name);
   this->_initKnob(r_spec, p_knob, p_label);
   this->knobGroups[iGroup].push_back(std::move(p_knob));
   this->groupKnobLabels[iGroup].push_back(std::move(p_label));
 }
 
-void NtPluginAudioProcessorEditor::_initKnob(NtFx::KnobSpec& spec,
+void NtPluginAudioProcessorEditor::_initKnob(NtFx::KnobSpec& r_spec,
     std::unique_ptr<juce::Slider>& r_slider,
     std::unique_ptr<juce::Label>& r_label) {
-  if (!spec.p_val) { return; }
+  if (!r_spec.p_val) { return; }
   r_slider->setLookAndFeel(&this->knobLookAndFeel);
-  std::string name(spec.name);
-  std::replace(name.begin(), name.end(), '_', ' ');
-  r_slider->setTextValueSuffix(spec.suffix);
+  r_slider->setTextValueSuffix(r_spec.suffix);
   r_slider->setSliderStyle(juce::Slider::SliderStyle::Rotary);
   r_slider->addListener(this);
   this->addAndMakeVisible(r_slider.get());
+  DBG("Creating attachment for slider '" + r_slider->getName() + "'.");
   this->knobAttachments.emplace_back(
       new juce::AudioProcessorValueTreeState::SliderAttachment(
           this->proc.paramLayout, r_slider->getName(), *r_slider));
-  r_slider->setRange(spec.minVal, spec.maxVal);
-  if (spec.midPoint) { r_slider->setSkewFactorFromMidPoint(spec.midPoint); }
+  r_slider->setRange(r_spec.minVal, r_spec.maxVal);
+  if (r_spec.midPoint) { r_slider->setSkewFactorFromMidPoint(r_spec.midPoint); }
 }
 
-void NtPluginAudioProcessorEditor::_initToggle(NtFx::ToggleSpec& spec) {
-  auto p_toggle = std::make_unique<NtFx::Toggle>(spec.name);
-  if (spec.p_val) { this->__initToggle(p_toggle.get(), spec); }
+void NtPluginAudioProcessorEditor::_initToggle(NtFx::ToggleSpec& r_spec) {
+  std::string mangledName(r_spec.name);
+  std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
+  auto p_toggle = std::make_unique<NtFx::Toggle>(mangledName);
+  if (r_spec.p_val) { this->__initToggle(p_toggle.get(), r_spec); }
   this->toggles.push_back(std::move(p_toggle));
 }
 
@@ -227,12 +238,12 @@ void NtPluginAudioProcessorEditor::__initToggle(
   p_toggle->setClickingTogglesState(true);
   p_toggle->setToggleable(true);
   p_toggle->addListener(this);
-  std::string name(spec.name);
-  std::replace(name.begin(), name.end(), '_', ' ');
-  p_toggle->setButtonText(name);
+  p_toggle->setButtonText(spec.name);
+  std::string mangledName(spec.name);
+  std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
   this->toggleAttachments.emplace_back(
       new juce::AudioProcessorValueTreeState::ButtonAttachment(
-          this->proc.paramLayout, spec.name, *p_toggle));
+          this->proc.paramLayout, mangledName, *p_toggle));
 }
 
 void NtPluginAudioProcessorEditor::_initWindowSize() {
@@ -713,7 +724,10 @@ void NtPluginAudioProcessorEditor::comboBoxChanged(juce::ComboBox* p_box) {
   }
   auto name  = p_box->getName().toStdString();
   auto p_val = this->proc.plug.getDropDownValuePtr(name);
-  if (!p_val) { return; }
+  if (!p_val) {
+    DBG("Failed to get dropdown value for '" + name + "'.");
+    return;
+  }
   *p_val = p_box->getSelectedId() - 1;
   this->proc.plug.update();
 }
@@ -758,11 +772,11 @@ void NtPluginAudioProcessorEditor::_updateTheme() {
 }
 
 std::unique_ptr<juce::Label> NtPluginAudioProcessorEditor::_makeLabel(
-    const std::string name) {
-  auto _name   = name;
-  auto p_label = std::make_unique<juce::Label>(_name);
-  std::replace(_name.begin(), _name.end(), '_', ' ');
-  p_label->setText(_name, juce::NotificationType::dontSendNotification);
+    const std::string mangledName) {
+  auto unmangledName = mangledName;
+  std::replace(unmangledName.begin(), unmangledName.end(), '_', ' ');
+  auto p_label = std::make_unique<juce::Label>(mangledName);
+  p_label->setText(unmangledName, juce::NotificationType::dontSendNotification);
   p_label->setJustificationType(juce::Justification::centred);
   this->addAndMakeVisible(*p_label);
   return std::move(p_label);

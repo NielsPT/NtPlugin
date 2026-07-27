@@ -74,7 +74,7 @@ struct ntDeEsser : public NtFx::NtPlugin {
       },
     };
     this->toggles = {
-      { .p_val = &this->scListenEnable, .name = "SC_Listen" },
+      { .p_val = &this->scListenEnable, .name = "SC Listen" },
       { .p_val = &this->scSettings.linkEnable, .name = "Link" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };

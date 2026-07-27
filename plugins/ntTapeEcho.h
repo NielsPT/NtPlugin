@@ -91,15 +91,15 @@ struct ntTapeEcho : public NtFx::NtPlugin {
       { &this->lpf.settings.fc_hz, "LPF", " Hz", 200, 20000, true },
     };
     this->secondaryKnobs = {
-      { &this->hpf.settings.q, "Q_HP", "", 0.5, 2, true },
-      { &this->lpf.settings.q, "Q_LP", "", 0.5, 2, true },
-      { &this->modFreq, "Mod_Freq", " Hz", 0.1, 10, true },
-      { &this->modDepth_percent, "Mod_Depth", " %", 0.01, 1, true },
-      { &this->modPhase, "Mod_Phase", "deg", 0, 180 },
+      { &this->hpf.settings.q, "Q HP", "", 0.5, 2, true },
+      { &this->lpf.settings.q, "Q LP", "", 0.5, 2, true },
+      { &this->modFreq, "Mod Freq", " Hz", 0.1, 10, true },
+      { &this->modDepth_percent, "Mod Depth", " %", 0.01, 1, true },
+      { &this->modPhase, "Mod Phase", "deg", 0, 180 },
       { &this->tOffset, "Offset", " ms", 0, 50 },
       { &this->noise_db, "Noise", " dB", -100, 0, true },
       { &this->mix_percent, "Mix", " %", 0, 100 },
-      { &this->tGlide, "Glide_Time", " s", 0.0, 1 },
+      { &this->tGlide, "Glide Time", " s", 0.0, 1 },
     };
 
     this->dropdowns = {
@@ -109,9 +109,9 @@ struct ntTapeEcho : public NtFx::NtPlugin {
           .options = {
               "half",
               "fourth",
-              "eighth_dot",
+              "eighth dot",
               "eighth",
-              "sixteenth_dot",
+              "sixteenth dot",
               "sixteenth",
           }, 
           ._defaultVal = 0,

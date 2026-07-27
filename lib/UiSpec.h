@@ -128,7 +128,7 @@ struct TitleBarSpec {
   std::vector<DropDownSpec> dropdowns {
     {
         nullptr,
-        "UI_Scale",
+        "UI Scale",
         { "50%", "75%", "100%", "125%", "150%", "175%", "200%" },
         2,
     },

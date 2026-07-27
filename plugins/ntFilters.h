@@ -62,7 +62,7 @@ struct ntFilters : public NtFx::NtPlugin {
       },
       {
           .p_val  = &this->qHpf,
-          .name   = "Q_HPF",
+          .name   = "Q HPF",
           .suffix = "",
           .minVal = 0.1,
           .maxVal = 2,
@@ -77,7 +77,7 @@ struct ntFilters : public NtFx::NtPlugin {
       },
       {
           .p_val  = &this->qLpf,
-          .name   = "Q_LPF",
+          .name   = "Q LPF",
           .suffix = "",
           .minVal = 0.1,
           .maxVal = 2,
@@ -86,7 +86,7 @@ struct ntFilters : public NtFx::NtPlugin {
     this->dropdowns = {
       {
           (int*)&this->orderHpf,
-          "HPF_Order",
+          "HPF Order",
           {
               "first",
               "second",
@@ -97,7 +97,7 @@ struct ntFilters : public NtFx::NtPlugin {
       },
       {
           (int*)&this->orderLpf,
-          "LPF_Order",
+          "LPF Order",
           {
               "first",
               "second",
@@ -108,8 +108,8 @@ struct ntFilters : public NtFx::NtPlugin {
       },
     };
     this->toggles = {
-      { &this->enableHpf, "HPF_on" },
-      { &this->enableLpf, "LPF_on" },
+      { &this->enableHpf, "HPF on" },
+      { &this->enableLpf, "LPF on" },
     };
     this->meters = {
       { .name = "IN", .addRms = true },

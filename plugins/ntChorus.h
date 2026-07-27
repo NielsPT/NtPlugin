@@ -59,7 +59,7 @@ struct ntChorus : public NtFx::NtPlugin {
       { &this->tDelayMod_ms, "Depth", " ms", 0, tModDlMax_ms },
     };
     this->secondaryKnobs = {
-      { &this->phaseMod_deg, "Mod_phase", " deg", 0, 180 },
+      { &this->phaseMod_deg, "Mod phase", " deg", 0, 180 },
       {
           .p_val    = &this->fcHpf_hz,
           .name     = "HPF",

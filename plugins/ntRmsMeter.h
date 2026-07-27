@@ -40,7 +40,7 @@ struct ntRmsMeter : public NtFx::NtPlugin {
     this->primaryKnobs = {
       { &this->decay_s, "Decay", " s", 0, 1 },
       { &this->hold_s, "Hold", " s", 0, 10 },
-      { &this->tRms_ms, "RMS_Time", " ms", 1, 1000 },
+      { &this->tRms_ms, "RMS Time", " ms", 1, 1000 },
     };
     this->uiSpec.meterHeight_dots = 25;
 

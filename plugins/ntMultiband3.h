@@ -56,7 +56,7 @@ struct ntMultiband3 : public NtFx::NtPlugin {
   std::array<signal_t, Bands::n> makeup_db { 0, 0, 0 };
   std::array<signal_t, Bands::n> makeup_lin { 1, 1, 1 };
   std::array<Audio, Bands::n> fbState { 0, 0, 0 };
-  const std::array<std::string, Bands::n> BandNames = { "High", "Mid", "Low" };
+  const std::array<std::string, Bands::n> bandNames = { "High", "Mid", "Low" };
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> loFlt;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> loMidFlt;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> hiMidFlt;
@@ -68,14 +68,14 @@ struct ntMultiband3 : public NtFx::NtPlugin {
     for (size_t i = 0; i < Bands::n; i++) {
       this->primaryKnobs.push_back({
           .p_val  = &this->scSettings[i].thresh_db,
-          .name   = this->BandNames[i] + "_Threshold",
+          .name   = this->bandNames[i] + "_Threshold",
           .suffix = " dB",
           .minVal = -60,
           .maxVal = 0,
       });
       this->primaryKnobs.push_back({
           .p_val    = &this->scSettings[i].ratio,
-          .name     = this->BandNames[i] + "_Ratio",
+          .name     = this->bandNames[i] + "_Ratio",
           .suffix   = "",
           .minVal   = 1.0,
           .maxVal   = 20.0,
@@ -83,7 +83,7 @@ struct ntMultiband3 : public NtFx::NtPlugin {
       });
       this->primaryKnobs.push_back({
           .p_val    = &this->scSettings[i].tAtt_ms,
-          .name     = this->BandNames[i] + "_Attack",
+          .name     = this->bandNames[i] + "_Attack",
           .suffix   = " ms",
           .minVal   = 0.01,
           .maxVal   = 50.0,
@@ -91,7 +91,7 @@ struct ntMultiband3 : public NtFx::NtPlugin {
       });
       this->primaryKnobs.push_back({
           .p_val    = &this->scSettings[i].tRel_ms,
-          .name     = this->BandNames[i] + "_Release",
+          .name     = this->bandNames[i] + "_Release",
           .suffix   = " ms",
           .minVal   = 10.0,
           .maxVal   = 1000.0,
@@ -100,7 +100,7 @@ struct ntMultiband3 : public NtFx::NtPlugin {
       });
       this->primaryKnobs.push_back({
           .p_val  = &this->makeup_db[i],
-          .name   = this->BandNames[i] + "_Makeup",
+          .name   = this->bandNames[i] + "_Makeup",
           .suffix = " dB",
           .minVal = 0.0,
           .maxVal = 24.0,
@@ -109,7 +109,7 @@ struct ntMultiband3 : public NtFx::NtPlugin {
     this->secondaryKnobs = {
       {
           .p_val    = &this->xOverLo_hz,
-          .name     = "Lo_Xover",
+          .name     = "Lo Xover",
           .suffix   = " Hz",
           .minVal   = 20,
           .maxVal   = 2000,
@@ -117,7 +117,7 @@ struct ntMultiband3 : public NtFx::NtPlugin {
       },
       {
           .p_val    = &this->xOverHi_hz,
-          .name     = "Hi_Xover",
+          .name     = "Hi Xover",
           .suffix   = " Hz",
           .minVal   = 200,
           .maxVal   = 20000,
@@ -140,20 +140,20 @@ struct ntMultiband3 : public NtFx::NtPlugin {
     this->toggleSets = {
       { "Solo", { } },
       { "Mute", { } },
-      { "Comp_Off", { } },
+      { "Comp Off", { } },
     };
     for (size_t i = 0; i < Bands::n; i++) {
       this->toggleSets[0].toggles.push_back({
           .p_val = &this->solos[i],
-          .name  = BandNames[i],
+          .name  = bandNames[i],
       });
       this->toggleSets[1].toggles.push_back({
           .p_val = &this->mutesUi[i],
-          .name  = BandNames[i],
+          .name  = bandNames[i],
       });
       this->toggleSets[2].toggles.push_back({
           .p_val = &this->compDisables[i],
-          .name  = BandNames[i],
+          .name  = bandNames[i],
       });
     }
     this->meters = {
@@ -161,7 +161,7 @@ struct ntMultiband3 : public NtFx::NtPlugin {
       { .name = "OUT", .hasScale = true, .decay_s = 0.75, .addRms = true },
     };
     for (int i = Bands::n - 1; i >= 0; i--) {
-      this->meters.push_back({ .name = this->BandNames[i], .invert = true });
+      this->meters.push_back({ .name = this->bandNames[i], .invert = true });
     }
     this->meters[Bands::n - 1 + 2].hasScale = true;
     this->uiSpec.meterHeight_dots           = 25;

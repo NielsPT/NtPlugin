@@ -182,7 +182,9 @@ template <typename T>
 void NtPluginAudioProcessor::loadParameter(std::vector<T>& v) {
   for (auto& p : v) {
     if (!p.p_val) { continue; }
-    auto par = this->paramLayout.getParameterAsValue(p.name);
+    auto mangledName = p.name;
+    std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
+    auto par = this->paramLayout.getParameterAsValue(mangledName);
     *p.p_val = par.getValue();
     DBG("Loaded '" << p.name << "': " << float(*p.p_val));
   }
@@ -193,8 +195,10 @@ void NtPluginAudioProcessor::loadRadioButtons(
   for (auto& p : v) {
     int val { 0 };
     for (size_t i = 0; i < p.options.size(); i++) {
-      auto par = this->paramLayout.getParameterAsValue(
-          NtFx::makeTmpToggle(p.name, p.options[i], "radioButton").name);
+      auto mangledName =
+          NtFx::makeTmpToggle(p.name, p.options[i], "radioButton").name;
+      std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
+      auto par = this->paramLayout.getParameterAsValue(mangledName);
       if (par.getValue()) { val = i; }
     }
     *p.p_val = val;
@@ -206,9 +210,11 @@ void NtPluginAudioProcessor::loadToggleSets(
     std::vector<NtFx::ToggleSetSpec>& v) {
   for (auto& p : v) {
     for (size_t i = 0; i < p.toggles.size(); i++) {
-      // TODO: What if we store the mangled name as well?
+      // TODO: What if we store the mangled name as well? Or a more general
+      // function.
       auto mangledName =
           NtFx::makeTmpToggle(p.name, p.toggles[i].name, "toggleGroup").name;
+      std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
       auto par            = this->paramLayout.getParameterAsValue(mangledName);
       *p.toggles[i].p_val = par.getValue();
       DBG("Loaded '" << mangledName << "': " << float(*p.toggles[i].p_val));
@@ -220,8 +226,9 @@ void NtPluginAudioProcessor::loadGroupKnobs(
     std::vector<NtFx::KnobSpec>& v, std::string groupName) {
   for (auto& p : v) {
     auto mangledName = "knobGroup:" + groupName + ":" + p.name;
-    auto par         = this->paramLayout.getParameterAsValue(mangledName);
-    *p.p_val         = par.getValue();
+    std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
+    auto par = this->paramLayout.getParameterAsValue(mangledName);
+    *p.p_val = par.getValue();
     DBG("Loaded '" << mangledName << "': " << float(*p.p_val));
   }
 }
@@ -270,17 +277,23 @@ NtPluginAudioProcessor::createParameterLayout() {
   // there is no attachement type for it, so we need to use/hack
   // comboboxAttachement.
   std::vector<NtFx::ToggleSpec> vTmpToggles;
-  for (auto& r : this->plug.radioButtons) {
+  for (auto& p : this->plug.radioButtons) {
     vTmpToggles.clear();
-    for (auto& option : r.options) {
-      vTmpToggles.push_back(NtFx::makeTmpToggle(r.name, option, "radioButton"));
+    for (auto& option : p.options) {
+      std::string mangledName(p.name);
+      std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
+      vTmpToggles.push_back(
+          NtFx::makeTmpToggle(mangledName, option, "radioButton"));
     }
     this->createParameters<bool>(vTmpToggles, parameters, i);
   }
   for (auto& r : this->plug.toggleSets) {
     vTmpToggles.clear();
     for (auto& t : r.toggles) {
-      vTmpToggles.push_back(NtFx::makeTmpToggle(r.name, t.name, "toggleGroup"));
+      std::string mangledName(t.name);
+      std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
+      vTmpToggles.push_back(
+          NtFx::makeTmpToggle(r.name, mangledName, "toggleGroup"));
     }
     this->createParameters<bool>(vTmpToggles, parameters, i);
   }
@@ -293,23 +306,25 @@ void NtPluginAudioProcessor::createParameters(std::vector<t_spec>& vParams,
     juce::AudioProcessorValueTreeState::ParameterLayout& paramLayout,
     int& i) {
   for (auto p : vParams) {
-    juce::ParameterID id(p.name, i++);
+    std::string mangledName(p.name);
+    std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
+    juce::ParameterID id(mangledName, i++);
     if constexpr (std::is_same_v<t_val, int>) {
       juce::StringArray options;
       for (const auto& option : p.options) {
         options.add(juce::String(option));
       }
       paramLayout.add(std::make_unique<juce::AudioParameterChoice>(
-          id, p.name, options, p._defaultVal));
+          id, mangledName, options, p._defaultVal));
     }
     if constexpr (std::is_same_v<t_val, bool>) {
       paramLayout.add(std::make_unique<juce::AudioParameterBool>(
-          id, p.name, p._defaultVal));
+          id, mangledName, p._defaultVal));
     }
     if constexpr (std::is_floating_point_v<t_val>) {
       paramLayout.add(std::make_unique<juce::AudioParameterFloat>(
-          id, p.name, p.minVal, p.maxVal, p._defaultVal));
+          id, mangledName, p.minVal, p.maxVal, p._defaultVal));
     }
-    DBG("Created parameter '" << p.name << "'.");
+    DBG("Created parameter '" << mangledName << "'.");
   }
 }

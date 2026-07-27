@@ -18,8 +18,8 @@
 #pragma once
 
 // TODO: Do we really need all these headers?
-#include "juce_core/system/juce_PlatformDefs.h"
 #include <juce_core/juce_core.h>
+#include <juce_core/system/juce_PlatformDefs.h>
 #include <juce_data_structures/juce_data_structures.h>
 #include <juce_events/juce_events.h>
 #include <juce_graphics/juce_graphics.h>

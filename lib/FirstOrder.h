@@ -110,6 +110,7 @@ namespace FirstOrder {
       r.reset(fs);
     }
 
+    // TODO: Be consistent with the rest of the lib.
     void setFc(signal_t fc) noexcept {
       l.fc_hz = fc;
       r.fc_hz = fc;

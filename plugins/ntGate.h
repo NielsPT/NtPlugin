@@ -94,7 +94,7 @@ struct ntGate : public NtFx::NtPlugin {
     this->secondaryKnobs     = {
       {
           .p_val    = &this->hpf.settings.fc_hz,
-          .name     = "SC_HPF",
+          .name     = "SC HPF",
           .suffix   = " Hz",
           .minVal   = 20,
           .maxVal   = 20e3,
@@ -102,7 +102,7 @@ struct ntGate : public NtFx::NtPlugin {
       },
       {
           .p_val    = &this->lpf.settings.fc_hz,
-          .name     = "SC_LPF",
+          .name     = "SC LPF",
           .suffix   = " Hz",
           .minVal   = 20,
           .maxVal   = 20e3,
@@ -119,7 +119,7 @@ struct ntGate : public NtFx::NtPlugin {
       },
       {
           .p_val    = &this->scHf.settings.tHold_ms,
-          .name     = "HF_Hold",
+          .name     = "HF Hold",
           .suffix   = " ms",
           .minVal   = 0.1,
           .maxVal   = 1000,
@@ -128,7 +128,7 @@ struct ntGate : public NtFx::NtPlugin {
       },
       {
           .p_val    = &this->scHf.settings.tRel_ms,
-          .name     = "HF_Release",
+          .name     = "HF Release",
           .suffix   = " ms",
           .minVal   = 0.1,
           .maxVal   = 1000,
@@ -137,7 +137,7 @@ struct ntGate : public NtFx::NtPlugin {
       },
       {
           .p_val    = &this->ignoreScSettings.thresh_db,
-          .name     = "Ignore_Sens",
+          .name     = "Ignore Sens",
           .suffix   = " dB",
           .minVal   = -80,
           .maxVal   = 0,
@@ -152,16 +152,16 @@ struct ntGate : public NtFx::NtPlugin {
       },
     };
     this->toggles = {
-      { .p_val = &this->scListenEnable, .name = "SC_Listen" },
-      { .p_val = &this->hfAccelEnable, .name = "Dual_Band" },
-      { .p_val = &this->lookaheadEnable, .name = "Lookahead_on" },
-      { .p_val = &this->latencyCompEnable, .name = "Latency_comp" },
+      { .p_val = &this->scListenEnable, .name = "SC Listen" },
+      { .p_val = &this->hfAccelEnable, .name = "Dual Band" },
+      { .p_val = &this->lookaheadEnable, .name = "Lookahead on" },
+      { .p_val = &this->latencyCompEnable, .name = "Latency comp" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
     this->radioButtons = {
       {
           .p_val   = (int*)&this->scMode,
-          .name    = "Side_Chain",
+          .name    = "Side Chain",
           .options = { "Internal", "External", "Ignore" },
       },
     };
@@ -216,17 +216,17 @@ struct ntGate : public NtFx::NtPlugin {
   void update() noexcept override {
     if (this->hfAccelEnable) {
       this->activateParameter("Xover");
-      this->activateParameter("HF_Hold");
-      this->activateParameter("HF_Release");
+      this->activateParameter("HF Hold");
+      this->activateParameter("HF Release");
     } else {
       this->deactivateParameter("Xover");
-      this->deactivateParameter("HF_Hold");
-      this->deactivateParameter("HF_Release");
+      this->deactivateParameter("HF Hold");
+      this->deactivateParameter("HF Release");
     }
     if (this->scMode == ScMode::ignore) {
-      this->activateParameter("Ignore_Sens");
+      this->activateParameter("Ignore Sens");
     } else {
-      this->deactivateParameter("Ignore_Sens");
+      this->deactivateParameter("Ignore Sens");
     }
     if (this->lookaheadEnable) {
       this->activateParameter("Lookahead");

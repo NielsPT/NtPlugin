@@ -60,7 +60,6 @@ namespace Delay {
   template <int dlLen, typename T = Audio>
   struct ShortGlideDelayLine : public ComponentBase<T> {
     std::array<T, dlLen> dl;
-    // TODO: Glide delay time. Separate class? Or just the way it is?
     ExpGlider t_ms { 0 };
     int i { 0 };
 

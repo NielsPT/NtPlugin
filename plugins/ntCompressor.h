@@ -111,21 +111,21 @@ struct ntCompressor : public NtFx::NtPlugin {
       },
       {
           .p_val  = &this->scSettings.tPeakHold_ms,
-          .name   = "Peak_Hold",
+          .name   = "Peak Hold",
           .suffix = " ms",
           .minVal = 0,
           .maxVal = 10,
       },
       {
           .p_val  = &this->scSettings.tRms_ms,
-          .name   = "RMS_Time",
+          .name   = "RMS Time",
           .suffix = " ms",
           .minVal = 1.0,
           .maxVal = 250.0,
       },
       {
           .p_val    = &this->hpf.settings.fc_hz,
-          .name     = "SC_HPF",
+          .name     = "SC HPF",
           .suffix   = " hz",
           .minVal   = 20.0,
           .maxVal   = 2000.0,
@@ -157,7 +157,7 @@ struct ntCompressor : public NtFx::NtPlugin {
 
     this->toggles = {
       { .p_val = &this->scSettings.linkEnable, .name = "Link" },
-      { .p_val = &this->scListenEnable, .name = "SC_Listen" },
+      { .p_val = &this->scListenEnable, .name = "SC Listen" },
       { .p_val = &this->clip, .name = "Softclip" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
@@ -174,7 +174,7 @@ struct ntCompressor : public NtFx::NtPlugin {
     });
     this->radioButtons.push_back({
         .p_val   = (int*)&this->scMode,
-        .name    = "Side_Chain",
+        .name    = "Side Chain",
         .options = { "Normal", "Feedback", "External" },
     });
 
