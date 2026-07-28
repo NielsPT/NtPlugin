@@ -25,6 +25,7 @@
 #include "lib/Component.h"
 #include "lib/RmsSensor.h"
 #include "lib/UiSpec.h"
+#include "lib/utils.h"
 
 #include <algorithm>
 #include <array>
@@ -147,17 +148,14 @@ struct NtPlugin : public ComponentBase<Audio> {
       if (param.name == name) { return param.p_val; }
     }
     for (auto& g : this->knobGroups) {
-      auto mangledName = g.name;
-      std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
-      for (auto param : g.primaryKnobs) {
-        // TODO: More generalized name mangling.
-        if (name == "knobGroup:" + mangledName + ":" + param.name) {
-          return param.p_val;
+      for (auto p : g.primaryKnobs) {
+        if (name == NtFx::mangleName("knobGroup", g.name, p.name)) {
+          return p.p_val;
         }
       }
-      for (auto param : g.secondaryKnobs) {
-        if (name == "knobGroup:" + mangledName + ":" + param.name) {
-          return param.p_val;
+      for (auto p : g.secondaryKnobs) {
+        if (name == NtFx::mangleName("knobGroup", g.name, p.name)) {
+          return p.p_val;
         }
       }
     }

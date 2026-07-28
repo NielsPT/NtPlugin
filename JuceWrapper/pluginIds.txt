@@ -8,3 +8,4 @@ ntTransformer:Migc:Distortion:Harmonic
 ntRmsMeter:Joxj
 ntDeEsser:Bagy:Dynamics:Dynamics
 ntGateMono:Jlkd:Dynamics:Dynamics
+ntChorus:Yheu:Modulation:Modulation

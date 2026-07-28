@@ -25,6 +25,7 @@
 
 #include "gcem.hpp"
 #include "lib/Audio.h"
+#include "lib/utils.h"
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -37,17 +38,13 @@ namespace NtFx {
  */
 struct KnobSpec {
   signal_t* p_val { nullptr }; ///< Pointer to value the knob represents.
-  // TODO: allow spaces in names and replace the other way around.
-  /** Name of knob, used for IDs and label in UI. Can't contain ' '. '_' is
-   * replaced with ' ' in UI lables. */
-  std::string name { "" };
-  std::string suffix { "" }; ///< Added to the end of value label for knob.
-  signal_t minVal { 0.0 };   ///< Starting level of knob.
-  signal_t maxVal { 1.0 };   ///< End level of knob,
+  std::string name { "" };     ///< Display name of knob.
+  std::string suffix { "" };   ///< Added to the end of value label for knob.
+  signal_t minVal { 0.0 };     ///< Starting level of knob.
+  signal_t maxVal { 1.0 };     ///< End level of knob,
+  signal_t midPoint { 0.0 }; ///< Sets the middel of the knob. 0 for don't care.
   bool logScale { false };   ///< Call setLogScale at construction.
   bool isActive { true };    ///< Gray out knob and make it unresponsive.
-  // TODO: Put midpoint back in the correct place.
-  signal_t midPoint { 0.0 }; ///< Sets the middel of the knob. 0 for don't care.
   signal_t _defaultVal;      ///< Default value. Set by updateDefaults().
   void setLogScale() {       ///< Sets midPoint for logarithmic scale.
     this->midPoint = gcem::sqrt(this->minVal * this->maxVal);
@@ -70,15 +67,14 @@ struct KnobGroupSpec {
  */
 struct ToggleSpec {
   bool* p_val; ///< Pointer to value the knob represents. Used to bind to UI.
-  /** Name of knob, used for IDs and label in UI. Can't contain ' '. '_' is
-   * replaced with ' ' in UI lables. */
+  /** Name of knob, used for IDs and label in UI. */
   std::string name;
   bool _defaultVal { false };
 };
 
 static inline ToggleSpec makeTmpToggle(
-    std::string name, std::string option, std::string prefix) {
-  return { nullptr, prefix + ":" + name + ":" + option };
+    std::string paramType, std::string groupName, std::string paramName) {
+  return { nullptr, mangleName(paramType, groupName, paramName) };
 }
 
 struct ToggleSetSpec {
@@ -141,12 +137,12 @@ struct TitleBarSpec {
             // "iir_2x",
             // "iir_4x",
             // "iir_8x",
-            "fir_2x_lq",
-            "fir_4x_lq",
-            "fir_8x_lq",
-            "fir_2x_hq",
-            "fir_4x_hq",
-            "fir_8x_hq" },
+            "FIR 2X LQ",
+            "FIR 4X LQ",
+            "FIR 8X LQ",
+            "FIR 2X HQ",
+            "FIR 4X HQ",
+            "FIR 8X HQ" },
         0,
     },
   };
@@ -177,5 +173,10 @@ struct UiSpec {
   int meterHeight_dots { 12 };        ///< Number of dots in the meteres.
   int meterWidth { 35 };              ///< Width of each meter in pixels.
   float meterRefreshRate_hz { 50 };   ///< Refresh rate of meters in the UI.
+  int groupWidth { 200 };
+  int groupEvenColOffset { 40 };
+  int groupKnobWidth { groupWidth / 2 };
+  int groupKnobHeight { 120 };
+  int groupPad { 20 };
 };
 } // namespace NtFx

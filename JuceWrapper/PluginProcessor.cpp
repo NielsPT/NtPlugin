@@ -25,6 +25,7 @@
 #include "PluginProcessor.h"
 #include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/system/juce_PlatformDefs.h"
+#include "lib/utils.h"
 #include <cstddef>
 #include <string>
 #include <type_traits>
@@ -182,9 +183,8 @@ template <typename T>
 void NtPluginAudioProcessor::loadParameter(std::vector<T>& v) {
   for (auto& p : v) {
     if (!p.p_val) { continue; }
-    auto mangledName = p.name;
-    std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
-    auto par = this->paramLayout.getParameterAsValue(mangledName);
+    auto par = this->paramLayout.getParameterAsValue(
+        NtFx::spacesToUnderscores(p.name));
     *p.p_val = par.getValue();
     DBG("Loaded '" << p.name << "': " << float(*p.p_val));
   }
@@ -195,10 +195,8 @@ void NtPluginAudioProcessor::loadRadioButtons(
   for (auto& p : v) {
     int val { 0 };
     for (size_t i = 0; i < p.options.size(); i++) {
-      auto mangledName =
-          NtFx::makeTmpToggle(p.name, p.options[i], "radioButton").name;
-      std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
-      auto par = this->paramLayout.getParameterAsValue(mangledName);
+      auto par = this->paramLayout.getParameterAsValue(
+          NtFx::mangleName("radioButton", p.name, p.options[i]));
       if (par.getValue()) { val = i; }
     }
     *p.p_val = val;
@@ -213,8 +211,7 @@ void NtPluginAudioProcessor::loadToggleSets(
       // TODO: What if we store the mangled name as well? Or a more general
       // function.
       auto mangledName =
-          NtFx::makeTmpToggle(p.name, p.toggles[i].name, "toggleGroup").name;
-      std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
+          NtFx::mangleName("toggleGroup", p.name, p.toggles[i].name);
       auto par            = this->paramLayout.getParameterAsValue(mangledName);
       *p.toggles[i].p_val = par.getValue();
       DBG("Loaded '" << mangledName << "': " << float(*p.toggles[i].p_val));
@@ -225,10 +222,9 @@ void NtPluginAudioProcessor::loadToggleSets(
 void NtPluginAudioProcessor::loadGroupKnobs(
     std::vector<NtFx::KnobSpec>& v, std::string groupName) {
   for (auto& p : v) {
-    auto mangledName = "knobGroup:" + groupName + ":" + p.name;
-    std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
-    auto par = this->paramLayout.getParameterAsValue(mangledName);
-    *p.p_val = par.getValue();
+    auto mangledName = NtFx::mangleName("knobGroup", groupName, p.name);
+    auto par         = this->paramLayout.getParameterAsValue(mangledName);
+    *p.p_val         = par.getValue();
     DBG("Loaded '" << mangledName << "': " << float(*p.p_val));
   }
 }
@@ -248,52 +244,27 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 NtPluginAudioProcessor::createParameterLayout() {
   int i = 1;
   juce::AudioProcessorValueTreeState::ParameterLayout parameters;
-
-  std::vector<NtFx::KnobSpec> vTmpKnobs;
-  // TODO: Make this a function. DRY!
   for (auto& g : this->plug.knobGroups) {
-    vTmpKnobs.clear();
-    for (auto& k : g.primaryKnobs) {
-      NtFx::KnobSpec _k = k;
-      _k.name           = "knobGroup:" + g.name + ":" + k.name;
-      vTmpKnobs.push_back(_k);
-    }
-    this->createParameters<float>(vTmpKnobs, parameters, i);
-    vTmpKnobs.clear();
-    for (auto& k : g.secondaryKnobs) {
-      NtFx::KnobSpec _k = k;
-      _k.name           = "knobGroup:" + g.name + ":" + k.name;
-      vTmpKnobs.push_back(_k);
-    }
-    this->createParameters<float>(vTmpKnobs, parameters, i);
+    this->createKnobGroupParameters(g.name, g.primaryKnobs, parameters, i);
+    this->createKnobGroupParameters(g.name, g.secondaryKnobs, parameters, i);
   }
   this->createParameters<float>(this->plug.primaryKnobs, parameters, i);
   this->createParameters<float>(this->plug.secondaryKnobs, parameters, i);
   this->createParameters<bool>(this->plug.toggles, parameters, i);
   this->createParameters<int>(this->plug.dropdowns, parameters, i);
   this->createParameters<int>(this->titleBarSpec.dropdowns, parameters, i);
-  // TODO: Look at this. Please DRY!
-  // TODO: Store the int for a radiobuttonset as an int instead. Trouble is
-  // there is no attachement type for it, so we need to use/hack
-  // comboboxAttachement.
   std::vector<NtFx::ToggleSpec> vTmpToggles;
   for (auto& p : this->plug.radioButtons) {
     vTmpToggles.clear();
     for (auto& option : p.options) {
-      std::string mangledName(p.name);
-      std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
-      vTmpToggles.push_back(
-          NtFx::makeTmpToggle(mangledName, option, "radioButton"));
+      vTmpToggles.push_back(NtFx::makeTmpToggle("radioButton", p.name, option));
     }
     this->createParameters<bool>(vTmpToggles, parameters, i);
   }
   for (auto& r : this->plug.toggleSets) {
     vTmpToggles.clear();
     for (auto& t : r.toggles) {
-      std::string mangledName(t.name);
-      std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
-      vTmpToggles.push_back(
-          NtFx::makeTmpToggle(r.name, mangledName, "toggleGroup"));
+      vTmpToggles.push_back(NtFx::makeTmpToggle("toggleGroup", r.name, t.name));
     }
     this->createParameters<bool>(vTmpToggles, parameters, i);
   }
@@ -301,13 +272,26 @@ NtPluginAudioProcessor::createParameterLayout() {
   return parameters;
 }
 
+template <typename T>
+void NtPluginAudioProcessor::createKnobGroupParameters(std::string groupName,
+    std::vector<T> groupParams,
+    juce::AudioProcessorValueTreeState::ParameterLayout& parameters,
+    int& i) {
+  std::vector<NtFx::KnobSpec> vTmpKnobs;
+  for (auto& k : groupParams) {
+    NtFx::KnobSpec _k = k;
+    _k.name           = NtFx::mangleName("knobGroup", groupName, k.name);
+    vTmpKnobs.push_back(_k);
+  }
+  this->createParameters<float>(vTmpKnobs, parameters, i);
+}
+
 template <typename t_val, typename t_spec>
 void NtPluginAudioProcessor::createParameters(std::vector<t_spec>& vParams,
     juce::AudioProcessorValueTreeState::ParameterLayout& paramLayout,
     int& i) {
   for (auto p : vParams) {
-    std::string mangledName(p.name);
-    std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
+    std::string mangledName = NtFx::spacesToUnderscores(p.name);
     juce::ParameterID id(mangledName, i++);
     if constexpr (std::is_same_v<t_val, int>) {
       juce::StringArray options;

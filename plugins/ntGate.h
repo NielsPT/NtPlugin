@@ -123,8 +123,8 @@ struct ntGate : public NtFx::NtPlugin {
           .suffix   = " ms",
           .minVal   = 0.1,
           .maxVal   = 1000,
-          .isActive = false,
           .midPoint = 100,
+          .isActive = false,
       },
       {
           .p_val    = &this->scHf.settings.tRel_ms,
@@ -132,8 +132,8 @@ struct ntGate : public NtFx::NtPlugin {
           .suffix   = " ms",
           .minVal   = 0.1,
           .maxVal   = 1000,
-          .isActive = false,
           .midPoint = 100,
+          .isActive = false,
       },
       {
           .p_val    = &this->ignoreScSettings.thresh_db,

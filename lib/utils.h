@@ -20,6 +20,7 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <string>
 #include <vector>
 
 namespace NtFx {
@@ -131,5 +132,16 @@ template <typename T>
 static inline T rand() noexcept {
   const uint64_t uintMax = std::numeric_limits<uint64_t>::max();
   return T(_KISS() - (uintMax >> 1)) / T(uintMax) * 2 - 1;
+}
+
+inline std::string spacesToUnderscores(std::string x) {
+  std::string mangledName = x;
+  std::replace(mangledName.begin(), mangledName.end(), ' ', '_');
+  return mangledName;
+}
+
+inline std::string mangleName(
+    std::string paramType, std::string groupName, std::string paramName) {
+  return spacesToUnderscores(paramType + ":" + groupName + ":" + paramName);
 }
 }
