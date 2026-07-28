@@ -17,6 +17,7 @@
 
 #pragma once
 #include "gcem.hpp"
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <limits>

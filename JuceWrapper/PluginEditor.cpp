@@ -33,7 +33,6 @@
 #include "juce_gui_basics/juce_gui_basics.h"
 #include "lib/utils.h"
 
-#include <algorithm>
 #include <cstddef>
 #include <memory>
 #include <string>

@@ -208,8 +208,6 @@ void NtPluginAudioProcessor::loadToggleSets(
     std::vector<NtFx::ToggleSetSpec>& v) {
   for (auto& p : v) {
     for (size_t i = 0; i < p.toggles.size(); i++) {
-      // TODO: What if we store the mangled name as well? Or a more general
-      // function.
       auto mangledName =
           NtFx::mangleName("toggleGroup", p.name, p.toggles[i].name);
       auto par            = this->paramLayout.getParameterAsValue(mangledName);

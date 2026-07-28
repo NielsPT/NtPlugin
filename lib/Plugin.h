@@ -27,7 +27,6 @@
 #include "lib/UiSpec.h"
 #include "lib/utils.h"
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <string>

@@ -8,12 +8,12 @@
 #include <array>
 #include <cstddef>
 
-enum Bands { lf, loMid, mid, hiMid, hf, n };
+enum Bands { lf, loMid, hiMid, hf, n };
 enum AttRelMode { relative, user };
 
 struct ntDynamicEq : public NtFx::NtPlugin {
   const std::array<std::string, Bands::n> bandNames {
-    "Low", "Low Mid", "Mid", "High Mid", "High"
+    "Low", "Low Mid", "High Mid", "High"
   };
   std::array<NtFx::Biquad::EqBand, Bands::n> bands;
   std::array<NtFx::Comp::ScSettings, Bands::n> scSettings;
@@ -21,7 +21,6 @@ struct ntDynamicEq : public NtFx::NtPlugin {
   std::array<signal_t, Bands::n> gain_lin;
   std::array<bool, Bands::n> solos = { false, false, false, false };
   std::array<bool, Bands::n> mutes = { false, false, false, false };
-  // std::array<bool, Bands::n> compDisables = { false, false, false, false };
   signal_t attScale { 0.25 };
   signal_t relScale { 4 };
   AttRelMode attRelMode { relative };
@@ -34,7 +33,6 @@ struct ntDynamicEq : public NtFx::NtPlugin {
             scSettings[1],
             scSettings[2],
             scSettings[3],
-            scSettings[4],
         }) {
     for (size_t i = 0; i < Bands::n; i++) {
       this->knobGroups.push_back({ .name = bandNames[i] });
@@ -114,7 +112,6 @@ struct ntDynamicEq : public NtFx::NtPlugin {
     this->toggleSets = {
       { "Solo", { } },
       { "Bypass", { } },
-      // { "Comp Off", { } },
     };
     this->radioButtons = {
       { (int*)&this->attRelMode, "Att/Rel", { "Relative", "Variable" } },
@@ -128,10 +125,6 @@ struct ntDynamicEq : public NtFx::NtPlugin {
           .p_val = &this->mutes[i],
           .name  = bandNames[i],
       });
-      // this->toggleSets[2].toggles.push_back({
-      //     .p_val = &this->compDisables[i],
-      //     .name  = bandNames[i],
-      // });
     }
     this->toggles = {
       { .p_val = &this->bypassEnable, .name = "Bypass" },
@@ -147,7 +140,6 @@ struct ntDynamicEq : public NtFx::NtPlugin {
     this->uiSpec.knobHeight                  = 140;
     this->bands[Bands::lf].settings.fc_hz    = 100;
     this->bands[Bands::loMid].settings.fc_hz = 500;
-    this->bands[Bands::mid].settings.fc_hz   = 1000;
     this->bands[Bands::hiMid].settings.fc_hz = 2e3;
     this->bands[Bands::hf].settings.fc_hz    = 10e3;
     this->updateDefaults();
@@ -173,7 +165,6 @@ struct ntDynamicEq : public NtFx::NtPlugin {
     this->template updatePeakLevel<3, true>(gr[1]);
     this->template updatePeakLevel<4, true>(gr[2]);
     this->template updatePeakLevel<5, true>(gr[3]);
-    this->template updatePeakLevel<6, true>(gr[4]);
     this->template updatePeakLevel<1>(acc);
     return acc;
   }
