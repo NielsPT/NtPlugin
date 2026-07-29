@@ -163,7 +163,7 @@ void NtPluginAudioProcessor::setStateInformation(
   this->paramLayout.replaceState(juce::ValueTree::fromXml(*xmlState));
   for (auto& g : this->plug.knobGroups) {
     this->loadGroupKnobs(g.primaryKnobs, g.name);
-    this->loadGroupKnobs(g.secondaryKnobs, g.name);
+    // this->loadGroupKnobs(g.secondaryKnobs, g.name);
   }
   this->loadParameter(this->plug.primaryKnobs);
   this->loadParameter(this->plug.secondaryKnobs);
@@ -244,7 +244,7 @@ NtPluginAudioProcessor::createParameterLayout() {
   juce::AudioProcessorValueTreeState::ParameterLayout parameters;
   for (auto& g : this->plug.knobGroups) {
     this->createKnobGroupParameters(g.name, g.primaryKnobs, parameters, i);
-    this->createKnobGroupParameters(g.name, g.secondaryKnobs, parameters, i);
+    // this->createKnobGroupParameters(g.name, g.secondaryKnobs, parameters, i);
   }
   this->createParameters<float>(this->plug.primaryKnobs, parameters, i);
   this->createParameters<float>(this->plug.secondaryKnobs, parameters, i);

@@ -58,7 +58,8 @@ struct KnobSpec {
 struct KnobGroupSpec {
   std::string name;
   std::vector<KnobSpec> primaryKnobs;
-  std::vector<KnobSpec> secondaryKnobs;
+  // TODO: secondary knobs, toggles and so on for knobgrids.
+  // std::vector<KnobSpec> secondaryKnobs;
 };
 
 /**

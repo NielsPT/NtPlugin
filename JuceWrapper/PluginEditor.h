@@ -128,6 +128,9 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   void _initToggleGroup(NtFx::ToggleSetSpec& spec);
   void _initDropDown(NtFx::DropDownSpec& p_spec, bool addToTitleBar = false);
   void _initRadioButton(NtFx::RadioButtonSetSpec& spec);
+  void _initWindowSize();
+  void _initWindowWidth(int nCols);
+  void _initWindowHeight(int nRows);
 
   // UI update.
   void _updateUi();
@@ -152,7 +155,6 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
       int size,
       std::vector<std::unique_ptr<juce::Label>>& labels,
       std::vector<std::unique_ptr<T>>& toggles);
-  void _initWindowSize();
 
   // Helpers.
   template <typename T, typename spec_t>

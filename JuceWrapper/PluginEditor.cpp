@@ -243,6 +243,11 @@ void NtPluginAudioProcessorEditor::_initWindowSize() {
       nCols,
       this->proc.plug.uiSpec.maxRows,
       this->proc.plug.uiSpec.maxColumns);
+  this->_initWindowWidth(nCols);
+  this->_initWindowHeight(nRows);
+}
+
+void NtPluginAudioProcessorEditor::_initWindowWidth(int nCols) {
   auto width = 0;
   if (this->proc.plug.uiSpec.includeMeters) {
     width += this->meters.getMinimalWidth();
@@ -251,11 +256,18 @@ void NtPluginAudioProcessorEditor::_initWindowSize() {
       || this->proc.plug.toggleSets.size()) {
     width += this->proc.plug.uiSpec.radioButtonAreaWidth;
   }
-  width += nCols * this->proc.plug.uiSpec.knobWidth;
+  auto primKnobsWidth = nCols * this->proc.plug.uiSpec.knobWidth;
+  width += primKnobsWidth;
+  auto secKnobWidth = this->proc.plug.secondaryKnobs.size()
+      * this->proc.plug.uiSpec.secondaryKnobWidth;
+  if (secKnobWidth > primKnobsWidth) { width += secKnobWidth - primKnobsWidth; }
   width += this->proc.plug.knobGroups.size() * this->proc.plug.uiSpec.groupWidth
       + this->proc.plug.uiSpec.groupPad;
   this->unscaledWindowWidth = width;
-  auto height               = 0;
+}
+
+void NtPluginAudioProcessorEditor::_initWindowHeight(int nRows) {
+  auto height = 0;
   if (this->proc.plug.uiSpec.includeTitleBar) {
     height += this->proc.plug.uiSpec.titleBarHeight;
   }

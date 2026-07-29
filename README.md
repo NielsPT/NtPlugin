@@ -20,8 +20,8 @@ another framework.
   parametes, and the framework takes care of the rest.
 - Oversampling available by default.
 - Possibility for wrapping plugins for other targets.
-  <!-- - Or just download the releases and start mixing. -->
-  <!-- TODO: relaeses. -->
+- Or just download the releases and start mixing. Releases are available at
+  [the NTfx website](http://www.ntlyd.dk/ntfx/index.html).
 
 ### The UI
 
@@ -245,24 +245,6 @@ platform-agnostic code, targeting more platforms in the future is possible. If
 anyone wishes to colaborate, adding a wrapper for eg. ESP32 or an ADI device
 would be an option for a project.
 
-## Mono plugins
-
-Plugins are stereo by default. If you want to build a plugin as mono, simply add
-`#define NTFX_MONO` to your plugin file **before** including any NtFx library
-headers. If you want your plugin to build in both mono and stereo versions, add
-a new plugin, which set the `NTFX_MONO` define, includes your plugin and
-typedefs your original plugin to the new plugin file name. This snippet is the
-mono plugin file in it's totality.
-
-```c++
-#pragma once
-#define NTFX_MONO
-#include "[stereo plugin name].h"
-template <typename signal_t>
-using [mono plugin name] = [stereo plugin name]<signal_t>;
-
-```
-
 ## Testing your plugin
 
 The `testWrapper` can be used to test plugins. The individual tests are stored
@@ -395,16 +377,13 @@ double precision for JUCE plugins.
 
 ### signal_t
 
-All classes and free functions in the library are templates of `signal_t`, which
-is the main signal datatype. At the time of writing, this always resolves to a
-float, but it is a template parameter in order to change that at a later point
-without having to touch all the code.
+`signal_t` is the underlying auto datatype. It is typedeffed i `Audio.h`. For
+JUCE plugins, this is float as default, and can be changed if double is needed.
 
 ### The Audio class
 
 The Audio class wraps two `signal_t` values in a single object and allows the
-user to write the dsp code once for both channels. If `NTFX_MONO` is set, it
-will wrap a single value.
+user to write the dsp code once for both channels.
 
 ### The Component class
 
@@ -434,8 +413,6 @@ interface.
 The only member of the `Component` class is `float fs`, which is the oversampled
 (high) sample rate.
 
-<!--TODO: Anything else to say? -->
-
 ### The Plugin class
 
 Each plugin design is controlled by settings in `uiSpec` and a number of
@@ -462,12 +439,15 @@ enhirets from the `NtPlugin` base plugin. The available vectors are:
   `uiSpec.maxColumns` can be used to control the number of rows and columns.
   `p_val` of primary knobs must point to a `signal_t` value. If not, the
   parameter is seen as a dummy parameter.
-- `secondaryKnobs` are placed below the main grid on a single row, that clips if
-  it gets too long. The width of the UI can be set to accommodate more controls
-  if needed. `p_val` of secondary knobs must point to a `signal_t` value. If
-  not, the parameter is seen as a dummy parameter.
-  <!-- TODO: auto width of UI if secondary knobs are too many. -->
-- `toggles`
+- `secondaryKnobs` are placed below the main grid on a single row. `p_val` of
+  secondary knobs should point to a `signal_t` value. If not, the parameter is
+  seen as a dummy parameter.
+- `knobGroups` are placed to the right of the meters and left of the main grid.
+  This is a vector of `KnobGroup` objects that contain a name and a vector of
+  knobs to be placed in the UI. This is what you want to use if you have too
+  many parameters to fit in the main grid. An example can be seen in
+  `ntDynamicEq.h`.
+- `toggles` are placed at the bottom of the UI in a row.
 - `dropdowns` are placed to the left of toggles in the bottom row. The field
   `options` can be used to name the available options. `p_val` of dropdowns must
   point to an `int` value.
@@ -518,10 +498,6 @@ coefficient calculation in the user plugin. It is updated per buffer if the host
 supports it. If not, the tempo is 0, so the user should always check it before
 using it.
 
-<!-- ### UiSpec
-
-TODO: Explain lib. -->
-
 ### The Glider class
 
 Under some circumstances, changing parameters will cause clicks and pops in
@@ -562,9 +538,6 @@ The peak sensor can be used to detect the peak level of a signal with a user
 controllable release. This is used for dynamics side chains and peak level
 meters.
 
-<!-- TODO: Add Peak sensor with hold for nicer meters and look ahead
-compressors. -->
-
 ### The RmsSensor class
 
 Rms sensor with variable averaging time in milliseconds. Used for RMS dynamics
@@ -581,17 +554,14 @@ per sample at the upsampled rate.
 
 ### SideChain
 
-The `SideChain` namespace contains a number of compressor side chains, including
+The `Comp` namespace contains a number of compressor side chains, including
 peak- and RMS-sensing in dB and linear domains.
-
-<!--TODO: Explain lib. -->
 
 ### SoftClip
 
-Since `SoftClip` does not hold state, it's not class. Classes are for storing
-state, not for wrapping functions in a namespace (Java, I'm looking at you!).
-The coefficients are calculated compile time and used in free functions for
-third, fifth and seventh order soft clipping.
+`SoftClip` is a stateless polynominal algorithm. The coefficients are calculated
+compile time and used in free functions for third, fifth and seventh order soft
+clipping.
 
 ### Transformer
 

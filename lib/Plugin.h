@@ -152,11 +152,11 @@ struct NtPlugin : public ComponentBase<Audio> {
           return p.p_val;
         }
       }
-      for (auto p : g.secondaryKnobs) {
-        if (name == NtFx::mangleName("knobGroup", g.name, p.name)) {
-          return p.p_val;
-        }
-      }
+      // for (auto p : g.secondaryKnobs) {
+      //   if (name == NtFx::mangleName("knobGroup", g.name, p.name)) {
+      //     return p.p_val;
+      //   }
+      // }
     }
     return nullptr;
   }
