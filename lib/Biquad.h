@@ -69,24 +69,6 @@ namespace Biquad {
     State r;
   };
 
-  struct Biquad6 {
-    Coeffs6& coeffs;
-    State state;
-    Biquad6(Coeffs6& coeffs) : coeffs(coeffs) { }
-    inline signal_t process(signal_t x) {
-      signal_t y = (this->coeffs.b[0] * x + this->coeffs.b[1] * this->state.x[0]
-                       + this->coeffs.b[2] * this->state.x[1]
-                       - this->coeffs.a[1] * this->state.y[0]
-                       - this->coeffs.a[2] * this->state.y[1])
-          / this->coeffs.a[0];
-      this->state.y[1] = this->state.y[0];
-      this->state.y[0] = y;
-      this->state.x[1] = this->state.x[0];
-      this->state.x[0] = x;
-      return y;
-    }
-  };
-
   inline static signal_t processBiquad5(
       signal_t x, Coeffs5& coeffs, State& state) noexcept {
     signal_t y = coeffs.b[0] * x + coeffs.b[1] * state.x[0]
@@ -284,6 +266,65 @@ namespace Biquad {
         gcem::pow(10, (settings.gain_db / 40)));
   }
 
+  struct Biquad6 {
+    Coeffs6& coeffs;
+    State state;
+    Biquad6(Coeffs6& coeffs) : coeffs(coeffs) { }
+    inline signal_t process(signal_t x) {
+      signal_t y = (this->coeffs.b[0] * x + this->coeffs.b[1] * this->state.x[0]
+                       + this->coeffs.b[2] * this->state.x[1]
+                       - this->coeffs.a[1] * this->state.y[0]
+                       - this->coeffs.a[2] * this->state.y[1])
+          / this->coeffs.a[0];
+      this->state.y[1] = this->state.y[0];
+      this->state.y[0] = y;
+      this->state.x[1] = this->state.x[0];
+      this->state.x[0] = x;
+      return y;
+    }
+  };
+
+  template <int t_numStages = 1>
+  struct Cascade {
+    Coeffs4 _coeffs[t_numStages];
+    signal_t _g { 1 };
+    signal_t _xn[2];
+    signal_t _yn[2 * t_numStages];
+
+    signal_t process(signal_t x) {
+      signal_t acc = x + this->_coeffs[0].b[0] * this->_xn[0]
+          + this->_coeffs[0].b[1] * this->_xn[1]
+          - this->_coeffs[0].a[0] * this->_yn[0]
+          - this->_coeffs[0].a[1] * this->_yn[1];
+
+      this->_xn[1]   = this->_xn[0];
+      this->_xn[0]   = x;
+      signal_t xNext = acc;
+
+      for (size_t i = 1; i < t_numStages; i++) {
+        acc = xNext + this->_coeffs[i].b[0] * this->_yn[(i - 1) * 2]
+            + this->_coeffs[i].b[1] * this->_yn[(i - 1) * 2 + 1]
+            - this->_coeffs[i].a[0] * this->_yn[i * 2]
+            - this->_coeffs[i].a[1] * this->_yn[i * 2 + 1];
+
+        this->_yn[(i - 1) * 2 + 1] = this->_yn[(i - 1) * 2];
+        this->_yn[(i - 1) * 2 + 0] = xNext;
+        xNext                      = acc;
+      }
+
+      this->_yn[(t_numStages - 1) * 2 + 1] =
+          this->_yn[(t_numStages - 1) * 2 + 0];
+      this->_yn[(t_numStages - 1) * 2 + 0] = acc;
+      return acc * this->_g;
+    }
+
+    void reset(float fs) {
+      for (size_t i = 0; i < t_numStages * 2; i++) { _yn[i] = 0; }
+      _xn[0] = 0;
+      _xn[1] = 0;
+    }
+  };
+
   struct EqBandMono : public ComponentBase<Audio> {
     Settings settings;
     Coeffs5 coeffs;
@@ -358,56 +399,33 @@ namespace Biquad {
     }
   };
 
-  using EqBand6 = EqBand6Stereo;
-  using EqBand  = EqBandStereo;
-
   template <int t_numStages = 1>
-  struct Cascade {
-    Coeffs4 _coeffs[t_numStages];
-    signal_t b0;
-    signal_t _xn[2];
-    signal_t _yn[2 * t_numStages];
-
-    signal_t process(signal_t x) {
-      // First stage uses the stored feed forward state m_xn.
-      signal_t acc = x * b0 + _coeffs[0].b[0] * _xn[0]
-          + _coeffs[0].b[1] * _xn[1] + _coeffs[0].a[0] * _yn[0]
-          + _coeffs[0].a[1] * _yn[1];
-
-      // Store feed forward state for first stage.
-      _xn[1] = _xn[0];
-      _xn[0] = x;
-
-      signal_t xRemainingStages = acc;
-
-      // Process the remaining stages using feedback state from the previous
-      // stage for feed forward state.
-      for (size_t i = 1; i < t_numStages; i++) {
-        acc = xRemainingStages + _coeffs[i].b[0] * _yn[(i - 1) * 2 + 0]
-            + _coeffs[i].b[1] * _yn[(i - 1) * 2 + 1]
-            + _coeffs[i].a[0] * _yn[i * 2 + 0]
-            + _coeffs[i].a[1] * _yn[i * 2 + 1];
-
-        // Update feed back state for previous stage.
-        _yn[(i - 1) * 2 + 1] = _yn[(i - 1) * 2 + 0];
-        _yn[(i - 1) * 2 + 0] = xRemainingStages;
-
-        xRemainingStages = acc;
-      }
-
-      // update feed back state for last stage.
-      _yn[(t_numStages - 1) * 2 + 1] = _yn[(t_numStages - 1) * 2 + 0];
-      _yn[(t_numStages - 1) * 2 + 0] = acc;
-      return acc;
+  struct Eq : public ComponentBase<Audio> {
+    Settings settings[t_numStages];
+    Cascade<t_numStages> l;
+    Cascade<t_numStages> r;
+    virtual Audio process(Audio x) noexcept override {
+      return { this->l.process(x.l), this->r.process(x.r) };
     }
-
-    void update() { }
-
-    void reset(float fs) {
-      for (size_t i = 0; i < t_numStages * 2; i++) { _yn[i] = 0; }
-      _xn[0] = 0;
-      _xn[1] = 0;
+    virtual void update() noexcept override {
+      signal_t g = 1;
+      for (size_t i = 0; i < t_numStages; i++) {
+        Coeffs5 coeffs5 = calcCoeffs5(this->settings[i], this->fs);
+        Coeffs4 coeffs4;
+        coeffs4.b[0] = coeffs5.b[1] / coeffs5.b[0];
+        coeffs4.b[1] = coeffs5.b[2] / coeffs5.b[0];
+        coeffs4.a[0] = coeffs5.a[0];
+        coeffs4.a[1] = coeffs5.a[1];
+        g *= coeffs5.b[0];
+        this->l._coeffs[i] = coeffs4;
+        this->r._coeffs[i] = coeffs4;
+      }
+      this->l._g = g;
+      this->r._g = g;
     }
   };
+
+  using EqBand6 = EqBand6Stereo;
+  using EqBand  = EqBandStereo;
 }
 }
