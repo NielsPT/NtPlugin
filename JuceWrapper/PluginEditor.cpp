@@ -500,7 +500,6 @@ void NtPluginAudioProcessorEditor::_placeToggles(
   }
 }
 
-// TODO: DRY. make a general _upadeteKnob function.
 void NtPluginAudioProcessorEditor::_updateSecondaryKnobs(
     juce::Rectangle<int>& area) {
   auto secondaryKnobsArea = area.removeFromBottom(

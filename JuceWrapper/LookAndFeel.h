@@ -33,13 +33,9 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 
 namespace NtFx {
-// TODO: A prettier knob.
-// TODO: Make it a component instead like Toggle. Maybe...
-// TODO: OR build an NrPluginLookAndFeel that holds all of it.
 struct KnobLookAndFeel : public juce::LookAndFeel_V4 {
   float fontSize = 1;
   float uiScale  = 1;
-  // TODO: Use Juce' colour system instead. This is inconsistent.
   uint32_t backgroundColour { 0xFFD3D3D3 };
   uint32_t foregroundColour { 0xFF000000 };
 

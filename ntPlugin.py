@@ -25,10 +25,11 @@ import subprocess
 import re
 import time
 import shutil
+import json
 from multiprocessing import cpu_count
 from testWrapper import test
 from JuceWrapper import package
-from JuceWrapper.package import RED, YELLOW, GREEN, BLUE, BLACK
+from JuceWrapper.package import RED, YELLOW, GREEN, BLUE, BLACK, PLUGINS_DIR
 
 REPO_BASE_DIR = os.path.realpath(os.path.dirname(__file__))
 BUILD_DIR = os.path.realpath(f"{REPO_BASE_DIR}/build")
@@ -73,11 +74,50 @@ def _artefactExists(plugin: str, target: str) -> bool:
     return False
 
 
-def _openInVscode(path: str) -> None:
+def _openInVscode(path: str) -> bool:
     try:
         subprocess.run(["code", path], check=False)
+        return True
     except FileNotFoundError:
-        pass
+        return False
+
+def _switchVsCodeSettings(plugin: str) -> bool:
+    pluginPath = f"{PLUGINS_DIR}/{plugin}.h"
+    if not os.path.exists(pluginPath):
+        print(f"{RED}Plugin '{plugin}' not found.{BLACK}")
+        return False
+    pluginIds = readPluginIds()
+    if plugin not in pluginIds:
+        print(f"{YELLOW}'{plugin}' not found in plugin ID file. Setting "
+        "category to 'Effect'.")
+        cat = "Effect"
+    else:
+        cat = pluginIds[plugin][VST3_CAT]
+    settingsFilePath = os.path.realpath(f"{REPO_BASE_DIR}/.vscode/settings.json")
+    if not os.path.exists(settingsFilePath):
+        return False
+    with open(settingsFilePath, "r", encoding="utf-8") as f:
+        settings = json.loads(f.read())
+    cmakeConfArgsKey = "cmake.configureArgs"
+    if cmakeConfArgsKey not in settings:
+        return False
+    configArgs = settings[cmakeConfArgsKey]
+    if not isinstance(configArgs, list):
+        return False
+    if len(configArgs)!=3:
+        return False
+    newConfigArgs = [
+        f"-DNTFX_PLUGIN={plugin}",
+        f"-DNTFX_AAX_CATEGORY={cat}",
+        f"-DNTFX_VST3_CATEGORY={CATEGORY_MAP[cat]}",
+    ]
+    settings[cmakeConfArgsKey] = newConfigArgs
+    newSettingJson = json.dumps(settings, indent=2)
+    with open(settingsFilePath, "w", encoding="utf-8") as f:
+        f.write(newSettingJson)
+    configure(plugin, pluginIds, cat)
+    _openInVscode(pluginPath)
+    return True
 
 
 def _writeFile(path: str, content: str) -> bool:
@@ -107,11 +147,9 @@ def newPlugin(name: str) -> bool:
 
 struct {name} : public NtFx::NtPlugin {{
   bool bypassEnable {{ false }};
-  // TODO: Create some variables.
 
   {name}() {{
     this->primaryKnobs = {{
-      // TODO: Create some knobs.
     }};
     this->toggles = {{
       {{ .p_val = &this->bypassEnable, .name = "Bypass" }},
@@ -126,18 +164,15 @@ struct {name} : public NtFx::NtPlugin {{
       return x;
     }}
     Audio y = {{ 0, 0 }};
-    // TODO: processing.
     this->template updatePeakLevel<1>(y);
     return y;
   }}
 
   void update() noexcept override {{
-    // TODO: Update coeffs.
   }}
 
   void reset(float fs) noexcept override {{
     this->fs = fs;
-    // TODO: Allocate and reset.
     this->update();
   }}
 }};
@@ -145,7 +180,7 @@ struct {name} : public NtFx::NtPlugin {{
     path = f"{REPO_BASE_DIR}/plugins/{name}.h"
     if not _writeFile(path, template):
         return False
-    _openInVscode(path)
+    _switchVsCodeSettings(name)
     return True
 
 
@@ -171,17 +206,12 @@ NTFX_TEST() {{
   NTFX_ADD_TEST(bypass, "impulse");
   auto defaults = {name}();
   NTFX_ADD_TEST(defaults, "impulse");
-  // TODO: Add more tests.
   return NTFX_RUN_TESTS();
 }}
 """
-    # TODO: use _writeFile
     path = f"{REPO_BASE_DIR}/testWrapper/tests/{name}_test.cpp"
-    if os.path.exists(path):
-        print(f"{YELLOW}'{path}' already exists.{BLACK}")
+    if not _writeFile(path, template):
         return False
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(template)
     _openInVscode(path)
     return True
 
@@ -237,6 +267,9 @@ def configure(
     ]
     if sys.platform == "win32":
         args += ["-A", "x64"]
+    if sys.platform == "darwin":
+        args += ["CMAKE_C_COMPILER=/usr/bin/cc"]
+        args += ["CMAKE_CXX_COMPILER=/usr/bin/c++"]
     if version:
         args += [f"-DNTFX_VERSION={version}"]
     if category:
@@ -560,6 +593,11 @@ def createParser() -> argparse.ArgumentParser:
         action="store_true",
         help="Add test file to 'testWrapper/tests'.",
     )
+    switchParser = subParsers.add_parser(
+        "switch", 
+        help="Switch VsCode context to a different plugin.",
+    )
+    switchParser.add_argument("name", help="Name of plugin")
     return parser
 
 
@@ -580,6 +618,8 @@ def main(args: dict) -> bool:
         return newPlugin(args["name"])
     if args["task"] == "package":
         return package.main(args)
+    if args["task"] == "switch":
+        return _switchVsCodeSettings(args["name"])
     print(f"{RED}Unknown command: {args["task"]}{BLACK}.")
     return False
 

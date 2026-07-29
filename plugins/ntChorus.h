@@ -27,8 +27,9 @@
 #include "lib/Plugin.h"
 #include "lib/utils.h"
 
-constexpr int tModDlMax_ms = 10;
-constexpr int tWetDlMax_ms = 100;
+constexpr signal_t minRate_hz = 0.1;
+constexpr int tModDlMax_ms    = 10 * int(1.0 / minRate_hz);
+constexpr int tWetDlMax_ms    = 100;
 
 struct ntChorus : public NtFx::NtPlugin {
   NtFx::Delay::FractDelayLine<192 * 8 * tModDlMax_ms, signal_t, 4> dlL;
@@ -49,39 +50,22 @@ struct ntChorus : public NtFx::NtPlugin {
   signal_t _t { 0 };
   signal_t fcHpf_hz { 20 };
   signal_t fcLpf_hz { 20e3 };
-
   bool bypassEnable { false };
 
   ntChorus() {
     this->primaryKnobs = {
-      { &this->fMod_hz.ui, "Rate", " Hz", 0.1, 10, 1 },
+      { &this->fMod_hz.ui, "Rate", " Hz", minRate_hz, 10, 1 },
       { &this->dlWet.t_ms.ui, "Delay", " ms", 0, tWetDlMax_ms },
-      { &this->tDelayMod_ms, "Depth", " ms", 0, tModDlMax_ms },
+      { &this->tDelayMod_ms, "Depth", " ms", 0, tModDlMax_ms * minRate_hz },
     };
     this->secondaryKnobs = {
       { &this->phaseMod_deg, "Mod phase", " deg", 0, 180 },
-      {
-          .p_val    = &this->fcHpf_hz,
-          .name     = "HPF",
-          .suffix   = " Hz",
-          .minVal   = 20,
-          .maxVal   = 20e3,
-          .midPoint = 2e3,
-      },
-      {
-          .p_val    = &this->fcLpf_hz,
-          .name     = "LPF",
-          .suffix   = " Hz",
-          .minVal   = 20,
-          .maxVal   = 20e3,
-          .midPoint = 2e3,
-      },
+      { &this->fcHpf_hz, "HPF", " Hz", 20, 20e3, 2e3 },
+      { &this->fcLpf_hz, "LPF", " Hz", 20, 20e3, 2e3 },
       { &this->gDry_db, "Dry", " dB", -100, 0 },
       { &this->gWet_db, "Wet", " dB", -100, 0 },
     };
-    this->toggles = {
-      { .p_val = &this->bypassEnable, .name = "Bypass" },
-    };
+    this->toggles       = { { &this->bypassEnable, "Bypass" } };
     this->dlWet.t_ms.ui = 10;
     this->dlWet.t_ms.pr = 10;
     this->updateDefaults();
@@ -122,7 +106,7 @@ struct ntChorus : public NtFx::NtPlugin {
     this->gWet_lin       = NtFx::invDb(this->gWet_db);
     this->gDry_lin       = NtFx::invDb(this->gDry_db);
     this->tDelayMod_s.ui = this->tDelayMod_ms / 2000;
-    if (this->fMod_hz.ui > 1) { this->tDelayMod_s.ui /= this->fMod_hz.ui; }
+    this->tDelayMod_s.ui /= this->fMod_hz.ui;
     this->phaseMod_rad.ui = this->phaseMod_deg * GCEM_PI / 180;
     this->tSample         = 1 / this->fs;
     this->fMod_hz.update(this->fs);
