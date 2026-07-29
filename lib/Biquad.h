@@ -21,6 +21,7 @@
 #include "lib/Component.h"
 
 #include "gcem.hpp"
+#include <array>
 
 namespace NtFx {
 namespace Biquad {
@@ -59,6 +60,12 @@ namespace Biquad {
     signal_t a[2] { 0, 0 };
   };
 
+  template <int nStages = 1>
+  struct CascadeCoeffs {
+    std::array<Coeffs4, nStages> _coeffs;
+    signal_t _g { 1 };
+  };
+
   struct State {
     signal_t x[2] { 0, 0 };
     signal_t y[2] { 0, 0 };
@@ -67,6 +74,12 @@ namespace Biquad {
   struct StereoState {
     State l;
     State r;
+  };
+
+  template <int nStages = 1>
+  struct CascadeState {
+    signal_t _xn[2];
+    signal_t _yn[2 * nStages];
   };
 
   inline static signal_t processBiquad5(
@@ -250,7 +263,7 @@ namespace Biquad {
     return normalizeCoeffs(coeffs6);
   }
 
-  static inline Coeffs5 calcCoeffs5(Settings& settings, signal_t fs) {
+  static inline Coeffs5 calcCoeffs5(const Settings& settings, signal_t fs) {
     return calcCoeffs5(settings.shape,
         fs,
         settings.fc_hz,
@@ -258,7 +271,7 @@ namespace Biquad {
         gcem::pow(10, (settings.gain_db / 40)));
   }
 
-  static inline Coeffs6 calcCoeffs6(Settings& settings, signal_t fs) {
+  static inline Coeffs6 calcCoeffs6(const Settings& settings, signal_t fs) {
     return calcCoeffs6(settings.shape,
         fs,
         settings.fc_hz,
@@ -284,46 +297,49 @@ namespace Biquad {
     }
   };
 
-  template <int t_numStages = 1>
-  struct Cascade {
-    Coeffs4 _coeffs[t_numStages];
-    signal_t _g { 1 };
-    signal_t _xn[2];
-    signal_t _yn[2 * t_numStages];
+  template <int nStages = 1>
+  static inline CascadeCoeffs<nStages> calcCascadeCoeffs(
+      const std::array<Settings, nStages>& ra_settings, float fs) {
+    CascadeCoeffs<nStages> coeffs;
+    for (size_t i = 0; i < nStages; i++) {
+      auto coeffs5           = calcCoeffs5(ra_settings[i], fs);
+      coeffs._coeffs[i].b[0] = coeffs5.b[1] / coeffs5.b[0];
+      coeffs._coeffs[i].b[1] = coeffs5.b[2] / coeffs5.b[0];
+      coeffs._coeffs[i].a[0] = coeffs5.a[0];
+      coeffs._coeffs[i].a[1] = coeffs5.a[1];
+      coeffs._g *= coeffs5.b[0];
+    }
+    return coeffs;
+  }
 
-    signal_t process(signal_t x) {
-      signal_t acc = x + this->_coeffs[0].b[0] * this->_xn[0]
-          + this->_coeffs[0].b[1] * this->_xn[1]
-          - this->_coeffs[0].a[0] * this->_yn[0]
-          - this->_coeffs[0].a[1] * this->_yn[1];
+  template <int nStages = 1>
+  static inline signal_t processCascade(signal_t x,
+      CascadeState<nStages>& r_state,
+      CascadeCoeffs<nStages>& r_coeffs) {
+    signal_t acc = x + r_coeffs._coeffs[0].b[0] * r_state._xn[0]
+        + r_coeffs._coeffs[0].b[1] * r_state._xn[1]
+        - r_coeffs._coeffs[0].a[0] * r_state._yn[0]
+        - r_coeffs._coeffs[0].a[1] * r_state._yn[1];
 
-      this->_xn[1]   = this->_xn[0];
-      this->_xn[0]   = x;
-      signal_t xNext = acc;
+    r_state._xn[1] = r_state._xn[0];
+    r_state._xn[0] = x;
+    signal_t xNext = acc;
 
-      for (size_t i = 1; i < t_numStages; i++) {
-        acc = xNext + this->_coeffs[i].b[0] * this->_yn[(i - 1) * 2]
-            + this->_coeffs[i].b[1] * this->_yn[(i - 1) * 2 + 1]
-            - this->_coeffs[i].a[0] * this->_yn[i * 2]
-            - this->_coeffs[i].a[1] * this->_yn[i * 2 + 1];
+    for (size_t i = 1; i < nStages; i++) {
+      acc = xNext + r_coeffs._coeffs[i].b[0] * r_state._yn[(i - 1) * 2]
+          + r_coeffs._coeffs[i].b[1] * r_state._yn[(i - 1) * 2 + 1]
+          - r_coeffs._coeffs[i].a[0] * r_state._yn[i * 2]
+          - r_coeffs._coeffs[i].a[1] * r_state._yn[i * 2 + 1];
 
-        this->_yn[(i - 1) * 2 + 1] = this->_yn[(i - 1) * 2];
-        this->_yn[(i - 1) * 2 + 0] = xNext;
-        xNext                      = acc;
-      }
-
-      this->_yn[(t_numStages - 1) * 2 + 1] =
-          this->_yn[(t_numStages - 1) * 2 + 0];
-      this->_yn[(t_numStages - 1) * 2 + 0] = acc;
-      return acc * this->_g;
+      r_state._yn[(i - 1) * 2 + 1] = r_state._yn[(i - 1) * 2];
+      r_state._yn[(i - 1) * 2 + 0] = xNext;
+      xNext                        = acc;
     }
 
-    void reset(float fs) {
-      for (size_t i = 0; i < t_numStages * 2; i++) { _yn[i] = 0; }
-      _xn[0] = 0;
-      _xn[1] = 0;
-    }
-  };
+    r_state._yn[(nStages - 1) * 2 + 1] = r_state._yn[(nStages - 1) * 2 + 0];
+    r_state._yn[(nStages - 1) * 2 + 0] = acc;
+    return acc * r_coeffs._g;
+  }
 
   struct EqBandMono : public ComponentBase<Audio> {
     Settings settings;
@@ -399,29 +415,18 @@ namespace Biquad {
     }
   };
 
-  template <int t_numStages = 1>
+  template <int nStages = 1>
   struct Eq : public ComponentBase<Audio> {
-    Settings settings[t_numStages];
-    Cascade<t_numStages> l;
-    Cascade<t_numStages> r;
+    std::array<Settings, nStages> settings;
+    CascadeCoeffs<nStages> coeffs;
+    CascadeState<nStages> stateL;
+    CascadeState<nStages> stateR;
     virtual Audio process(Audio x) noexcept override {
-      return { this->l.process(x.l), this->r.process(x.r) };
+      return { processCascade<nStages>(x.l, stateL, coeffs),
+        processCascade<nStages>(x.r, stateR, coeffs) };
     }
     virtual void update() noexcept override {
-      signal_t g = 1;
-      for (size_t i = 0; i < t_numStages; i++) {
-        Coeffs5 coeffs5 = calcCoeffs5(this->settings[i], this->fs);
-        Coeffs4 coeffs4;
-        coeffs4.b[0] = coeffs5.b[1] / coeffs5.b[0];
-        coeffs4.b[1] = coeffs5.b[2] / coeffs5.b[0];
-        coeffs4.a[0] = coeffs5.a[0];
-        coeffs4.a[1] = coeffs5.a[1];
-        g *= coeffs5.b[0];
-        this->l._coeffs[i] = coeffs4;
-        this->r._coeffs[i] = coeffs4;
-      }
-      this->l._g = g;
-      this->r._g = g;
+      this->coeffs = calcCascadeCoeffs<nStages>(this->settings, this->fs);
     }
   };
 
