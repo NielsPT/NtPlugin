@@ -129,8 +129,8 @@ struct ntChorus : public NtFx::NtPlugin {
     this->phaseMod_rad.update(this->fs);
     this->tDelayMod_s.update(this->fs);
     this->dlWet.update();
-    this->hpf.setFc(this->fcHpf_hz);
-    this->lpf.setFc(this->fcLpf_hz);
+    this->hpf.fc_hz = this->fcHpf_hz;
+    this->lpf.fc_hz = this->fcLpf_hz;
     this->hpf.update();
     this->lpf.update();
   }

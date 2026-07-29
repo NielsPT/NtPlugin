@@ -143,7 +143,7 @@ struct ntFilters : public NtFx::NtPlugin {
   void update() noexcept override {
     this->primaryKnobs[1].isActive = true;
     this->primaryKnobs[3].isActive = true;
-    this->firstOrderHpf.setFc(fHpf);
+    this->firstOrderHpf.fc_hz      = fHpf;
     this->firstOrderHpf.update();
     if (this->orderHpf == Order::fourth) {
       this->bqHpf0.settings.q     = gcem::sqrt(this->qHpf);
@@ -164,7 +164,7 @@ struct ntFilters : public NtFx::NtPlugin {
     this->bqHpf0.update();
     this->bqHpf1.update();
 
-    this->firstOrderLpf.setFc(fLpf);
+    this->firstOrderLpf.fc_hz = fLpf;
     this->firstOrderLpf.update();
     if (this->orderLpf == Order::fourth) {
       this->bqLpf0.settings.q     = gcem::sqrt(this->qLpf);

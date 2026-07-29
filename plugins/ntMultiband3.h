@@ -208,10 +208,10 @@ struct ntMultiband3 : public NtFx::NtPlugin {
   }
 
   void update() noexcept override {
-    this->hiFlt.setFc(this->xOverHi_hz);
-    this->hiMidFlt.setFc(this->xOverHi_hz);
-    this->loMidFlt.setFc(this->xOverLo_hz);
-    this->loFlt.setFc(this->xOverLo_hz);
+    this->hiFlt.fc_hz    = this->xOverHi_hz;
+    this->hiMidFlt.fc_hz = this->xOverHi_hz;
+    this->loMidFlt.fc_hz = this->xOverLo_hz;
+    this->loFlt.fc_hz    = this->xOverLo_hz;
     this->hiFlt.update();
     this->hiMidFlt.update();
     this->loMidFlt.update();

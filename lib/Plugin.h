@@ -58,7 +58,9 @@ struct NtPlugin : public ComponentBase<Audio> {
    */
   UiSpec uiSpec;
 
-  // TODO: A proper class for this with name and primary and secondary knobs.
+  /**
+   * @brief vector of knob groups to be displayed to the left of primare knobs.
+   */
   std::vector<KnobGroupSpec> knobGroups;
 
   /**

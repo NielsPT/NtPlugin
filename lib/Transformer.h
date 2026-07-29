@@ -38,14 +38,14 @@ struct Transformer : public ComponentBase<Audio> {
   }
   virtual void update() noexcept override {
     if (this->fc_hz < 20) { this->fc_hz = 20; }
-    this->gain_lin = this->fc_hz / this->lfCutoff_hz - 1;
-    this->hpf.setFc(fc_hz);
+    this->gain_lin  = this->fc_hz / this->lfCutoff_hz - 1;
+    this->hpf.fc_hz = fc_hz;
     this->lpf.update();
     this->hpf.update();
   }
   virtual void reset(float fs) noexcept override {
-    this->fs = fs;
-    this->lpf.setFc(this->lfCutoff_hz);
+    this->fs        = fs;
+    this->lpf.fc_hz = this->lfCutoff_hz;
     this->lpf.reset(fs);
     this->hpf.reset(fs);
     this->update();

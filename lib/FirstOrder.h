@@ -46,10 +46,10 @@ namespace FirstOrder {
    */
   template <Shape shape>
   struct Filter : public ComponentBase<signal_t> {
-    signal_t fc_hz = 1000;
-    signal_t _a    = 0;
-    signal_t _yn1  = 0;
-    signal_t _xn1  = 0;
+    signal_t fc_hz { 1000 };
+    signal_t _a { 0 };
+    signal_t _yn1 { 0 };
+    signal_t _xn1 { 0 };
 
     virtual signal_t process(signal_t x) noexcept override {
       signal_t y;
@@ -95,25 +95,22 @@ namespace FirstOrder {
   struct StereoFilter : public ComponentBase<Audio> {
     Filter<shape> l;
     Filter<shape> r;
+    signal_t fc_hz { 1000 };
 
     Audio process(Audio x) noexcept override {
-      return { l.process(x.l), r.process(x.r) };
+      return { this->l.process(x.l), this->r.process(x.r) };
     }
 
     virtual void update() noexcept override {
-      l.update();
-      r.update();
+      this->l.fc_hz = this->fc_hz;
+      this->r.fc_hz = this->fc_hz;
+      this->l.update();
+      this->r.update();
     }
 
     virtual void reset(float fs) noexcept override {
-      l.reset(fs);
-      r.reset(fs);
-    }
-
-    // TODO: Be consistent with the rest of the lib.
-    void setFc(signal_t fc) noexcept {
-      l.fc_hz = fc;
-      r.fc_hz = fc;
+      this->l.reset(fs);
+      this->r.reset(fs);
     }
   };
 }
