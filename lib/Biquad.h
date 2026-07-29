@@ -54,6 +54,11 @@ namespace Biquad {
     signal_t a[2] { 0, 0 };
   };
 
+  struct Coeffs4 {
+    signal_t b[2] { 0, 0 };
+    signal_t a[2] { 0, 0 };
+  };
+
   struct State {
     signal_t x[2] { 0, 0 };
     signal_t y[2] { 0, 0 };
@@ -355,145 +360,54 @@ namespace Biquad {
 
   using EqBand6 = EqBand6Stereo;
   using EqBand  = EqBandStereo;
-} // namespace Biquad
-} // namespace NtFx
 
-// #pragma once
+  template <int t_numStages = 1>
+  struct Cascade {
+    Coeffs4 _coeffs[t_numStages];
+    signal_t b0;
+    signal_t _xn[2];
+    signal_t _yn[2 * t_numStages];
 
-// // Indexes for coeffs
-// constexpr int b0     = 0;
-// constexpr int b1     = 1;
-// constexpr int b2     = 2;
-// constexpr int a1     = 3;
-// constexpr int a2     = 4;
-// constexpr int minus1 = 0;
-// constexpr int minus2 = 1;
+    signal_t process(signal_t x) {
+      // First stage uses the stored feed forward state m_xn.
+      signal_t acc = x * b0 + _coeffs[0].b[0] * _xn[0]
+          + _coeffs[0].b[1] * _xn[1] + _coeffs[0].a[0] * _yn[0]
+          + _coeffs[0].a[1] * _yn[1];
 
-// template <typename T, bool t_32bitState = false> struct BiquadParameterSet {
-//    /**
-//     * @brief Coeffs are stored in the order { b0 a1 b1 a2 b2, padding * 3}
-//     *
-//     */
-//    T m_coeffs[8] { 1, 0, 0, 0, 0, 0, 0, 0 };
-// };
+      // Store feed forward state for first stage.
+      _xn[1] = _xn[0];
+      _xn[0] = x;
 
-// /**
-//  * @brief Cascade of t_numStages biquad filters. Optimized to recycle feed
-//  back state
-//  * of previous stage as feed forward state for the next stage in the cascade.
-//  This
-//  * should decrease the amount of writes by half in the filter. To be
-//  confirmed.
-//  *
-//  * @tparam T Data type of audio. Double or float.
-//  * @tparam t_numStages Number of stages.
-//  */
-// template <typename T, int t_numStages = 1> struct BiquadCascade {
-//    BiquadParameterSet<T> m_params[t_numStages];
+      signal_t xRemainingStages = acc;
 
-//    /**
-//     * @brief Feed forward state for frist filter in chain.
-//     *
-//     */
-//    T m_xn[2];
+      // Process the remaining stages using feedback state from the previous
+      // stage for feed forward state.
+      for (size_t i = 1; i < t_numStages; i++) {
+        acc = xRemainingStages + _coeffs[i].b[0] * _yn[(i - 1) * 2 + 0]
+            + _coeffs[i].b[1] * _yn[(i - 1) * 2 + 1]
+            + _coeffs[i].a[0] * _yn[i * 2 + 0]
+            + _coeffs[i].a[1] * _yn[i * 2 + 1];
 
-//    /**
-//     * @brief Feed back state for each stage doubles as feed forward state for
-//     the
-//     * next stage.
-//     *
-//     */
-//    T m_yn[2 * t_numStages];
+        // Update feed back state for previous stage.
+        _yn[(i - 1) * 2 + 1] = _yn[(i - 1) * 2 + 0];
+        _yn[(i - 1) * 2 + 0] = xRemainingStages;
 
-//    /**
-//     * @brief Processes one sample with BiquadCascade.
-//     *
-//     * @param x Input sample.
-//     * @return T y Out put sample.
-//     */
-//     T processSample(T x) {
-//       // First stage uses the stored feed forward state m_xn.
-//       T acc = m_params[0].m_coeffs[b0] * x;
+        xRemainingStages = acc;
+      }
 
-//       acc += m_params[0].m_coeffs[b1] * m_xn[minus1];
-//       acc += m_params[0].m_coeffs[b2] * m_xn[minus2];
-//       acc += m_params[0].m_coeffs[a1] * m_yn[minus1];
-//       acc += m_params[0].m_coeffs[a2] * m_yn[minus2];
+      // update feed back state for last stage.
+      _yn[(t_numStages - 1) * 2 + 1] = _yn[(t_numStages - 1) * 2 + 0];
+      _yn[(t_numStages - 1) * 2 + 0] = acc;
+      return acc;
+    }
 
-//       // Store feed forward state for first stage.
-//       m_xn[minus2] = m_xn[minus1];
-//       m_xn[minus1] = x;
+    void update() { }
 
-//       T xRemainingStages = acc;
-
-//       // Process the remaining stages using feedback state from the previous
-//       stage
-//       // for feed forward state.
-//       for (size_t i = 1; i < t_numStages; i++) {
-//          acc = m_params[i].m_coeffs[b0] * xRemainingStages;
-
-//          acc += m_params[i].m_coeffs[b1] * m_yn[(i - 1) * 2 + minus1];
-//          acc += m_params[i].m_coeffs[b2] * m_yn[(i - 1) * 2 + minus2];
-//          acc += m_params[i].m_coeffs[a1] * m_yn[i * 2 + minus1];
-//          acc += m_params[i].m_coeffs[a2] * m_yn[i * 2 + minus2];
-
-//          // Update feed back state for previous stage.
-//          m_yn[(i - 1) * 2 + minus2] = m_yn[(i - 1) * 2 + minus1];
-//          m_yn[(i - 1) * 2 + minus1] = xRemainingStages;
-
-//          xRemainingStages = acc;
-//       }
-
-//       // update feed back state for last stage.
-//       m_yn[(t_numStages - 1) * 2 + minus2] = m_yn[(t_numStages - 1) * 2 +
-//       minus1]; m_yn[(t_numStages - 1) * 2 + minus1] = acc; return acc;
-//    }
-
-//    /**
-//     * @brief Initialize cascade by resetting all states.
-//     *
-//     * @return error
-//     */
-//    Error init() {
-//       for (size_t i = 0; i < t_numStages * 2; i++) {
-//          m_yn[i] = 0;
-//       }
-//       m_xn[0] = 0;
-//       m_xn[1] = 0;
-
-//       return Error::noError;
-//    }
-
-//    /**
-//     * @brief Set the Coeffs of biquad filter, with normalization and scaling.
-//     * This is the method to use in the general case and for any static
-//     filter.
-//     *
-//     * @param[in] p_coeffs Pointer to unnormalized, floating point
-//     coefficients.
-//     * @param coeffSet Number of stage in cascade to change coeffs for.
-//     * @return error
-//     */
-//    template <typename T_coeffs>
-//    Error setCoeffs(const BiquadCoeffs<T_coeffs>* const p_coeffs, int coeffSet
-//    = 0) {
-//       if (coeffSet < 0 || coeffSet >= t_numStages) {
-//          return Error::outOfRangeError;
-//       }
-
-//       // Copy the coeffs so that we don't mutate the original.
-//       BiquadCoeffs<T_coeffs> coeffs = *p_coeffs;
-
-//       // Normalize coeffs with respect to a0.
-//       normalizeCoeffs(&coeffs);
-
-//       m_params[coeffSet].m_coeffs[b0] = coeffs.m_b[0];
-//       m_params[coeffSet].m_coeffs[b1] = coeffs.m_b[1];
-//       m_params[coeffSet].m_coeffs[b2] = coeffs.m_b[2];
-//       m_params[coeffSet].m_coeffs[a1] = -coeffs.m_a[1];
-//       m_params[coeffSet].m_coeffs[a2] = -coeffs.m_a[2];
-
-//       return Error::noError;
-//    }
-// };
-// }
+    void reset(float fs) {
+      for (size_t i = 0; i < t_numStages * 2; i++) { _yn[i] = 0; }
+      _xn[0] = 0;
+      _xn[1] = 0;
+    }
+  };
+}
+}
