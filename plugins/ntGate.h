@@ -154,8 +154,6 @@ struct ntGate : public NtFx::NtPlugin {
     this->toggles = {
       { .p_val = &this->scListenEnable, .name = "SC Listen" },
       { .p_val = &this->hfAccelEnable, .name = "Dual Band" },
-      { .p_val = &this->lookaheadEnable, .name = "Lookahead on" },
-      { .p_val = &this->latencyCompEnable, .name = "Latency comp" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
     this->radioButtons = {
@@ -228,12 +226,7 @@ struct ntGate : public NtFx::NtPlugin {
     } else {
       this->deactivateParameter("Ignore Sens");
     }
-    if (this->lookaheadEnable) {
-      this->activateParameter("Lookahead");
-    } else {
-      this->deactivateParameter("Lookahead");
-    }
-    // this->lookaheadEnable = (this->tLookahead_ms > 0);
+    this->lookaheadEnable = (this->dl.t_ms > 0);
     this->dl.update();
     if (this->latencyCompEnable) {
       this->latency = this->dl.n;

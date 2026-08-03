@@ -171,7 +171,7 @@ struct NtPlugin : public ComponentBase<Audio> {
    */
   bool* getToggleValuePtr(std::string name) const noexcept {
     for (auto param : this->toggles) {
-      if (param.name == name) { return param.p_val; }
+      if (spacesToUnderscores(param.name) == name) { return param.p_val; }
     }
     return nullptr;
   }
