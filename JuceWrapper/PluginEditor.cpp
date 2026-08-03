@@ -36,10 +36,41 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 // TODO: Major refactor. There are SO many repitions in this file.
+
+// https://stackoverflow.com/questions/38955940/how-to-concatenate-static-strings-at-compile-time
+template <std::string_view const&... Strs>
+struct join {
+  // Join all strings into a single std::array of chars
+  static constexpr auto impl() noexcept {
+    constexpr std::size_t len = (Strs.size() + ... + 0);
+    std::array<char, len + 1> arr { };
+    auto append = [i = 0, &arr](auto const& s) mutable {
+      for (auto c : s) arr[i++] = c;
+    };
+    (append(Strs), ...);
+    arr[len] = 0;
+    return arr;
+  }
+  // Give the joined string static storage
+  static constexpr auto arr = impl();
+  // View as a std::string_view
+  static constexpr std::string_view value { arr.data(), arr.size() - 1 };
+};
+// Helper to get the value out
+template <std::string_view const&... Strs>
+static constexpr auto join_v = join<Strs...>::value;
+
+constexpr auto _name         = std::string_view(JucePlugin_Name);
+constexpr auto _space        = std::string_view(" ");
+constexpr auto _version      = std::string_view(JucePlugin_VersionString);
+constexpr auto _zero         = std::string_view("\0");
+static constexpr auto _title = join_v<_name, _space, _version, _zero>;
+
 enum TitleBarDropDowns { e_uiScale, e_theme, e_oversampling };
 int NtFx::RadioButtonSet::s_id { 0 };
 
@@ -64,7 +95,7 @@ NtPluginAudioProcessorEditor::NtPluginAudioProcessorEditor(
   }
 
   this->pluginNameLabel.setText(
-      JucePlugin_Name, juce::NotificationType::dontSendNotification);
+      _title.begin(), juce::NotificationType::dontSendNotification);
   this->pluginNameLabel.setJustificationType(juce::Justification::right);
   this->addAndMakeVisible(this->pluginNameLabel);
 
