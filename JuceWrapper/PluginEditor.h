@@ -144,8 +144,9 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   void _updateOversampling();
   void _updateTheme();
 
+  int _getNKnobsInLargestKnobGroup();
   void _placeGruopKnobColumn(
-      juce::Rectangle<int>& groupArea, int n, int i, bool even);
+      juce::Rectangle<int>& groupArea, int n, int i, int nCols, bool even);
   void _placeSmallTogglesArea(juce::Rectangle<int>& area);
   void _placeBottomRow(juce::Rectangle<int>& area);
   void _placeDropdowns(juce::Rectangle<int>& area, size_t columnWidth);

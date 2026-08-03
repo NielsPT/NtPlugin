@@ -25,18 +25,7 @@
 
 namespace NtFx {
 namespace Biquad {
-  enum class Shape {
-    unknown,
-    bell,
-    hiShelf,
-    loShelf,
-    notch,
-    hpf,
-    lpf,
-    apf,
-    bpf,
-    none
-  };
+  enum Shape : int { bell, hiShelf, loShelf, notch, hpf, lpf, apf, bpf, none };
 
   struct Settings {
     Shape shape { Shape::bell };
@@ -62,8 +51,8 @@ namespace Biquad {
 
   template <int nStages = 1>
   struct CascadeCoeffs {
-    std::array<Coeffs4, nStages> _coeffs;
-    signal_t _g { 1 };
+    std::array<Coeffs4, nStages> c;
+    signal_t b0 { 1 };
   };
 
   struct State {
@@ -78,8 +67,8 @@ namespace Biquad {
 
   template <int nStages = 1>
   struct CascadeState {
-    signal_t _xn[2];
-    signal_t _yn[2 * nStages];
+    signal_t _xn[2] { 0, 0 };
+    signal_t _yn[2 * nStages] { 0, 0 };
   };
 
   inline static signal_t processBiquad5(
@@ -186,9 +175,9 @@ namespace Biquad {
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
     Coeffs6 c;
-    c.b[0] = q * alpha;
+    c.b[0] = alpha;
     c.b[1] = 0;
-    c.b[2] = -q * alpha;
+    c.b[2] = -alpha;
     c.a[0] = 1.0 + alpha;
     c.a[1] = -2.0 * cosW0;
     c.a[2] = 1.0 - alpha;
@@ -239,7 +228,6 @@ namespace Biquad {
       c = calcCoeffsNotch(fs, fc_hz, q);
       break;
     case Shape::none:
-    case Shape::unknown:
     default:
       c = { 1.0, 0.0, 0.0, 1.0, 0.0, 0.0 };
       break;
@@ -302,12 +290,12 @@ namespace Biquad {
       const std::array<Settings, nStages>& ra_settings, float fs) {
     CascadeCoeffs<nStages> coeffs;
     for (size_t i = 0; i < nStages; i++) {
-      auto coeffs5           = calcCoeffs5(ra_settings[i], fs);
-      coeffs._coeffs[i].b[0] = coeffs5.b[1] / coeffs5.b[0];
-      coeffs._coeffs[i].b[1] = coeffs5.b[2] / coeffs5.b[0];
-      coeffs._coeffs[i].a[0] = coeffs5.a[0];
-      coeffs._coeffs[i].a[1] = coeffs5.a[1];
-      coeffs._g *= coeffs5.b[0];
+      auto coeffs5     = calcCoeffs5(ra_settings[i], fs);
+      coeffs.c[i].b[0] = coeffs5.b[1] / coeffs5.b[0];
+      coeffs.c[i].b[1] = coeffs5.b[2] / coeffs5.b[0];
+      coeffs.c[i].a[0] = -coeffs5.a[0];
+      coeffs.c[i].a[1] = -coeffs5.a[1];
+      coeffs.b0 *= coeffs5.b[0];
     }
     return coeffs;
   }
@@ -316,29 +304,29 @@ namespace Biquad {
   static inline signal_t processCascade(signal_t x,
       CascadeState<nStages>& r_state,
       CascadeCoeffs<nStages>& r_coeffs) {
-    signal_t acc = x + r_coeffs._coeffs[0].b[0] * r_state._xn[0]
-        + r_coeffs._coeffs[0].b[1] * r_state._xn[1]
-        - r_coeffs._coeffs[0].a[0] * r_state._yn[0]
-        - r_coeffs._coeffs[0].a[1] * r_state._yn[1];
+    signal_t acc = x + r_coeffs.c[0].b[0] * r_state._xn[0]
+        + r_coeffs.c[0].b[1] * r_state._xn[1]
+        + r_coeffs.c[0].a[0] * r_state._yn[0]
+        + r_coeffs.c[0].a[1] * r_state._yn[1];
 
     r_state._xn[1] = r_state._xn[0];
     r_state._xn[0] = x;
     signal_t xNext = acc;
 
     for (size_t i = 1; i < nStages; i++) {
-      acc = xNext + r_coeffs._coeffs[i].b[0] * r_state._yn[(i - 1) * 2]
-          + r_coeffs._coeffs[i].b[1] * r_state._yn[(i - 1) * 2 + 1]
-          - r_coeffs._coeffs[i].a[0] * r_state._yn[i * 2]
-          - r_coeffs._coeffs[i].a[1] * r_state._yn[i * 2 + 1];
+      acc = xNext + r_coeffs.c[i].b[0] * r_state._yn[(i - 1) * 2]
+          + r_coeffs.c[i].b[1] * r_state._yn[(i - 1) * 2 + 1]
+          + r_coeffs.c[i].a[0] * r_state._yn[i * 2]
+          + r_coeffs.c[i].a[1] * r_state._yn[i * 2 + 1];
 
       r_state._yn[(i - 1) * 2 + 1] = r_state._yn[(i - 1) * 2];
-      r_state._yn[(i - 1) * 2 + 0] = xNext;
+      r_state._yn[(i - 1) * 2]     = xNext;
       xNext                        = acc;
     }
 
-    r_state._yn[(nStages - 1) * 2 + 1] = r_state._yn[(nStages - 1) * 2 + 0];
-    r_state._yn[(nStages - 1) * 2 + 0] = acc;
-    return acc * r_coeffs._g;
+    r_state._yn[(nStages - 1) * 2 + 1] = r_state._yn[(nStages - 1) * 2];
+    r_state._yn[(nStages - 1) * 2]     = acc;
+    return acc * r_coeffs.b0;
   }
 
   struct EqBandMono : public ComponentBase<Audio> {

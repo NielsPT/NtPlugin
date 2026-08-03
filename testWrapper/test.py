@@ -270,7 +270,7 @@ def plotImpulse(
         filename (str): Name of output file.
         legends (list | None, optional): Legends of plots. Defaults to None.
     """
-    xFft = np.fft.fft(x)
+    xFft = np.fft.fft(x, 2**15)
     xAbs = np.abs(xFft)
     xPhase = np.angle(xFft)
     xDb = 20 * np.log10(xAbs + 1e-8)
@@ -371,6 +371,7 @@ def plotFrequencyDomain(
     if ylim:
         _ylim = ylim
     else:
+        print(f"{filename}:{float(x.max())=}")
         if x.min() > -60:
             _ylim[0] = x.min() * 1.1
         if x.max() > 10:
@@ -629,6 +630,8 @@ def _readAndPlotTestResults(testFileName: str, fs: float):
                 continue
             expectedFiles += [info[0] + SEPARATOR + info[1]]
     results, legends = _parseFiles(resultFiles, expectedFiles)
+    if np.any(np.isnan(np.concatenate(results["impulse"]))):
+        print(f"{RED}NaN is impulse.{BLACK}")
     _plotResults(results, legends, testFileName, fs)
 
 

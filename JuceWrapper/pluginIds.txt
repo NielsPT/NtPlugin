@@ -10,3 +10,4 @@ ntDeEsser:Bagy:Dynamics:Dynamics
 ntGateMono:Jlkd:Dynamics:Dynamics
 ntChorus:Yheu:Modulation:Modulation
 ntDynamicEq:Dukg:Dynamics:Dynamics
+ntEqualizer:Fqwo:Fx:Effect

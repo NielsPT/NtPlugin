@@ -159,7 +159,7 @@ struct ntDynamicEq : public NtFx::NtPlugin {
       if (this->mutes[i]) { continue; }
       gr[i] = this->scs[i].process(yFlt);
       acc += yFlt * !(this->soloAny ^ this->solos[i])
-          * (gr[i] * this->gain_lin[i] - 1) / this->bands[i].settings.q;
+          * (gr[i] * this->gain_lin[i] - 1);
     }
     this->template updatePeakLevel<2, true>(gr[0]);
     this->template updatePeakLevel<3, true>(gr[1]);

@@ -110,7 +110,8 @@ struct OptionsSpec {
   int* p_val { nullptr };
   std::string name; ///< Name of drop down, used for label and id.
   std::vector<std::string> options; ///< Vector of options in the drop down.
-  int _defaultVal { 0 };            ///< Index of default option.
+  bool hideName { false };
+  int _defaultVal { 0 }; ///< Index of default option.
   int _id { 0 };
 };
 
@@ -127,6 +128,7 @@ struct TitleBarSpec {
         nullptr,
         "UI Scale",
         { "50%", "75%", "100%", "125%", "150%", "175%", "200%" },
+        false,
         2,
     },
     { nullptr, "Theme", { "Light", "Dark" }, 1 },
@@ -144,6 +146,7 @@ struct TitleBarSpec {
             "FIR 2X HQ",
             "FIR 4X HQ",
             "FIR 8X HQ" },
+        false,
         0,
     },
   };
@@ -179,5 +182,6 @@ struct UiSpec {
   int groupKnobWidth { groupWidth / 2 };
   int groupKnobHeight { 120 };
   int groupPad { 20 };
+  int groupSingleColumnLimit { 4 };
 };
 } // namespace NtFx

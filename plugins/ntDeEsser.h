@@ -98,11 +98,11 @@ struct ntDeEsser : public NtFx::NtPlugin {
     }
 
     Audio yScFlt, gr, y;
-    yScFlt = this->scBpf.process(x / this->q);
+    yScFlt = this->scBpf.process(x);
     gr     = sc.process(yScFlt);
     switch (this->mode) {
     case Mode::bell:
-      y = yDl - this->bpf.process(yDl) * (Audio(1) - gr) / this->q;
+      y = yDl - this->bpf.process(yDl) * (Audio(1) - gr);
       break;
     case Mode::shelf:
       this->shelf.gain_lin = gr.absMin();

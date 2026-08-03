@@ -92,7 +92,7 @@ def _switchVsCodeSettings(plugin: str) -> bool:
         "category to 'Effect'.")
         cat = "Effect"
     else:
-        cat = pluginIds[plugin][VST3_CAT]
+        cat = pluginIds[plugin][AAX_CAT]
     settingsFilePath = os.path.realpath(f"{REPO_BASE_DIR}/.vscode/settings.json")
     if not os.path.exists(settingsFilePath):
         return False
@@ -115,7 +115,7 @@ def _switchVsCodeSettings(plugin: str) -> bool:
     newSettingJson = json.dumps(settings, indent=2)
     with open(settingsFilePath, "w", encoding="utf-8") as f:
         f.write(newSettingJson)
-    configure(plugin, pluginIds, cat)
+    configure(plugin, pluginIds, cat, debug=True)
     _openInVscode(pluginPath)
     return True
 
@@ -241,6 +241,7 @@ def configure(
     category: str = "",
     version: str = "",
     company: str = "",
+    debug: bool = False,
 ) -> bool:
     """
     Configures Cmake for build
@@ -253,6 +254,9 @@ def configure(
     Returns:
         bool: True on success.
     """
+    buildType = "Release"
+    if debug:
+        buildType = "Debug"
     if os.path.exists("build/CMakeCache.txt"):
         os.remove("build/CMakeCache.txt")
     args = [
@@ -262,14 +266,14 @@ def configure(
         "-S",
         JUCE_WRAPPER_DIR,
         f"-DNTFX_PLUGIN={plugin}",
-        "-DCMAKE_BUILD_TYPE=Release",
+        f"-DCMAKE_BUILD_TYPE={buildType}",
         "-DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE",
     ]
     if sys.platform == "win32":
         args += ["-A", "x64"]
     if sys.platform == "darwin":
-        args += ["CMAKE_C_COMPILER=/usr/bin/cc"]
-        args += ["CMAKE_CXX_COMPILER=/usr/bin/c++"]
+        args += ["CMAKE_C_COMPILER:FILEPATH=/usr/bin/clang"]
+        args += ["CMAKE_CXX_COMPILER:FILEPATH=/usr/bin/clang++"]
     if version:
         args += [f"-DNTFX_VERSION={version}"]
     if category:
@@ -353,7 +357,7 @@ def _overwriteIdFile(pluginIds: dict[str, list[str]]) -> bool:
     os.remove(ID_FILE)
     for name, info in pluginIds.items():
         if not _writePluginId(
-            name, info[ID], info[VST3_CAT] if len(info) > 1 else ""
+            name, info[ID], info[AAX_CAT] if len(info) > 1 else ""
         ):
             return False
     return True

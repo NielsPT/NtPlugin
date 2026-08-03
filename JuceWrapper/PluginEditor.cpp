@@ -247,6 +247,16 @@ void NtPluginAudioProcessorEditor::_initWindowSize() {
   this->_initWindowHeight(nRows);
 }
 
+int NtPluginAudioProcessorEditor::_getNKnobsInLargestKnobGroup() {
+  int nGroupKnobsMax = 0;
+  for (auto& g : this->proc.plug.knobGroups) {
+    if (g.primaryKnobs.size() > nGroupKnobsMax) {
+      nGroupKnobsMax = g.primaryKnobs.size();
+    }
+  }
+  return nGroupKnobsMax;
+}
+
 void NtPluginAudioProcessorEditor::_initWindowWidth(int nCols) {
   auto width = 0;
   if (this->proc.plug.uiSpec.includeMeters) {
@@ -257,12 +267,15 @@ void NtPluginAudioProcessorEditor::_initWindowWidth(int nCols) {
     width += this->proc.plug.uiSpec.radioButtonAreaWidth;
   }
   auto primKnobsWidth = nCols * this->proc.plug.uiSpec.knobWidth;
-  width += primKnobsWidth;
-  auto secKnobWidth = this->proc.plug.secondaryKnobs.size()
+  auto secKnobWidth   = this->proc.plug.secondaryKnobs.size()
       * this->proc.plug.uiSpec.secondaryKnobWidth;
-  if (secKnobWidth > primKnobsWidth) { width += secKnobWidth - primKnobsWidth; }
-  width += this->proc.plug.knobGroups.size() * this->proc.plug.uiSpec.groupWidth
-      + this->proc.plug.uiSpec.groupPad;
+  auto nGroupKnobsMax = this->_getNKnobsInLargestKnobGroup();
+  auto knobGroupWidth =
+      this->proc.plug.knobGroups.size() * this->proc.plug.uiSpec.groupWidth;
+  // if (nGroupKnobsMax <= this->proc.plug.uiSpec.groupSingleColumnLimit) {
+  // knobGroupWidth /= 2; }
+  knobGroupWidth += this->proc.plug.uiSpec.groupPad;
+  width += gcem::max(gcem::max(primKnobsWidth, secKnobWidth), knobGroupWidth);
   this->unscaledWindowWidth = width;
 }
 
@@ -276,19 +289,23 @@ void NtPluginAudioProcessorEditor::_initWindowHeight(int nRows) {
   if (this->proc.plug.secondaryKnobs.size() != 0) {
     height += this->proc.plug.uiSpec.secondaryKnobHeight;
   }
-  if (this->proc.plug.toggles.size() != 0) {
+  if (this->proc.plug.toggles.size() || this->proc.plug.dropdowns.size()) {
     height += this->proc.plug.uiSpec.toggleHeight;
   }
   if (this->proc.plug.knobGroups.size()) {
     height += this->proc.plug.uiSpec.labelHeight;
-    int max = 0;
-    for (auto& g : this->proc.plug.knobGroups) {
-      if (g.primaryKnobs.size() > max) { max = g.primaryKnobs.size(); }
+    auto nGroupKnobsMax = this->_getNKnobsInLargestKnobGroup();
+    int groupsHeight;
+    if (nGroupKnobsMax <= this->proc.plug.uiSpec.groupSingleColumnLimit) {
+      groupsHeight = (this->proc.plug.uiSpec.groupKnobHeight
+                         + this->proc.plug.uiSpec.groupPad)
+          * nGroupKnobsMax;
+    } else {
+      groupsHeight = (this->proc.plug.uiSpec.groupKnobHeight
+                         + this->proc.plug.uiSpec.groupPad)
+              * (nGroupKnobsMax % 2 + nGroupKnobsMax / 2)
+          + this->proc.plug.uiSpec.groupEvenColOffset * nGroupKnobsMax % 2;
     }
-    auto groupsHeight = (this->proc.plug.uiSpec.groupKnobHeight
-                            + this->proc.plug.uiSpec.groupPad)
-            * (max % 2 + max / 2)
-        + this->proc.plug.uiSpec.groupEvenColOffset * max % 2;
     if (groupsHeight > primHeight) { height += groupsHeight - primHeight; }
   }
   if (this->proc.plug.uiSpec.includeMeters) {
@@ -366,7 +383,9 @@ void NtPluginAudioProcessorEditor::_updateUi() {
       || this->proc.plug.toggleSets.size()) {
     this->_placeSmallTogglesArea(area);
   }
-  if (this->proc.plug.toggles.size()) { this->_placeBottomRow(area); }
+  if (this->proc.plug.toggles.size() || this->proc.plug.dropdowns.size()) {
+    this->_placeBottomRow(area);
+  }
   if (this->proc.plug.uiSpec.includeSecondaryKnobs
       && this->proc.plug.secondaryKnobs.size()) {
     this->_updateSecondaryKnobs(area);
@@ -463,7 +482,7 @@ void NtPluginAudioProcessorEditor::_placeBottomRow(juce::Rectangle<int>& area) {
   this->borderedAreas.push_back(bottomRowArea);
   auto nToggles    = this->proc.plug.toggles.size();
   auto nDropdowns  = this->proc.plug.dropdowns.size();
-  auto nElements   = nToggles + nDropdowns * 2;
+  auto nElements   = nToggles + nDropdowns;
   auto columnWidth = bottomRowArea.getWidth() / nElements;
   this->_placeDropdowns(bottomRowArea, columnWidth);
   this->_placeToggles(bottomRowArea, columnWidth);
@@ -472,10 +491,16 @@ void NtPluginAudioProcessorEditor::_placeBottomRow(juce::Rectangle<int>& area) {
 void NtPluginAudioProcessorEditor::_placeDropdowns(
     juce::Rectangle<int>& area, size_t columnWidth) {
   for (size_t i = 0; i < this->proc.plug.dropdowns.size(); i++) {
-    auto dropdownArea = area.removeFromLeft(columnWidth * 2);
-    auto labelArea    = dropdownArea.removeFromLeft(columnWidth);
+    auto dropdownArea = area.removeFromLeft(columnWidth);
+    auto labelArea    = juce::Rectangle<int>();
+    if (!this->proc.plug.dropdowns[i].hideName) {
+      labelArea = dropdownArea.removeFromLeft(columnWidth / 2);
+      labelArea.reduce(this->pad, this->pad);
+      this->dropDownLabels[i]->setBounds(labelArea);
+      this->dropDownLabels[i]->setFont(juce::FontOptions(
+          this->proc.plug.uiSpec.defaultFontSize * 0.8 * this->uiScale));
+    }
     dropdownArea.reduce(this->pad, this->pad);
-    labelArea.reduce(this->pad, this->pad);
     this->dropDowns[i]->setBounds(dropdownArea);
     this->dropDowns[i]->setColour(juce::ComboBox::ColourIds::textColourId,
         juce::Colour(this->proc.plug.uiSpec.foregroundColour));
@@ -483,11 +508,9 @@ void NtPluginAudioProcessorEditor::_placeDropdowns(
         juce::Colour(this->proc.plug.uiSpec.foregroundColour));
     this->dropDowns[i]->setColour(juce::ComboBox::ColourIds::backgroundColourId,
         juce::Colour(this->proc.plug.uiSpec.backgroundColour));
-    this->dropDownLabels[i]->setBounds(labelArea);
-    this->dropDownLabels[i]->setFont(juce::FontOptions(
-        this->proc.plug.uiSpec.defaultFontSize * this->uiScale));
   }
 }
+
 void NtPluginAudioProcessorEditor::_placeToggles(
     juce::Rectangle<int>& area, size_t columnWidth) {
   for (size_t i = 0; i < this->proc.plug.toggles.size(); i++) {
@@ -532,45 +555,44 @@ void NtPluginAudioProcessorEditor::_updateKnobGroups(
     auto groupLableArea =
         groupArea.removeFromTop(this->proc.plug.uiSpec.labelHeight);
     this->knobGroupLabels[i]->setBounds(groupLableArea);
-    int nLhs = 0;
-    int nRhs = 0;
     auto& g  = this->proc.plug.knobGroups[i];
-    for (size_t j = 0; j < g.primaryKnobs.size(); j++) {
-      if (!(j % 2)) {
-        nLhs++;
-      } else {
-        nRhs++;
-      }
+    int nRhs = g.primaryKnobs.size() / 2;
+    int nLhs = nRhs + g.primaryKnobs.size() % 2;
+    if (this->_getNKnobsInLargestKnobGroup()
+        <= this->proc.plug.uiSpec.groupSingleColumnLimit) {
+      this->_placeGruopKnobColumn(
+          groupArea, g.primaryKnobs.size(), i, 1, false);
+    } else {
+      auto lArea = groupArea.removeFromLeft(
+          this->proc.plug.uiSpec.groupKnobWidth * this->uiScale);
+      this->_placeGruopKnobColumn(lArea, nLhs, i, 2, false);
+      groupArea.removeFromTop(
+          this->proc.plug.uiSpec.groupEvenColOffset * this->uiScale);
+      this->_placeGruopKnobColumn(groupArea, nRhs, i, 2, true);
     }
-    auto lArea = groupArea.removeFromLeft(
-        this->proc.plug.uiSpec.groupKnobWidth * this->uiScale);
-    this->_placeGruopKnobColumn(lArea, nLhs, i, false);
-    groupArea.removeFromTop(
-        this->proc.plug.uiSpec.groupEvenColOffset * this->uiScale);
-    this->_placeGruopKnobColumn(groupArea, nRhs, i, true);
   }
 }
 
 void NtPluginAudioProcessorEditor::_placeGruopKnobColumn(
-    juce::Rectangle<int>& groupArea, int n, int i, bool even) {
+    juce::Rectangle<int>& groupArea, int n, int i, int nCols, bool even) {
   for (size_t j = 0; j < n; j++) {
     auto kArea = groupArea.removeFromTop(
         this->proc.plug.uiSpec.groupKnobHeight * this->uiScale);
     kArea.removeFromTop(10 * this->uiScale);
     auto labelArea =
         kArea.removeFromTop(this->proc.plug.uiSpec.labelHeight * this->uiScale);
-    if (!this->groupKnobLabels[i][j * 2 + even]) { continue; }
-    this->groupKnobLabels[i][j * 2 + even]->setBounds(labelArea);
-    this->knobGroups[i][j * 2 + even]->setBounds(kArea);
-    this->groupKnobLabels[i][j * 2 + even]->setFont(juce::FontOptions(
+    if (!this->groupKnobLabels[i][j * nCols + even]) { continue; }
+    this->groupKnobLabels[i][j * nCols + even]->setBounds(labelArea);
+    this->knobGroups[i][j * nCols + even]->setBounds(kArea);
+    this->groupKnobLabels[i][j * nCols + even]->setFont(juce::FontOptions(
         this->proc.plug.uiSpec.defaultFontSize * this->uiScale));
-    this->knobGroups[i][j * 2 + even]->setTextBoxStyle(
+    this->knobGroups[i][j * nCols + even]->setTextBoxStyle(
         juce::Slider::TextBoxBelow,
         false,
         80 * this->uiScale,
         this->proc.plug.uiSpec.labelHeight * this->uiScale);
-    this->knobGroups[i][j * 2 + even]->setEnabled(
-        this->proc.plug.knobGroups[i].primaryKnobs[j * 2 + even].isActive);
+    this->knobGroups[i][j * nCols + even]->setEnabled(
+        this->proc.plug.knobGroups[i].primaryKnobs[j * nCols + even].isActive);
   }
 }
 
