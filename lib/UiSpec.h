@@ -162,6 +162,7 @@ struct UiSpec {
   bool includeSecondaryKnobs { true };      ///< Enable row below the main grid.
   uint32_t foregroundColour { 0xFFFFFFFF }; ///< UI foreground colour in HEX.
   uint32_t backgroundColour { 0xFF000000 }; ///< UI background colour in HEX.
+  float pad = { 10 };
   int maxRows { 3 };    ///< The maximum number of rows in main knob grid.
   int maxColumns { 6 }; ///< The maximum number of columns in main knob grid.
   float defaultFontSize { 16 }; ///< Font size before scaling.
@@ -180,8 +181,8 @@ struct UiSpec {
   int groupWidth { 200 };
   int groupEvenColOffset { 40 };
   int groupKnobWidth { groupWidth / 2 };
-  int groupKnobHeight { 120 };
-  int groupPad { 20 };
+  int groupKnobHeight { 150 };
+  int groupPad { 10 };
   int groupSingleColumnLimit { 4 };
 };
 } // namespace NtFx

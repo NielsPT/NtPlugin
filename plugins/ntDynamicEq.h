@@ -142,6 +142,8 @@ struct ntDynamicEq : public NtFx::NtPlugin {
     this->bands[Bands::loMid].settings.fc_hz = 500;
     this->bands[Bands::hiMid].settings.fc_hz = 2e3;
     this->bands[Bands::hf].settings.fc_hz    = 10e3;
+    this->uiSpec.defaultFontSize             = 14;
+    this->uiSpec.meterHeight_dots            = 24;
     this->updateDefaults();
   }
 

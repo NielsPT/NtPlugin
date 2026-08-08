@@ -165,6 +165,7 @@ struct ntMultiband3 : public NtFx::NtPlugin {
     }
     this->meters[Bands::n - 1 + 2].hasScale = true;
     this->uiSpec.meterHeight_dots           = 25;
+    this->uiSpec.pad                        = 15;
     for (auto& m : this->meters) { m.minVal_db = -50; }
     this->updateDefaults();
   }

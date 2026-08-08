@@ -24,6 +24,5 @@ NTFX_TEST() {
   soloHi.solos[Bands::mid] = false;
   soloHi.solos[Bands::lo]  = false;
   NTFX_ADD_TEST(soloHi, "impulse");
-  // TODO: Add more tests. (Of dynamics as well)
   return NTFX_RUN_TESTS();
 }

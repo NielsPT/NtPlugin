@@ -134,11 +134,11 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
 
   // UI update.
   void _updateUi();
-  void _updateKnobGroups(juce::Rectangle<int>& area);
-  void _updateTitleBar(juce::Rectangle<int>& area);
-  void _updateMeters(juce::Rectangle<int>& area);
-  void _updateSecondaryKnobs(juce::Rectangle<int>& area);
-  void _updatePrimaryKnobs(juce::Rectangle<int>& area);
+  void _placeKnobGroups(juce::Rectangle<int>& area);
+  void _placeTitleBar(juce::Rectangle<int>& area);
+  void _placeMeters(juce::Rectangle<int>& area);
+  void _placeSecondaryKnobs(juce::Rectangle<int>& area);
+  void _placePrimaryKnobs(juce::Rectangle<int>& area);
   void _updateColours();
   void _updateUiScale();
   void _updateOversampling();
