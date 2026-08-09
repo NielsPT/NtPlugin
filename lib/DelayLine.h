@@ -33,53 +33,17 @@
 namespace NtFx {
 namespace Delay {
   template <double dlLen_ms, typename T = Audio>
-  struct Base : public ComponentBase<T> {
+  struct Short : public ComponentBase<T> {
     constexpr const static int nDl = dlLen_ms * 192 * 8;
-    T* dl { nullptr };
-    signal_t t_ms { 0 };
-    int _n { 0 };
-    int _i { 0 };
-
-    virtual void store(T x) noexcept {
-      this->dl[this->_i++] = x;
-      if (this->_i >= nDl) { this->_i = 0; }
-    }
-
-    virtual T read() noexcept {
-      auto _i = this->_i - this->_n;
-      if (_i < 0) { _i += nDl; }
-      return this->dl[_i];
-    }
-
-    virtual T process(T x) noexcept override {
-      store(x);
-      if (this->_n == 0) { return x; }
-      return read();
-    }
-
-    virtual void update() noexcept override {
-      this->_n = int(gcem::floor(this->t_ms * 0.001 * this->fs));
-      if (this->_n >= nDl) { this->_n = nDl; }
-    }
-
-  protected:
-    Base() { }
-  };
-
-  template <double dlLen_ms, typename T = Audio>
-  struct Short : public Base<dlLen_ms, T> {
-    constexpr const static int nDl = Base<dlLen_ms, T>::nDl;
     std::array<T, nDl> dl;
 
     virtual T process(T x) noexcept override {
-      // this->dl[this->_i++] = x;
-      // if (this->_i >= nDl) { this->_i = 0; }
-      this->store(x);
+      this->dl[this->_i++] = x;
+      if (this->_i >= nDl) { this->_i = 0; }
       if (this->_n == 0) { return x; }
-      // auto _i = this->_i - this->_n;
-      // if (_i < 0) { _i += nDl; }
-      // return this->dl[_i];
-      return this->read();
+      auto _i = this->_i - this->_n;
+      if (_i < 0) { _i += nDl; }
+      return this->dl[_i];
     }
 
     virtual void update() noexcept override {
@@ -125,30 +89,23 @@ namespace Delay {
   };
 
   template <double dlLen_ms, typename T = Audio>
-  struct ShortGlided : public Base<dlLen_ms, T> {
+  struct ShortGlided : public ComponentBase<T> {
     constexpr const static int nDl = dlLen_ms * 192 * 8;
     std::array<T, nDl> dl;
     ExpGlider t_ms { 0 };
-    // int _i { 0 };
+    int _i { 0 };
 
     virtual T process(T x) noexcept override {
-      // this->t_ms.process();
-      // this->dl[this->_i++] = x;
-      // if (this->_i >= nDl) { this->_i = 0; }
-      // int n { 0 };
-      // n = int(this->t_ms.pr * 0.001 * this->fs);
-      // if (n == 0) { return x; }
-      // if (n >= nDl) { n = nDl; }
-      // auto _i = this->_i - n;
-      // if (_i < 0) { _i += nDl; }
-      // return this->dl[_i];
-
-      this->store(x);
-      this->_n = int(this->t_ms.pr * 0.001 * this->fs);
-      if (this->_n == 0) { return x; }
-      if (this->_n >= nDl) { this->_n = nDl; }
-      if (this->_n == 0) { return x; }
-      return this->read();
+      this->t_ms.process();
+      this->dl[this->_i++] = x;
+      if (this->_i >= nDl) { this->_i = 0; }
+      int n { 0 };
+      n = int(this->t_ms.pr * 0.001 * this->fs);
+      if (n == 0) { return x; }
+      if (n >= nDl) { n = nDl; }
+      auto _i = this->_i - n;
+      if (_i < 0) { _i += nDl; }
+      return this->dl[_i];
     }
 
     virtual void update() noexcept override { this->t_ms.update(this->fs); }
@@ -168,15 +125,11 @@ namespace Delay {
     int32_t idx { 0 };
     int32_t nDelay;
 
-    void _store(T x) {
+    virtual T process(T x) noexcept override {
       this->dl[idx]       = x;
       this->dl[idx + nDl] = x;
       ++this->idx;
-      this->idx = (this->idx < nDl ? this->idx : 0);
-    }
-
-    virtual T process(T x) noexcept override {
-      _store(x);
+      this->idx         = (this->idx < nDl ? this->idx : 0);
       int32_t readIndex = idx - this->nDelay;
       readIndex += nDl * (readIndex < nDl);
       T acc0 { 0 };
