@@ -234,7 +234,7 @@ namespace Comp {
    * @tparam signal_t The signal type (e.g., float, double)
    */
   struct RmsSideChainDb : public PeakSideChainDb {
-    LongRmsSensor<> rmsSensor; ///< RMS sensor for stereo signals
+    ShortRmsSensor<> rmsSensor; ///< RMS sensor for stereo signals
 
     RmsSideChainDb(ScSettings& settings) : PeakSideChainDb(settings) { }
 

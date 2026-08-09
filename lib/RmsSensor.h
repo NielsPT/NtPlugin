@@ -30,13 +30,63 @@
 
 namespace NtFx {
 
+template <double tRmsMax_ms>
+struct ShortRmsSensorMono : public ComponentBase<signal_t> {
+  constexpr static const int nDlMax = int(tRmsMax_ms * 192.0 * 8.0);
+  std::array<signal_t, nDlMax> _dl; ///< Sample delay line.
+  signal_t tRms_ms;
+  signal_t _acc { 0 };
+  int _i { 0 };
+  int _n { 1 };
+  virtual signal_t process(signal_t x) noexcept override {
+    this->processDelayLine(x);
+    return this->getRms();
+  }
+  void processDelayLine(signal_t x) noexcept {
+    auto x2 = x * x;
+    if (x2 != x2) { x2 = signal_t(0.0); }
+    this->_acc += x2 - this->_dl[this->_i];
+    this->_dl[this->_i++] = x2;
+    if (this->_i >= this->_n) { this->_i = 0; }
+  }
+  signal_t getRms() const noexcept {
+    signal_t y = gcem::sqrt(signal_t(2.0) * this->_acc / signal_t(this->_n));
+    if (y != y) { y = signal_t(0.0); }
+    return y;
+  }
+  virtual void update() noexcept override {
+    auto n = int(gcem::floor(this->tRms_ms * 0.001 * this->fs));
+    if (n == this->_n) { return; }
+    this->_n   = n;
+    this->_i   = 0;
+    this->_acc = 0;
+    std::fill(this->_dl.begin(), this->_dl.end(), 0);
+  }
+};
+
+template <double tRmsMax_ms>
+struct ShortRmsSensorStereo
+    : public AudioComponent<signal_t, ShortRmsSensorMono<tRmsMax_ms>> {
+  void setT_ms(signal_t t) {
+    this->l.tRms_ms = t;
+    this->r.tRms_ms = t;
+    this->update();
+  }
+  Audio getRms() const noexcept {
+    return { this->l.getRms(), this->r.getRms() };
+  }
+};
+
+template <double tRmsMax_ms = 100.0>
+using ShortRmsSensor = ShortRmsSensorStereo<tRmsMax_ms>;
+
 /**
  * @brief RMS (Root Mean Square) sensor component for audio signal processing
  *
  * This component calculates the RMS value of an audio signal over a specified
- * time period. It maintains two delay lines: one for sample-level accumulation
- * and one for millisecond-level accumulation, allowing for efficient RMS
- * calculation.
+ * time period. It maintains two delay lines: one for sample-level
+ * accumulation and one for millisecond-level accumulation, allowing for
+ * efficient RMS calculation.
  *
  * @tparam signal_t The type of the audio signal (e.g., float, double)
  * @tparam maxT_ms Maximum time window in milliseconds for RMS calculation
@@ -44,9 +94,7 @@ namespace NtFx {
  * @tparam maxSampleDLineLen Maximum length of the sample delay line (default:
  * 192 * 8)
  */
-template <typename signal_t,
-    int maxT_ms           = 1000,
-    int maxSampleDLineLen = 192 * 8>
+template <int maxT_ms = 1000, int maxSampleDLineLen = 192 * 8>
 struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
   std::array<signal_t, maxSampleDLineLen> sampleDLine; ///< Sample delay line.
   std::array<signal_t, maxT_ms> msDLine; ///< Millisecond delay line.
@@ -54,9 +102,9 @@ struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
   signal_t msAccum { 0 };     ///< Accumulator for millisecond-level values.
   int sampleIdx { 0 };        ///< Current index in the sample delay line.
   int msIdx { 0 };            ///< Current index in the millisecond delay line.
-  bool resetAccums { false }; ///< Flag to reset accumulators.
   int msDLineLen { maxT_ms }; ///< Current time window in milliseconds.
   int sampleDLineLen { 48 };  ///< Length of sample delay line.
+  bool resetAccums { false }; ///< Flag to reset accumulators.
 
   /**
    * @brief Process the input signal and update RMS calculation
@@ -95,8 +143,8 @@ struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
   /**
    * @brief Update the component state
    *
-   * This method resets the accumulators and delay lines if the resetAccums flag
-   * is set.
+   * This method resets the accumulators and delay lines if the resetAccums
+   * flag is set.
    */
   virtual void update() noexcept override {
     if (this->resetAccums) {
@@ -113,8 +161,8 @@ struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
   /**
    * @brief Reset the component with a new sample rate
    *
-   * This method updates the sample rate and recalculates the sample delay line
-   * length based on the new rate.
+   * This method updates the sample rate and recalculates the sample delay
+   * line length based on the new rate.
    *
    * @param fs The new sample rate in Hz
    */
@@ -140,6 +188,7 @@ struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
     return y;
   }
 
+  // TODO: Use the same pattern as short rms sensor. No resetAccums.
   /**
    * @brief Set the time window for RMS calculation
    *
@@ -171,7 +220,7 @@ struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
 template <int maxT_ms = 1000, int maxSampleDLineLen = 192 * 8>
 struct LongRmsSensorStereo
     : public AudioComponent<signal_t,
-          LongRmsSensorMono<signal_t, maxT_ms, maxSampleDLineLen>> {
+          LongRmsSensorMono<maxT_ms, maxSampleDLineLen>> {
   /**
    * @brief Set the time window for RMS calculation
    *
