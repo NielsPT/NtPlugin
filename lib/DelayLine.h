@@ -22,32 +22,69 @@
  * You are free to download, build and use this code for commercial
  * purposes. Just don't resell it or a build of it, modified or otherwise.
  */
+
+#include "gcem.hpp"
 #include "lib/Audio.h"
 #include "lib/Component.h"
 #include "lib/Glider.h"
 #include <array>
+#include <vector>
+
 namespace NtFx {
 namespace Delay {
-  template <int dlLen, typename T = Audio>
-  struct ShortDelayLine : public ComponentBase<T> {
-    std::array<T, dlLen> dl;
-    // TODO: Glide delay time. Separate class? Or just the way it is?
+  template <double dlLen_ms, typename T = Audio>
+  struct Base : public ComponentBase<T> {
+    constexpr const static int nDl = dlLen_ms * 192 * 8;
+    T* dl { nullptr };
     signal_t t_ms { 0 };
-    int n { 0 };
-    int i { 0 };
+    int _n { 0 };
+    int _i { 0 };
 
-    virtual T process(T x) noexcept override {
-      this->dl[this->i++] = x;
-      if (this->i >= dlLen) { this->i = 0; }
-      if (this->n == 0) { return x; }
-      auto _i = this->i - this->n;
-      if (_i < 0) { _i += dlLen; }
+    virtual void store(T x) noexcept {
+      this->dl[this->_i++] = x;
+      if (this->_i >= nDl) { this->_i = 0; }
+    }
+
+    virtual T read() noexcept {
+      auto _i = this->_i - this->_n;
+      if (_i < 0) { _i += nDl; }
       return this->dl[_i];
     }
 
+    virtual T process(T x) noexcept override {
+      store(x);
+      if (this->_n == 0) { return x; }
+      return read();
+    }
+
     virtual void update() noexcept override {
-      this->n = int(this->t_ms * 0.001 * this->fs);
-      if (this->n >= dlLen) { this->n = dlLen; }
+      this->_n = int(gcem::floor(this->t_ms * 0.001 * this->fs));
+      if (this->_n >= nDl) { this->_n = nDl; }
+    }
+
+  protected:
+    Base() { }
+  };
+
+  template <double dlLen_ms, typename T = Audio>
+  struct Short : public Base<dlLen_ms, T> {
+    constexpr const static int nDl = Base<dlLen_ms, T>::nDl;
+    std::array<T, nDl> dl;
+
+    virtual T process(T x) noexcept override {
+      // this->dl[this->_i++] = x;
+      // if (this->_i >= nDl) { this->_i = 0; }
+      this->store(x);
+      if (this->_n == 0) { return x; }
+      // auto _i = this->_i - this->_n;
+      // if (_i < 0) { _i += nDl; }
+      // return this->dl[_i];
+      return this->read();
+    }
+
+    virtual void update() noexcept override {
+      this->_n = int(gcem::floor(this->t_ms * 0.001 * this->fs));
+      if (this->_n >= nDl) { this->_n = nDl; }
     }
 
     virtual void reset(float fs) noexcept override {
@@ -57,29 +94,64 @@ namespace Delay {
     }
   };
 
-  template <int dlLen, typename T = Audio>
-  struct ShortGlideDelayLine : public ComponentBase<T> {
-    std::array<T, dlLen> dl;
-    ExpGlider t_ms { 0 };
-    int i { 0 };
+  template <double dlLen_ms, typename T = Audio>
+  struct Long : public ComponentBase<T> {
+    constexpr const static int nDl = dlLen_ms * 192 * 8;
+    std::vector<T> dl;
+    signal_t t_ms { 0 };
+    int _n { 0 };
+    int _i { 0 };
 
     virtual T process(T x) noexcept override {
-      this->t_ms.process();
-      this->dl[this->i++] = x;
-      if (this->i >= dlLen) { this->i = 0; }
-      int n { 0 };
-      n = int(this->t_ms.pr * 0.001 * this->fs);
-      if (n == 0) { return x; }
-      if (n >= dlLen) { n = dlLen; }
-      auto _i = this->i - n;
-      if (_i < 0) { _i += dlLen; }
+      this->dl[this->_i++] = x;
+      if (this->_i >= nDl) { this->_i = 0; }
+      if (this->_n == 0) { return x; }
+      auto _i = this->_i - this->_n;
+      if (_i < 0) { _i += nDl; }
       return this->dl[_i];
     }
 
     virtual void update() noexcept override {
-      this->t_ms.update(this->fs);
-      this->t_ms.process();
+      this->_n = int(gcem::floor(this->t_ms * 0.001 * this->fs));
+      if (this->_n >= nDl) { this->_n = nDl; }
     }
+
+    virtual void reset(float fs) noexcept override {
+      this->fs = fs;
+      this->update();
+      this->dl.resize(gcem::ceil(dlLen_ms * 0.001 * this->fs));
+      this->dl.clear();
+    }
+  };
+
+  template <double dlLen_ms, typename T = Audio>
+  struct ShortGlided : public Base<dlLen_ms, T> {
+    constexpr const static int nDl = dlLen_ms * 192 * 8;
+    std::array<T, nDl> dl;
+    ExpGlider t_ms { 0 };
+    // int _i { 0 };
+
+    virtual T process(T x) noexcept override {
+      // this->t_ms.process();
+      // this->dl[this->_i++] = x;
+      // if (this->_i >= nDl) { this->_i = 0; }
+      // int n { 0 };
+      // n = int(this->t_ms.pr * 0.001 * this->fs);
+      // if (n == 0) { return x; }
+      // if (n >= nDl) { n = nDl; }
+      // auto _i = this->_i - n;
+      // if (_i < 0) { _i += nDl; }
+      // return this->dl[_i];
+
+      this->store(x);
+      this->_n = int(this->t_ms.pr * 0.001 * this->fs);
+      if (this->_n == 0) { return x; }
+      if (this->_n >= nDl) { this->_n = nDl; }
+      if (this->_n == 0) { return x; }
+      return this->read();
+    }
+
+    virtual void update() noexcept override { this->t_ms.update(this->fs); }
 
     virtual void reset(float fs) noexcept override {
       this->fs = fs;
@@ -89,7 +161,7 @@ namespace Delay {
   };
 
   template <int nDl, typename T, int nCoeffs = 4>
-  struct ShortFractDelayLine : public ComponentBase<T> {
+  struct ShortFract : public ComponentBase<T> {
     std::array<T, nCoeffs> coeffs;
     T dl[nDl * 2] { 0 };
     signal_t t_ms { 0 };
@@ -157,13 +229,13 @@ namespace Delay {
     }
   };
 
-  struct ModDelayLine : public NtFx::ComponentBase<Audio> {
+  struct Mod : public NtFx::ComponentBase<Audio> {
     constexpr static const signal_t minRate_hz = 0.1;
     constexpr static const int tModDlMax_ms    = 10 * int(1.0 / minRate_hz);
     constexpr static const int nDl             = 192 * 8 * tModDlMax_ms;
 
-    NtFx::Delay::ShortFractDelayLine<nDl, signal_t> l;
-    NtFx::Delay::ShortFractDelayLine<nDl, signal_t> r;
+    NtFx::Delay::ShortFract<nDl, signal_t> l;
+    NtFx::Delay::ShortFract<nDl, signal_t> r;
     NtFx::ExpGlider _tDelayMod_s;
     NtFx::ExpGlider _phaseMod_rad;
     NtFx::ExpGlider fMod_hz { 0.25 };
@@ -179,14 +251,11 @@ namespace Delay {
       signal_t omegaT_rad = 2 * GCEM_PI * this->fMod_hz.pr * this->_t;
       this->_t += this->_tSample;
       if (this->_t >= 1 / this->fMod_hz.pr) { this->_t = 0; }
-      this->l.t_ms = (gcem::sin(omegaT_rad) * this->_tDelayMod_s.pr
-                         + this->_tDelayMod_s.pr)
-          * 1000;
-      this->r.t_ms = (gcem::sin(omegaT_rad + this->_phaseMod_rad.pr)
-                             * this->_tDelayMod_s.pr
-                         + this->_tDelayMod_s.pr)
-          * 1000;
+      auto tmp     = gcem::sin(omegaT_rad);
+      this->l.t_ms = (tmp + 1) * this->_tDelayMod_s.pr * 1000;
       this->l.update();
+      tmp          = gcem::sin(omegaT_rad + this->_phaseMod_rad.pr);
+      this->r.t_ms = (tmp + 1) * this->_tDelayMod_s.pr * 1000;
       this->r.update();
       return { this->l.process(x.l), this->r.process(x.r) };
     }

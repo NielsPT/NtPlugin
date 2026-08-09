@@ -27,11 +27,11 @@
 #include "lib/Plugin.h"
 #include "lib/utils.h"
 
-constexpr int tWetDlMax_ms = 100;
+constexpr double tWetDlMax_ms = 100;
 
 struct ntChorus : public NtFx::NtPlugin {
-  NtFx::Delay::ModDelayLine dlMod;
-  NtFx::Delay::ShortGlideDelayLine<192 * 8 * tWetDlMax_ms, Audio> dlWet;
+  NtFx::Delay::Mod dlMod;
+  NtFx::Delay::ShortGlided<tWetDlMax_ms, Audio> dlWet;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> hpf;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> lpf;
 

@@ -31,7 +31,7 @@
 enum scMode { feedForward = 0, feedback, external };
 
 struct ntCompressor : public NtFx::NtPlugin {
-  NtFx::Delay::ShortDelayLine<192 * 8 * 10> dl;
+  NtFx::Delay::Short<10.0> dl;
   NtFx::Comp::ScSettings scSettings;
   NtFx::Comp::PeakSideChainDb peakScDb;
   NtFx::Comp::PeakSideChainLinear peakScLin;
@@ -248,7 +248,7 @@ struct ntCompressor : public NtFx::NtPlugin {
     this->rmsScDb.update();
     this->rmsScLin.update();
     this->dl.update();
-    this->latency    = this->dl.n;
+    this->latency    = this->dl._n;
     this->makeup_lin = NtFx::invDb(this->makeup_db);
     this->mix_lin    = this->mix_percent / 100.0;
   }

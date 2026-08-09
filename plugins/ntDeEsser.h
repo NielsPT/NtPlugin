@@ -7,12 +7,10 @@
 #include "lib/DynamicFilter.h"
 #include "lib/Plugin.h"
 
-// 10 ms lookahead max
-constexpr int dlLookaheadLen = 192 * 8 * 10;
 enum Mode { wide, shelf, bell };
 
 struct ntDeEsser : public NtFx::NtPlugin {
-  NtFx::Delay::ShortDelayLine<dlLookaheadLen> dl;
+  NtFx::Delay::Short<10.0> dl;
   NtFx::Comp::PeakSideChainLinear sc;
   NtFx::Biquad::EqBand scBpf;
   NtFx::DynamicFilter::ShelfFixedZeros shelf;
@@ -136,7 +134,7 @@ struct ntDeEsser : public NtFx::NtPlugin {
     this->scBpf.update();
 
     this->dl.update();
-    this->latency = this->dl.n;
+    this->latency = this->dl._n;
   }
 
   void reset(float fs) noexcept override {

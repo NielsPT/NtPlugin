@@ -30,8 +30,6 @@
 
 enum ScMode { internal, external, ignore };
 
-constexpr int dlLookaheadLen = 192 * 8 * 10;
-
 struct ntGate : public NtFx::NtPlugin {
   NtFx::Gate::Sc sc;
   NtFx::Gate::Sc scHf;
@@ -40,7 +38,7 @@ struct ntGate : public NtFx::NtPlugin {
   NtFx::DynamicFilter::ShelfFixedPoles flt;
   NtFx::Biquad::EqBand hpf;
   NtFx::Biquad::EqBand lpf;
-  NtFx::Delay::ShortDelayLine<dlLookaheadLen> dl;
+  NtFx::Delay::Short<10.0> dl;
   int scMode { 0 };
   bool bypassEnable { false };
   bool scListenEnable { false };
@@ -229,7 +227,7 @@ struct ntGate : public NtFx::NtPlugin {
     this->lookaheadEnable = (this->dl.t_ms > 0);
     this->dl.update();
     if (this->latencyCompEnable) {
-      this->latency = this->dl.n;
+      this->latency = this->dl._n;
     } else {
       this->latency = 0;
     }
