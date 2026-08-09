@@ -36,6 +36,9 @@ namespace Delay {
   struct Short : public ComponentBase<T> {
     constexpr const static int nDl = dlLen_ms * 192 * 8;
     std::array<T, nDl> dl;
+    signal_t t_ms { 0 };
+    int _n { 0 };
+    int _i { 0 };
 
     virtual T process(T x) noexcept override {
       this->dl[this->_i++] = x;
@@ -120,17 +123,17 @@ namespace Delay {
   template <int nDl, typename T, int nCoeffs = 4>
   struct ShortFract : public ComponentBase<T> {
     std::array<T, nCoeffs> coeffs;
-    T dl[nDl * 2] { 0 };
+    std::array<T, nDl * 2> dl;
     signal_t t_ms { 0 };
-    int32_t idx { 0 };
-    int32_t nDelay;
+    int32_t _i { 0 };
+    int32_t _n;
 
     virtual T process(T x) noexcept override {
-      this->dl[idx]       = x;
-      this->dl[idx + nDl] = x;
-      ++this->idx;
-      this->idx         = (this->idx < nDl ? this->idx : 0);
-      int32_t readIndex = idx - this->nDelay;
+      this->dl[_i]       = x;
+      this->dl[_i + nDl] = x;
+      this->_i++;
+      this->_i          = (this->_i < nDl ? this->_i : 0);
+      int32_t readIndex = this->_i - this->_n;
       readIndex += nDl * (readIndex < nDl);
       T acc0 { 0 };
       for (int32_t i = 0; i < nCoeffs; i++) {
@@ -144,7 +147,7 @@ namespace Delay {
       delay_samples      = delay_samples < 1.0f ? 1.0f : delay_samples;
       auto n             = int(delay_samples);
       float d            = delay_samples - n;
-      this->nDelay       = n;
+      this->_n           = n;
       if (d < 0.0 || d >= 1.0) { return; }
       const signal_t D = d + gcem::floor(nCoeffs / 2.0) - 1.0;
       if constexpr (nCoeffs == 4) {
@@ -179,6 +182,12 @@ namespace Delay {
         }
         this->coeffs[i] = acc;
       }
+    }
+
+    virtual void reset(float fs) noexcept override {
+      this->fs = fs;
+      std::fill(this->dl.begin(), this->dl.end(), 0);
+      this->update();
     }
   };
 

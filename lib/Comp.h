@@ -39,15 +39,15 @@ namespace Comp {
    * @tparam signal_t The signal type (e.g., float, double)
    */
   struct ScSettings {
-    signal_t thresh_db = signal_t(0);    ///< Threshold in dB
-    signal_t ratio     = signal_t(2);    ///< Compression ratio
-    signal_t knee_db   = signal_t(12);   ///< Knee width in dB
-    signal_t tAtt_ms   = signal_t(0.1);  ///< Attack time in milliseconds
-    signal_t tRel_ms   = signal_t(100);  ///< Release time in milliseconds
-    signal_t tRms_ms   = signal_t(80);   ///< RMS time constant in milliseconds
-    signal_t tPeak_ms  = signal_t(20);   ///< Peak time constant in milliseconds
-    signal_t tPeakHold_ms = signal_t(0); ///< Peak sensor hold time.
-    bool linkEnable       = false;
+    signal_t thresh_db { 0 };    ///< Threshold in dB
+    signal_t ratio { 2 };        ///< Compression ratio
+    signal_t knee_db { 12 };     ///< Knee width in dB
+    signal_t tAtt_ms { 0.1 };    ///< Attack time in milliseconds
+    signal_t tRel_ms { 100 };    ///< Release time in milliseconds
+    signal_t tRms_ms { 80 };     ///< RMS time constant in milliseconds
+    signal_t tPeak_ms { 20 };    ///< Peak time constant in milliseconds
+    signal_t tPeakHold_ms { 0 }; ///< Peak sensor hold time.
+    bool linkEnable = false;
   };
 
   /**

@@ -143,10 +143,10 @@ struct NtPlugin : public ComponentBase<Audio> {
    */
   signal_t* getKnobValuePtr(std::string name) const noexcept {
     for (auto param : this->primaryKnobs) {
-      if (param.name == name) { return param.p_val; }
+      if (NtFx::spacesToUnderscores(param.name) == name) { return param.p_val; }
     }
     for (auto param : this->secondaryKnobs) {
-      if (param.name == name) { return param.p_val; }
+      if (NtFx::spacesToUnderscores(param.name) == name) { return param.p_val; }
     }
     for (auto& g : this->knobGroups) {
       for (auto p : g.primaryKnobs) {
