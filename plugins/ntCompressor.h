@@ -23,7 +23,7 @@
 #include "lib/Audio.h"
 #include "lib/Biquad.h"
 #include "lib/Comp.h"
-#include "lib/DelayLine.h"
+#include "lib/Delay.h"
 #include "lib/Plugin.h"
 #include "lib/SoftClip.h"
 #include "lib/utils.h"

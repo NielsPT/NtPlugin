@@ -78,7 +78,7 @@ namespace Comp {
      * @param x Input stereo signal
      * @return Gain reduction in linear domain.
      */
-    virtual Audio process(Audio x) noexcept override {
+    Audio process(Audio x) noexcept override {
       auto ySens = this->peakSensor.process(x);
       ensureFinite(this->stateFilter);
       auto y = Audio({
@@ -95,7 +95,7 @@ namespace Comp {
     /**
      * @brief Update component coefficients.
      */
-    virtual void update() noexcept override {
+    void update() noexcept override {
       this->alphaAtt = gcem::exp(-2200.0 / (this->settings.tAtt_ms * this->fs));
       this->alphaRel = gcem::exp(-2200.0 / (this->settings.tRel_ms * this->fs));
       if (this->alphaRel < this->alphaAtt) { this->alphaRel = this->alphaAtt; }
@@ -108,7 +108,7 @@ namespace Comp {
      * @brief Reset component with new sample rate
      * @param fs Sample rate in Hz
      */
-    virtual void reset(float fs) noexcept override {
+    void reset(float fs) noexcept override {
       this->peakSensor.reset(fs);
       this->fs = fs;
       this->update();
@@ -172,7 +172,7 @@ namespace Comp {
      * @return Result of side chain. Multiply your input by this to apply side
      * chain.
      */
-    virtual Audio process(Audio x) noexcept override {
+    Audio process(Audio x) noexcept override {
       auto ySens = this->peakSensor.process(x);
       ensureFinite(this->stateFilter);
       Audio y {
@@ -189,7 +189,7 @@ namespace Comp {
     /**
      * @brief Update component coefficients
      */
-    virtual void update() noexcept override {
+    void update() noexcept override {
       this->PeakSideChainDb::update();
       this->thresh_lin            = invDb(this->settings.thresh_db);
       this->knee_lin              = invDb(this->settings.knee_db);
@@ -243,7 +243,7 @@ namespace Comp {
      * @param x Input stereo signal
      * @return Processed stereo signal with gain reduction applied
      */
-    virtual Audio process(Audio x) noexcept override {
+    Audio process(Audio x) noexcept override {
       auto ySens = rmsSensor.process(x);
 
       ensureFinite(this->stateFilter);
@@ -256,7 +256,7 @@ namespace Comp {
     /**
      * @brief Update component parameters
      */
-    virtual void update() noexcept override {
+    void update() noexcept override {
       this->rmsSensor.setT_ms(this->settings.tRms_ms);
       this->rmsSensor.update();
       this->PeakSideChainDb::update();
@@ -266,7 +266,7 @@ namespace Comp {
      * @brief Reset component with new sample rate
      * @param fs Sample rate in Hz
      */
-    virtual void reset(float fs) noexcept override {
+    void reset(float fs) noexcept override {
       this->rmsSensor.reset(fs);
       this->PeakSideChainDb::reset(fs);
     }
@@ -295,7 +295,7 @@ namespace Comp {
      * @param x Input stereo signal
      * @return Processed stereo signal with gain reduction applied
      */
-    virtual Audio process(Audio x) noexcept override {
+    Audio process(Audio x) noexcept override {
       auto ySens = rmsSensor.process(x);
       ensureFinite(this->stateFilter);
       return {
@@ -307,7 +307,7 @@ namespace Comp {
     /**
      * @brief Update component parameters
      */
-    virtual void update() noexcept override {
+    void update() noexcept override {
       this->rmsSensor.setT_ms(this->settings.tRms_ms);
       this->rmsSensor.update();
       this->PeakSideChainLinear::update();
@@ -317,7 +317,7 @@ namespace Comp {
      * @brief Reset component with new sample rate
      * @param fs Sample rate in Hz
      */
-    virtual void reset(float fs) noexcept override {
+    void reset(float fs) noexcept override {
       this->rmsSensor.reset(fs);
       this->PeakSideChainLinear::reset(fs);
     }

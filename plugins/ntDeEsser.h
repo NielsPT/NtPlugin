@@ -3,7 +3,7 @@
 #include "lib/Audio.h"
 #include "lib/Biquad.h"
 #include "lib/Comp.h"
-#include "lib/DelayLine.h"
+#include "lib/Delay.h"
 #include "lib/DynamicFilter.h"
 #include "lib/Plugin.h"
 

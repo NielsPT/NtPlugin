@@ -48,20 +48,20 @@ struct ntRmsMeter : public NtFx::NtPlugin {
     this->updateDefaults();
   }
 
-  virtual Audio process(Audio x) noexcept override {
+  Audio process(Audio x) noexcept override {
     this->template updatePeakLevel<Peak>(x);
     this->template updatePeakLevel<RMS>(msSensor.process(x));
     return x;
   }
 
-  virtual void update() noexcept override {
+  void update() noexcept override {
     for (auto& m : this->meters) { m.decay_s = this->decay_s; }
     for (auto& m : this->meters) { m.hold_s = this->hold_s; }
     this->msSensor.setT_ms(this->tRms_ms);
     this->uiNeedsUpdate = true;
   }
 
-  virtual void reset(float fs) noexcept override {
+  void reset(float fs) noexcept override {
     this->fs = fs;
     this->msSensor.reset(fs);
     this->update();

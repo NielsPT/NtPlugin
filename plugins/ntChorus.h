@@ -21,7 +21,7 @@
 #pragma once
 
 #include "lib/Audio.h"
-#include "lib/DelayLine.h"
+#include "lib/Delay.h"
 #include "lib/FirstOrder.h"
 #include "lib/Glider.h"
 #include "lib/Plugin.h"

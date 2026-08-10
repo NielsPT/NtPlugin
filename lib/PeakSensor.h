@@ -57,7 +57,7 @@ struct PeakSensor : public ComponentBase<signal_t> {
    * @param x The input signal sample.
    * @return The detected peak amplitude.
    */
-  virtual signal_t process(signal_t x) noexcept override {
+  signal_t process(signal_t x) noexcept override {
     return this->_peakSensor(this->_alpha, this->_state, x);
   }
 
@@ -67,11 +67,11 @@ struct PeakSensor : public ComponentBase<signal_t> {
    * This method recalculates the smoothing factor (alpha) based on the current
    * time constant (tPeak_ms) and sample rate (fs).
    */
-  virtual void update() noexcept override {
+  void update() noexcept override {
     this->_alpha = gcem::exp(-2200.0 / (this->tPeak_ms * this->fs));
   }
 
-  virtual void reset(float fs) noexcept override {
+  void reset(float fs) noexcept override {
     this->fs     = fs;
     this->_alpha = 0;
     this->_state = 0;
@@ -150,7 +150,7 @@ struct PeakHoldSensor : public PeakSensor {
    * @param x Input.
    * @return signal_t Sensor output.
    */
-  virtual signal_t process(signal_t x) noexcept override {
+  signal_t process(signal_t x) noexcept override {
     auto _x = this->_peakSensor(this->_alpha, this->_state, x);
 
     this->_dl[this->_idx++] = _x;
@@ -172,7 +172,7 @@ struct PeakHoldSensor : public PeakSensor {
    * @brief Calculates coefficients.
    *
    */
-  virtual void update() noexcept override {
+  void update() noexcept override {
     this->_nHold = this->tHold_ms * this->fs / 1000;
     this->_nHold =
         (this->_nHold >= delayLineLength ? delayLineLength - 1 : this->_nHold);

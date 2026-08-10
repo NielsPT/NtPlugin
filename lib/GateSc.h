@@ -48,13 +48,13 @@ namespace Gate {
     int _nHold { 0 };
     int _holdCount { 0 };
 
-    virtual Audio process(Audio x) noexcept override {
+    Audio process(Audio x) noexcept override {
       auto xSc = x.absMax();
       auto y   = this->gateSc_db(xSc);
       return { y, y };
     }
 
-    virtual void update() noexcept override {
+    void update() noexcept override {
       this->_alphaAtt = gcem::exp(-2200 / (this->settings.tAtt_ms * this->fs));
       this->_slopeRel = this->settings.range_db * signal_t(20)
           / (this->settings.range_db * this->settings.tRel_ms * signal_t(0.001)
@@ -64,7 +64,7 @@ namespace Gate {
       this->sensor.update();
     }
 
-    virtual void reset(float fs) noexcept override {
+    void reset(float fs) noexcept override {
       this->fs              = fs;
       _stateAtt             = -100;
       _stateRel             = -100;

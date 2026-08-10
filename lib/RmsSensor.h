@@ -38,7 +38,7 @@ struct ShortRmsSensorMono : public ComponentBase<signal_t> {
   signal_t _acc { 0 };
   int _i { 0 };
   int _n { 1 };
-  virtual signal_t process(signal_t x) noexcept override {
+  signal_t process(signal_t x) noexcept override {
     this->processDelayLine(x);
     return this->getRms();
   }
@@ -54,7 +54,7 @@ struct ShortRmsSensorMono : public ComponentBase<signal_t> {
     if (y != y) { y = signal_t(0.0); }
     return y;
   }
-  virtual void update() noexcept override {
+  void update() noexcept override {
     auto n = int(gcem::floor(this->tRms_ms * 0.001 * this->fs));
     if (n == this->_n) { return; }
     this->_n   = n;
@@ -115,7 +115,7 @@ struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
    * @param x The input signal value
    * @return The current RMS value
    */
-  virtual Mono<signal_t> process(Mono<signal_t> x) noexcept override {
+  Mono<signal_t> process(Mono<signal_t> x) noexcept override {
     this->processDelayLine(x.l);
     return this->getRms();
   }
@@ -146,7 +146,7 @@ struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
    * This method resets the accumulators and delay lines if the resetAccums
    * flag is set.
    */
-  virtual void update() noexcept override {
+  void update() noexcept override {
     if (this->resetAccums) {
       this->sampleIdx   = 0;
       this->msIdx       = 0;
@@ -166,7 +166,7 @@ struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
    *
    * @param fs The new sample rate in Hz
    */
-  virtual void reset(float fs) noexcept override {
+  void reset(float fs) noexcept override {
     this->fs             = fs;
     this->sampleDLineLen = fs / 1000;
     this->resetAccums    = true;

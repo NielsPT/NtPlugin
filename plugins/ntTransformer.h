@@ -38,7 +38,7 @@ struct ntTransformer : public NtFx::NtPlugin {
     };
     this->toggles = { { &this->bypass, "Bypass" } };
   }
-  virtual Audio process(Audio x) noexcept override {
+  Audio process(Audio x) noexcept override {
     this->template updatePeakLevel<0>(x);
     if (this->bypass) {
       this->template updatePeakLevel<1>(x);
@@ -50,12 +50,12 @@ struct ntTransformer : public NtFx::NtPlugin {
     this->template updatePeakLevel<1>(y);
     return y;
   }
-  virtual void update() noexcept override {
+  void update() noexcept override {
     this->drive_lin = NtFx::invDb(this->drive_db);
     this->transformer.update();
     this->bqHpf0.update();
   }
-  virtual void reset(float fs) noexcept override {
+  void reset(float fs) noexcept override {
     this->fs = fs;
     this->transformer.reset(fs);
     this->bqHpf0.settings.fc_hz = 40;

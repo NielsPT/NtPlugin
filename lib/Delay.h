@@ -40,7 +40,7 @@ namespace Delay {
     int _n { 0 };
     int _i { 0 };
 
-    virtual T process(T x) noexcept override {
+    T process(T x) noexcept override {
       this->dl[this->_i++] = x;
       if (this->_i >= nDl) { this->_i = 0; }
       if (this->_n == 0) { return x; }
@@ -49,12 +49,12 @@ namespace Delay {
       return this->dl[_i];
     }
 
-    virtual void update() noexcept override {
+    void update() noexcept override {
       this->_n = int(gcem::floor(this->t_ms * 0.001 * this->fs));
       if (this->_n >= nDl) { this->_n = nDl; }
     }
 
-    virtual void reset(float fs) noexcept override {
+    void reset(float fs) noexcept override {
       this->fs = fs;
       std::fill(this->dl.begin(), this->dl.end(), 0);
       this->update();
@@ -63,60 +63,93 @@ namespace Delay {
 
   template <double dlLen_ms, typename T = Audio>
   struct Long : public ComponentBase<T> {
-    constexpr const static int nDl = dlLen_ms * 192 * 8;
+    int nDl { 1 };
     std::vector<T> dl;
     signal_t t_ms { 0 };
     int _n { 0 };
     int _i { 0 };
 
-    virtual T process(T x) noexcept override {
+    T process(T x) noexcept override {
       this->dl[this->_i++] = x;
-      if (this->_i >= nDl) { this->_i = 0; }
+      if (this->_i >= this->nDl) { this->_i = 0; }
       if (this->_n == 0) { return x; }
       auto _i = this->_i - this->_n;
-      if (_i < 0) { _i += nDl; }
+      if (_i < 0) { _i += this->nDl; }
       return this->dl[_i];
     }
 
-    virtual void update() noexcept override {
+    void update() noexcept override {
       this->_n = int(gcem::floor(this->t_ms * 0.001 * this->fs));
-      if (this->_n >= nDl) { this->_n = nDl; }
+      if (this->_n >= this->nDl) { this->_n = this->nDl; }
     }
 
-    virtual void reset(float fs) noexcept override {
+    void reset(float fs) noexcept override {
       this->fs = fs;
       this->update();
-      this->dl.resize(gcem::ceil(dlLen_ms * 0.001 * this->fs));
-      this->dl.clear();
+      this->nDl = int(gcem::ceil(dlLen_ms * 0.001 * this->fs));
+      this->dl.resize(this->nDl);
+      std::fill(this->dl.begin(), this->dl.end(), 0);
     }
   };
 
   template <double dlLen_ms, typename T = Audio>
   struct ShortGlided : public ComponentBase<T> {
-    constexpr const static int nDl = dlLen_ms * 192 * 8;
-    std::array<T, nDl> dl;
+    constexpr const static int _nDl = dlLen_ms * 192 * 8;
+    std::array<T, _nDl> dl;
     ExpGlider t_ms { 0 };
     int _i { 0 };
 
-    virtual T process(T x) noexcept override {
+    T process(T x) noexcept override {
       this->t_ms.process();
       this->dl[this->_i++] = x;
-      if (this->_i >= nDl) { this->_i = 0; }
+      if (this->_i >= this->_nDl) { this->_i = 0; }
       int n { 0 };
       n = int(this->t_ms.pr * 0.001 * this->fs);
       if (n == 0) { return x; }
-      if (n >= nDl) { n = nDl; }
+      if (n >= this->_nDl) { n = this->_nDl; }
       auto _i = this->_i - n;
-      if (_i < 0) { _i += nDl; }
+      if (_i < 0) { _i += this->_nDl; }
       return this->dl[_i];
     }
 
-    virtual void update() noexcept override { this->t_ms.update(this->fs); }
+    void update() noexcept override { this->t_ms.update(this->fs); }
 
-    virtual void reset(float fs) noexcept override {
+    void reset(float fs) noexcept override {
       this->fs = fs;
       std::fill(this->dl.begin(), this->dl.end(), 0);
       this->update();
+    }
+  };
+
+  template <double dlLen_ms, typename T = Audio>
+  struct LongGlided : public ComponentBase<T> {
+    std::vector<T> dl;
+    ExpGlider t_ms { 0 };
+    int _nDl { 1 };
+    int _n { 0 };
+    int _i { 0 };
+
+    T process(T x) noexcept override {
+      this->t_ms.process();
+      this->dl[this->_i++] = x;
+      if (this->_i >= this->_nDl) { this->_i = 0; }
+      int n { 0 };
+      n = int(this->t_ms.pr * 0.001 * this->fs);
+      if (n == 0) { return x; }
+      if (n >= this->_nDl) { n = this->_nDl; }
+      auto _i = this->_i - n;
+      if (_i < 0) { _i += this->_nDl; }
+      return this->dl[_i];
+    }
+
+    void update() noexcept override { this->t_ms.update(this->fs); }
+
+    void reset(float fs) noexcept override {
+      this->fs = fs;
+      this->update();
+      this->_nDl = int(gcem::ceil(dlLen_ms * 0.001 * this->fs));
+      this->dl.resize(this->_nDl);
+      std::fill(this->dl.begin(), this->dl.end(), 0);
     }
   };
 
@@ -128,7 +161,7 @@ namespace Delay {
     int32_t _i { 0 };
     int32_t _n;
 
-    virtual T process(T x) noexcept override {
+    T process(T x) noexcept override {
       this->dl[_i]       = x;
       this->dl[_i + nDl] = x;
       this->_i++;
@@ -142,7 +175,7 @@ namespace Delay {
       return acc0;
     }
 
-    virtual void update() noexcept override {
+    void update() noexcept override {
       auto delay_samples = this->t_ms * this->fs * 0.001;
       delay_samples      = delay_samples < 1.0f ? 1.0f : delay_samples;
       auto n             = int(delay_samples);
@@ -184,7 +217,7 @@ namespace Delay {
       }
     }
 
-    virtual void reset(float fs) noexcept override {
+    void reset(float fs) noexcept override {
       this->fs = fs;
       std::fill(this->dl.begin(), this->dl.end(), 0);
       this->update();

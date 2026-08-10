@@ -53,12 +53,12 @@ namespace DynamicFilter {
     signal_t _beta1 { 0 };
     signal_t _beta2 { 0 };
 
-    virtual Audio process(Audio x) noexcept override {
+    Audio process(Audio x) noexcept override {
       this->calcCoeffsProcess();
       return _flt.process(x);
     }
 
-    virtual void update() noexcept override {
+    void update() noexcept override {
       auto alpha          = signal_t(2) * GCEM_PI * this->fc_hz / this->fs;
       this->_alphaSquared = alpha * alpha;
       this->_beta1        = signal_t(2) * alpha / this->q1;
@@ -66,7 +66,7 @@ namespace DynamicFilter {
       this->calcCoeffsUpdate();
     }
 
-    virtual void reset(float fs) noexcept override {
+    void reset(float fs) noexcept override {
       this->fs = fs;
       this->_flt.reset(fs);
       this->update();
@@ -78,13 +78,13 @@ namespace DynamicFilter {
 
   struct ShelfFixedPoles : public ShelfBase {
 
-    virtual void calcCoeffsUpdate() noexcept override {
+    void calcCoeffsUpdate() noexcept override {
       this->_flt.coeffs.a[0] = this->_alphaSquared + this->_beta1 + 4;
       this->_flt.coeffs.a[1] = signal_t(2) * this->_alphaSquared - 8;
       this->_flt.coeffs.a[2] = this->_alphaSquared - this->_beta1 + 4;
     }
 
-    virtual void calcCoeffsProcess() noexcept override {
+    void calcCoeffsProcess() noexcept override {
       auto A4                = signal_t(4) * this->gain_lin;
       auto z                 = this->_beta2 * gcem::sqrt(this->gain_lin);
       this->_flt.coeffs.b[0] = this->_alphaSquared + z + A4;
@@ -94,13 +94,13 @@ namespace DynamicFilter {
   };
 
   struct ShelfFixedZeros : public ShelfBase {
-    virtual void calcCoeffsUpdate() noexcept override {
+    void calcCoeffsUpdate() noexcept override {
       this->_flt.coeffs.b[0] = this->_alphaSquared + this->_beta2 + 4;
       this->_flt.coeffs.b[1] = signal_t(2) * (this->_alphaSquared - 4);
       this->_flt.coeffs.b[2] = this->_alphaSquared - this->_beta2 + 4;
     }
 
-    virtual void calcCoeffsProcess() noexcept override {
+    void calcCoeffsProcess() noexcept override {
       auto A4                = signal_t(4) / this->gain_lin;
       auto z                 = this->_beta1 * gcem::sqrt(1 / this->gain_lin);
       this->_flt.coeffs.a[0] = this->_alphaSquared + z + A4;

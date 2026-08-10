@@ -23,13 +23,11 @@
 #include "gcem.hpp"
 #include "lib/Audio.h"
 #include "lib/Biquad.h"
+#include "lib/Delay.h"
 #include "lib/Glider.h"
 #include "lib/Plugin.h"
 #include "lib/SoftClip.h"
 #include "lib/utils.h"
-#include <algorithm>
-#include <array>
-#include <cstddef>
 
 enum SubDev : int {
   half,
@@ -39,67 +37,50 @@ enum SubDev : int {
   sixteenth_dot,
   sixteenth,
 };
-// 192 kHz * 2 seconds * 8 x oversampling * 2 stores pr sample * 2 for mod (the
-// last doesn't need to be that big).
-// TODO: Calculate space for mod.
-// TODO: Dynamic alocation of delayline.
-constexpr int delayLineLength = 192e3 * 2 * 8 * 2 * 2;
 
 struct ntTapeEcho : public NtFx::NtPlugin {
-  signal_t tGui             = 0.5;
-  signal_t fb_percent       = 20;
-  signal_t modFreq          = 1.0;
-  signal_t modPhase         = 0.0;
-  signal_t clipG_db         = 0.0;
-  signal_t mix_percent      = 100.0;
-  signal_t tOffset          = 0.0;
-  signal_t modDepth_percent = 0.1;
-  signal_t noise_db         = -100;
-  bool sync                 = false;
-  bool mod                  = true;
-  bool clip                 = true;
-  bool doGlide              = true;
-  bool bypass               = false;
-  SubDev subDev             = SubDev::fourth;
-  signal_t tempoScale       = 1;
+  NtFx::Delay::LongGlided<2e3, signal_t> dlL;
+  NtFx::Delay::LongGlided<2e3, signal_t> dlR;
+  NtFx::Delay::Mod mod;
   NtFx::Biquad::EqBand hpf;
   NtFx::Biquad::EqBand lpf;
   Audio fbState;
-  std::array<Audio, delayLineLength> delayLine;
-  signal_t fb_lin    = 0.2;
-  signal_t noise_lin = 0;
-  signal_t tGlide    = 0.36;
-  // NtFx::LinGlider nDelay;
-  NtFx::ExpGlider nDelay;
-  size_t iStore      = 0;
-  signal_t aClip_lin = 1;
-  size_t timeCounter = 0;
-  NtFx::ExpGlider nOffset;
+  signal_t t_ms { 500 };
+  signal_t fb_percent { 20 };
+  signal_t clipG_db { 0.0 };
+  signal_t mix_percent { 100.0 };
+  signal_t tOffset { 0.0 };
+  signal_t noise_db { -100 };
+  signal_t tempoScale { 1 };
+  SubDev subDev { SubDev::fourth };
+  signal_t fb_lin { 0.2 };
+  signal_t noise_lin { 0 };
+  size_t iStore { 0 };
+  signal_t aClip_lin { 1 };
   // TODO: Mix should have -3 dB law.
-  signal_t mix_lin = 1;
-  NtFx::ExpGlider modDepth;
-  // TODO: How in the world do we get mod to glide gracefully?
-  NtFx::ExpGlider thetaMod;
-  NtFx::ExpGlider thetaModPhase;
+  signal_t mix_lin { 1 };
+  bool syncEnable { false };
+  bool modEnable { true };
+  bool clipEnable { true };
+  bool bypassEnable { false };
 
-  ntTapeEcho() : modDepth(0.1) {
+  ntTapeEcho() {
     this->primaryKnobs = {
-      { &this->tGui, "Time", " s", 0.02, 2 },
+      { &this->t_ms, "Time", " ms", 20, 2e3 },
       { &this->fb_percent, "Feedback", " %", 0, 200 },
       { &this->clipG_db, "Drive", " dB", -20, 20 },
-      { &this->hpf.settings.fc_hz, "HPF", " Hz", 20, 2000, true },
-      { &this->lpf.settings.fc_hz, "LPF", " Hz", 200, 20000, true },
+      { &this->hpf.settings.fc_hz, "HPF", " Hz", 20, 2000, 200 },
+      { &this->lpf.settings.fc_hz, "LPF", " Hz", 200, 20000, 2000 },
     };
     this->secondaryKnobs = {
-      { &this->hpf.settings.q, "Q HP", "", 0.5, 2, true },
-      { &this->lpf.settings.q, "Q LP", "", 0.5, 2, true },
-      { &this->modFreq, "Mod Freq", " Hz", 0.1, 10, true },
-      { &this->modDepth_percent, "Mod Depth", " %", 0.01, 1, true },
-      { &this->modPhase, "Mod Phase", "deg", 0, 180 },
+      { &this->hpf.settings.q, "Q HP", "", 0.5, 2, 1 },
+      { &this->lpf.settings.q, "Q LP", "", 0.5, 2, 1 },
+      { &this->mod.fMod_hz.ui, "Mod Freq", " Hz", 0.1, 10, 1 },
+      { &this->mod.depth_p, "Mod Depth", " %", 0, 100 },
+      { &this->mod.phaseMod_deg, "Mod Phase", "deg", 0, 180 },
       { &this->tOffset, "Offset", " ms", 0, 50 },
-      { &this->noise_db, "Noise", " dB", -100, 0, true },
+      { &this->noise_db, "Noise", " dB", -100, 0 },
       { &this->mix_percent, "Mix", " %", 0, 100 },
-      { &this->tGlide, "Glide Time", " s", 0.0, 1 },
     };
 
     this->dropdowns = {
@@ -114,15 +95,14 @@ struct ntTapeEcho : public NtFx::NtPlugin {
               "sixteenth dot",
               "sixteenth",
           }, 
-          ._defaultVal = 0,
+          .hideName = true,
       },
     };
     this->toggles = {
-      { &this->sync, "Sync" },
-      { &this->mod, "Mod" },
-      { &this->clip, "Softclip" },
-      { &this->doGlide, "Glide" },
-      { &this->bypass, "Bypass" },
+      { &this->syncEnable, "Sync" },
+      { &this->modEnable, "Mod" },
+      { &this->clipEnable, "Softclip" },
+      { &this->bypassEnable, "Bypass" },
     };
     this->meters = { { "IN" }, { .name = "OUT", .hasScale = true } };
     this->lpf.settings.shape = NtFx::Biquad::Shape::lpf;
@@ -132,41 +112,14 @@ struct ntTapeEcho : public NtFx::NtPlugin {
     this->updateDefaults();
   }
 
-  virtual Audio process(Audio x) noexcept override {
-    this->nDelay.process();
-    this->modDepth.process();
-    this->thetaMod.process();
-    this->thetaModPhase.process();
-    this->nOffset.process();
+  Audio process(Audio x) noexcept override {
     auto xNoisy = x + NtFx::rand<signal_t>() * this->noise_lin;
     NtFx::ensureFinite(xNoisy);
     NtFx::ensureFinite(this->fbState);
-    this->iStore++;
-    if (this->iStore >= delayLineLength) { this->iStore = 0; }
-    this->delayLine[this->iStore] = xNoisy + this->fb_lin * this->fbState;
-
-    int nModL = this->nDelay.pr;
-    int nModR = this->nDelay.pr + this->nOffset.pr;
-    if (this->mod) {
-      auto modSawL = NtFx::saw(this->thetaMod.pr * this->timeCounter);
-      auto modSawR = NtFx::saw(
-          this->thetaMod.pr * this->timeCounter + this->thetaModPhase.pr);
-      nModL = gcem::round(modSawL * this->nDelay.pr * this->modDepth.pr)
-          + this->nDelay.pr;
-      nModR = gcem::round(modSawR * this->nDelay.pr * this->modDepth.pr)
-          + this->nDelay.pr + this->nOffset.pr;
-      this->timeCounter++;
-    }
-
-    // TODO: DelayLine class.
-    int iLoadL = this->iStore - gcem::round(nModL);
-    if (iLoadL < 0) { iLoadL += delayLineLength; }
-    int iLoadR = this->iStore - gcem::round(nModR);
-    if (iLoadR < 0) { iLoadR += delayLineLength; }
-    Audio yDelay = {
-      this->delayLine[iLoadL].l,
-      this->delayLine[iLoadR].r,
-    };
+    auto xMod = xNoisy + this->fb_lin * this->fbState;
+    auto yMod = xMod;
+    if (this->modEnable) { yMod = this->mod.process(xMod); }
+    Audio yDelay = { this->dlL.process(yMod.l), this->dlR.process(yMod.r) };
     auto yFbClip =
         NtFx::softClip3rdStereo(yDelay * this->aClip_lin) / aClip_lin;
     NtFx::ensureFinite(yFbClip);
@@ -174,12 +127,12 @@ struct ntTapeEcho : public NtFx::NtPlugin {
     auto yLp      = lpf.process(yHp);
     this->fbState = yLp;
     auto yOutClip = yLp;
-    if (this->clip) { yOutClip = NtFx::softClip5thStereo(yLp); }
+    if (this->clipEnable) { yOutClip = NtFx::softClip5thStereo(yLp); }
     auto y = (signal_t(1.0) - this->mix_lin) * x + this->mix_lin * yOutClip;
     // TODO: Make this a member.
     y *= (2 - gcem::abs(this->mix_lin * 2 - 1));
     this->template updatePeakLevel<0>(x);
-    if (this->bypass) {
+    if (this->bypassEnable) {
       this->template updatePeakLevel<1>(x);
       return x;
     }
@@ -187,15 +140,11 @@ struct ntTapeEcho : public NtFx::NtPlugin {
     return y;
   }
 
-  virtual void update() noexcept override {
-    this->hpf.update();
-    this->lpf.update();
-    this->nOffset.ui  = gcem::round(this->tOffset / 1000 * this->fs);
-    this->aClip_lin   = NtFx::invDb(this->clipG_db);
-    this->mix_lin     = this->mix_percent / 100;
-    this->fb_lin      = this->fb_percent / 100;
-    this->noise_lin   = NtFx::invDb(this->noise_db);
-    this->modDepth.ui = this->modDepth_percent / 100;
+  void update() noexcept override {
+    this->aClip_lin = NtFx::invDb(this->clipG_db);
+    this->mix_lin   = this->mix_percent / 100;
+    this->fb_lin    = this->fb_percent / 100;
+    this->noise_lin = NtFx::invDb(this->noise_db);
     switch (this->subDev) {
     case SubDev::half:
       this->tempoScale = 2;
@@ -216,36 +165,33 @@ struct ntTapeEcho : public NtFx::NtPlugin {
       this->tempoScale = 0.25;
       break;
     }
-    this->thetaMod.ui      = 2.0 * GCEM_PI * this->modFreq / this->fs;
-    this->thetaModPhase.ui = this->modPhase * GCEM_PI / 180;
     this->onTempoChanged();
-    signal_t tGlide = 0.0;
-    if (this->doGlide) { tGlide = this->tGlide; }
-    this->modDepth.update(this->fs, tGlide);
-    // TODO: fix mod glider.
-    // this->thetaMod.update(this->fs, tGlide);
-    this->thetaMod.update(this->fs, 0);
-    this->thetaModPhase.update(this->fs, tGlide);
-    this->nOffset.update(this->fs, tGlide);
-    this->nDelay.update(this->fs, tGlide);
+    this->mod.update();
+    this->dlL.t_ms.ui = this->t_ms;
+    this->dlL.update();
+    this->dlR.t_ms.ui = this->t_ms + this->tOffset;
+    this->dlR.update();
+    this->hpf.update();
+    this->lpf.update();
   }
 
-  virtual void reset(float fs) noexcept override {
+  void reset(float fs) noexcept override {
     this->fs = fs;
-    std::fill(this->delayLine.begin(), this->delayLine.end(), 0);
+    this->dlL.reset(fs);
+    this->dlR.reset(fs);
+    this->mod.reset(fs);
     this->hpf.reset(this->fs);
     this->lpf.reset(this->fs);
     this->update();
   }
 
-  virtual void onTempoChanged() noexcept override {
-    if (this->sync && this->tempo) {
-      this->tGui                     = 60 / this->tempo * this->tempoScale;
+  void onTempoChanged() noexcept override {
+    if (this->syncEnable && this->tempo) {
+      this->t_ms = 60 / this->tempo * this->tempoScale * 1000;
       this->primaryKnobs[0].isActive = false;
     } else {
       this->primaryKnobs[0].isActive = true;
     }
     this->uiNeedsUpdate = true;
-    this->nDelay.ui     = gcem::round(this->tGui * this->fs);
   }
 };

@@ -51,7 +51,7 @@ namespace FirstOrder {
     signal_t _yn1 { 0 };
     signal_t _xn1 { 0 };
 
-    virtual signal_t process(signal_t x) noexcept override {
+    signal_t process(signal_t x) noexcept override {
       signal_t y;
       if constexpr (shape == Shape::none) {
         return x;
@@ -67,7 +67,7 @@ namespace FirstOrder {
       return y;
     }
 
-    virtual void update() noexcept override {
+    void update() noexcept override {
       if (this->fs <= 0) { return; }
       signal_t z = 2 * GCEM_PI * this->fc_hz / this->fs;
       if constexpr (shape == Shape::hpf) {
@@ -77,7 +77,7 @@ namespace FirstOrder {
       }
     }
 
-    virtual void reset(float fs) noexcept override {
+    void reset(float fs) noexcept override {
       this->fs   = fs;
       this->_xn1 = 0;
       this->_yn1 = 0;
@@ -101,14 +101,14 @@ namespace FirstOrder {
       return { this->l.process(x.l), this->r.process(x.r) };
     }
 
-    virtual void update() noexcept override {
+    void update() noexcept override {
       this->l.fc_hz = this->fc_hz;
       this->r.fc_hz = this->fc_hz;
       this->l.update();
       this->r.update();
     }
 
-    virtual void reset(float fs) noexcept override {
+    void reset(float fs) noexcept override {
       this->l.reset(fs);
       this->r.reset(fs);
     }

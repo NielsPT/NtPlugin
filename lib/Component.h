@@ -81,16 +81,16 @@ struct StereoComponent : public ComponentBase<Stereo<signal_t>> {
   component_t l;
   component_t r;
 
-  virtual Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
+  Stereo<signal_t> process(Stereo<signal_t> x) noexcept override {
     return { this->l.process(x.l), this->r.process(x.r) };
   }
 
-  virtual void update() noexcept override {
+  void update() noexcept override {
     this->l.update();
     this->r.update();
   }
 
-  virtual void reset(float fs) noexcept override {
+  void reset(float fs) noexcept override {
     this->l.reset(fs);
     this->r.reset(fs);
   }
@@ -106,12 +106,12 @@ struct StereoComponent : public ComponentBase<Stereo<signal_t>> {
 template <typename signal_t, typename component_t>
 struct MonoComponent : public ComponentBase<Mono<signal_t>> {
   component_t l;
-  virtual Mono<signal_t> process(Mono<signal_t> x) noexcept override {
+  Mono<signal_t> process(Mono<signal_t> x) noexcept override {
     return this->l.process(x.l);
   }
 
-  virtual void update() noexcept override { this->l.update(); }
-  virtual void reset(float fs) noexcept override { this->l.reset(fs); }
+  void update() noexcept override { this->l.update(); }
+  void reset(float fs) noexcept override { this->l.reset(fs); }
 };
 
 template <typename signal_t, typename component_t>

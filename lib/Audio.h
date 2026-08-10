@@ -36,7 +36,7 @@ struct Mono {
   Mono() : l(0) { }
   Mono(signal_t v) : l(v) { }
   Mono(signal_t l, signal_t r) : l((l + r) / 2) { }
-  Mono(Stereo<signal_t> x) : l(x.l, x.r) { };
+  Mono(Stereo<signal_t> x) : l(x.l, x.r) { }
   Mono<signal_t>& operator=(const Mono<signal_t>& x) noexcept {
     this->l = x.l;
     return *this;

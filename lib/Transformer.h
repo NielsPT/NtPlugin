@@ -30,20 +30,20 @@ struct Transformer : public ComponentBase<Audio> {
   signal_t gain_lin { 0 };
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> lpf;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> hpf;
-  virtual Audio process(Audio x) noexcept override {
+  Audio process(Audio x) noexcept override {
     auto yShelf = x + this->lpf.process(x) * this->gain_lin;
     auto yClip  = NtFx::softClip5thStereo(yShelf);
     auto yHpf   = this->hpf.process(yClip);
     return yHpf;
   }
-  virtual void update() noexcept override {
+  void update() noexcept override {
     if (this->fc_hz < 20) { this->fc_hz = 20; }
     this->gain_lin  = this->fc_hz / this->lfCutoff_hz - 1;
     this->hpf.fc_hz = fc_hz;
     this->lpf.update();
     this->hpf.update();
   }
-  virtual void reset(float fs) noexcept override {
+  void reset(float fs) noexcept override {
     this->fs        = fs;
     this->lpf.fc_hz = this->lfCutoff_hz;
     this->lpf.reset(fs);

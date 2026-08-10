@@ -4,3 +4,6 @@ CompileFlags:
     - "-Ilib/gcem/include"
     - "-I../../lib/gcem/include"
     - "-I../.."
+    - -Wimplicit-float-conversion
+    # - -Wimplicit-fixed-point-conversion
+    - -Wimplicit-int-float-conversion

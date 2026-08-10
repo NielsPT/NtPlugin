@@ -5,7 +5,7 @@
 namespace NtFx {
 namespace Generator {
   struct Noise : public ComponentBase<Audio> {
-    virtual Audio process(Audio x) noexcept override {
+    Audio process(Audio x) noexcept override {
       return { rand<signal_t>(), rand<signal_t>() };
     }
   };

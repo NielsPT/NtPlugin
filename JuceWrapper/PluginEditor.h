@@ -62,15 +62,15 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   ~NtPluginAudioProcessorEditor() override;
 
   // "Public".
-  virtual void paint(juce::Graphics&) override;
-  virtual void resized() override;
+  void paint(juce::Graphics&) override;
+  void resized() override;
 
   // Callbacks.
-  virtual void sliderValueChanged(juce::Slider* slider) override;
-  virtual void buttonClicked(juce::Button* button) override;
-  virtual void changeListenerCallback(juce::ChangeBroadcaster* source) override;
-  virtual void comboBoxChanged(juce::ComboBox* p_box) override;
-  virtual void timerCallback() override;
+  void sliderValueChanged(juce::Slider* slider) override;
+  void buttonClicked(juce::Button* button) override;
+  void changeListenerCallback(juce::ChangeBroadcaster* source) override;
+  void comboBoxChanged(juce::ComboBox* p_box) override;
+  void timerCallback() override;
 
   NtPluginAudioProcessor& proc;
   NtFx::MeterGroup meters;

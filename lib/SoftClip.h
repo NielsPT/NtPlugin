@@ -118,9 +118,7 @@ static inline Audio softClip3rdStereo(Audio x) {
  * @tparam signal_t Audio datatype.
  */
 class SoftClip3 : public ComponentBase<Audio> {
-  virtual Audio process(Audio x) noexcept override {
-    return softClip3rdStereo(x);
-  }
+  Audio process(Audio x) noexcept override { return softClip3rdStereo(x); }
 };
 
 /**
@@ -129,8 +127,6 @@ class SoftClip3 : public ComponentBase<Audio> {
  * @tparam signal_t Audio datatype.
  */
 class SoftClip5 : public ComponentBase<Audio> {
-  virtual Audio process(Audio x) noexcept override {
-    return softClip5thStereo(x);
-  }
+  Audio process(Audio x) noexcept override { return softClip5thStereo(x); }
 };
 } // namespace NtFx

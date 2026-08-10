@@ -123,7 +123,7 @@ struct RadioButtonSet : public ToggleSetBase {
     }
   }
 
-  virtual void updateToggleStates(int i) override {
+  void updateToggleStates(int i) override {
     if (*this->spec.p_val != i) {
       this->toggles[i]->setToggleState(
           false, juce::NotificationType::sendNotificationSync);
