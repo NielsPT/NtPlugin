@@ -188,7 +188,6 @@ struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
     return y;
   }
 
-  // TODO: Use the same pattern as short rms sensor. No resetAccums.
   /**
    * @brief Set the time window for RMS calculation
    *

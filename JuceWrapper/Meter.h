@@ -71,8 +71,7 @@ struct Meter final : public juce::Component {
   Meter(MeterSpec& _meterSpec, UiSpec& _uiSpec)
       : meterSpec(_meterSpec), uiSpec(_uiSpec),
         nDots(_uiSpec.meterHeight_dots) {
-    // TODO: We need to be able to set these from the plugin.
-    this->updateRelease(48000, 250, 100);
+    this->updateRelease(48000);
     this->refresh();
   }
   ~Meter() override = default;
@@ -186,9 +185,9 @@ struct Meter final : public juce::Component {
     if (repaint) { this->repaint(); }
   }
 
-  void updateRelease(float fs, float t_ms, float tHold_ms = 100) {
-    this->peakSensor.tPeak_ms = t_ms;
-    this->peakSensor.tHold_ms = tHold_ms;
+  void updateRelease(float fs) {
+    this->peakSensor.tPeak_ms = this->meterSpec.decay_s * 1000;
+    this->peakSensor.tHold_ms = this->meterSpec.hold_s * 1000;
     this->peakSensor.reset(fs);
     this->nHold_frames =
         int(this->meterSpec.hold_s * this->uiSpec.meterRefreshRate_hz);
@@ -342,8 +341,8 @@ struct MeterGroup : public juce::Component {
   }
   void updateRelease(float fs) {
     for (auto& m : this->meters) {
-      m->l.updateRelease(fs, m->l.meterSpec.decay_s * 1000);
-      m->r.updateRelease(fs, m->r.meterSpec.decay_s * 1000);
+      m->l.updateRelease(fs);
+      m->r.updateRelease(fs);
     }
   }
   float getMinimalWidth() const noexcept {

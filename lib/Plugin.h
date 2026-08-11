@@ -210,7 +210,6 @@ struct NtPlugin : public ComponentBase<Audio> {
         return;
       }
     }
-    // TODO: isActive field for all param types. INCLUDES fixing editor.
     // for (auto& param : this->toggles) {
     //   if (param.name == name) {
     //     param.isActive      = false;
