@@ -40,7 +40,7 @@ struct ComponentBase {
    * @brief Sample rate of component.
    *
    */
-  float fs { 48e3 };
+  float _fs { 48e3 };
 
   /**
    * @brief Called for every sample as audio is processed.
@@ -64,9 +64,9 @@ struct ComponentBase {
    * @param fs Sample rate. If you need it for calculateCoeffs, store it.
    */
   virtual void reset(float fs) noexcept {
-    this->fs = fs;
+    this->_fs = fs;
     this->update();
-  };
+  }
 };
 
 /**
@@ -97,8 +97,10 @@ struct StereoComponent : public ComponentBase<Stereo<signal_t>> {
 };
 
 /**
- * @brief Wraps two objects of type Component<signal_t> as a
- * Component<Audio> and calls through the both objects.
+ * @brief Wraps an object of type Component<signal_t> as a
+ * Component<Audio> and calls through the objects.
+ * Makes nesting of template parameters consistent for mono and stereo
+ * components.
  *
  * @tparam signal_t Datatype for signal. Must be a floating point type.
  * @tparam component_t Type of Component to wrap.

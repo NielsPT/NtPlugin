@@ -33,7 +33,7 @@ enum Order : int {
   fourth,
 };
 
-struct ntFilters : public NtFx::NtPlugin {
+struct ntFilters final : public NtFx::NtPlugin {
   signal_t fHpf = 20;
   signal_t fLpf = 20000;
   signal_t qHpf = 0.707;
@@ -188,7 +188,7 @@ struct ntFilters : public NtFx::NtPlugin {
   }
 
   void reset(float fs) noexcept override {
-    this->fs = fs;
+    this->_fs = fs;
     this->firstOrderHpf.reset(fs);
     this->firstOrderLpf.reset(fs);
     this->bqHpf0.reset(fs);

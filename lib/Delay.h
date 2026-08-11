@@ -33,7 +33,7 @@
 namespace NtFx {
 namespace Delay {
   template <double dlLen_ms, typename T = Audio>
-  struct Short : public ComponentBase<T> {
+  struct Short final : public ComponentBase<T> {
     constexpr const static int nDl = dlLen_ms * 192 * 8;
     std::array<T, nDl> dl;
     signal_t t_ms { 0 };
@@ -44,25 +44,25 @@ namespace Delay {
       this->dl[this->_i++] = x;
       if (this->_i >= nDl) { this->_i = 0; }
       if (this->_n == 0) { return x; }
-      auto _i = this->_i - this->_n;
-      if (_i < 0) { _i += nDl; }
-      return this->dl[_i];
+      auto i = this->_i - this->_n;
+      if (i < 0) { i += nDl; }
+      return this->dl[i];
     }
 
     void update() noexcept override {
-      this->_n = int(gcem::floor(this->t_ms * 0.001 * this->fs));
+      this->_n = int(gcem::floor(this->t_ms * 0.001 * this->_fs));
       if (this->_n >= nDl) { this->_n = nDl; }
     }
 
     void reset(float fs) noexcept override {
-      this->fs = fs;
+      this->_fs = fs;
       std::fill(this->dl.begin(), this->dl.end(), 0);
       this->update();
     }
   };
 
   template <double dlLen_ms, typename T = Audio>
-  struct Long : public ComponentBase<T> {
+  struct Long final : public ComponentBase<T> {
     int nDl { 1 };
     std::vector<T> dl;
     signal_t t_ms { 0 };
@@ -79,21 +79,21 @@ namespace Delay {
     }
 
     void update() noexcept override {
-      this->_n = int(gcem::floor(this->t_ms * 0.001 * this->fs));
+      this->_n = int(gcem::floor(this->t_ms * 0.001 * this->_fs));
       if (this->_n >= this->nDl) { this->_n = this->nDl; }
     }
 
     void reset(float fs) noexcept override {
-      this->fs = fs;
+      this->_fs = fs;
       this->update();
-      this->nDl = int(gcem::ceil(dlLen_ms * 0.001 * this->fs));
+      this->nDl = int(gcem::ceil(dlLen_ms * 0.001 * this->_fs));
       this->dl.resize(this->nDl);
       std::fill(this->dl.begin(), this->dl.end(), 0);
     }
   };
 
   template <double dlLen_ms, typename T = Audio>
-  struct ShortGlided : public ComponentBase<T> {
+  struct ShortGlided final : public ComponentBase<T> {
     constexpr const static int _nDl = dlLen_ms * 192 * 8;
     std::array<T, _nDl> dl;
     ExpGlider t_ms { 0 };
@@ -104,7 +104,7 @@ namespace Delay {
       this->dl[this->_i++] = x;
       if (this->_i >= this->_nDl) { this->_i = 0; }
       int n { 0 };
-      n = int(this->t_ms.pr * 0.001 * this->fs);
+      n = int(this->t_ms.pr * 0.001 * this->_fs);
       if (n == 0) { return x; }
       if (n >= this->_nDl) { n = this->_nDl; }
       auto _i = this->_i - n;
@@ -112,17 +112,17 @@ namespace Delay {
       return this->dl[_i];
     }
 
-    void update() noexcept override { this->t_ms.update(this->fs); }
+    void update() noexcept override { this->t_ms.update(this->_fs); }
 
     void reset(float fs) noexcept override {
-      this->fs = fs;
+      this->_fs = fs;
       std::fill(this->dl.begin(), this->dl.end(), 0);
       this->update();
     }
   };
 
   template <double dlLen_ms, typename T = Audio>
-  struct LongGlided : public ComponentBase<T> {
+  struct LongGlided final : public ComponentBase<T> {
     std::vector<T> dl;
     ExpGlider t_ms { 0 };
     int _nDl { 1 };
@@ -134,7 +134,7 @@ namespace Delay {
       this->dl[this->_i++] = x;
       if (this->_i >= this->_nDl) { this->_i = 0; }
       int n { 0 };
-      n = int(this->t_ms.pr * 0.001 * this->fs);
+      n = int(this->t_ms.pr * 0.001 * this->_fs);
       if (n == 0) { return x; }
       if (n >= this->_nDl) { n = this->_nDl; }
       auto _i = this->_i - n;
@@ -142,41 +142,41 @@ namespace Delay {
       return this->dl[_i];
     }
 
-    void update() noexcept override { this->t_ms.update(this->fs); }
+    void update() noexcept override { this->t_ms.update(this->_fs); }
 
     void reset(float fs) noexcept override {
-      this->fs = fs;
+      this->_fs = fs;
       this->update();
-      this->_nDl = int(gcem::ceil(dlLen_ms * 0.001 * this->fs));
+      this->_nDl = int(gcem::ceil(dlLen_ms * 0.001 * this->_fs));
       this->dl.resize(this->_nDl);
       std::fill(this->dl.begin(), this->dl.end(), 0);
     }
   };
 
   template <int nDl, typename T, int nCoeffs = 4>
-  struct ShortFract : public ComponentBase<T> {
+  struct ShortFract final : public ComponentBase<T> {
     std::array<T, nCoeffs> coeffs;
     std::array<T, nDl * 2> dl;
     signal_t t_ms { 0 };
-    int32_t _i { 0 };
-    int32_t _n;
+    int _i { 0 };
+    int _n { 1 };
 
     T process(T x) noexcept override {
       this->dl[_i]       = x;
       this->dl[_i + nDl] = x;
       this->_i++;
-      this->_i          = (this->_i < nDl ? this->_i : 0);
-      int32_t readIndex = this->_i - this->_n;
+      this->_i      = (this->_i < nDl ? this->_i : 0);
+      int readIndex = this->_i - this->_n;
       readIndex += nDl * (readIndex < nDl);
       T acc0 { 0 };
-      for (int32_t i = 0; i < nCoeffs; i++) {
+      for (int i = 0; i < nCoeffs; i++) {
         acc0 += this->coeffs[i] * this->dl[readIndex - i];
       }
       return acc0;
     }
 
     void update() noexcept override {
-      auto delay_samples = this->t_ms * this->fs * 0.001;
+      auto delay_samples = this->t_ms * this->_fs * 0.001;
       delay_samples      = delay_samples < 1.0f ? 1.0f : delay_samples;
       auto n             = int(delay_samples);
       float d            = delay_samples - n;
@@ -218,13 +218,13 @@ namespace Delay {
     }
 
     void reset(float fs) noexcept override {
-      this->fs = fs;
+      this->_fs = fs;
       std::fill(this->dl.begin(), this->dl.end(), 0);
       this->update();
     }
   };
 
-  struct Mod : public NtFx::ComponentBase<Audio> {
+  struct Mod final : public ComponentBase<Audio> {
     constexpr static const signal_t minRate_hz = 0.1;
     constexpr static const int tModDlMax_ms    = 10 * int(1.0 / minRate_hz);
     constexpr static const int nDl             = 192 * 8 * tModDlMax_ms;
@@ -259,15 +259,15 @@ namespace Delay {
       this->_tDelayMod_s.ui = this->depth_p * tModDlMax_ms / 2000000;
       this->_tDelayMod_s.ui /= this->fMod_hz.ui;
       this->_phaseMod_rad.ui = this->phaseMod_deg * GCEM_PI / 180;
-      this->_tSample         = 1 / this->fs;
+      this->_tSample         = 1 / this->_fs;
       if (this->fMod_hz.ui < 0.1) { this->fMod_hz.ui = 0.1; }
-      this->fMod_hz.update(this->fs);
-      this->_phaseMod_rad.update(this->fs);
-      this->_tDelayMod_s.update(this->fs);
+      this->fMod_hz.update(this->_fs);
+      this->_phaseMod_rad.update(this->_fs);
+      this->_tDelayMod_s.update(this->_fs);
     }
 
     void reset(float fs) noexcept override {
-      this->fs = fs;
+      this->_fs = fs;
       this->l.reset(fs);
       this->r.reset(fs);
     }

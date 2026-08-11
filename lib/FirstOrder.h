@@ -68,8 +68,8 @@ namespace FirstOrder {
     }
 
     void update() noexcept override {
-      if (this->fs <= 0) { return; }
-      signal_t z = 2 * GCEM_PI * this->fc_hz / this->fs;
+      if (this->_fs <= 0) { return; }
+      signal_t z = 2 * GCEM_PI * this->fc_hz / this->_fs;
       if constexpr (shape == Shape::hpf) {
         this->_a = 1.0 / (z + 1.0);
       } else {
@@ -78,7 +78,7 @@ namespace FirstOrder {
     }
 
     void reset(float fs) noexcept override {
-      this->fs   = fs;
+      this->_fs  = fs;
       this->_xn1 = 0;
       this->_yn1 = 0;
       this->update();

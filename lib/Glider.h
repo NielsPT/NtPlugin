@@ -24,14 +24,12 @@
 #include "gcem.hpp"
 #include "lib/Audio.h"
 
-// TODO: Make this a Component.
 /**
  * @brief An exponential glider. Member value 'ui' is set from the UI side of
  * the plugin and 'pr' is read from the processing side.
  *
  */
 namespace NtFx {
-
 struct ExpGlider {
   signal_t ui = 0; ///< UI side input value.
   signal_t pr = 0; ///< Processing side output of glider.
@@ -49,7 +47,7 @@ struct ExpGlider {
    *
    * @return signal_t Audio datatype.
    */
-  inline signal_t process() noexcept {
+  signal_t process() noexcept {
     this->pr += this->_a * (this->ui - this->pr);
     return this->pr;
   }
@@ -60,13 +58,13 @@ struct ExpGlider {
    * @param fs Sample rate
    * @param tSmooth Smoothing time constant.
    */
-  inline void update(signal_t fs, signal_t tSmooth_s = 0.1) noexcept {
+  void update(signal_t fs, signal_t tSmooth_s = signal_t(0.1)) noexcept {
     if (tSmooth_s <= 0) {
       this->_a = 0;
       this->pr = this->ui;
       return;
     }
-    this->_a = 1.0 - gcem::exp(-1.0 / (fs * tSmooth_s));
+    this->_a = signal_t(1.0 - gcem::exp(-1.0 / (fs * tSmooth_s)));
   }
 };
 
@@ -93,7 +91,7 @@ struct LinGlider {
    * @return signal_t Audio datatype.
    */
   inline signal_t process() noexcept {
-    if (this->ui == this->pr) { return this->pr; }
+    if (gcem::abs(this->ui - this->pr) < s) { return this->pr; }
     if (this->pr < this->ui) {
       this->pr += s;
     } else {

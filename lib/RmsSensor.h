@@ -31,10 +31,10 @@
 namespace NtFx {
 
 template <double tRmsMax_ms>
-struct ShortRmsSensorMono : public ComponentBase<signal_t> {
+struct ShortRmsSensorMono final : public ComponentBase<signal_t> {
   constexpr static const int nDlMax = int(tRmsMax_ms * 192.0 * 8.0);
   std::array<signal_t, nDlMax> _dl; ///< Sample delay line.
-  signal_t tRms_ms;
+  signal_t tRms_ms { 0 };
   signal_t _acc { 0 };
   int _i { 0 };
   int _n { 1 };
@@ -55,7 +55,7 @@ struct ShortRmsSensorMono : public ComponentBase<signal_t> {
     return y;
   }
   void update() noexcept override {
-    auto n = int(gcem::floor(this->tRms_ms * 0.001 * this->fs));
+    auto n = int(gcem::floor(this->tRms_ms * 0.001 * this->_fs));
     if (n == this->_n) { return; }
     this->_n   = n;
     this->_i   = 0;
@@ -167,7 +167,7 @@ struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
    * @param fs The new sample rate in Hz
    */
   void reset(float fs) noexcept override {
-    this->fs             = fs;
+    this->_fs            = fs;
     this->sampleDLineLen = fs / 1000;
     this->resetAccums    = true;
     this->update();

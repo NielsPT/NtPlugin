@@ -145,7 +145,7 @@ def newPlugin(name: str) -> bool:
 #include "lib/Audio.h"
 
 
-struct {name} : public NtFx::NtPlugin {{
+struct {name} final : public NtFx::NtPlugin {{
   bool bypassEnable {{ false }};
 
   {name}() {{

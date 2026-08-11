@@ -51,12 +51,6 @@ namespace Src {
    */
   enum oversamplingMode : int {
     disable = 1,
-    // iir_2x,
-    // iir_4x,
-    // iir_8x,
-    fir_2x_lq,
-    fir_4x_lq,
-    fir_8x_lq,
     fir_2x_hq,
     fir_4x_hq,
     fir_8x_hq,
@@ -113,7 +107,7 @@ namespace Src {
     /**
      * @brief FIR filter coefficients
      */
-    std::array<signal_t, nDelayLine> b;
+    std::array<signal_t, nDelayLine> b { 0 };
   };
   /**
    * @brief Sample rate converter class
@@ -135,17 +129,17 @@ namespace Src {
     /**
      * @brief Oversampling mode
      */
-    oversamplingMode mode;
+    oversamplingMode mode { oversamplingMode::disable };
     /**
      * @brief Sampling rate
      */
-    float fs;
+    float _fs { 48e3 };
 
     /**
      * @brief Constructor
      * @param plug Reference to the plugin
      */
-    SampleRateConverter(NTFX_PLUGIN& plug) : plug(plug) { }
+    SampleRateConverter(NTFX_PLUGIN& _plug) : plug(_plug) { }
 
     /**
      * @brief Process audio samples through the sample rate converter
@@ -193,32 +187,21 @@ namespace Src {
      */
     inline void update() {
       switch (this->mode) {
-
-        // TODO: IIR oversampling
-        // case iir_2x:
-        //   this->coeffs.osFactor = 2;
-        //   break;
-        // case iir_4x:
-        //   this->coeffs.osFactor = 4;
-        //   break;
-        // case iir_8x:
-        //   this->coeffs.osFactor = 8;
-        //   break;
-      case fir_2x_lq:
-        this->coeffs.osFactor     = 2;
-        this->coeffs.osFirLenMult = oversamplingFirMultLq;
-        this->coeffs.disable      = false;
-        break;
-      case fir_4x_lq:
-        this->coeffs.osFactor     = 4;
-        this->coeffs.osFirLenMult = oversamplingFirMultLq;
-        this->coeffs.disable      = false;
-        break;
-      case fir_8x_lq:
-        this->coeffs.osFactor     = 8;
-        this->coeffs.osFirLenMult = oversamplingFirMultLq;
-        this->coeffs.disable      = false;
-        break;
+      // case fir_2x_lq:
+      //   this->coeffs.osFactor     = 2;
+      //   this->coeffs.osFirLenMult = oversamplingFirMultLq;
+      //   this->coeffs.disable      = false;
+      //   break;
+      // case fir_4x_lq:
+      //   this->coeffs.osFactor     = 4;
+      //   this->coeffs.osFirLenMult = oversamplingFirMultLq;
+      //   this->coeffs.disable      = false;
+      //   break;
+      // case fir_8x_lq:
+      //   this->coeffs.osFactor     = 8;
+      //   this->coeffs.osFirLenMult = oversamplingFirMultLq;
+      //   this->coeffs.disable      = false;
+      //   break;
       case fir_2x_hq:
         this->coeffs.osFactor     = 2;
         this->coeffs.osFirLenMult = oversamplingFirMultHq;
@@ -240,7 +223,7 @@ namespace Src {
         this->coeffs.osFirLenMult = 1;
         this->coeffs.disable      = true;
       }
-      this->coeffs.fsHi = this->fs * this->coeffs.osFactor;
+      this->coeffs.fsHi = this->_fs * this->coeffs.osFactor;
       this->coeffs.n    = this->coeffs.osFactor * this->coeffs.osFirLenMult;
       if (!this->coeffs.disable) {
         auto b = windowMethod<signal_t>(fc, this->coeffs.n, this->coeffs.fsHi);
@@ -256,7 +239,7 @@ namespace Src {
      * @param fs Sampling rate
      */
     inline void reset(float fs) {
-      this->fs              = fs;
+      this->_fs             = fs;
       this->state.iStoreIn  = 0;
       this->state.iStoreOut = 0;
       std::fill(this->state.dlAntialiasing.begin(),

@@ -4,11 +4,10 @@
 
 namespace NtFx {
 namespace Generator {
-  struct Noise : public ComponentBase<Audio> {
-    Audio process(Audio x) noexcept override {
+  struct Noise final : public ComponentBase<Audio> {
+    Audio process(Audio) noexcept override {
       return { rand<signal_t>(), rand<signal_t>() };
     }
   };
-  // TODO: Sine, square, saw and so on.
 }
 }

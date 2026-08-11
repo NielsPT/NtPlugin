@@ -136,13 +136,7 @@ struct TitleBarSpec {
         nullptr,
         "Oversampling",
         { "disable",
-            // TODO: IIR oversampling
-            // "iir_2x",
-            // "iir_4x",
-            // "iir_8x",
-            "FIR 2X LQ",
-            "FIR 4X LQ",
-            "FIR 8X LQ",
+
             "FIR 2X HQ",
             "FIR 4X HQ",
             "FIR 8X HQ" },
@@ -177,7 +171,7 @@ struct UiSpec {
   float titleBarHeight { 22 };        ///< Height of title bar in pixels.
   int meterHeight_dots { 12 };        ///< Number of dots in the meteres.
   int meterWidth { 35 };              ///< Width of each meter in pixels.
-  float meterRefreshRate_hz { 50 };   ///< Refresh rate of meters in the UI.
+  int meterRefreshRate_hz { 50 };     ///< Refresh rate of meters in the UI.
   int groupWidth { 200 };
   int groupEvenColOffset { 40 };
   int groupKnobWidth { groupWidth / 2 };

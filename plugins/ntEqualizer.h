@@ -33,7 +33,7 @@ const std::vector<std::string> bandOptions {
   "Off",
 };
 
-struct ntEqualizer : public NtFx::NtPlugin {
+struct ntEqualizer final : public NtFx::NtPlugin {
   NtFx::Biquad::Eq<fN> cascade;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> firstOrderHpf;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> firstOrderLpf;
@@ -116,7 +116,7 @@ struct ntEqualizer : public NtFx::NtPlugin {
   }
 
   void reset(float fs) noexcept override {
-    this->fs = fs;
+    this->_fs = fs;
     this->firstOrderHpf.reset(fs);
     this->firstOrderLpf.reset(fs);
     this->cascade.reset(fs);

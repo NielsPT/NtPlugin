@@ -68,11 +68,11 @@ struct PeakSensor : public ComponentBase<signal_t> {
    * time constant (tPeak_ms) and sample rate (fs).
    */
   void update() noexcept override {
-    this->_alpha = gcem::exp(-2200.0 / (this->tPeak_ms * this->fs));
+    this->_alpha = gcem::exp(-2200.0 / (this->tPeak_ms * this->_fs));
   }
 
   void reset(float fs) noexcept override {
-    this->fs     = fs;
+    this->_fs    = fs;
     this->_alpha = 0;
     this->_state = 0;
     this->update();
@@ -173,7 +173,7 @@ struct PeakHoldSensor : public PeakSensor {
    *
    */
   void update() noexcept override {
-    this->_nHold = this->tHold_ms * this->fs / 1000;
+    this->_nHold = this->tHold_ms * this->_fs / 1000;
     this->_nHold =
         (this->_nHold >= delayLineLength ? delayLineLength - 1 : this->_nHold);
     this->PeakSensor::update();

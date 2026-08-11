@@ -39,7 +39,7 @@ constexpr std::array<std::string, Bands::n> bandNames = {
   "High", "Mid", "Low"
 };
 
-struct ntMultiband3 : public NtFx::NtPlugin {
+struct ntMultiband3 final : public NtFx::NtPlugin {
   signal_t xOverLo_hz { 200 };
   signal_t xOverHi_hz { 4000 };
   signal_t ouputGain_db { 0 };
@@ -228,12 +228,12 @@ struct ntMultiband3 : public NtFx::NtPlugin {
   }
 
   void reset(float fs) noexcept override {
-    this->fs = fs;
-    this->hiFlt.reset(this->fs);
-    this->hiMidFlt.reset(this->fs);
-    this->loMidFlt.reset(this->fs);
-    this->loFlt.reset(this->fs);
-    for (size_t i = 0; i < Bands::n; i++) { this->sc[i].reset(this->fs); }
+    this->_fs = fs;
+    this->hiFlt.reset(this->_fs);
+    this->hiMidFlt.reset(this->_fs);
+    this->loMidFlt.reset(this->_fs);
+    this->loFlt.reset(this->_fs);
+    for (size_t i = 0; i < Bands::n; i++) { this->sc[i].reset(this->_fs); }
     this->update();
   }
 

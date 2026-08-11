@@ -10,11 +10,11 @@
 
 enum Bands { lf, loMid, hiMid, hf, n };
 enum AttRelMode { relative, user };
+constexpr std::array<std::string, Bands::n> bandNames {
+  "Low", "Low Mid", "High Mid", "High"
+};
 
-struct ntDynamicEq : public NtFx::NtPlugin {
-  const std::array<std::string, Bands::n> bandNames {
-    "Low", "Low Mid", "High Mid", "High"
-  };
+struct ntDynamicEq final : public NtFx::NtPlugin {
   std::array<NtFx::Biquad::EqBand, Bands::n> bands;
   std::array<NtFx::Comp::ScSettings, Bands::n> scSettings;
   std::array<NtFx::Comp::PeakSideChainLinear, Bands::n> scs;
@@ -199,7 +199,7 @@ struct ntDynamicEq : public NtFx::NtPlugin {
   }
 
   void reset(float fs) noexcept override {
-    this->fs = fs;
+    this->_fs = fs;
     for (size_t i = 0; i < Bands::n; i++) {
       this->bands[i].settings.shape = NtFx::Biquad::Shape::bpf;
       this->scs[i].reset(fs);

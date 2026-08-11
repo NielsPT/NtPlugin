@@ -57,26 +57,10 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
                                       private juce::ToggleButton::Listener,
                                       private juce::ComboBox::Listener,
                                       private juce::ChangeListener {
-
-  NtPluginAudioProcessorEditor(NtPluginAudioProcessor&);
-  ~NtPluginAudioProcessorEditor() override;
-
-  // "Public".
-  void paint(juce::Graphics&) override;
-  void resized() override;
-
-  // Callbacks.
-  void sliderValueChanged(juce::Slider* slider) override;
-  void buttonClicked(juce::Button* button) override;
-  void changeListenerCallback(juce::ChangeBroadcaster* source) override;
-  void comboBoxChanged(juce::ComboBox* p_box) override;
-  void timerCallback() override;
-
   NtPluginAudioProcessor& proc;
   NtFx::MeterGroup meters;
   NtFx::KnobLookAndFeel knobLookAndFeel;
   NtFx::TitleBarLookAndFeel dropDownLookAndFeel;
-
   std::vector<std::unique_ptr<juce::Slider>> primaryKnobs;
   std::vector<std::unique_ptr<juce::Label>> primaryKnobLabels;
   std::vector<std::unique_ptr<juce::Slider>> secondaryKnobs;
@@ -106,25 +90,41 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   std::vector<juce::Rectangle<int>> borderedAreas;
   std::vector<juce::Rectangle<int>> grayAreas;
 
-  float unscaledWindowHeight = 0;
-  float unscaledWindowWidth  = 0;
-  float uiScale              = 1;
-  float titleBarScale        = 0.7;
-  float pad                  = 10;
-  bool isInitialized         = false;
+  float unscaledWindowHeight { 0 };
+  float unscaledWindowWidth { 0 };
+  float uiScale { 1 };
+  float titleBarScale { 0.7 };
+  float pad { 10 };
+  bool isInitialized { false };
 
   juce::Label pluginNameLabel;
+
+  NtPluginAudioProcessorEditor(NtPluginAudioProcessor&);
+  NtPluginAudioProcessorEditor(NtPluginAudioProcessorEditor&&) = delete;
+  ~NtPluginAudioProcessorEditor() override;
+  NtPluginAudioProcessorEditor& operator=(
+      NtPluginAudioProcessorEditor&&) = delete;
+
+  // "Public".
+  void paint(juce::Graphics&) override;
+  void resized() override;
+
+  // Callbacks.
+  void sliderValueChanged(juce::Slider* slider) override;
+  void buttonClicked(juce::Button* button) override;
+  void changeListenerCallback(juce::ChangeBroadcaster* source) override;
+  void comboBoxChanged(juce::ComboBox* p_box) override;
+  void timerCallback() override;
 
   // Initializers.
   void _initPrimaryKnob(NtFx::KnobSpec& p_spec);
   void _initSecondaryKnob(NtFx::KnobSpec& p_spec);
-  void _initKnobGroup(int iGroup, NtFx::KnobGroupSpec& p_group);
-  void _initGroupKnob(int iGroup, NtFx::KnobSpec& p_spec);
-  void _initKnob(NtFx::KnobSpec& p_spec,
-      std::unique_ptr<juce::Slider>& p_slider,
-      std::unique_ptr<juce::Label>& p_label);
-  void _initToggle(NtFx::ToggleSpec& spec);
-  void __initToggle(NtFx::Toggle* p_toggle, NtFx::ToggleSpec& spec);
+  void _initKnobGroup(size_t iGroup, NtFx::KnobGroupSpec& p_group);
+  void _initGroupKnob(size_t iGroup, NtFx::KnobSpec& p_spec);
+  void _initKnob(
+      NtFx::KnobSpec& p_spec, std::unique_ptr<juce::Slider>& p_slider);
+  void _makeToggle(NtFx::ToggleSpec& spec);
+  void _initToggle(NtFx::Toggle* p_toggle, NtFx::ToggleSpec& spec);
   void _initToggleGroup(NtFx::ToggleSetSpec& spec);
   void _initDropDown(NtFx::DropDownSpec& p_spec, bool addToTitleBar = false);
   void _initRadioButton(NtFx::RadioButtonSetSpec& spec);
@@ -149,8 +149,8 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
       juce::Rectangle<int>& groupArea, int n, int i, int nCols, bool even);
   void _placeSmallTogglesArea(juce::Rectangle<int>& area);
   void _placeBottomRow(juce::Rectangle<int>& area);
-  void _placeDropdowns(juce::Rectangle<int>& area, size_t columnWidth);
-  void _placeToggles(juce::Rectangle<int>& area, size_t columnWidth);
+  void _placeDropdowns(juce::Rectangle<int>& area, int columnWidth);
+  void _placeToggles(juce::Rectangle<int>& area, int columnWidth);
   template <typename T>
   void _placeSmallToggles(juce::Rectangle<int>& area,
       int size,

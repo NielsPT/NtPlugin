@@ -29,7 +29,7 @@
 
 constexpr double tWetDlMax_ms = 100;
 
-struct ntChorus : public NtFx::NtPlugin {
+struct ntChorus final : public NtFx::NtPlugin {
   NtFx::Delay::Mod dlMod;
   NtFx::Delay::ShortGlided<tWetDlMax_ms, Audio> dlWet;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> hpf;
@@ -91,7 +91,7 @@ struct ntChorus : public NtFx::NtPlugin {
   }
 
   void reset(float fs) noexcept override {
-    this->fs = fs;
+    this->_fs = fs;
     this->dlMod.reset(fs);
     this->dlWet.reset(fs);
     this->hpf.reset(fs);

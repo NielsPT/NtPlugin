@@ -59,7 +59,7 @@ namespace DynamicFilter {
     }
 
     void update() noexcept override {
-      auto alpha          = signal_t(2) * GCEM_PI * this->fc_hz / this->fs;
+      auto alpha          = signal_t(2) * GCEM_PI * this->fc_hz / this->_fs;
       this->_alphaSquared = alpha * alpha;
       this->_beta1        = signal_t(2) * alpha / this->q1;
       this->_beta2        = signal_t(2) * alpha / this->q2;
@@ -67,7 +67,7 @@ namespace DynamicFilter {
     }
 
     void reset(float fs) noexcept override {
-      this->fs = fs;
+      this->_fs = fs;
       this->_flt.reset(fs);
       this->update();
     }

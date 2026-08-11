@@ -26,7 +26,7 @@
 #include "lib/Transformer.h"
 #include "lib/utils.h"
 
-struct ntTransformer : public NtFx::NtPlugin {
+struct ntTransformer final : public NtFx::NtPlugin {
   NtFx::Biquad::EqBand bqHpf0;
   NtFx::Transformer transformer;
   signal_t drive_db  = -10;
@@ -56,7 +56,7 @@ struct ntTransformer : public NtFx::NtPlugin {
     this->bqHpf0.update();
   }
   void reset(float fs) noexcept override {
-    this->fs = fs;
+    this->_fs = fs;
     this->transformer.reset(fs);
     this->bqHpf0.settings.fc_hz = 40;
     this->bqHpf0.settings.q     = 1.1;

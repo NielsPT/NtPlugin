@@ -24,6 +24,7 @@
 #include "lib/Audio.h"
 #include "lib/Biquad.h"
 #include "lib/Delay.h"
+#include "lib/DryMix.h"
 #include "lib/Glider.h"
 #include "lib/Plugin.h"
 #include "lib/SoftClip.h"
@@ -38,17 +39,17 @@ enum SubDev : int {
   sixteenth,
 };
 
-struct ntTapeEcho : public NtFx::NtPlugin {
+struct ntTapeEcho final : public NtFx::NtPlugin {
   NtFx::Delay::LongGlided<2e3, signal_t> dlL;
   NtFx::Delay::LongGlided<2e3, signal_t> dlR;
   NtFx::Delay::Mod mod;
   NtFx::Biquad::EqBand hpf;
   NtFx::Biquad::EqBand lpf;
+  NtFx::DryMix dryMix;
   Audio fbState;
   signal_t t_ms { 500 };
   signal_t fb_percent { 20 };
   signal_t clipG_db { 0.0 };
-  signal_t mix_percent { 100.0 };
   signal_t tOffset { 0.0 };
   signal_t noise_db { -100 };
   signal_t tempoScale { 1 };
@@ -57,8 +58,6 @@ struct ntTapeEcho : public NtFx::NtPlugin {
   signal_t noise_lin { 0 };
   size_t iStore { 0 };
   signal_t aClip_lin { 1 };
-  // TODO: Mix should have -3 dB law.
-  signal_t mix_lin { 1 };
   bool syncEnable { false };
   bool modEnable { true };
   bool clipEnable { true };
@@ -80,7 +79,7 @@ struct ntTapeEcho : public NtFx::NtPlugin {
       { &this->mod.phaseMod_deg, "Mod Phase", "deg", 0, 180 },
       { &this->tOffset, "Offset", " ms", 0, 50 },
       { &this->noise_db, "Noise", " dB", -100, 0 },
-      { &this->mix_percent, "Mix", " %", 0, 100 },
+      { &this->dryMix.mix_p, "Mix", " %", 0, 100 },
     };
 
     this->dropdowns = {
@@ -128,9 +127,7 @@ struct ntTapeEcho : public NtFx::NtPlugin {
     this->fbState = yLp;
     auto yOutClip = yLp;
     if (this->clipEnable) { yOutClip = NtFx::softClip5thStereo(yLp); }
-    auto y = (signal_t(1.0) - this->mix_lin) * x + this->mix_lin * yOutClip;
-    // TODO: Make this a member.
-    y *= (2 - gcem::abs(this->mix_lin * 2 - 1));
+    auto y = this->dryMix.process(yOutClip, x);
     this->template updatePeakLevel<0>(x);
     if (this->bypassEnable) {
       this->template updatePeakLevel<1>(x);
@@ -142,7 +139,6 @@ struct ntTapeEcho : public NtFx::NtPlugin {
 
   void update() noexcept override {
     this->aClip_lin = NtFx::invDb(this->clipG_db);
-    this->mix_lin   = this->mix_percent / 100;
     this->fb_lin    = this->fb_percent / 100;
     this->noise_lin = NtFx::invDb(this->noise_db);
     switch (this->subDev) {
@@ -173,20 +169,21 @@ struct ntTapeEcho : public NtFx::NtPlugin {
     this->dlR.update();
     this->hpf.update();
     this->lpf.update();
+    this->dryMix.update();
   }
 
   void reset(float fs) noexcept override {
-    this->fs = fs;
+    this->_fs = fs;
     this->dlL.reset(fs);
     this->dlR.reset(fs);
     this->mod.reset(fs);
-    this->hpf.reset(this->fs);
-    this->lpf.reset(this->fs);
+    this->hpf.reset(this->_fs);
+    this->lpf.reset(this->_fs);
     this->update();
   }
 
   void onTempoChanged() noexcept override {
-    if (this->syncEnable && this->tempo) {
+    if (this->syncEnable && (this->tempo != 0.0)) {
       this->t_ms = 60 / this->tempo * this->tempoScale * 1000;
       this->primaryKnobs[0].isActive = false;
     } else {

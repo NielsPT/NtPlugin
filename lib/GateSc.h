@@ -55,17 +55,17 @@ namespace Gate {
     }
 
     void update() noexcept override {
-      this->_alphaAtt = gcem::exp(-2200 / (this->settings.tAtt_ms * this->fs));
+      this->_alphaAtt = gcem::exp(-2200 / (this->settings.tAtt_ms * this->_fs));
       this->_slopeRel = this->settings.range_db * signal_t(20)
           / (this->settings.range_db * this->settings.tRel_ms * signal_t(0.001)
-                  * this->fs
+                  * this->_fs
               + 1e-20);
-      this->_nHold = gcem::round(this->settings.tHold_ms * 0.001 * this->fs);
+      this->_nHold = gcem::round(this->settings.tHold_ms * 0.001 * this->_fs);
       this->sensor.update();
     }
 
     void reset(float fs) noexcept override {
-      this->fs              = fs;
+      this->_fs             = fs;
       _stateAtt             = -100;
       _stateRel             = -100;
       this->sensor.tPeak_ms = 1;

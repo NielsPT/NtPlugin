@@ -27,7 +27,7 @@
 // the whole thing in headers and swap the signal data type. I perfer using
 // structs so I don't need to consider private/public.
 
-struct gainExample : public NtFx::NtPlugin {
+struct gainExample final : public NtFx::NtPlugin {
   // Make some variables.
   signal_t gain_db { 0 };
   signal_t gain_lin { 1 };
@@ -85,7 +85,7 @@ struct gainExample : public NtFx::NtPlugin {
 
   // Override the reset method.
   void reset(float fs) noexcept override {
-    this->fs = fs;
+    this->_fs = fs;
     this->update();
   }
 };

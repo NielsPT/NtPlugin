@@ -30,7 +30,7 @@
 
 enum scMode { feedForward = 0, feedback, external };
 
-struct ntCompressor : public NtFx::NtPlugin {
+struct ntCompressor final : public NtFx::NtPlugin {
   NtFx::Delay::Short<10.0> dl;
   NtFx::Comp::ScSettings scSettings;
   NtFx::Comp::PeakSideChainDb peakScDb;
@@ -256,15 +256,15 @@ struct ntCompressor : public NtFx::NtPlugin {
   }
 
   void reset(float fs) noexcept override {
-    this->fs      = fs;
+    this->_fs     = fs;
     this->fbState = signal_t(0);
-    this->peakScDb.reset(this->fs);
-    this->peakScLin.reset(this->fs);
-    this->rmsScDb.reset(this->fs);
-    this->rmsScLin.reset(this->fs);
-    this->hpf.reset(this->fs);
-    this->boost.reset(this->fs);
-    this->dl.reset(this->fs);
+    this->peakScDb.reset(this->_fs);
+    this->peakScLin.reset(this->_fs);
+    this->rmsScDb.reset(this->_fs);
+    this->rmsScLin.reset(this->_fs);
+    this->hpf.reset(this->_fs);
+    this->boost.reset(this->_fs);
+    this->dl.reset(this->_fs);
     this->update();
   }
 };

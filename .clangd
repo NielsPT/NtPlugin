@@ -7,3 +7,4 @@ CompileFlags:
     - -Wimplicit-float-conversion
     # - -Wimplicit-fixed-point-conversion
     - -Wimplicit-int-float-conversion
+    - -Wno-missing-field-initializers

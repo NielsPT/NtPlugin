@@ -9,7 +9,7 @@
 
 enum Mode { wide, shelf, bell };
 
-struct ntDeEsser : public NtFx::NtPlugin {
+struct ntDeEsser final : public NtFx::NtPlugin {
   NtFx::Delay::Short<10.0> dl;
   NtFx::Comp::PeakSideChainLinear sc;
   NtFx::Biquad::EqBand scBpf;
@@ -142,7 +142,7 @@ struct ntDeEsser : public NtFx::NtPlugin {
     this->shelf.reset(fs);
     this->scBpf.reset(fs);
     this->bpf.reset(fs);
-    this->fs = fs;
+    this->_fs = fs;
     this->update();
   }
 };

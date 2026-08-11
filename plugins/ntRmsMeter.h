@@ -21,7 +21,7 @@
 #include "lib/Plugin.h"
 #include "lib/RmsSensor.h"
 
-struct ntRmsMeter : public NtFx::NtPlugin {
+struct ntRmsMeter final : public NtFx::NtPlugin {
   enum Meter {
     Peak,
     RMS,
@@ -62,7 +62,7 @@ struct ntRmsMeter : public NtFx::NtPlugin {
   }
 
   void reset(float fs) noexcept override {
-    this->fs = fs;
+    this->_fs = fs;
     this->msSensor.reset(fs);
     this->update();
   }

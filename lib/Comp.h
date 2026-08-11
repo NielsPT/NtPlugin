@@ -96,8 +96,10 @@ namespace Comp {
      * @brief Update component coefficients.
      */
     void update() noexcept override {
-      this->alphaAtt = gcem::exp(-2200.0 / (this->settings.tAtt_ms * this->fs));
-      this->alphaRel = gcem::exp(-2200.0 / (this->settings.tRel_ms * this->fs));
+      this->alphaAtt =
+          gcem::exp(-2200.0 / (this->settings.tAtt_ms * this->_fs));
+      this->alphaRel =
+          gcem::exp(-2200.0 / (this->settings.tRel_ms * this->_fs));
       if (this->alphaRel < this->alphaAtt) { this->alphaRel = this->alphaAtt; }
       this->peakSensor.setT_ms(this->settings.tPeak_ms);
       this->peakSensor.setTHold_ms(this->settings.tPeakHold_ms);
@@ -110,7 +112,7 @@ namespace Comp {
      */
     void reset(float fs) noexcept override {
       this->peakSensor.reset(fs);
-      this->fs = fs;
+      this->_fs = fs;
       this->update();
     }
 

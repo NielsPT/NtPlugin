@@ -278,19 +278,20 @@ namespace Biquad {
   }
 
   struct Biquad6 {
-    Coeffs6& coeffs;
-    State state;
-    Biquad6(Coeffs6& coeffs) : coeffs(coeffs) { }
+    const Coeffs6* _coeffs;
+    State _state;
+    Biquad6(const Coeffs6* coeffs) : _coeffs(coeffs) { }
     inline signal_t process(signal_t x) {
-      signal_t y = (this->coeffs.b[0] * x + this->coeffs.b[1] * this->state.x[0]
-                       + this->coeffs.b[2] * this->state.x[1]
-                       - this->coeffs.a[1] * this->state.y[0]
-                       - this->coeffs.a[2] * this->state.y[1])
-          / this->coeffs.a[0];
-      this->state.y[1] = this->state.y[0];
-      this->state.y[0] = y;
-      this->state.x[1] = this->state.x[0];
-      this->state.x[0] = x;
+      signal_t y =
+          (this->_coeffs->b[0] * x + this->_coeffs->b[1] * this->_state.x[0]
+              + this->_coeffs->b[2] * this->_state.x[1]
+              - this->_coeffs->a[1] * this->_state.y[0]
+              - this->_coeffs->a[2] * this->_state.y[1])
+          / this->_coeffs->a[0];
+      this->_state.y[1] = this->_state.y[0];
+      this->_state.y[0] = y;
+      this->_state.x[1] = this->_state.x[0];
+      this->_state.x[0] = x;
       return y;
     }
   };
@@ -339,7 +340,7 @@ namespace Biquad {
     return acc * r_coeffs.b0;
   }
 
-  struct EqBandMono : public ComponentBase<Audio> {
+  struct EqBandMono final : public ComponentBase<Audio> {
     Settings settings;
     Coeffs5 coeffs;
     State state;
@@ -348,49 +349,49 @@ namespace Biquad {
       return processBiquad5(x.l, this->coeffs, this->state);
     }
     void update() noexcept override {
-      this->coeffs = calcCoeffs5(this->settings, this->fs);
+      this->coeffs = calcCoeffs5(this->settings, this->_fs);
     }
     void reset(float fs) noexcept override {
-      this->fs    = fs;
+      this->_fs   = fs;
       this->state = { { 0, 0 }, { 0, 0 } };
       this->update();
     }
   };
 
-  struct EqBand6Stereo : public ComponentBase<Audio> {
+  struct EqBand6Stereo final : public ComponentBase<Audio> {
     Biquad6 l;
     Biquad6 r;
     Settings settings;
     Coeffs6 coeffs;
-    EqBand6Stereo() : l(coeffs), r(coeffs) { }
+    EqBand6Stereo() : l(&coeffs), r(&coeffs) { }
     Audio process(Audio x) noexcept override {
       return { this->l.process(x.l), this->r.process(x.r) };
     }
     void update() noexcept override {
-      this->coeffs = calcCoeffs6(settings, this->fs);
+      this->coeffs = calcCoeffs6(settings, this->_fs);
     }
     void reset(float fs) noexcept override {
-      this->fs = fs;
+      this->_fs = fs;
       this->update();
     }
   };
 
-  struct EqBand6Mono : public ComponentBase<Audio> {
+  struct EqBand6Mono final : public ComponentBase<Audio> {
     Biquad6 l;
     Settings settings;
     Coeffs6 coeffs;
-    EqBand6Mono() : l(coeffs) { }
+    EqBand6Mono() : l(&coeffs) { }
     Audio process(Audio x) noexcept override { return this->l.process(x.l); }
     void update() noexcept override {
-      this->coeffs = calcCoeffs6(settings, this->fs);
+      this->coeffs = calcCoeffs6(settings, this->_fs);
     }
     void reset(float fs) noexcept override {
-      this->fs = fs;
+      this->_fs = fs;
       this->update();
     }
   };
 
-  struct EqBandStereo : public ComponentBase<Audio> {
+  struct EqBandStereo final : public ComponentBase<Audio> {
     Settings settings;
     Coeffs5 coeffs;
     State stateL;
@@ -401,18 +402,18 @@ namespace Biquad {
         processBiquad5(x.r, this->coeffs, this->stateR) };
     }
     void update() noexcept override {
-      this->coeffs = calcCoeffs5(this->settings, this->fs);
+      this->coeffs = calcCoeffs5(this->settings, this->_fs);
     }
     void reset(float fs) noexcept override {
-      this->fs     = fs;
+      this->_fs    = fs;
       this->stateL = { { 0, 0 }, { 0, 0 } };
       this->stateR = { { 0, 0 }, { 0, 0 } };
       this->update();
     }
   };
 
-  template <int nStages = 1>
-  struct Eq : public ComponentBase<Audio> {
+  template <int nStages>
+  struct Eq final : public ComponentBase<Audio> {
     std::array<Settings, nStages> settings;
     CascadeCoeffs<nStages> coeffs;
     CascadeState<nStages> stateL;
@@ -422,7 +423,7 @@ namespace Biquad {
         processCascade<nStages>(x.r, stateR, coeffs) };
     }
     void update() noexcept override {
-      this->coeffs = calcCascadeCoeffs<nStages>(this->settings, this->fs);
+      this->coeffs = calcCascadeCoeffs<nStages>(this->settings, this->_fs);
     }
   };
 

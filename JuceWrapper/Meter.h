@@ -45,7 +45,7 @@
 #include <vector>
 
 namespace NtFx {
-struct Meter : public juce::Component {
+struct Meter final : public juce::Component {
   PeakHoldSensor<> peakSensor;
   MeterSpec& meterSpec;
   UiSpec& uiSpec;
@@ -54,46 +54,41 @@ struct Meter : public juce::Component {
   int dotDiameter { 0 };
   int dotDist { 0 };
   int nDots { 14 };
-  int nActiveDotsPeak { 0 };
+  float nActiveDotsPeak { 0 };
   float fractPeak { 0 };
   int nActiveDotsRms { 0 };
   float peakVal_lin { 0 };
   float rmsVal_lin { 0 };
   float dbPrDot { 0 };
   float opacity { 0.7f };
-  bool isInitialized { false };
-  int fontSize { 20 };
+  float fontSize { 20 };
   int nHold_frames { 0 };
   int holdCounter_frames { 0 };
   float holdVal_db { 0 };
   int iHoldDot { 0 };
   bool hasScale { false };
 
-  Meter(MeterSpec& meterSpec, UiSpec& uiSpec)
-      : meterSpec(meterSpec), uiSpec(uiSpec), nDots(uiSpec.meterHeight_dots) {
+  Meter(MeterSpec& _meterSpec, UiSpec& _uiSpec)
+      : meterSpec(_meterSpec), uiSpec(_uiSpec),
+        nDots(_uiSpec.meterHeight_dots) {
     // TODO: We need to be able to set these from the plugin.
     this->updateRelease(48000, 250, 100);
     this->refresh();
-    this->isInitialized = true;
-  };
-  ~Meter() = default;
+  }
+  ~Meter() override = default;
 
   void paint(juce::Graphics& g) override {
-    if (!this->isInitialized) { return; }
     if (this->getWidth() <= 0) { return; }
-    int y = this->pad;
     g.setColour(juce::Colour(this->uiSpec.foregroundColour));
     g.setFont(this->fontSize);
     g.drawText(this->label,
         0,
-        y,
+        this->pad,
         this->getWidth(),
-        this->fontSize,
+        int(this->fontSize),
         juce::Justification::centred);
-    for (size_t i = 0; i < this->nDots; i++) {
-      int y;
-      y = this->pad + (i + 1) * this->dotDist;
-      // if (this->meterSpec.invert && i < 2) { continue; }
+    for (int i = 0; i < this->nDots; i++) {
+      int y = this->pad + (i + 1) * this->dotDist;
       g.setColour(juce::Colour(this->uiSpec.foregroundColour));
       g.drawEllipse(this->pad, y, this->dotDiameter, this->dotDiameter, 1);
       float fillPad      = this->getWidth() * 4.0 / 35.0;
@@ -108,7 +103,7 @@ struct Meter : public juce::Component {
               && this->nActiveDotsPeak != 0) {
         uint8_t opacity = 255.0f * this->opacity;
         g.setColour(juce::Colour(
-            this->uiSpec.foregroundColour & 0x00FFFFFF | (opacity << 24)));
+            this->uiSpec.foregroundColour & 0x00FFFFFF | (opacity << 24u)));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
 
@@ -196,16 +191,15 @@ struct Meter : public juce::Component {
     this->peakSensor.tHold_ms = tHold_ms;
     this->peakSensor.reset(fs);
     this->nHold_frames =
-        this->meterSpec.hold_s * this->uiSpec.meterRefreshRate_hz;
-    this->dbPrDot =
-        (this->meterSpec.maxVal_db - this->meterSpec.minVal_db) / this->nDots;
+        int(this->meterSpec.hold_s * this->uiSpec.meterRefreshRate_hz);
+    this->dbPrDot = (this->meterSpec.maxVal_db - this->meterSpec.minVal_db)
+        / float(this->nDots);
   }
 
   int calcActiveDots(float peak_db) {
-    int nActiveDots;
-    nActiveDots =
-        (peak_db + this->meterSpec.maxVal_db - this->meterSpec.minVal_db)
-        / this->dbPrDot;
+    int nActiveDots =
+        int((peak_db + this->meterSpec.maxVal_db - this->meterSpec.minVal_db)
+            / this->dbPrDot);
     return this->nDots - nActiveDots;
   }
 
@@ -308,7 +302,6 @@ struct MeterGroup : public juce::Component {
     for (auto& m : this->meters) { m->fontSize = size; }
   }
   MeterGroup(UiSpec& uiSpec, std::vector<MeterSpec>& meterSpecs) {
-    size_t i = 0;
     for (auto& spec : meterSpecs) {
       auto meter = std::make_unique<StereoMeter>(spec, uiSpec);
       this->addAndMakeVisible(meter.get());
@@ -321,15 +314,14 @@ struct MeterGroup : public juce::Component {
       meters.push_back(std::move(meter));
     }
   }
-
   void refresh(size_t idx, Audio xPeak, Audio xRms) {
     this->meters[idx]->refresh(xPeak, xRms);
   }
   void updateUi() noexcept {
     auto area       = this->getLocalBounds();
     auto totalWidth = area.getWidth();
-    auto scaleWidth =
-        totalWidth / (this->meters.size() * this->nChs + this->scales.size());
+    auto scaleWidth = totalWidth
+        / (int(this->meters.size()) * this->nChs + int(this->scales.size()));
     auto meterWidth = scaleWidth * this->nChs;
     size_t iScale   = 0;
     for (auto& m : this->meters) {
@@ -357,7 +349,7 @@ struct MeterGroup : public juce::Component {
   float getMinimalWidth() const noexcept {
     if (!this->meters.size()) { return 0; }
     return this->meters[0]->l.uiSpec.meterWidth
-        * (this->meters.size() * this->nChs + this->scales.size());
+        * (int(this->meters.size()) * this->nChs + int(this->scales.size()));
   }
   float getMinimalHeight() const noexcept {
     if (!this->meters.size()) { return 0; }
