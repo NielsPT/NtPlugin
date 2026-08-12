@@ -172,7 +172,7 @@ struct {name} final : public NtFx::NtPlugin {{
   }}
 
   void reset(float fs) noexcept override {{
-    this->fs = fs;
+    this->_fs = fs;
     this->update();
   }}
 }};

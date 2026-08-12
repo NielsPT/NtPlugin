@@ -112,7 +112,12 @@ struct RadioButtonSet : public ToggleSetBase {
       }
       auto pp_toggle    = p_toggle.get();
       p_toggle->onClick = [this, pp_toggle]() {
-        if (!pp_toggle->getToggleState()) { return; }
+        if (*this->spec.p_val == pp_toggle->_id) {
+          if (!pp_toggle->getToggleState()) {
+            pp_toggle->setToggleState(true, juce::sendNotification);
+          }
+          return;
+        }
         *this->spec.p_val = pp_toggle->_id;
         DBG("Onclick radiobutton '" << this->spec.name
                                     << "', group ID: " << this->spec._id

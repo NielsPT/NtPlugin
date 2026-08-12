@@ -724,6 +724,20 @@ void NtPluginAudioProcessorEditor::sliderValueChanged(juce::Slider* p_slider) {
     return;
   }
   *p_val = p_slider->getValue();
+  for (size_t i = 0; i < this->primaryKnobs.size(); i++) {
+    auto juceSliderVal = this->primaryKnobs[i]->getValue();
+    auto ntKnobVal     = *this->proc.plug.primaryKnobs[i].p_val;
+    if (ntKnobVal != juceSliderVal) {
+      this->primaryKnobs[i]->setValue(ntKnobVal, juce::dontSendNotification);
+    }
+  }
+  for (size_t i = 0; i < this->secondaryKnobs.size(); i++) {
+    auto juceSliderVal = this->secondaryKnobs[i]->getValue();
+    auto ntKnobVal     = *this->proc.plug.secondaryKnobs[i].p_val;
+    if (ntKnobVal != juceSliderVal) {
+      this->secondaryKnobs[i]->setValue(ntKnobVal, juce::dontSendNotification);
+    }
+  }
   this->proc.plug.update();
 }
 

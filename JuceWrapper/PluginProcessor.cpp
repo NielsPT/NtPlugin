@@ -126,7 +126,7 @@ void NtPluginAudioProcessor::processBlock(
   this->setLatencySamples(this->plug.latency / this->src.coeffs.osFactor
       + this->src.coeffs.osFirLenMult - 2);
 
-  for (size_t i = 0; i < buffer.getNumSamples(); i++) {
+  for (int i = 0; i < buffer.getNumSamples(); i++) {
     if (p_xSc) { this->plug.xSc = p_xSc[i]; }
     float l = p_l[i];
     float r = l;
@@ -234,7 +234,7 @@ void NtPluginAudioProcessor::updateOversampling(int mode) {
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
-  DBG("Creating new NtFx plugin editor.");
+  DBG("Creating new NtFx plugin editor for '" << JucePlugin_Name << "'.");
   return new NtPluginAudioProcessor();
 }
 
