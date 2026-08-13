@@ -21,7 +21,7 @@
 #include "lib/Plugin.h"
 #include "lib/RmsSensor.h"
 
-struct ntRmsMeter final : public NtFx::NtPlugin {
+struct ntRmsMeter final : public NtFx::Plugin {
   enum Meter {
     Peak,
     RMS,

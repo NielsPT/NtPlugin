@@ -1,5 +1,25 @@
 #pragma once
 
+/*
+ * Copyright (C) 2026 Niels Thøgersen, NTlyd
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * You are free to download, build and use this code for commercial
+ * purposes. Just don't resell it or a build of it, modified or otherwise.
+ **/
+
 #include "lib/Audio.h"
 #include "lib/Biquad.h"
 #include "lib/Comp.h"
@@ -9,19 +29,18 @@
 
 enum Mode { wide, shelf, bell };
 
-struct ntDeEsser final : public NtFx::NtPlugin {
+struct ntDeEsser final : public NtFx::Plugin {
   NtFx::Delay::Short<10.0> dl;
-  NtFx::Comp::PeakSideChainLinear sc;
+  NtFx::Comp::PeakSideChainLin sc;
   NtFx::Biquad::EqBand scBpf;
   NtFx::DynamicFilter::ShelfFixedZeros shelf;
   NtFx::Biquad::EqBand bpf;
-  NtFx::Comp::ScSettings scSettings;
   signal_t q { 1.0 };
   signal_t fc_hz { 4e3 };
   Mode mode { Mode::bell };
   bool bypassEnable { false };
   bool scListenEnable { false };
-  ntDeEsser() : sc(scSettings) {
+  ntDeEsser() {
     this->primaryKnobs = {
       {
           .p_val    = &this->fc_hz,
@@ -32,7 +51,7 @@ struct ntDeEsser final : public NtFx::NtPlugin {
           .logScale = true,
       },
       {
-          .p_val  = &this->scSettings.thresh_db,
+          .p_val  = &this->sc.settings.thresh_db,
           .name   = "Threshold",
           .suffix = " dB",
           .minVal = -60,
@@ -56,7 +75,7 @@ struct ntDeEsser final : public NtFx::NtPlugin {
       },
 
       {
-          .p_val    = &this->scSettings.tRel_ms,
+          .p_val    = &this->sc.settings.tRel_ms,
           .name     = "Release",
           .suffix   = " ms",
           .minVal   = 1.0,
@@ -73,17 +92,17 @@ struct ntDeEsser final : public NtFx::NtPlugin {
     };
     this->toggles = {
       { .p_val = &this->scListenEnable, .name = "SC Listen" },
-      { .p_val = &this->scSettings.linkEnable, .name = "Link" },
+      { .p_val = &this->sc.settings.linkEnable, .name = "Link" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
     this->meters.push_back({ .name = "GR", .invert = true });
-    this->scSettings.ratio      = 20;
-    this->scSettings.knee_db    = 3;
-    this->scSettings.linkEnable = true;
-    this->dl.t_ms               = 1;
-    this->scSettings.tRel_ms    = 30;
-    this->bpf.settings.shape    = NtFx::Biquad::Shape::bpf;
-    this->scBpf.settings.shape  = NtFx::Biquad::Shape::bpf;
+    this->sc.settings.ratio      = 20;
+    this->sc.settings.knee_db    = 3;
+    this->sc.settings.linkEnable = true;
+    this->dl.t_ms                = 1;
+    this->sc.settings.tRel_ms    = 30;
+    this->bpf.settings.shape     = NtFx::Biquad::Shape::bpf;
+    this->scBpf.settings.shape   = NtFx::Biquad::Shape::bpf;
     this->updateDefaults();
   }
 
@@ -118,8 +137,8 @@ struct ntDeEsser final : public NtFx::NtPlugin {
   }
 
   void update() noexcept override {
-    this->scSettings.tPeakHold_ms = this->dl.t_ms;
-    this->scSettings.tAtt_ms      = gcem::max(this->dl.t_ms, 0.1);
+    this->sc.settings.tPeakHold_ms = this->dl.t_ms;
+    this->sc.settings.tAtt_ms      = gcem::max(this->dl.t_ms, 0.1);
     this->sc.update();
 
     this->shelf.fc_hz = this->fc_hz;

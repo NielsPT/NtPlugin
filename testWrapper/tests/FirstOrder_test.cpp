@@ -3,18 +3,17 @@
 #include "lib/ComponentTest.h"
 #include "lib/FirstOrder.h"
 
-NTFX_TEST_BEGIN
-
-NTFX_TEST() {
+int main() {
+  auto set  = NtFx::ComponentTestSet(std::string(testFileBaseName(__FILE__)));
   auto hpf  = NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf>();
   hpf.fc_hz = 1e3;
-  NTFX_ADD_TEST(hpf, "impulse");
+  NTFX_ADD_TEST(set, hpf, "impulse");
   auto lpf  = NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf>();
   lpf.fc_hz = 1e3;
-  NTFX_ADD_TEST(lpf, "impulse");
+  NTFX_ADD_TEST(set, lpf, "impulse");
   auto lpfWithZero =
       NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpfZero>();
   lpfWithZero.fc_hz = 1e3;
-  NTFX_ADD_TEST(lpfWithZero, { "impulse" });
-  return NTFX_RUN_TESTS();
+  NTFX_ADD_TEST(set, lpfWithZero, "impulse");
+  return set.runAllTests();
 }

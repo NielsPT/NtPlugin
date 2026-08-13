@@ -30,11 +30,11 @@
 
 enum scMode { feedForward = 0, feedback, external };
 
-struct ntCompressor final : public NtFx::NtPlugin {
+struct ntCompressor final : public NtFx::Plugin {
   NtFx::Delay::Short<10.0> dl;
   NtFx::Comp::ScSettings scSettings;
   NtFx::Comp::PeakSideChainDb peakScDb;
-  NtFx::Comp::PeakSideChainLinear peakScLin;
+  NtFx::Comp::PeakSideChainLin peakScLin;
   NtFx::Comp::RmsSideChainDb rmsScDb;
   NtFx::Comp::RmsSideChainLinear rmsScLin;
   NtFx::Biquad::EqBand hpf;
@@ -52,9 +52,7 @@ struct ntCompressor final : public NtFx::NtPlugin {
   signal_t makeup_lin { signal_t(1.0) };
   Audio fbState { signal_t(0.0) };
 
-  ntCompressor()
-      : peakScDb(scSettings), peakScLin(scSettings), rmsScDb(scSettings),
-        rmsScLin(scSettings) {
+  ntCompressor() {
     this->primaryKnobs = {
       {
           .p_val  = &this->scSettings.thresh_db,
@@ -238,6 +236,10 @@ struct ntCompressor final : public NtFx::NtPlugin {
   }
 
   void update() noexcept override {
+    this->peakScDb.settings  = this->scSettings;
+    this->peakScLin.settings = this->scSettings;
+    this->rmsScDb.settings   = this->scSettings;
+    this->rmsScLin.settings  = this->scSettings;
     if (this->rmsEnable) {
       this->activateParameter("RMS");
     } else {
@@ -252,7 +254,7 @@ struct ntCompressor final : public NtFx::NtPlugin {
     this->dl.update();
     this->latency    = this->dl._n;
     this->makeup_lin = NtFx::invDb(this->makeup_db);
-    this->mix_lin    = this->mix_percent / 100.0;
+    this->mix_lin    = signal_t(this->mix_percent / 100.0);
   }
 
   void reset(float fs) noexcept override {

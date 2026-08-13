@@ -19,7 +19,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "gcem.hpp"
 #include "lib/Audio.h"
 #include "lib/Biquad.h"
 #include "lib/Comp.h"
@@ -30,11 +29,10 @@
 
 enum ScMode { internal, external, ignore };
 
-struct ntGate final : public NtFx::NtPlugin {
+struct ntGate final : public NtFx::Plugin {
   NtFx::Gate::Sc sc;
   NtFx::Gate::Sc scHf;
-  NtFx::Comp::ScSettings ignoreScSettings;
-  NtFx::Comp::PeakSideChainLinear ignoreSc;
+  NtFx::Comp::PeakSideChainLin ignoreSc;
   NtFx::DynamicFilter::ShelfFixedPoles flt;
   NtFx::Biquad::EqBand hpf;
   NtFx::Biquad::EqBand lpf;
@@ -46,7 +44,7 @@ struct ntGate final : public NtFx::NtPlugin {
   bool lookaheadEnable { true };
   bool latencyCompEnable { true };
 
-  ntGate() : ignoreSc(ignoreScSettings) {
+  ntGate() {
     this->primaryKnobs = {
       {
           .p_val  = &this->sc.settings.thresh_db,
@@ -134,7 +132,7 @@ struct ntGate final : public NtFx::NtPlugin {
           .isActive = false,
       },
       {
-          .p_val    = &this->ignoreScSettings.thresh_db,
+          .p_val    = &this->ignoreSc.settings.thresh_db,
           .name     = "Ignore Sens",
           .suffix   = " dB",
           .minVal   = -80,
@@ -167,7 +165,12 @@ struct ntGate final : public NtFx::NtPlugin {
       { .name = "GR", .invert = true },
       { .name = "HF GR", .invert = true, .hasScale = true },
     };
-    this->sc.settings.tAtt_ms = 0.1;
+    this->sc.settings.tAtt_ms            = 0.1;
+    this->ignoreSc.settings.knee_db      = 3;
+    this->ignoreSc.settings.ratio        = 20;
+    this->ignoreSc.settings.tAtt_ms      = 0.1;
+    this->ignoreSc.settings.tRel_ms      = 20;
+    this->ignoreSc.settings.tPeakHold_ms = 10;
     this->updateDefaults();
   }
 
@@ -259,11 +262,7 @@ struct ntGate final : public NtFx::NtPlugin {
     this->lpf.settings.shape = NtFx::Biquad::Shape::lpf;
     this->lpf.reset(fs);
     this->flt.reset(fs);
-    this->ignoreScSettings.knee_db      = 3;
-    this->ignoreScSettings.ratio        = 20;
-    this->ignoreScSettings.tAtt_ms      = 0.1;
-    this->ignoreScSettings.tRel_ms      = 20;
-    this->ignoreScSettings.tPeakHold_ms = 10;
+
     this->ignoreSc.reset(fs);
     this->update();
   }

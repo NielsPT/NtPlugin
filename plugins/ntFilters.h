@@ -33,7 +33,7 @@ enum Order : int {
   fourth,
 };
 
-struct ntFilters final : public NtFx::NtPlugin {
+struct ntFilters final : public NtFx::Plugin {
   signal_t fHpf = 20;
   signal_t fLpf = 20000;
   signal_t qHpf = 0.707;

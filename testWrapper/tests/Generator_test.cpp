@@ -1,10 +1,9 @@
 #include "lib/ComponentTest.h"
 #include "lib/Generator.h"
 
-NTFX_TEST_BEGIN
-
-NTFX_TEST() {
+int main() {
+  auto set = NtFx::ComponentTestSet(std::string(testFileBaseName(__FILE__)));
   NtFx::Generator::Noise noise;
-  NTFX_ADD_TEST(noise, "impulse");
-  return NTFX_RUN_TESTS();
+  NTFX_ADD_TEST(set, noise, "impulse");
+  return set.runAllTests();
 }

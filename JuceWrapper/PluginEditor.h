@@ -90,11 +90,11 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   std::vector<juce::Rectangle<int>> borderedAreas;
   std::vector<juce::Rectangle<int>> grayAreas;
 
-  float unscaledWindowHeight { 0 };
-  float unscaledWindowWidth { 0 };
+  int unscaledWindowHeight { 0 };
+  int unscaledWindowWidth { 0 };
   float uiScale { 1 };
-  float titleBarScale { 0.7 };
-  float pad { 10 };
+  float titleBarScale { 0.7f };
+  float _pad { 10 };
   bool isInitialized { false };
 
   juce::Label pluginNameLabel;
@@ -145,23 +145,29 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   void _updateTheme();
 
   int _getNKnobsInLargestKnobGroup();
-  void _placeGruopKnobColumn(
-      juce::Rectangle<int>& groupArea, int n, int i, int nCols, bool even);
+  void _placeGruopKnobColumn(juce::Rectangle<int>& groupArea,
+      size_t n,
+      size_t i,
+      size_t nCols,
+      bool even);
   void _placeSmallTogglesArea(juce::Rectangle<int>& area);
   void _placeBottomRow(juce::Rectangle<int>& area);
   void _placeDropdowns(juce::Rectangle<int>& area, int columnWidth);
   void _placeToggles(juce::Rectangle<int>& area, int columnWidth);
   template <typename T>
   void _placeSmallToggles(juce::Rectangle<int>& area,
-      int size,
+      size_t size,
       std::vector<std::unique_ptr<juce::Label>>& labels,
       std::vector<std::unique_ptr<T>>& toggles);
 
   // Helpers.
   template <typename T, typename spec_t>
   std::unique_ptr<T> _makeSmallToggleSet(spec_t& spec);
-  void _calcSliderRowsCols(
-      int nSliders, int& nRows, int& nColumns, int maxRows, int maxColumns);
+  void _calcSliderRowsCols(size_t nSliders,
+      size_t& nRows,
+      size_t& nColumns,
+      size_t maxRows,
+      size_t maxColumns);
   void _makeGrid(juce::Rectangle<int>& area,
       float nRows,
       float nCols,

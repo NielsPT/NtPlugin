@@ -59,11 +59,11 @@ consteval auto testFileBaseName(std::string_view fileName) {
   return baseNameNoExt;
 }
 
-#define _NTFX_QUOTE(str) #str
-#define _NTFX_EXPAND_AND_QUOTE(str) _NTFX_QUOTE(str)
+#define NTFX_QUOTE(str) #str
+#define NTFX_EXPAND_AND_QUOTE(str) NTFX_QUOTE(str)
 
-#define _NTFX_ADD_TEST_IMPL(object, stimuli)                                   \
-  componentTestSet.addTest(object, _NTFX_EXPAND_AND_QUOTE(object), { stimuli })
+#define NTFX_ADD_TEST_IMPL(set, object, stimuli)                               \
+  set.addTest(&(object), NTFX_EXPAND_AND_QUOTE(object), { stimuli })
 
 /**
  * @brief Adds a new test to ComponentTest.
@@ -72,33 +72,21 @@ consteval auto testFileBaseName(std::string_view fileName) {
  * Note that the object is NOT copied and must stay in scope until the test has
  * run.
  */
-#define NTFX_ADD_TEST(object, stimuli) _NTFX_ADD_TEST_IMPL(object, stimuli)
+#define NTFX_ADD_TEST(set, object, stimuli)                                    \
+  NTFX_ADD_TEST_IMPL(set, object, stimuli)
 
-#define _NTFX_TEST_BEGIN_IMPL                                                  \
-  auto componentTestSet =                                                      \
-      NtFx::ComponentTestSet(std::string(testFileBaseName(__FILE__)));
-
-#ifndef _NTFX_TEST_STARTED
-  /**
-   * @brief Add this to the beginning of you test suite to instantiate the
-   * needed statics of ComponentTest. Sucks, I know, but that's what C++
-   * demands.
-   *
-   */
-  #define NTFX_TEST_BEGIN _NTFX_TEST_BEGIN_IMPL
-  #define _NTFX_TEST_STARTED
-#else
-  #define NTFX_TEST_BEGIN
-#endif
-
-#define _NTFX_TEST_IMPL() int main()
-#define NTFX_TEST() _NTFX_TEST_IMPL()
+#define NTFX_ADD_TEST_PTR_IMPL(set, object, stimuli)                           \
+  set.addTest(object, NTFX_EXPAND_AND_QUOTE(object), { stimuli })
 
 /**
- * @brief Runs all tests added to test set.
+ * @brief Adds a new test to ComponentTest.
  *
+ * @param object Object derived from Component class that need to be tested.
+ * Note that the object is NOT copied and must stay in scope until the test has
+ * run.
  */
-#define NTFX_RUN_TESTS() componentTestSet.runAllTests()
+#define NTFX_ADD_TEST_PTR(set, object, stimuli)                                \
+  NTFX_ADD_TEST_PTR_IMPL(set, object, stimuli)
 
 namespace NtFx {
 static const std::vector<std::string> STIMULI_NAMES { "impulse",
@@ -118,8 +106,8 @@ struct ComponentTest;
  * @tparam signal_t Audio datatype
  */
 struct ComponentTestSet {
-  int nTests;      ///< Total tests run.
-  int nSuccessful; ///< Number of successful tests.
+  int nTests { 0 };      ///< Total tests run.
+  int nSuccessful { 0 }; ///< Number of successful tests.
   std::vector<std::unique_ptr<ComponentTest>>
       tests;        ///< Vector of tests to run.
   std::string name; ///< Name of set of tests.
@@ -129,7 +117,7 @@ struct ComponentTestSet {
    *
    * @param name Name of component under test.
    */
-  ComponentTestSet(std::string name) : name(name) { }
+  ComponentTestSet(std::string _name) : name(_name) { }
 
   /**
    * @brief Get and print the results of all tests.
@@ -170,9 +158,15 @@ struct ComponentTestSet {
    * @return true if tests pass.
    * @return false if tests fail.
    */
-  bool addTest(ComponentBase<Stereo<signal_t>>& componentObj,
+  bool addTest(ComponentBase<Stereo<signal_t>>* componentObj,
       std::string objName,
       std::vector<std::string> stimuli);
+
+  bool addTest(ComponentBase<Stereo<signal_t>>** componentObj,
+      std::string objName,
+      std::vector<std::string> stimuli) {
+    return this->addTest(*componentObj, objName, stimuli);
+  }
 
   /**
    * @brief Runs all tests added to test set.
@@ -188,9 +182,9 @@ struct ComponentTestSet {
  *
  */
 struct ComponentTest {
-  ComponentTestSet& owner;              ///< Set this test belongs to.
-  const std::string objName;            ///< Object to be tested.
-  ComponentBase<Stereo<signal_t>>& cut; ///< Component under test.
+  ComponentTestSet* p_owner;              ///< Set this test belongs to.
+  std::string objName;                    ///< Object to be tested.
+  ComponentBase<Stereo<signal_t>>* p_cut; ///< Component under test.
   std::vector<std::string> activeStimuli = STIMULI_NAMES; ///< Tests to run.
 
   /**
@@ -203,11 +197,11 @@ struct ComponentTest {
    * Accepted values are defined in STIMULI_NAMES. Defaults to an empty vector,
    * selecting all knows stimuli as defined in STIMULI_NAMES.
    */
-  ComponentTest(ComponentTestSet& owner,
-      std::string objName,
-      ComponentBase<Stereo<signal_t>>& cut,
+  ComponentTest(ComponentTestSet* _p_owner,
+      std::string _objName,
+      ComponentBase<Stereo<signal_t>>* _p_cut,
       std::vector<std::string> stimuli = { })
-      : owner(owner), objName(objName), cut(cut) {
+      : p_owner(_p_owner), objName(_objName), p_cut(_p_cut) {
     if (stimuli.empty()) { return; }
     for (auto& stimulus : stimuli) {
       if (std::find(STIMULI_NAMES.begin(), STIMULI_NAMES.end(), stimulus)
@@ -230,12 +224,12 @@ struct ComponentTest {
    */
   bool run(std::string stimulus) {
     if (!this->_stimulusIsActive(stimulus)) { return true; }
-    this->owner.nTests++;
+    this->p_owner->nTests++;
     auto x = this->_readInput(stimulus);
     std::vector<Stereo<signal_t>> y;
-    this->cut.reset(NTFX_FS);
-    for (auto _x : x) { y.push_back(cut.process(_x)); }
-    const auto yPath = "testWrapper/out/" + this->owner.name + SEPARATOR
+    this->p_cut->reset(NTFX_FS);
+    for (auto _x : x) { y.push_back(p_cut->process(_x)); }
+    const auto yPath = "testWrapper/out/" + this->p_owner->name + SEPARATOR
         + this->objName + SEPARATOR + stimulus + SEPARATOR + "result.txt";
     std::ofstream yFile(yPath);
     yFile << std::fixed << std::setprecision(16);
@@ -243,12 +237,12 @@ struct ComponentTest {
     auto success = this->_compareExpected(stimulus, y);
     if (success) {
       std::cout << "\033[32m";
-      this->owner.nSuccessful++;
+      this->p_owner->nSuccessful++;
     } else {
       std::cout << "\033[31m";
     }
     std::cout << "Test '" << stimulus << "' for object '" << this->objName
-              << "' in file '" << this->owner.name << "'";
+              << "' in file '" << this->p_owner->name << "'";
     std::cout << (success ? " passed." : " failed.") << "\033[0m" << "\n";
     return success;
   }
@@ -262,7 +256,7 @@ struct ComponentTest {
     }
     std::fstream xFile(xPath);
     std::vector<Stereo<signal_t>> x;
-    signal_t l, r;
+    signal_t l { 0 }, r { 0 };
     while (xFile >> l >> r) { x.push_back({ l, r }); }
     return x;
   }
@@ -277,7 +271,7 @@ struct ComponentTest {
   }
 
   std::vector<Stereo<signal_t>> _readExpected(std::string stimulus) {
-    auto expPath = "testWrapper/in/" + this->owner.name + SEPARATOR
+    auto expPath = "testWrapper/in/" + this->p_owner->name + SEPARATOR
         + this->objName + SEPARATOR + stimulus + SEPARATOR + "expected.txt";
     bool expFileExists = std::filesystem::exists(expPath);
     if (!expFileExists) {
@@ -291,7 +285,7 @@ struct ComponentTest {
     std::string line;
     while (std::getline(eFile, line)) {
       std::istringstream iss(line);
-      signal_t l, r;
+      signal_t l { 0 }, r { 0 };
       if (iss >> l >> r) {
         e.push_back({ l, r });
       } else {
@@ -309,12 +303,12 @@ struct ComponentTest {
                 << " e: " << e.size() << ", y: " << y.size() << "\n";
       return false;
     }
-    signal_t acceptedDiff = 0.0001;
+    auto acceptedDiff = signal_t(0.0001);
     for (size_t i = 0; i < y.size(); i++) {
       auto diff = gcem::abs(y[i] - e[i]);
       if (diff > acceptedDiff) {
-        std::cout << this->owner.name << "." << this->objName << "." << stimulus
-                  << ":" << " output: {" << y[i].l << ", " << y[i].r
+        std::cout << this->p_owner->name << "." << this->objName << "."
+                  << stimulus << ":" << " output: {" << y[i].l << ", " << y[i].r
                   << "}, expected: {" << e[i].l << ", " << e[i].r
                   << "}, at index: " << i << ". Diff: {" << diff.l << ", "
                   << diff.r << "}." << "\n";
@@ -325,11 +319,11 @@ struct ComponentTest {
   }
 };
 
-bool ComponentTestSet::addTest(ComponentBase<Stereo<signal_t>>& componentObj,
+bool ComponentTestSet::addTest(ComponentBase<Stereo<signal_t>>* componentObj,
     std::string objName,
     std::vector<std::string> stimuli) {
   this->tests.push_back(std::make_unique<NtFx::ComponentTest>(
-      *this, objName, componentObj, stimuli));
+      this, objName, componentObj, stimuli));
   return true;
 }
 

@@ -33,7 +33,7 @@ namespace Src {
   /**
    * @brief Delay line size for interpolation and antialiasing
    */
-  constexpr int nDelayLine = 192;
+  constexpr size_t nDelayLine = 192;
   /**
    * @brief Oversampling FIR multiplier for high quality mode
    */
@@ -140,6 +140,12 @@ namespace Src {
      * @param plug Reference to the plugin
      */
     SampleRateConverter(NTFX_PLUGIN& _plug) : plug(_plug) { }
+    SampleRateConverter()                                 = delete;
+    SampleRateConverter(SampleRateConverter&&)            = delete;
+    SampleRateConverter(SampleRateConverter&)             = delete;
+    ~SampleRateConverter()                                = default;
+    SampleRateConverter& operator=(SampleRateConverter&&) = delete;
+    SampleRateConverter& operator=(SampleRateConverter&)  = delete;
 
     /**
      * @brief Process audio samples through the sample rate converter
@@ -187,21 +193,6 @@ namespace Src {
      */
     inline void update() {
       switch (this->mode) {
-      // case fir_2x_lq:
-      //   this->coeffs.osFactor     = 2;
-      //   this->coeffs.osFirLenMult = oversamplingFirMultLq;
-      //   this->coeffs.disable      = false;
-      //   break;
-      // case fir_4x_lq:
-      //   this->coeffs.osFactor     = 4;
-      //   this->coeffs.osFirLenMult = oversamplingFirMultLq;
-      //   this->coeffs.disable      = false;
-      //   break;
-      // case fir_8x_lq:
-      //   this->coeffs.osFactor     = 8;
-      //   this->coeffs.osFirLenMult = oversamplingFirMultLq;
-      //   this->coeffs.disable      = false;
-      //   break;
       case fir_2x_hq:
         this->coeffs.osFactor     = 2;
         this->coeffs.osFirLenMult = oversamplingFirMultHq;
@@ -223,7 +214,7 @@ namespace Src {
         this->coeffs.osFirLenMult = 1;
         this->coeffs.disable      = true;
       }
-      this->coeffs.fsHi = this->_fs * this->coeffs.osFactor;
+      this->coeffs.fsHi = this->_fs * float(this->coeffs.osFactor);
       this->coeffs.n    = this->coeffs.osFactor * this->coeffs.osFirLenMult;
       if (!this->coeffs.disable) {
         auto b = windowMethod<signal_t>(fc, this->coeffs.n, this->coeffs.fsHi);

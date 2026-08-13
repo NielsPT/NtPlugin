@@ -40,7 +40,14 @@ namespace NtFx {
  *
  * @tparam signal_t Basic datatype for audio signal.
  */
-struct NtPlugin : public ComponentBase<Audio> {
+struct Plugin : public ComponentBase<Audio> {
+  Plugin()                    = default;
+  Plugin(Plugin&&)            = delete;
+  Plugin(Plugin&)             = delete;
+  virtual ~Plugin()           = default;
+  Plugin& operator=(Plugin&)  = delete;
+  Plugin& operator=(Plugin&&) = delete;
+
   /**
    * @brief Array of rms sensors for RMS meter.
    *
@@ -112,7 +119,7 @@ struct NtPlugin : public ComponentBase<Audio> {
    * @brief Updated at base sample rate and can be used in process() for exenal
    * side chain input.
    */
-  signal_t xSc;
+  signal_t xSc { 0 };
 
   /**
    * @brief Set this to true if you want to force an update of the UI

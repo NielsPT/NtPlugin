@@ -36,11 +36,10 @@ NtPluginAudioProcessor::NtPluginAudioProcessor()
               .withInput("Input", juce::AudioChannelSet::stereo(), true)
               .withOutput("Output", juce::AudioChannelSet::stereo(), true)
               .withInput("SideChain", juce::AudioChannelSet::mono(), true)),
-      paramLayout(*this,
-          nullptr,
-          juce::Identifier(JucePlugin_Name),
-          createParameterLayout()),
-      src(plug) { }
+      src(plug), paramLayout(*this,
+                     nullptr,
+                     juce::Identifier(JucePlugin_Name),
+                     createParameterLayout()) { }
 
 NtPluginAudioProcessor::~NtPluginAudioProcessor() { }
 
@@ -54,21 +53,19 @@ bool NtPluginAudioProcessor::isMidiEffect() const { return false; }
 double NtPluginAudioProcessor::getTailLengthSeconds() const { return 0.0; }
 int NtPluginAudioProcessor::getNumPrograms() { return 1; }
 int NtPluginAudioProcessor::getCurrentProgram() { return 0; }
-void NtPluginAudioProcessor::setCurrentProgram(int index) { }
-const juce::String NtPluginAudioProcessor::getProgramName(int index) {
+void NtPluginAudioProcessor::setCurrentProgram(int) { }
+const juce::String NtPluginAudioProcessor::getProgramName(int) {
   return "Default";
 }
-void NtPluginAudioProcessor::changeProgramName(
-    int index, const juce::String& newName) { }
+void NtPluginAudioProcessor::changeProgramName(int, const juce::String&) { }
 
-void NtPluginAudioProcessor::prepareToPlay(
-    double sampleRate, int samplesPerBlock) {
+void NtPluginAudioProcessor::prepareToPlay(double sampleRate, int) {
   if (!this->plug.isInitialized) { return; }
-  if (!sampleRate) { return; }
-  this->fsBase = sampleRate;
+  if (sampleRate == 0.0) { return; }
+  this->_fsBase = float(sampleRate);
   this->updateOversampling();
-  this->plug.xRms[0].reset(sampleRate);
-  this->plug.xRms[1].reset(sampleRate);
+  this->plug.xRms[0].reset(this->_fsBase);
+  this->plug.xRms[1].reset(this->_fsBase);
 }
 
 void NtPluginAudioProcessor::releaseResources() { }
@@ -86,7 +83,7 @@ bool NtPluginAudioProcessor::isBusesLayoutSupported(
 #endif
 
 void NtPluginAudioProcessor::processBlock(
-    juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) {
+    juce::AudioBuffer<float>& buffer, juce::MidiBuffer&) {
   juce::ScopedNoDenormals noDenormals;
   auto totalNumInputChannels  = getTotalNumInputChannels();
   auto totalNumOutputChannels = getTotalNumOutputChannels();
@@ -175,7 +172,7 @@ void NtPluginAudioProcessor::setStateInformation(
   auto val = par.getValue();
   if (val) {
     this->src.mode = NtFx::Src::oversamplingMode((int)val);
-    this->src.reset(this->fsBase);
+    this->src.reset(this->_fsBase);
   }
 }
 
@@ -229,7 +226,7 @@ void NtPluginAudioProcessor::loadGroupKnobs(
 
 void NtPluginAudioProcessor::updateOversampling(int mode) {
   if (mode) { this->src.mode = NtFx::Src::oversamplingMode(mode); }
-  this->src.reset(this->fsBase);
+  this->src.reset(this->_fsBase);
   this->plug.reset(this->src.coeffs.fsHi);
 }
 

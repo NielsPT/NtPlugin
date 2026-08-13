@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include "gcem.hpp"
 #include "lib/Audio.h"
 #include "lib/Biquad.h"
 #include "lib/Delay.h"
@@ -28,6 +27,7 @@
 #include "lib/Glider.h"
 #include "lib/Plugin.h"
 #include "lib/SoftClip.h"
+#include "lib/gcem.h"
 #include "lib/utils.h"
 
 enum SubDev : int {
@@ -39,7 +39,7 @@ enum SubDev : int {
   sixteenth,
 };
 
-struct ntTapeEcho final : public NtFx::NtPlugin {
+struct ntTapeEcho final : public NtFx::Plugin {
   NtFx::Delay::LongGlided<2e3, signal_t> dlL;
   NtFx::Delay::LongGlided<2e3, signal_t> dlR;
   NtFx::Delay::Mod mod;

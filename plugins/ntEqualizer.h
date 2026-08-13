@@ -1,6 +1,25 @@
 #pragma once
 
-#include "gcem.hpp"
+/*
+ * Copyright (C) 2026 Niels Thøgersen, NTlyd
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * You are free to download, build and use this code for commercial
+ * purposes. Just don't resell it or a build of it, modified or otherwise.
+ **/
+
 #include "lib/Audio.h"
 #include "lib/Biquad.h"
 #include "lib/FirstOrder.h"
@@ -33,7 +52,7 @@ const std::vector<std::string> bandOptions {
   "Off",
 };
 
-struct ntEqualizer final : public NtFx::NtPlugin {
+struct ntEqualizer final : public NtFx::Plugin {
   NtFx::Biquad::Eq<fN> cascade;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> firstOrderHpf;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> firstOrderLpf;

@@ -20,11 +20,11 @@
 
 #pragma once
 
-#include "gcem.hpp"
 #include "lib/Audio.h"
 #include "lib/Component.h"
 #include "lib/PeakSensor.h"
 #include "lib/RmsSensor.h"
+#include "lib/gcem.h"
 #include "lib/utils.h"
 
 namespace NtFx {
@@ -61,17 +61,16 @@ namespace Comp {
    */
   struct PeakSideChainDb : public ComponentBase<Audio> {
     PeakHoldSensorStereo<> peakSensor; ///< Peak sensor for stereo signals
+    ScSettings settings;               ///< Side chain settings
     signal_t alphaAtt = signal_t(0);   ///< Attack coefficient
     signal_t alphaRel = signal_t(0);   ///< Release coefficient
-
-    ScSettings& settings;              ///< Reference to side chain settings
-    Audio stateFilter = signal_t(0.0); ///< State filter for gain computation
-
-    /**
-     * @brief Constructor
-     * @param settings Reference to side chain settings
-     */
-    PeakSideChainDb(ScSettings& settings) : settings(settings) { }
+    Audio stateFilter = Audio(0.0);    ///< State filter for gain computation
+    PeakSideChainDb() = default;
+    PeakSideChainDb(PeakSideChainDb&)                  = default;
+    PeakSideChainDb(PeakSideChainDb&&)                 = default;
+    virtual ~PeakSideChainDb()                         = default;
+    PeakSideChainDb& operator=(PeakSideChainDb const&) = default;
+    PeakSideChainDb& operator=(PeakSideChainDb&&)      = default;
 
     /**
      * @brief Process stereo audio signal
@@ -97,9 +96,9 @@ namespace Comp {
      */
     void update() noexcept override {
       this->alphaAtt =
-          gcem::exp(-2200.0 / (this->settings.tAtt_ms * this->_fs));
+          gcem::exp(signal_t(-2200.0) / (this->settings.tAtt_ms * this->_fs));
       this->alphaRel =
-          gcem::exp(-2200.0 / (this->settings.tRel_ms * this->_fs));
+          gcem::exp(signal_t(-2200.0) / (this->settings.tRel_ms * this->_fs));
       if (this->alphaRel < this->alphaAtt) { this->alphaRel = this->alphaAtt; }
       this->peakSensor.setT_ms(this->settings.tPeak_ms);
       this->peakSensor.setTHold_ms(this->settings.tPeakHold_ms);
@@ -124,7 +123,7 @@ namespace Comp {
      */
     inline signal_t _gainComputer_db(signal_t x, signal_t& state) noexcept {
       signal_t x_db = db(x);
-      signal_t y_db;
+      signal_t y_db { 0 };
       if ((x_db - this->settings.thresh_db) > (this->settings.knee_db / 2)) {
         y_db = this->settings.thresh_db
             + (x_db - this->settings.thresh_db) / this->settings.ratio;
@@ -157,16 +156,10 @@ namespace Comp {
    *
    * @tparam signal_t The signal type (e.g., float, double)
    */
-  struct PeakSideChainLinear : public PeakSideChainDb {
+  struct PeakSideChainLin : public PeakSideChainDb {
     signal_t thresh_lin = signal_t(1); ///< Threshold in linear domain
     signal_t ratio_lin  = signal_t(1); ///< Compression ratio in linear domain
     signal_t knee_lin   = signal_t(1); ///< Knee width in linear domain
-
-    /**
-     * @brief Constructor
-     * @param settings Reference to side chain settings
-     */
-    PeakSideChainLinear(ScSettings& settings) : PeakSideChainDb(settings) { }
 
     /**
      * @brief Process stereo audio signal
@@ -195,7 +188,7 @@ namespace Comp {
       this->PeakSideChainDb::update();
       this->thresh_lin            = invDb(this->settings.thresh_db);
       this->knee_lin              = invDb(this->settings.knee_db);
-      const signal_t oneOverSqrt2 = 1.0 / gcem::sqrt(2.0);
+      const signal_t oneOverSqrt2 = signal_t(1.0 / gcem::sqrt(2.0));
       const signal_t tmp          = oneOverSqrt2
           - (this->settings.ratio - signal_t(3.0)) / signal_t(18.0);
       this->ratio_lin = (signal_t(1.0) - signal_t(1.0) / this->settings.ratio)
@@ -209,7 +202,7 @@ namespace Comp {
      * @return Gain reduction factor
      */
     inline signal_t _gainComputer_lin(signal_t x, signal_t& state) noexcept {
-      signal_t target;
+      signal_t target { 0 };
       if (x < this->thresh_lin / this->knee_lin) {
         target = signal_t(0);
       } else if (x < this->thresh_lin) {
@@ -236,9 +229,7 @@ namespace Comp {
    * @tparam signal_t The signal type (e.g., float, double)
    */
   struct RmsSideChainDb : public PeakSideChainDb {
-    ShortRmsSensor<> rmsSensor; ///< RMS sensor for stereo signals
-
-    RmsSideChainDb(ScSettings& settings) : PeakSideChainDb(settings) { }
+    ShortRmsSensor<10.0> rmsSensor; ///< RMS sensor for stereo signals
 
     /**
      * @brief Process stereo audio signal
@@ -283,14 +274,8 @@ namespace Comp {
    *
    * @tparam signal_t The signal type (e.g., float, double)
    */
-  struct RmsSideChainLinear : public PeakSideChainLinear {
+  struct RmsSideChainLinear : public PeakSideChainLin {
     LongRmsSensor<> rmsSensor; ///< RMS sensor for stereo signals
-
-    /**
-     * @brief Constructor
-     * @param settings Reference to side chain settings
-     */
-    RmsSideChainLinear(ScSettings& settings) : PeakSideChainLinear(settings) { }
 
     /**
      * @brief Process stereo audio signal
@@ -312,7 +297,7 @@ namespace Comp {
     void update() noexcept override {
       this->rmsSensor.setT_ms(this->settings.tRms_ms);
       this->rmsSensor.update();
-      this->PeakSideChainLinear::update();
+      this->PeakSideChainLin::update();
     }
 
     /**
@@ -321,7 +306,7 @@ namespace Comp {
      */
     void reset(float fs) noexcept override {
       this->rmsSensor.reset(fs);
-      this->PeakSideChainLinear::reset(fs);
+      this->PeakSideChainLin::reset(fs);
     }
   };
 } // namespace NtFx

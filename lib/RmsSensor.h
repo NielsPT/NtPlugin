@@ -27,13 +27,14 @@
 #include "lib/Component.h"
 #include <algorithm>
 #include <array>
+#include <vector>
 
 namespace NtFx {
 
 template <double tRmsMax_ms>
 struct ShortRmsSensorMono final : public ComponentBase<signal_t> {
-  constexpr static const int nDlMax = int(tRmsMax_ms * 192.0 * 8.0);
-  std::array<signal_t, nDlMax> _dl; ///< Sample delay line.
+  // constexpr static const int nDlMax = int(tRmsMax_ms * 192.0 * 8.0);
+  std::vector<signal_t> _dl; ///< Sample delay line.
   signal_t tRms_ms { 0 };
   signal_t _acc { 0 };
   int _i { 0 };
@@ -61,6 +62,11 @@ struct ShortRmsSensorMono final : public ComponentBase<signal_t> {
     this->_i   = 0;
     this->_acc = 0;
     std::fill(this->_dl.begin(), this->_dl.end(), 0);
+  }
+  void reset(float fs) noexcept override {
+    this->_fs = fs;
+    this->_dl.resize(int(tRmsMax_ms * 0.001 * double(this->_fs)));
+    this->update();
   }
 };
 

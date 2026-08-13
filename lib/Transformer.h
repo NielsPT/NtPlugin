@@ -24,7 +24,7 @@
 
 namespace NtFx {
 
-struct Transformer : public ComponentBase<Audio> {
+struct Transformer final : public ComponentBase<Audio> {
   signal_t fc_hz       = 250;
   signal_t lfCutoff_hz = 20;
   signal_t gain_lin { 0 };

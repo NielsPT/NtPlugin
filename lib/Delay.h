@@ -23,10 +23,10 @@
  * purposes. Just don't resell it or a build of it, modified or otherwise.
  */
 
-#include "gcem.hpp"
 #include "lib/Audio.h"
 #include "lib/Component.h"
 #include "lib/Glider.h"
+#include "lib/gcem.h"
 #include <array>
 #include <vector>
 

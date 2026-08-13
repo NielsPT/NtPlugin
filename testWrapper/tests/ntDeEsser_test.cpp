@@ -1,35 +1,42 @@
 #include "lib/ComponentTest.h"
 #include "plugins/ntDeEsser.h"
 
-NTFX_TEST_BEGIN
+int main() {
+  auto set = NtFx::ComponentTestSet(std::string(testFileBaseName(__FILE__)));
 
-NTFX_TEST() {
   // auto defaults = ntDeEsser();
-  // NTFX_ADD_TEST(defaults, "dynamic_alternating");
-  // NTFX_ADD_TEST(defaults, "impulse");
+  // NTFX_ADD_TEST(set, defaults, "dynamic_alternating");
+  // NTFX_ADD_TEST(set, defaults, "impulse");
   auto shelf                  = ntDeEsser();
   shelf.mode                  = Mode::shelf;
   shelf.fc_hz                 = 10e3;
   shelf.sc.settings.thresh_db = -6;
   shelf.sc.settings.tRel_ms   = 10;
-  NTFX_ADD_TEST(shelf, "dynamic_alternating");
-  NTFX_ADD_TEST(shelf, "dynamic_matched");
-  NTFX_ADD_TEST(shelf, "impulse");
-  auto bell = shelf;
-  bell.mode = Mode::bell;
-  NTFX_ADD_TEST(bell, "dynamic_alternating");
-  NTFX_ADD_TEST(bell, "dynamic_matched");
-  NTFX_ADD_TEST(bell, "impulse");
-  auto bell1    = bell;
-  bell1.dl.t_ms = 0;
-  NTFX_ADD_TEST(bell1, "dynamic_matched");
+  NTFX_ADD_TEST(set, shelf, "dynamic_alternating");
+  NTFX_ADD_TEST(set, shelf, "dynamic_matched");
+  NTFX_ADD_TEST(set, shelf, "impulse");
+  auto bell                  = ntDeEsser();
+  bell.mode                  = Mode::bell;
+  bell.fc_hz                 = 10e3;
+  bell.sc.settings.thresh_db = -6;
+  bell.sc.settings.tRel_ms   = 10;
+  NTFX_ADD_TEST(set, bell, "dynamic_alternating");
+  NTFX_ADD_TEST(set, bell, "dynamic_matched");
+  NTFX_ADD_TEST(set, bell, "impulse");
+  auto bell1                  = ntDeEsser();
+  bell1.mode                  = Mode::bell;
+  bell1.fc_hz                 = 10e3;
+  bell1.sc.settings.thresh_db = -6;
+  bell1.sc.settings.tRel_ms   = 10;
+  bell1.dl.t_ms               = 0;
+  NTFX_ADD_TEST(set, bell1, "dynamic_matched");
   auto scHpf           = ntDeEsser();
   scHpf.mode           = Mode::shelf;
   scHpf.scListenEnable = true;
-  NTFX_ADD_TEST(scHpf, "impulse");
+  NTFX_ADD_TEST(set, scHpf, "impulse");
   auto scBpf           = ntDeEsser();
   scBpf.mode           = Mode::bell;
   scBpf.scListenEnable = true;
-  NTFX_ADD_TEST(scBpf, "impulse");
-  return NTFX_RUN_TESTS();
+  NTFX_ADD_TEST(set, scBpf, "impulse");
+  return set.runAllTests();
 }

@@ -27,7 +27,7 @@
 // the whole thing in headers and swap the signal data type. I perfer using
 // structs so I don't need to consider private/public.
 
-struct gainExample final : public NtFx::NtPlugin {
+struct gainExample final : public NtFx::Plugin {
   // Make some variables.
   signal_t gain_db { 0 };
   signal_t gain_lin { 1 };

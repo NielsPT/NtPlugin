@@ -17,13 +17,6 @@
 
 #pragma once
 
-#include <juce_audio_basics/juce_audio_basics.h>
-#include <juce_audio_devices/juce_audio_devices.h>
-#include <juce_audio_formats/juce_audio_formats.h>
-#include <juce_audio_plugin_client/juce_audio_plugin_client.h>
-#include <juce_audio_processors/juce_audio_processors.h>
-#include <juce_audio_processors_headless/juce_audio_processors_headless.h>
-#include <juce_audio_utils/juce_audio_utils.h>
 #include <juce_core/juce_core.h>
 #include <juce_data_structures/juce_data_structures.h>
 #include <juce_events/juce_events.h>
@@ -39,21 +32,21 @@
 
 namespace NtFx {
 struct ToggleSetBase : public juce::Component, public juce::ChangeBroadcaster {
-  UiSpec& uiSpec;
   std::vector<std::unique_ptr<Toggle>> toggles;
+  UiSpec& _uiSpec;
 
   float uiScale = 1;
-  ToggleSetBase(UiSpec& uiSpec) : uiSpec(uiSpec) { }
-  std::unique_ptr<Toggle> makeToggle(std::string option, int i) {
+  ToggleSetBase(UiSpec& uiSpec) : _uiSpec(uiSpec) { }
+  std::unique_ptr<Toggle> makeToggle(std::string option, size_t i) {
     auto p_toggle = std::make_unique<Toggle>(option, i);
     this->addAndMakeVisible(p_toggle.get());
     p_toggle->setButtonText(option);
     p_toggle->setClickingTogglesState(true);
     p_toggle->setToggleable(true);
-    return std::move(p_toggle);
+    return p_toggle;
   }
 
-  virtual void updateToggleStates(int i) { };
+  virtual void updateToggleStates(size_t) { }
 
   void resized() override { this->updateUi(); }
 
@@ -63,13 +56,13 @@ struct ToggleSetBase : public juce::Component, public juce::ChangeBroadcaster {
     auto h    = area.getHeight();
     auto n    = this->toggles.size();
     if (!w || !h || !n) { return; }
-    float pad = 3 * this->uiScale;
+    int pad = int(3.0f * this->uiScale);
     for (size_t i = 0; i < n; i++) {
       auto p_toggle      = this->toggles[i].get();
-      p_toggle->colour   = uiSpec.foregroundColour;
-      p_toggle->fontSize = this->uiSpec.defaultFontSize * this->uiScale;
-      auto toggleArea =
-          area.removeFromTop(this->uiSpec.radioButtonHeight * this->uiScale);
+      p_toggle->colour   = _uiSpec.foregroundColour;
+      p_toggle->fontSize = this->_uiSpec.defaultFontSize * this->uiScale;
+      auto toggleArea    = area.removeFromTop(
+          int(this->_uiSpec.radioButtonHeight * this->uiScale));
       toggleArea.reduce(pad, pad);
       p_toggle->setBounds(toggleArea);
       this->updateToggleStates(i);
@@ -78,10 +71,10 @@ struct ToggleSetBase : public juce::Component, public juce::ChangeBroadcaster {
   }
 };
 
-struct ToggleSet : public ToggleSetBase {
-  ToggleSetSpec spec;
+struct ToggleSet final : public ToggleSetBase {
+  ToggleSetSpec _spec;
   ToggleSet(ToggleSetSpec spec, UiSpec& uiSpec)
-      : spec(spec), ToggleSetBase(uiSpec) {
+      : ToggleSetBase(uiSpec), _spec(spec) {
     for (size_t i = 0; i < spec.toggles.size(); i++) {
       auto p_toggle     = this->makeToggle(spec.toggles[i].name, i);
       auto pp_toggle    = p_toggle.get();
@@ -93,43 +86,48 @@ struct ToggleSet : public ToggleSetBase {
       toggles.push_back(std::move(p_toggle));
     }
   }
+  ToggleSet(ToggleSet&&)            = delete;
+  ~ToggleSet() final                = default;
+  ToggleSet& operator=(ToggleSet&&) = delete;
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ToggleSet)
 };
 
-struct RadioButtonSet : public ToggleSetBase {
-  RadioButtonSetSpec& spec;
-  static int s_id;
-
+struct RadioButtonSet final : public ToggleSetBase {
+  RadioButtonSetSpec& _spec;
+  static int _s_id;
   RadioButtonSet(RadioButtonSetSpec& spec, UiSpec& uiSpec)
-      : spec(spec), ToggleSetBase(uiSpec) { //}, val(spec._defaultVal) {
+      : ToggleSetBase(uiSpec), _spec(spec) {
     for (size_t i = 0; i < spec.options.size(); i++) {
       auto option   = spec.options[i];
       auto p_toggle = this->makeToggle(option, i);
-      if (!this->spec._id) {
-        this->spec._id = ++s_id;
+      if (!this->_spec._id) {
+        this->_spec._id = ++_s_id;
         p_toggle->setRadioGroupId(
-            this->spec._id, juce::NotificationType::dontSendNotification);
+            this->_spec._id, juce::NotificationType::dontSendNotification);
       }
       auto pp_toggle    = p_toggle.get();
       p_toggle->onClick = [this, pp_toggle]() {
-        if (*this->spec.p_val == pp_toggle->_id) {
+        if (*this->_spec.p_val == pp_toggle->_id) {
           if (!pp_toggle->getToggleState()) {
             pp_toggle->setToggleState(true, juce::sendNotification);
           }
           return;
         }
-        *this->spec.p_val = pp_toggle->_id;
-        DBG("Onclick radiobutton '" << this->spec.name
-                                    << "', group ID: " << this->spec._id
-                                    << " val: " << *this->spec.p_val);
+        *this->_spec.p_val = pp_toggle->_id;
+        DBG("Onclick radiobutton '" << this->_spec.name
+                                    << "', group ID: " << this->_spec._id
+                                    << " val: " << *this->_spec.p_val);
         this->sendChangeMessage();
       };
       this->toggles.push_back(std::move(p_toggle));
     }
   }
+  RadioButtonSet(RadioButtonSet&&)            = delete;
+  ~RadioButtonSet() final                     = default;
+  RadioButtonSet& operator=(RadioButtonSet&&) = delete;
 
-  void updateToggleStates(int i) override {
-    if (*this->spec.p_val != i) {
+  void updateToggleStates(size_t i) override {
+    if (*this->_spec.p_val != int(i)) {
       this->toggles[i]->setToggleState(
           false, juce::NotificationType::sendNotificationSync);
     } else {

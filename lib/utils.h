@@ -16,7 +16,8 @@
  **/
 
 #pragma once
-#include "gcem.hpp"
+#include "lib/gcem.h"
+// #include "gcem.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -112,7 +113,7 @@ static inline T saw(T x) {
  *
  * @return unsigned long
  */
-static inline uint64_t _KISS() noexcept {
+static inline uint64_t KISS() noexcept {
   static uint64_t x = 123456789, y = 362436000, z = 521288629, c = 7654321, t;
   x = 69069 * x + 12345;
   y ^= y << 13;
@@ -132,7 +133,7 @@ static inline uint64_t _KISS() noexcept {
 template <typename T>
 static inline T rand() noexcept {
   const uint64_t uintMax = std::numeric_limits<uint64_t>::max();
-  return T(_KISS() - (uintMax >> 1)) / T(uintMax) * 2 - 1;
+  return T(KISS() - (uintMax >> 1)) / T(uintMax) * 2 - 1;
 }
 
 inline std::string spacesToUnderscores(std::string x) {

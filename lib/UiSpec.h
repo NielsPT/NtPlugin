@@ -23,8 +23,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "gcem.hpp"
 #include "lib/Audio.h"
+#include "lib/gcem.h"
 #include "lib/utils.h"
 #include <cstdint>
 #include <string>
@@ -149,9 +149,6 @@ struct TitleBarSpec {
  *
  */
 struct UiSpec {
-  bool includeMeters { true };              ///< Add meters to the UI.
-  bool includeTitleBar { true };            ///< Add title bar to UI.
-  bool includeSecondaryKnobs { true };      ///< Enable row below the main grid.
   uint32_t foregroundColour { 0xFFFFFFFF }; ///< UI foreground colour in HEX.
   uint32_t backgroundColour { 0xFF000000 }; ///< UI background colour in HEX.
   float pad = { 10 };
@@ -168,13 +165,16 @@ struct UiSpec {
   float secondaryKnobHeight { 115 };  ///< Height of secondary knobs in UI.
   float titleBarHeight { 22 };        ///< Height of title bar in pixels.
   int meterHeight_dots { 12 };        ///< Number of dots in the meteres.
-  int meterWidth { 35 };              ///< Width of each meter in pixels.
-  int meterRefreshRate_hz { 50 };     ///< Refresh rate of meters in the UI.
-  int groupWidth { 200 };
-  int groupEvenColOffset { 40 };
-  int groupKnobWidth { groupWidth / 2 };
-  int groupKnobHeight { 150 };
-  int groupPad { 10 };
+  float meterWidth { 35 };            ///< Width of each meter in pixels.
+  float meterRefreshRate_hz { 50 };   ///< Refresh rate of meters in the UI.
+  float groupWidth { 200 };
+  float groupEvenColOffset { 40 };
+  float groupKnobWidth { groupWidth / 2 };
+  float groupKnobHeight { 150 };
+  float groupPad { 10 };
   int groupSingleColumnLimit { 4 };
+  bool includeMeters { true };         ///< Add meters to the UI.
+  bool includeTitleBar { true };       ///< Add title bar to UI.
+  bool includeSecondaryKnobs { true }; ///< Enable row below the main grid.
 };
 } // namespace NtFx

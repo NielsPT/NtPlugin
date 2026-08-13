@@ -1,10 +1,10 @@
 CompileFlags:
   Add:
     - "-DNTFX_FS=48e3"
-    - "-Ilib/gcem/include"
-    - "-I../../lib/gcem/include"
-    - "-I../.."
+    # - "-Ilib/gcem/include"
+    # - "-I../../lib/gcem/include"
     - -Wimplicit-float-conversion
     # - -Wimplicit-fixed-point-conversion
     - -Wimplicit-int-float-conversion
     - -Wno-missing-field-initializers
+    - -Wno-float-equal

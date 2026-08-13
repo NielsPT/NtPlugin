@@ -3,12 +3,11 @@
 #include "lib/ComponentTest.h"
 #include "lib/SoftClip.h"
 
-NTFX_TEST_BEGIN
-
-NTFX_TEST() {
+int main() {
+  auto set   = NtFx::ComponentTestSet(std::string(testFileBaseName(__FILE__)));
   auto third = NtFx::SoftClip3();
-  NTFX_ADD_TEST(third, "linearSweep");
+  NTFX_ADD_TEST(set, third, "linearSweep");
   auto fifth = NtFx::SoftClip5();
-  NTFX_ADD_TEST(fifth, "linearSweep");
-  return NTFX_RUN_TESTS();
+  NTFX_ADD_TEST(set, fifth, "linearSweep");
+  return set.runAllTests();
 }

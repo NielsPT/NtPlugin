@@ -21,7 +21,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "gcem.hpp"
+#include "lib/gcem.h"
 #include "lib/utils.h"
 #include <cstddef>
 #include <type_traits>
@@ -35,8 +35,13 @@ struct Mono {
   signal_t l { 0 };
   Mono() : l(0) { }
   Mono(signal_t v) : l(v) { }
-  Mono(signal_t l, signal_t r) : l((l + r) / 2) { }
+  Mono(signal_t _l, signal_t _r) : l((_l + _r) / 2) { }
   Mono(Stereo<signal_t> x) : l(x.l, x.r) { }
+
+  Mono(Mono&&) noexcept            = default;
+  Mono(Mono&) noexcept             = default;
+  ~Mono()                          = default;
+  Mono& operator=(Mono&&) noexcept = default;
   Mono<signal_t>& operator=(const Mono<signal_t>& x) noexcept {
     this->l = x.l;
     return *this;
@@ -226,6 +231,7 @@ static inline void ensureFinite(
  */
 template <typename signal_t>
 struct Stereo {
+
   signal_t l { 0 };
   signal_t r { 0 };
   Stereo() : l(0.0f), r(0.0f) {
@@ -233,13 +239,19 @@ struct Stereo {
         std::is_floating_point_v<signal_t>, "Type must be floating point.");
   }
   Stereo(signal_t x) : l(x), r(x) { }
-  Stereo(signal_t l, signal_t r) : l(l), r(r) { }
-  Stereo(Mono<signal_t> l, Mono<signal_t> r) : l(l.l), r(r.l) { }
+  Stereo(signal_t _l, signal_t _r) : l(_l), r(_r) { }
+  Stereo(Mono<signal_t> _l, Mono<signal_t> _r) : l(_l.l), r(_r.l) { }
+  Stereo(Stereo&& x) noexcept : l(x.l), r(x.r) { }
+  Stereo(Stereo& x) noexcept : l(x.l), r(x.r) { }
+  Stereo(const Stereo& x) noexcept : l(x.l), r(x.r) { }
+  ~Stereo()                            = default;
+  Stereo& operator=(Stereo&&) noexcept = default;
   Stereo<signal_t>& operator=(const Stereo<signal_t>& x) noexcept {
     this->l = x.l;
     this->r = x.r;
     return *this;
   }
+
   Stereo<signal_t>& operator=(const signal_t& x) noexcept {
     this->l = x;
     this->r = x;

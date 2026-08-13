@@ -39,7 +39,7 @@ constexpr std::array<std::string, Bands::n> bandNames = {
   "High", "Mid", "Low"
 };
 
-struct ntMultiband3 final : public NtFx::NtPlugin {
+struct ntMultiband3 final : public NtFx::Plugin {
   signal_t xOverLo_hz { 200 };
   signal_t xOverHi_hz { 4000 };
   signal_t ouputGain_db { 0 };
@@ -55,7 +55,7 @@ struct ntMultiband3 final : public NtFx::NtPlugin {
   std::array<bool, Bands::n> compDisables = { false, false, false };
 
   std::array<NtFx::Comp::ScSettings, Bands::n> scSettings;
-  std::array<NtFx::Comp::PeakSideChainLinear, Bands::n> sc;
+  std::array<NtFx::Comp::PeakSideChainLin, Bands::n> sc;
   std::array<signal_t, Bands::n> makeup_db { 0, 0, 0 };
   std::array<signal_t, Bands::n> makeup_lin { 1, 1, 1 };
   std::array<Audio, Bands::n> fbState { 0, 0, 0 };
@@ -63,7 +63,7 @@ struct ntMultiband3 final : public NtFx::NtPlugin {
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> loMidFlt;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> hiMidFlt;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> hiFlt;
-  ntMultiband3() : sc { scSettings[0], scSettings[1], scSettings[2] } {
+  ntMultiband3() {
     this->uiSpec.maxColumns = 5;
     this->uiSpec.maxRows    = Bands::n;
 

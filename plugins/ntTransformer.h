@@ -26,7 +26,7 @@
 #include "lib/Transformer.h"
 #include "lib/utils.h"
 
-struct ntTransformer final : public NtFx::NtPlugin {
+struct ntTransformer final : public NtFx::Plugin {
   NtFx::Biquad::EqBand bqHpf0;
   NtFx::Transformer transformer;
   signal_t drive_db  = -10;

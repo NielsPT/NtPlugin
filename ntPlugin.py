@@ -203,9 +203,9 @@ NTFX_TEST_BEGIN
 NTFX_TEST() {{
   auto bypass = {name}();
   bypass.bypassEnable = true;
-  NTFX_ADD_TEST(bypass, "impulse");
+  NTFX_ADD_TEST(set, bypass, "impulse");
   auto defaults = {name}();
-  NTFX_ADD_TEST(defaults, "impulse");
+  NTFX_ADD_TEST(set, defaults, "impulse");
   return NTFX_RUN_TESTS();
 }}
 """

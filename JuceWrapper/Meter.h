@@ -17,19 +17,12 @@
 
 #pragma once
 
-#include "gcem.hpp"
 #include "lib/Audio.h"
 #include "lib/PeakSensor.h"
 #include "lib/UiSpec.h"
+#include "lib/gcem.h"
 #include "lib/utils.h"
 
-#include <juce_audio_basics/juce_audio_basics.h>
-#include <juce_audio_devices/juce_audio_devices.h>
-#include <juce_audio_formats/juce_audio_formats.h>
-#include <juce_audio_plugin_client/juce_audio_plugin_client.h>
-#include <juce_audio_processors/juce_audio_processors.h>
-#include <juce_audio_processors_headless/juce_audio_processors_headless.h>
-#include <juce_audio_utils/juce_audio_utils.h>
 #include <juce_core/juce_core.h>
 #include <juce_core/system/juce_PlatformDefs.h>
 #include <juce_data_structures/juce_data_structures.h>
@@ -50,11 +43,11 @@ struct Meter final : public juce::Component {
   MeterSpec& meterSpec;
   UiSpec& uiSpec;
   std::string label { "" };
-  int pad { 10 };
-  int dotDiameter { 0 };
-  int dotDist { 0 };
+  float pad { 10 };
+  float dotDiameter { 0 };
+  float dotDist { 0 };
   int nDots { 14 };
-  float nActiveDotsPeak { 0 };
+  int nActiveDotsPeak { 0 };
   float fractPeak { 0 };
   int nActiveDotsRms { 0 };
   float peakVal_lin { 0 };
@@ -74,7 +67,11 @@ struct Meter final : public juce::Component {
     this->updateRelease(48000);
     this->refresh();
   }
-  ~Meter() override = default;
+  ~Meter() override         = default;
+  Meter(Meter&&)            = delete;
+  Meter(Meter&)             = delete;
+  Meter& operator=(Meter&&) = delete;
+  Meter& operator=(Meter&)  = delete;
 
   void paint(juce::Graphics& g) override {
     if (this->getWidth() <= 0) { return; }
@@ -82,55 +79,55 @@ struct Meter final : public juce::Component {
     g.setFont(this->fontSize);
     g.drawText(this->label,
         0,
-        this->pad,
+        int(this->pad),
         this->getWidth(),
         int(this->fontSize),
         juce::Justification::centred);
     for (int i = 0; i < this->nDots; i++) {
-      int y = this->pad + (i + 1) * this->dotDist;
+      auto y = float(this->pad + (float(i) + 1.0f) * this->dotDist);
       g.setColour(juce::Colour(this->uiSpec.foregroundColour));
       g.drawEllipse(this->pad, y, this->dotDiameter, this->dotDiameter, 1);
-      float fillPad      = this->getWidth() * 4.0 / 35.0;
-      float fillDiameter = this->dotDiameter - fillPad;
+      auto fillPad      = float(this->getWidth()) * 4.0f / 35.0f;
+      auto fillDiameter = this->dotDiameter - fillPad;
       if (fillDiameter < 0) { return; }
-      float fillX = this->pad + fillPad / 2;
-      float fillY = y + fillPad / 2;
+      auto fillX = this->pad + fillPad / 2;
+      auto fillY = y + fillPad / 2;
 
       // Filled regular dots.
       if ((!this->meterSpec.invert && i >= this->nActiveDotsPeak)
-          || (this->meterSpec.invert && i <= this->nActiveDotsPeak - 1)
-              && this->nActiveDotsPeak != 0) {
-        uint8_t opacity = 255.0f * this->opacity;
-        g.setColour(juce::Colour(
-            this->uiSpec.foregroundColour & 0x00FFFFFF | (opacity << 24u)));
+          || ((this->meterSpec.invert && i <= this->nActiveDotsPeak - 1)
+              && this->nActiveDotsPeak != 0)) {
+        auto _opacity = uint8_t(255.0f * this->opacity);
+        g.setColour(juce::Colour((this->uiSpec.foregroundColour & 0x00FFFFFF)
+            | uint32_t(_opacity << 24u)));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
 
       // Fractional.
       if (this->meterSpec.invert && i == this->nActiveDotsPeak
           && this->nActiveDotsPeak != 0) {
-        uint8_t opacity = 255.0f * (1 - this->fractPeak);
-        g.setColour(juce::Colour(
-            this->uiSpec.foregroundColour & 0x00FFFFFF | (opacity << 24)));
+        auto _opacity = uint8_t(255.0f * this->fractPeak);
+        g.setColour(juce::Colour((this->uiSpec.foregroundColour & 0x00FFFFFF)
+            | uint32_t(_opacity << 24)));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
       if (!this->meterSpec.invert && i == this->nActiveDotsPeak - 1) {
-        uint8_t opacity = 255.0f * this->fractPeak;
-        g.setColour(juce::Colour(
-            this->uiSpec.foregroundColour & 0x00FFFFFF | (opacity << 24)));
+        auto _opacity = uint8_t(255.0f * this->fractPeak);
+        g.setColour(juce::Colour((this->uiSpec.foregroundColour & 0x00FFFFFF)
+            | uint32_t(_opacity << 24)));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
 
       // RMS overlay.
       if (!this->meterSpec.invert && i >= this->nActiveDotsRms) {
-        uint8_t opacity = 255.0f * this->opacity;
-        g.setColour(juce::Colour(
-            this->uiSpec.foregroundColour & 0x00FFFFFF | (opacity << 24)));
+        auto _opacity = uint8_t(255.0f * this->opacity);
+        g.setColour(juce::Colour((this->uiSpec.foregroundColour & 0x00FFFFFF)
+            | uint32_t(_opacity << 24)));
         g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
       }
 
       // Peak hold ring.
-      if (i == this->iHoldDot && this->meterSpec.hold_s
+      if (i == this->iHoldDot && (this->meterSpec.hold_s != 0.0f)
           && !(this->meterSpec.invert && i == 0)) {
         g.setColour(juce::Colour(
             this->uiSpec.foregroundColour)); // & 0x00FFFFFF | 0x8F000000));
@@ -148,7 +145,7 @@ struct Meter final : public juce::Component {
   }
 
   void refresh(bool repaint = true) {
-    float ySens;
+    float ySens { 0 };
     ensureFinite(this->peakVal_lin);
     if (this->meterSpec.invert) {
       ySens = 1.0f - peakSensor.process(1.0f - this->peakVal_lin);
@@ -173,14 +170,15 @@ struct Meter final : public juce::Component {
     this->nActiveDotsPeak = this->calcActiveDots(peak_db);
     this->nActiveDotsRms  = this->calcActiveDots(rms_db);
     this->refreshPeakHold(peak_db);
-    this->fractPeak = gcem::abs(peak_db + this->nActiveDotsPeak * this->dbPrDot)
+    this->fractPeak =
+        gcem::abs(peak_db + float(this->nActiveDotsPeak) * this->dbPrDot)
         / this->dbPrDot;
     jassert(this->fractPeak <= 1 && this->fractPeak >= 0);
 
-    auto w = this->getWidth();
-    if (!repaint || !w) { w = this->uiSpec.meterWidth; }
-    this->pad         = w * 10.0 / this->uiSpec.meterWidth;
-    this->dotDiameter = w * 15.0 / this->uiSpec.meterWidth;
+    auto w = float(this->getWidth());
+    if (!repaint || w != 0.0f) { w = this->uiSpec.meterWidth; }
+    this->pad         = w * 10.0f / this->uiSpec.meterWidth;
+    this->dotDiameter = w * 15.0f / this->uiSpec.meterWidth;
     this->dotDist     = this->pad + this->dotDiameter;
     if (repaint) { this->repaint(); }
   }
@@ -230,10 +228,11 @@ struct MeterScale : public juce::Component {
     auto offset = this->meter.pad + this->meter.dotDist;
     g.setColour(juce::Colour(meter.uiSpec.foregroundColour));
     g.setFont(this->meter.fontSize);
-    for (size_t i = 0; i < this->meter.nDots; i++) {
-      auto y = i * this->meter.dotDist + offset;
-      auto t = "- " + std::to_string(static_cast<int>(this->meter.dbPrDot * i));
-      g.drawText(t, 0, y, 1000, 10, juce::Justification::left, false);
+    for (size_t i = 0; i < size_t(this->meter.nDots); i++) {
+      auto y = float(i) * this->meter.dotDist + offset;
+      auto t = "- "
+          + std::to_string(static_cast<int>(this->meter.dbPrDot * float(i)));
+      g.drawText(t, 0, int(y), 1000, 10, juce::Justification::left, false);
     }
   }
   void resized() override {
@@ -247,7 +246,7 @@ struct StereoMeter : public juce::Component {
   Meter r;
   UiSpec& spec;
   juce::Label label;
-  int fontSize { 0 };
+  float fontSize { 0 };
   float uiScale { 1 };
   bool hasScale { false };
   bool onlyShowLeft { false };
@@ -275,11 +274,11 @@ struct StereoMeter : public juce::Component {
       return;
     }
     auto labelArea =
-        area.removeFromTop(this->l.uiSpec.labelHeight * this->uiScale);
+        area.removeFromTop(int(this->l.uiSpec.labelHeight * this->uiScale));
     this->label.setFont(juce::FontOptions(this->fontSize));
     this->label.setBounds(labelArea);
     this->label.setJustificationType(juce::Justification::centredBottom);
-    auto lArea = area.removeFromLeft(area.getWidth() / 2.0);
+    auto lArea = area.removeFromLeft(area.getWidth() / 2);
     this->l.setBounds(lArea);
     this->r.setBounds(area);
   }
@@ -297,7 +296,7 @@ struct MeterGroup : public juce::Component {
     this->updateUi();
     this->repaint();
   }
-  virtual void setFontSize(int size) {
+  virtual void setFontSize(float size) {
     for (auto& m : this->meters) { m->fontSize = size; }
   }
   MeterGroup(UiSpec& uiSpec, std::vector<MeterSpec>& meterSpecs) {
@@ -348,14 +347,16 @@ struct MeterGroup : public juce::Component {
   float getMinimalWidth() const noexcept {
     if (!this->meters.size()) { return 0; }
     return this->meters[0]->l.uiSpec.meterWidth
-        * (int(this->meters.size()) * this->nChs + int(this->scales.size()));
+        * (float(this->meters.size()) * float(this->nChs)
+            + float(this->scales.size()));
   }
   float getMinimalHeight() const noexcept {
     if (!this->meters.size()) { return 0; }
     auto& m = this->meters[0]->l;
     m.refresh(false);
-    return (m.uiSpec.labelHeight) * this->nChs + (m.nDots + 2) * m.dotDist
-        + m.pad;
+    return (m.uiSpec.labelHeight) * float(this->nChs)
+        + float(m.nDots + 2) * float(m.dotDist) + float(m.pad);
+    // TODO: Or make these float as well like uiSpec.
   }
 };
 } // namespace NtFx

@@ -1,5 +1,25 @@
 #pragma once
 
+/*
+ * Copyright (C) 2026 Niels Thøgersen, NTlyd
+ *
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * You are free to download, build and use this code for commercial
+ * purposes. Just don't resell it or a build of it, modified or otherwise.
+ **/
+
 #include "lib/Audio.h"
 #include "lib/Biquad.h"
 #include "lib/Comp.h"
@@ -14,10 +34,9 @@ constexpr std::array<std::string, Bands::n> bandNames {
   "Low", "Low Mid", "High Mid", "High"
 };
 
-struct ntDynamicEq final : public NtFx::NtPlugin {
+struct ntDynamicEq final : public NtFx::Plugin {
   std::array<NtFx::Biquad::EqBand, Bands::n> bands;
-  std::array<NtFx::Comp::ScSettings, Bands::n> scSettings;
-  std::array<NtFx::Comp::PeakSideChainLinear, Bands::n> scs;
+  std::array<NtFx::Comp::PeakSideChainLin, Bands::n> scs;
   std::array<signal_t, Bands::n> gain_lin;
   std::array<bool, Bands::n> solos = { false, false, false, false };
   std::array<bool, Bands::n> mutes = { false, false, false, false };
@@ -27,13 +46,7 @@ struct ntDynamicEq final : public NtFx::NtPlugin {
   bool bypassEnable { false };
   bool soloAny { false };
 
-  ntDynamicEq()
-      : scs({
-            scSettings[0],
-            scSettings[1],
-            scSettings[2],
-            scSettings[3],
-        }) {
+  ntDynamicEq() {
     for (size_t i = 0; i < Bands::n; i++) {
       this->knobGroups.push_back({ .name = bandNames[i] });
     }
@@ -61,21 +74,21 @@ struct ntDynamicEq final : public NtFx::NtPlugin {
           .midPoint = 1,
       });
       this->knobGroups[i].primaryKnobs.push_back({
-          .p_val  = &this->scSettings[i].thresh_db,
+          .p_val  = &this->scs[i].settings.thresh_db,
           .name   = "Thresh",
           .suffix = " dB",
           .minVal = -60,
           .maxVal = 0,
       });
       this->knobGroups[i].primaryKnobs.push_back({
-          .p_val    = &this->scSettings[i].ratio,
+          .p_val    = &this->scs[i].settings.ratio,
           .name     = "Ratio",
           .minVal   = 1,
           .maxVal   = 20,
           .midPoint = 2,
       });
       this->knobGroups[i].primaryKnobs.push_back({
-          .p_val    = &this->scSettings[i].tAtt_ms,
+          .p_val    = &this->scs[i].settings.tAtt_ms,
           .name     = "Attack",
           .suffix   = " ms",
           .minVal   = 0.01,
@@ -84,7 +97,7 @@ struct ntDynamicEq final : public NtFx::NtPlugin {
           .isActive = false,
       });
       this->knobGroups[i].primaryKnobs.push_back({
-          .p_val    = &this->scSettings[i].tRel_ms,
+          .p_val    = &this->scs[i].settings.tRel_ms,
           .name     = "Release",
           .suffix   = " ms",
           .minVal   = 10.0,
@@ -131,7 +144,7 @@ struct ntDynamicEq final : public NtFx::NtPlugin {
     };
     for (size_t i = 0; i < Bands::n; i++) {
       this->meters.push_back({
-          .name   = this->bandNames[i],
+          .name   = bandNames[i],
           .invert = true,
       });
     }
@@ -157,9 +170,9 @@ struct ntDynamicEq final : public NtFx::NtPlugin {
     if (!this->soloAny) { acc = x; }
     std::array<Audio, Bands::n> gr { 1, 1, 1, 1 };
     for (size_t i = 0; i < Bands::n; i++) {
-      auto yFlt = this->bands[i].process(x);
       if (this->mutes[i]) { continue; }
-      gr[i] = this->scs[i].process(yFlt);
+      auto yFlt = this->bands[i].process(x);
+      gr[i]     = this->scs[i].process(yFlt);
       acc += yFlt * !(this->soloAny ^ this->solos[i])
           * (gr[i] * this->gain_lin[i] - 1);
     }
@@ -183,8 +196,8 @@ struct ntDynamicEq final : public NtFx::NtPlugin {
       this->gain_lin[i] = NtFx::invDb(this->bands[i].settings.gain_db);
       if (this->attRelMode == relative) {
         auto tau = signal_t(1) / this->bands[i].settings.fc_hz;
-        this->scSettings[i].tAtt_ms                  = tau * this->attScale;
-        this->scSettings[i].tRel_ms                  = tau * this->relScale;
+        this->scs[i].settings.tAtt_ms                = tau * this->attScale;
+        this->scs[i].settings.tRel_ms                = tau * this->relScale;
         this->knobGroups[i].primaryKnobs[5].isActive = false;
         this->knobGroups[i].primaryKnobs[6].isActive = false;
       } else {

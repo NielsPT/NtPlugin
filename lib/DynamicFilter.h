@@ -24,10 +24,10 @@
  * purposes. Just don't resell it or a build of it, modified or otherwise.
  */
 
-#include "gcem.hpp"
 #include "lib/Audio.h"
 #include "lib/Biquad.h"
 #include "lib/Component.h"
+#include "lib/gcem.h"
 
 namespace NtFx {
 namespace DynamicFilter {

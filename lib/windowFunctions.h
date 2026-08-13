@@ -22,7 +22,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "gcem.hpp"
+#include "lib/gcem.h"
 #include <cassert>
 #include <cmath>
 #include <complex>

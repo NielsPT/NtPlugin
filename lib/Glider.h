@@ -21,8 +21,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "gcem.hpp"
 #include "lib/Audio.h"
+#include "lib/gcem.h"
 
 /**
  * @brief An exponential glider. Member value 'ui' is set from the UI side of

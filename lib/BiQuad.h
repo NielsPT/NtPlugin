@@ -20,7 +20,7 @@
 #include "lib/Audio.h"
 #include "lib/Component.h"
 
-#include "gcem.hpp"
+#include "lib/gcem.h"
 #include <array>
 
 namespace NtFx {
@@ -95,117 +95,125 @@ namespace Biquad {
 
   static inline Coeffs6 calcCoeffsBell(
       signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
-    auto w0    = 2.0 * GCEM_PI * fc_hz / fs;
+    double w0  = 2.0 * GCEM_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
     Coeffs6 c;
-    c.b[0] = 1.0 + alpha * a;
-    c.b[1] = -2.0 * cosW0;
-    c.b[2] = 1.0 - alpha * a;
-    c.a[0] = 1.0 + alpha / a;
-    c.a[1] = -2.0 * cosW0;
-    c.a[2] = 1.0 - alpha / a;
+    c.b[0] = signal_t(1.0 + alpha * a);
+    c.b[1] = signal_t(-2.0 * cosW0);
+    c.b[2] = signal_t(1.0 - alpha * a);
+    c.a[0] = signal_t(1.0 + alpha / a);
+    c.a[1] = signal_t(-2.0 * cosW0);
+    c.a[2] = signal_t(1.0 - alpha / a);
     return c;
   }
 
   static inline Coeffs6 calcCoeffsLoShelf(
       signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
-    auto w0    = 2.0 * GCEM_PI * fc_hz / fs;
+    double w0  = 2.0 * GCEM_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (signal_t(2.0) * q);
     Coeffs6 c;
-    c.b[0] = a * ((a + 1.0) - (a - 1.0) * cosW0 + 2.0 * gcem::sqrt(a) * alpha);
-    c.b[1] = 2.0 * a * ((a - 1.0) - (a + 1.0) * cosW0);
-    c.b[2] = a * ((a + 1.0) - (a - 1.0) * cosW0 - 2.0 * gcem::sqrt(a) * alpha);
-    c.a[0] = (a + 1.0) + (a - 1.0) * cosW0 + 2.0 * gcem::sqrt(a) * alpha;
-    c.a[1] = -2.0 * ((a - 1.0) + (a + 1.0) * cosW0);
-    c.a[2] = (a + 1.0) + (a - 1.0) * cosW0 - 2.0 * gcem::sqrt(a) * alpha;
+    c.b[0] = signal_t(
+        a * ((a + 1.0) - (a - 1.0) * cosW0 + 2.0 * gcem::sqrt(a) * alpha));
+    c.b[1] = signal_t(2.0 * a * ((a - 1.0) - (a + 1.0) * cosW0));
+    c.b[2] = signal_t(
+        a * ((a + 1.0) - (a - 1.0) * cosW0 - 2.0 * gcem::sqrt(a) * alpha));
+    c.a[0] =
+        signal_t((a + 1.0) + (a - 1.0) * cosW0 + 2.0 * gcem::sqrt(a) * alpha);
+    c.a[1] = signal_t(-2.0 * ((a - 1.0) + (a + 1.0) * cosW0));
+    c.a[2] =
+        signal_t((a + 1.0) + (a - 1.0) * cosW0 - 2.0 * gcem::sqrt(a) * alpha);
     return c;
   }
 
   static inline Coeffs6 calcCoeffsHiShelf(
       signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
-    auto w0    = 2.0 * GCEM_PI * fc_hz / fs;
+    double w0  = 2.0 * GCEM_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
     Coeffs6 c;
-    c.b[0] = a * ((a + 1.0) + (a - 1.0) * cosW0 + 2.0 * gcem::sqrt(a) * alpha);
-    c.b[1] = -2.0 * a * ((a - 1.0) + (a + 1.0) * cosW0);
-    c.b[2] = a * ((a + 1.0) + (a - 1.0) * cosW0 - 2.0 * gcem::sqrt(a) * alpha);
-    c.a[0] = (a + 1.0) - (a - 1.0) * cosW0 + 2.0 * gcem::sqrt(a) * alpha;
-    c.a[1] = 2.0 * ((a - 1.0) - (a + 1.0) * cosW0);
-    c.a[2] = (a + 1.0) - (a - 1.0) * cosW0 - 2.0 * gcem::sqrt(a) * alpha;
+    c.b[0] = signal_t(
+        a * ((a + 1.0) + (a - 1.0) * cosW0 + 2.0 * gcem::sqrt(a) * alpha));
+    c.b[1] = signal_t(-2.0 * a * ((a - 1.0) + (a + 1.0) * cosW0));
+    c.b[2] = signal_t(
+        a * ((a + 1.0) + (a - 1.0) * cosW0 - 2.0 * gcem::sqrt(a) * alpha));
+    c.a[0] =
+        signal_t((a + 1.0) - (a - 1.0) * cosW0 + 2.0 * gcem::sqrt(a) * alpha);
+    c.a[1] = signal_t(2.0 * ((a - 1.0) - (a + 1.0) * cosW0));
+    c.a[2] =
+        signal_t((a + 1.0) - (a - 1.0) * cosW0 - 2.0 * gcem::sqrt(a) * alpha);
     return c;
   }
 
   static inline Coeffs6 calcCoeffsHpf(signal_t fs, signal_t fc_hz, signal_t q) {
-    auto w0    = 2.0 * GCEM_PI * fc_hz / fs;
+    double w0  = 2.0 * GCEM_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
     Coeffs6 c;
-    c.b[0] = (1.0 + cosW0) / 2;
-    c.b[1] = -(1.0 + cosW0);
-    c.b[2] = (1.0 + cosW0) / 2;
-    c.a[0] = 1.0 + alpha;
-    c.a[1] = -2.0 * cosW0;
-    c.a[2] = 1.0 - alpha;
+    c.b[0] = signal_t((1.0 + cosW0) / 2);
+    c.b[1] = signal_t(-(1.0 + cosW0));
+    c.b[2] = signal_t((1.0 + cosW0) / 2);
+    c.a[0] = signal_t(1.0 + alpha);
+    c.a[1] = signal_t(-2.0 * cosW0);
+    c.a[2] = signal_t(1.0 - alpha);
     return c;
   }
 
   static inline Coeffs6 calcCoeffsLpf(signal_t fs, signal_t fc_hz, signal_t q) {
-    auto w0    = 2.0 * GCEM_PI * fc_hz / fs;
+    double w0  = 2.0 * GCEM_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
     Coeffs6 c;
-    c.b[0] = (1.0 - cosW0) / 2;
-    c.b[1] = 1.0 - cosW0;
-    c.b[2] = (1.0 - cosW0) / 2;
-    c.a[0] = 1.0 + alpha;
-    c.a[1] = -2.0 * cosW0;
-    c.a[2] = 1.0 - alpha;
+    c.b[0] = signal_t((1.0 - cosW0) / 2);
+    c.b[1] = signal_t(1.0 - cosW0);
+    c.b[2] = signal_t((1.0 - cosW0) / 2);
+    c.a[0] = signal_t(1.0 + alpha);
+    c.a[1] = signal_t(-2.0 * cosW0);
+    c.a[2] = signal_t(1.0 - alpha);
     return c;
   }
 
   static inline Coeffs6 calcCoeffsApf(signal_t fs, signal_t fc_hz, signal_t q) {
-    auto w0    = 2.0 * GCEM_PI * fc_hz / fs;
+    double w0  = 2.0 * GCEM_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
     Coeffs6 c;
-    c.b[0] = 1.0 - alpha;
-    c.b[1] = -2.0 * cosW0;
-    c.b[2] = 1.0 + alpha;
-    c.a[0] = 1.0 + alpha;
-    c.a[1] = -2.0 * cosW0;
-    c.a[2] = 1.0 - alpha;
+    c.b[0] = signal_t(1.0 - alpha);
+    c.b[1] = signal_t(-2.0 * cosW0);
+    c.b[2] = signal_t(1.0 + alpha);
+    c.a[0] = signal_t(1.0 + alpha);
+    c.a[1] = signal_t(-2.0 * cosW0);
+    c.a[2] = signal_t(1.0 - alpha);
     return c;
   }
 
   static inline Coeffs6 calcCoeffsBpf(signal_t fs, signal_t fc_hz, signal_t q) {
-    auto w0    = 2.0 * GCEM_PI * fc_hz / fs;
+    double w0  = 2.0 * GCEM_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
     Coeffs6 c;
-    c.b[0] = alpha;
-    c.b[1] = 0;
-    c.b[2] = -alpha;
-    c.a[0] = 1.0 + alpha;
-    c.a[1] = -2.0 * cosW0;
-    c.a[2] = 1.0 - alpha;
+    c.b[0] = signal_t(alpha);
+    c.b[1] = signal_t(0);
+    c.b[2] = signal_t(-alpha);
+    c.a[0] = signal_t(1.0 + alpha);
+    c.a[1] = signal_t(-2.0 * cosW0);
+    c.a[2] = signal_t(1.0 - alpha);
     return c;
   }
 
   static inline Coeffs6 calcCoeffsNotch(
       signal_t fs, signal_t fc_hz, signal_t q) {
-    auto w0    = 2.0 * GCEM_PI * fc_hz / fs;
+    double w0  = 2.0 * GCEM_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
     Coeffs6 c;
-    c.b[0] = 1.0;
-    c.b[1] = -2.0 * cosW0;
-    c.b[2] = 1.0;
-    c.a[0] = 1.0 + alpha;
-    c.a[1] = -2.0 * cosW0;
-    c.a[2] = 1.0 - alpha;
+    c.b[0] = signal_t(1.0);
+    c.b[1] = signal_t(-2.0 * cosW0);
+    c.b[2] = signal_t(1.0);
+    c.a[0] = signal_t(1.0 + alpha);
+    c.a[1] = signal_t(-2.0 * cosW0);
+    c.a[2] = signal_t(1.0 - alpha);
     return c;
   }
 
@@ -266,7 +274,7 @@ namespace Biquad {
         fs,
         settings.fc_hz,
         settings.q,
-        gcem::pow(10.0, (settings.gain_db / 40.0)));
+        signal_t(gcem::pow(10.0, (settings.gain_db / 40.0))));
   }
 
   static inline Coeffs6 calcCoeffs6(const Settings& settings, signal_t fs) {
@@ -274,7 +282,7 @@ namespace Biquad {
         fs,
         settings.fc_hz,
         settings.q,
-        gcem::pow(10, (settings.gain_db / 40)));
+        signal_t(gcem::pow(10.0, (settings.gain_db / 40.0))));
   }
 
   struct Biquad6 {

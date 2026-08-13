@@ -236,6 +236,10 @@ def _runTestProg() -> int:
     )
     if res.returncode < 0:
         print(f"{RED}Return code: {res.returncode}.{BLACK}")
+    if res.returncode == -1:
+        print(f"{RED}PROCESS HUNG UP.{BLACK}")
+    if res.returncode == -11:
+        print(f"{RED}SEGMENTATION FAULT.{BLACK}")
     return res.returncode
 
 
@@ -630,7 +634,7 @@ def _readAndPlotTestResults(testFileName: str, fs: float):
                 continue
             expectedFiles += [info[0] + SEPARATOR + info[1]]
     results, legends = _parseFiles(resultFiles, expectedFiles)
-    if np.any(np.isnan(np.concatenate(results["impulse"]))):
+    if "impulse" in results and results["impulse"] and np.any(np.isnan(np.concatenate(results["impulse"]))):
         print(f"{RED}NaN is impulse.{BLACK}")
     _plotResults(results, legends, testFileName, fs)
 
@@ -705,6 +709,8 @@ def runTests(path: str, fs: float) -> bool:
     if not _buildTestProg(path):
         return False
     returncode = _runTestProg()
+    if returncode < 0:
+        return False
     _readAndPlotTestResults(testFileName, fs)
     return returncode == 0
 
@@ -766,6 +772,7 @@ def run(args: dict):
         if not os.path.exists(file):
             print(f"File '{file}' not found. Skipping test.")
             continue
+        # TODO: Abort on segfault.
         success &= runTests(file, args["fs"])
         print()
     results = _readAggregateResults()

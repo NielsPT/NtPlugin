@@ -22,9 +22,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "gcem.hpp"
 #include "lib/Audio.h"
 #include "lib/Component.h"
+#include "lib/gcem.h"
 #include "lib/utils.h"
 #include <array>
 #include <cstddef>
