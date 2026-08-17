@@ -161,6 +161,7 @@ struct ntDeEsser final : public NtFx::Plugin {
     this->shelf.reset(fs);
     this->scBpf.reset(fs);
     this->bpf.reset(fs);
+    this->dl.reset(fs);
     this->_fs = fs;
     this->update();
   }
