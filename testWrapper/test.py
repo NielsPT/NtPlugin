@@ -375,7 +375,6 @@ def plotFrequencyDomain(
     if ylim:
         _ylim = ylim
     else:
-        print(f"{filename}:{float(x.max())=}")
         if x.min() > -60:
             _ylim[0] = x.min() * 1.1
         if x.max() > 10:

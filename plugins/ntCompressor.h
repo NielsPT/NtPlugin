@@ -241,9 +241,9 @@ struct ntCompressor final : public NtFx::Plugin {
     this->rmsScDb.settings   = this->scSettings;
     this->rmsScLin.settings  = this->scSettings;
     if (this->rmsEnable) {
-      this->activateParameter("RMS");
+      this->activateParameter("RMS Time");
     } else {
-      this->deactivateParameter("RMS");
+      this->deactivateParameter("RMS Time");
     }
     this->hpf.update();
     this->boost.update();
