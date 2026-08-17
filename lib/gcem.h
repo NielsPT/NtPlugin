@@ -429,26 +429,6 @@ namespace internal {
 
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /*
  * compile-time check if a float is NaN-valued
  */
@@ -484,26 +464,6 @@ namespace internal {
 
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /*
  * compile-time check if a float is not NaN-valued or +/-Inf
  */
@@ -537,26 +497,6 @@ namespace internal {
 
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /**
  * Compile-time absolute value function
  *
@@ -572,26 +512,6 @@ constexpr T abs(const T x) noexcept {
           x < T(0) ? -x
                    : x);
 }
-
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
 
 namespace internal {
 
@@ -633,26 +553,6 @@ constexpr return_t<T> ceil(const T x) noexcept {
   return internal::ceil_check(static_cast<return_t<T>>(x));
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 namespace internal {
 
   template <typename T>
@@ -693,26 +593,6 @@ constexpr return_t<T> floor(const T x) noexcept {
   return internal::floor_check(static_cast<return_t<T>>(x));
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 namespace internal {
 
   template <typename T>
@@ -749,26 +629,6 @@ constexpr return_t<T> trunc(const T x) noexcept {
   return internal::trunc_check(static_cast<return_t<T>>(x));
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /*
  * compile-time check if integer is odd
  */
@@ -782,26 +642,6 @@ namespace internal {
 
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /*
  * compile-time check if integer is even
  */
@@ -811,26 +651,6 @@ namespace internal {
   constexpr bool is_even(const llint_t x) noexcept { return !is_odd(x); }
 
 }
-
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
 
 /**
  * Compile-time pairwise maximum function
@@ -846,26 +666,6 @@ constexpr common_t<T1, T2> max(const T1 x, const T2 y) noexcept {
   return (y < x ? x : y);
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /**
  * Compile-time pairwise minimum function
  *
@@ -879,26 +679,6 @@ template <typename T1, typename T2>
 constexpr common_t<T1, T2> min(const T1 x, const T2 y) noexcept {
   return (y > x ? x : y);
 }
-
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
 
 /*
  * compile-time square-root function
@@ -948,26 +728,6 @@ constexpr return_t<T> sqrt(const T x) noexcept {
   return internal::sqrt_check(static_cast<return_t<T>>(x), return_t<T>(1));
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /**
  * Compile-time sign bit detection function
  *
@@ -981,27 +741,8 @@ constexpr bool signbit(const T x) noexcept {
   return ((x == T(0)) ? (_fpclass(x) == _FPCLASS_NZ) : (x < T(0)));
 #else
   return GCEM_SIGNBIT(x);
+#endif
 }
-
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
 
 /**
  * Compile-time copy sign function
@@ -1015,26 +756,6 @@ template <typename T1, typename T2>
 constexpr T1 copysign(const T1 x, const T2 y) noexcept {
   return (signbit(x) != signbit(y) ? -x : x);
 }
-
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
 
 /*
  * extract signbit for signed zeros
@@ -1087,26 +808,6 @@ constexpr int sgn(const T x) noexcept {
           0);
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /*
  * compile-time find_exponent function
  */
@@ -1123,26 +824,6 @@ namespace internal {
   }
 
 }
-
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
 
 /*
  * find the fraction part of x = n + r, where -0.5 <= r <= 0.5
@@ -1161,26 +842,6 @@ namespace internal {
 
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /*
  * find the whole number part of x = n + r, where -0.5 <= r <= 0.5
  */
@@ -1198,26 +859,6 @@ namespace internal {
 
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /*
  * compile-time mantissa function
  */
@@ -1234,26 +875,6 @@ namespace internal {
   }
 
 }
-
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
 
 namespace internal {
 
@@ -1290,26 +911,6 @@ constexpr return_t<T> round(const T x) noexcept {
   return internal::round_check(static_cast<return_t<T>>(x));
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 namespace internal {
 
   template <typename T>
@@ -1342,26 +943,6 @@ template <typename T1, typename T2>
 constexpr common_return_t<T1, T2> fmod(const T1 x, const T2 y) noexcept {
   return internal::fmod_type_check(x, y);
 }
-
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
 
 /*
  * compile-time power function
@@ -1448,26 +1029,6 @@ namespace internal {
 
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /*
  * compile-time exponential function
  */
@@ -1530,26 +1091,6 @@ constexpr return_t<T> exp(const T x) noexcept {
   return internal::exp_check(static_cast<return_t<T>>(x));
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /*
  * compile-time exponential function
  */
@@ -1592,26 +1133,6 @@ template <typename T>
 constexpr return_t<T> expm1(const T x) noexcept {
   return internal::expm1_check(static_cast<return_t<T>>(x));
 }
-
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
 
 /*
  * compile-time natural logarithm function
@@ -1710,26 +1231,6 @@ constexpr return_t<T> log(const T x) noexcept {
   return internal::log_check(static_cast<return_t<T>>(x));
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /*
  * compile-time natural logarithm(x+1) function
  */
@@ -1775,26 +1276,6 @@ template <typename T>
 constexpr return_t<T> log1p(const T x) noexcept {
   return internal::log1p_check(static_cast<return_t<T>>(x));
 }
-
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
 
 /*
  * compile-time binary logarithm function
@@ -1859,26 +1340,6 @@ constexpr return_t<T> log10(const T x) noexcept {
   return internal::log10_check(x);
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /*
  * compile-time power function
  */
@@ -1925,26 +1386,6 @@ constexpr common_t<T1, T2> pow(const T1 base, const T2 exp_term) noexcept {
   return internal::pow_check(base, exp_term);
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 namespace internal {
 
   template <typename T>
@@ -1985,26 +1426,6 @@ constexpr common_t<T1, T2> gcd(const T1 a, const T2 b) noexcept {
   return internal::gcd_type_check(a, b);
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 namespace internal {
 
   template <typename T>
@@ -2034,26 +1455,6 @@ template <typename T1, typename T2>
 constexpr common_t<T1, T2> lcm(const T1 a, const T2 b) noexcept {
   return internal::lcm_type_check(a, b);
 }
-
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
 
 /*
  * compile-time tangent function
@@ -2152,26 +1553,6 @@ constexpr return_t<T> tan(const T x) noexcept {
   return internal::tan_check(static_cast<return_t<T>>(x));
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /*
  * compile-time cosine function using tan(x/2)
  */
@@ -2214,26 +1595,6 @@ template <typename T>
 constexpr return_t<T> cos(const T x) noexcept {
   return internal::cos_check(static_cast<return_t<T>>(x));
 }
-
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
 
 /*
  * compile-time sine function using tan(x/2)
@@ -2279,26 +1640,6 @@ template <typename T>
 constexpr return_t<T> sin(const T x) noexcept {
   return internal::sin_check(static_cast<return_t<T>>(x));
 }
-
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
 
 /*
  * compile-time arctangent function
@@ -2411,26 +1752,6 @@ constexpr return_t<T> atan(const T x) noexcept {
   return internal::atan_check(static_cast<return_t<T>>(x));
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /*
  * compile-time two-argument arctangent function
  */
@@ -2487,26 +1808,6 @@ constexpr common_return_t<T1, T2> atan2(const T1 y, const T2 x) noexcept {
   return internal::atan2_type_check(x, y);
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /*
  * compile-time arccosine function
  */
@@ -2552,26 +1853,6 @@ constexpr return_t<T> acos(const T x) noexcept {
   return internal::acos_check(static_cast<return_t<T>>(x));
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /*
  * compile-time arcsine function
  */
@@ -2613,26 +1894,6 @@ template <typename T>
 constexpr return_t<T> asin(const T x) noexcept {
   return internal::asin_check(static_cast<return_t<T>>(x));
 }
-
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
 
 /*
  * compile-time hyperbolic tangent function
@@ -2681,26 +1942,6 @@ constexpr return_t<T> tanh(const T x) noexcept {
   return internal::tanh_check(static_cast<return_t<T>>(x));
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /*
  * compile-time hyperbolic cosine function
  */
@@ -2733,26 +1974,6 @@ constexpr return_t<T> cosh(const T x) noexcept {
   return internal::cosh_compute(static_cast<return_t<T>>(x));
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /*
  * compile-time hyperbolic sine function
  */
@@ -2784,26 +2005,6 @@ template <typename T>
 constexpr return_t<T> sinh(const T x) noexcept {
   return internal::sinh_check(static_cast<return_t<T>>(x));
 }
-
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
 
 /*
  * compile-time inverse hyperbolic tangent function
@@ -2847,26 +2048,6 @@ constexpr return_t<T> atanh(const T x) noexcept {
   return internal::atanh_check(static_cast<return_t<T>>(x));
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /*
  * compile-time inverse hyperbolic cosine function
  */
@@ -2902,26 +2083,6 @@ constexpr return_t<T> acosh(const T x) noexcept {
   return internal::acosh_compute(static_cast<return_t<T>>(x));
 }
 
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
-
 /*
  * compile-time inverse hyperbolic sine function
  */
@@ -2953,26 +2114,6 @@ template <typename T>
 constexpr return_t<T> asinh(const T x) noexcept {
   return internal::asinh_compute(static_cast<return_t<T>>(x));
 }
-
-/*################################################################################
-##
-##   Copyright (C) 2016-2020 Keith O'Hara
-##
-##   This file is part of the GCE-Math C++ library.
-##
-##   Licensed under the Apache License, Version 2.0 (the "License");
-##   you may not use this file except in compliance with the License.
-##   You may obtain a copy of the License at
-##
-##       http://www.apache.org/licenses/LICENSE-2.0
-##
-##   Unless required by applicable law or agreed to in writing, software
-##   distributed under the License is distributed on an "AS IS" BASIS,
-##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-##   See the License for the specific language governing permissions and
-##   limitations under the License.
-##
-################################################################################*/
 
 namespace internal {
 
@@ -3025,1796 +2166,1538 @@ constexpr common_t<T1, T2> binomial_coef(const T1 n, const T2 k) noexcept {
   return internal::binomial_coef_type_check(n, k);
 }
 
-#endif /*################################################################################ \
-   ##                                                                                     \
-   ##   Copyright (C) 2016-2020 Keith O'Hara                                              \
-   ##                                                                                     \
-   ##   This file is part of the GCE-Math C++ library.                                    \
-   ##                                                                                     \
-   ##   Licensed under the Apache License, Version 2.0 (the "License");                   \
-   ##   you may not use this file except in compliance with the License.                  \
-   ##   You may obtain a copy of the License at                                           \
-   ##                                                                                     \
-   ##       http://www.apache.org/licenses/LICENSE-2.0                                    \
-   ##                                                                                     \
-   ##   Unless required by applicable law or agreed to in writing, software               \
-   ##   distributed under the License is distributed on an "AS IS" BASIS,                 \
-   ##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or                   \
-   implied.                                                                               \
-   ##   See the License for the specific language governing permissions and               \
-   ##   limitations under the License.                                                    \
-   ##                                                                                     \
-   ################################################################################*/
+/*
+ * compile-time log-gamma function
+ *
+ * for coefficient values, see:
+ * http://my.fit.edu/~gabdo/gamma.txt
+ */
 
-  /*
-   * compile-time log-gamma function
-   *
-   * for coefficient values, see:
-   * http://my.fit.edu/~gabdo/gamma.txt
-   */
+namespace internal {
 
-  namespace internal {
+  // P. Godfrey's coefficients:
+  //
+  //  0.99999999999999709182
+  //  57.156235665862923517
+  // -59.597960355475491248
+  //  14.136097974741747174
+  //  -0.49191381609762019978
+  //    .33994649984811888699e-4
+  //    .46523628927048575665e-4
+  //   -.98374475304879564677e-4
+  //    .15808870322491248884e-3
+  //   -.21026444172410488319e-3
+  //    .21743961811521264320e-3
+  //   -.16431810653676389022e-3
+  //    .84418223983852743293e-4
+  //   -.26190838401581408670e-4
+  //    .36899182659531622704e-5
 
-    // P. Godfrey's coefficients:
-    //
-    //  0.99999999999999709182
-    //  57.156235665862923517
-    // -59.597960355475491248
-    //  14.136097974741747174
-    //  -0.49191381609762019978
-    //    .33994649984811888699e-4
-    //    .46523628927048575665e-4
-    //   -.98374475304879564677e-4
-    //    .15808870322491248884e-3
-    //   -.21026444172410488319e-3
-    //    .21743961811521264320e-3
-    //   -.16431810653676389022e-3
-    //    .84418223983852743293e-4
-    //   -.26190838401581408670e-4
-    //    .36899182659531622704e-5
-
-    constexpr long double lgamma_coef_term(const long double x) noexcept {
-      return (0.99999999999999709182L + 57.156235665862923517L / (x + 1)
-          - 59.597960355475491248L / (x + 2) + 14.136097974741747174L / (x + 3)
-          - 0.49191381609762019978L / (x + 4)
-          + .33994649984811888699e-4L / (x + 5)
-          + .46523628927048575665e-4L / (x + 6)
-          - .98374475304879564677e-4L / (x + 7)
-          + .15808870322491248884e-3L / (x + 8)
-          - .21026444172410488319e-3L / (x + 9)
-          + .21743961811521264320e-3L / (x + 10)
-          - .16431810653676389022e-3L / (x + 11)
-          + .84418223983852743293e-4L / (x + 12)
-          - .26190838401581408670e-4L / (x + 13)
-          + .36899182659531622704e-5L / (x + 14));
-    }
-
-    template <typename T>
-    constexpr T lgamma_term_2(const T x) noexcept { //
-      return (T(GCEM_LOG_SQRT_2PI) + log(T(lgamma_coef_term(x))));
-    }
-
-    template <typename T>
-    constexpr T lgamma_term_1(
-        const T x) noexcept { // note: 607/128 + 0.5 = 5.2421875
-      return ((x + T(0.5)) * log(x + T(5.2421875L)) - (x + T(5.2421875L)));
-    }
-
-    template <typename T>
-    constexpr T lgamma_begin(const T x) noexcept { // returns lngamma(x+1)
-      return (lgamma_term_1(x) + lgamma_term_2(x));
-    }
-
-    template <typename T>
-    constexpr T lgamma_check(const T x) noexcept {
-      return ( // NaN check
-          is_nan(x) ? GCLIM<T>::quiet_NaN() :
-                    // indistinguishable from one or <= zero
-              GCLIM<T>::epsilon() > abs(x - T(1)) ? T(0)
-              : GCLIM<T>::epsilon() > x           ? GCLIM<T>::infinity()
-                                                  :
-                                                  // else
-              lgamma_begin(x - T(1)));
-    }
-
+  constexpr long double lgamma_coef_term(const long double x) noexcept {
+    return (0.99999999999999709182L + 57.156235665862923517L / (x + 1)
+        - 59.597960355475491248L / (x + 2) + 14.136097974741747174L / (x + 3)
+        - 0.49191381609762019978L / (x + 4)
+        + .33994649984811888699e-4L / (x + 5)
+        + .46523628927048575665e-4L / (x + 6)
+        - .98374475304879564677e-4L / (x + 7)
+        + .15808870322491248884e-3L / (x + 8)
+        - .21026444172410488319e-3L / (x + 9)
+        + .21743961811521264320e-3L / (x + 10)
+        - .16431810653676389022e-3L / (x + 11)
+        + .84418223983852743293e-4L / (x + 12)
+        - .26190838401581408670e-4L / (x + 13)
+        + .36899182659531622704e-5L / (x + 14));
   }
-
-  /**
-   * Compile-time log-gamma function
-   *
-   * @param x a real-valued input.
-   * @return computes the log-gamma function
-   * \f[ \ln \Gamma(x) = \ln \int_0^\infty y^{x-1} \exp(-y) dy \f]
-   * using a polynomial form:
-   * \f[ \Gamma(x+1) \approx (x+g+0.5)^{x+0.5} \exp(-x-g-0.5) \sqrt{2 \pi}
-   * \left[ c_0 + \frac{c_1}{x+1} + \frac{c_2}{x+2} + \cdots + \frac{c_n}{x+n}
-   * \right]
-   * \f] where the value \f$ g \f$ and the coefficients \f$ (c_0, c_1, \ldots,
-   * c_n) \f$ are taken from Paul Godfrey, whose note can be found here:
-   * http://my.fit.edu/~gabdo/gamma.txt
-   */
 
   template <typename T>
-  constexpr return_t<T> lgamma(const T x) noexcept {
-    return internal::lgamma_check(static_cast<return_t<T>>(x));
+  constexpr T lgamma_term_2(const T x) noexcept { //
+    return (T(GCEM_LOG_SQRT_2PI) + log(T(lgamma_coef_term(x))));
   }
-
-  /*################################################################################
-  ##
-  ##   Copyright (C) 2016-2020 Keith O'Hara
-  ##
-  ##   This file is part of the GCE-Math C++ library.
-  ##
-  ##   Licensed under the Apache License, Version 2.0 (the "License");
-  ##   you may not use this file except in compliance with the License.
-  ##   You may obtain a copy of the License at
-  ##
-  ##       http://www.apache.org/licenses/LICENSE-2.0
-  ##
-  ##   Unless required by applicable law or agreed to in writing, software
-  ##   distributed under the License is distributed on an "AS IS" BASIS,
-  ##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ##   See the License for the specific language governing permissions and
-  ##   limitations under the License.
-  ##
-  ################################################################################*/
-
-  /*
-   * the ('true') gamma function
-   */
-
-  namespace internal {
-
-    template <typename T>
-    constexpr T tgamma_check(const T x) noexcept {
-      return ( // NaN check
-          is_nan(x) ? GCLIM<T>::quiet_NaN() :
-                    // indistinguishable from one or zero
-              GCLIM<T>::epsilon() > abs(x - T(1)) ? T(1)
-              : GCLIM<T>::epsilon() > abs(x)      ? GCLIM<T>::infinity()
-                                                  :
-                                                  // negative numbers
-              x < T(0) ? // check for integer
-              GCLIM<T>::epsilon() > abs(x - find_whole(x))
-                  ? GCLIM<T>::quiet_NaN()
-                  :
-                  // else
-                  tgamma_check(x + T(1)) / x
-                       :
-
-                       // else
-              exp(lgamma(x)));
-    }
-
-  }
-
-  /**
-   * Compile-time gamma function
-   *
-   * @param x a real-valued input.
-   * @return computes the `true' gamma function
-   * \f[ \Gamma(x) = \int_0^\infty y^{x-1} \exp(-y) dy \f]
-   * using a polynomial form:
-   * \f[ \Gamma(x+1) \approx (x+g+0.5)^{x+0.5} \exp(-x-g-0.5) \sqrt{2 \pi}
-   * \left[ c_0 + \frac{c_1}{x+1} + \frac{c_2}{x+2} + \cdots + \frac{c_n}{x+n}
-   * \right]
-   * \f] where the value \f$ g \f$ and the coefficients \f$ (c_0, c_1, \ldots,
-   * c_n) \f$ are taken from Paul Godfrey, whose note can be found here:
-   * http://my.fit.edu/~gabdo/gamma.txt
-   */
 
   template <typename T>
-  constexpr return_t<T> tgamma(const T x) noexcept {
-    return internal::tgamma_check(static_cast<return_t<T>>(x));
+  constexpr T lgamma_term_1(
+      const T x) noexcept { // note: 607/128 + 0.5 = 5.2421875
+    return ((x + T(0.5)) * log(x + T(5.2421875L)) - (x + T(5.2421875L)));
   }
-
-  /*################################################################################
-  ##
-  ##   Copyright (C) 2016-2020 Keith O'Hara
-  ##
-  ##   This file is part of the GCE-Math C++ library.
-  ##
-  ##   Licensed under the Apache License, Version 2.0 (the "License");
-  ##   you may not use this file except in compliance with the License.
-  ##   You may obtain a copy of the License at
-  ##
-  ##       http://www.apache.org/licenses/LICENSE-2.0
-  ##
-  ##   Unless required by applicable law or agreed to in writing, software
-  ##   distributed under the License is distributed on an "AS IS" BASIS,
-  ##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ##   See the License for the specific language governing permissions and
-  ##   limitations under the License.
-  ##
-  ################################################################################*/
-
-  /*
-   * compile-time factorial function
-   */
-
-  namespace internal {
-
-    // T should be int, long int, unsigned int, etc.
-
-    template <typename T>
-    constexpr T factorial_table(
-        const T x) noexcept { // table for x! when x = {2,...,16}
-      return (x == T(2)   ? T(2)
-              : x == T(3) ? T(6)
-              : x == T(4) ? T(24)
-              : x == T(5) ? T(120)
-              : x == T(6) ? T(720)
-              : x == T(7) ? T(5040)
-              : x == T(8) ? T(40320)
-              : x == T(9) ? T(362880)
-                          :
-                          //
-              x == T(10)   ? T(3628800)
-              : x == T(11) ? T(39916800)
-              : x == T(12) ? T(479001600)
-              : x == T(13) ? T(6227020800)
-              : x == T(14) ? T(87178291200)
-              : x == T(15) ? T(1307674368000)
-                           : T(20922789888000));
-    }
-
-    template <typename T,
-        typename std::enable_if<std::is_integral<T>::value>::type* = nullptr>
-    constexpr T factorial_recur(const T x) noexcept {
-      return (x == T(0)   ? T(1)
-              : x == T(1) ? x
-                          :
-                          //
-              x < T(17) ? // if
-              factorial_table(x)
-                        :
-                        // else
-              x * factorial_recur(x - 1));
-    }
-
-    template <typename T,
-        typename std::enable_if<!std::is_integral<T>::value>::type* = nullptr>
-    constexpr T factorial_recur(const T x) noexcept {
-      return tgamma(x + 1);
-    }
-
-  }
-
-  /**
-   * Compile-time factorial function
-   *
-   * @param x a real-valued input.
-   * @return Computes the factorial value \f$ x! \f$.
-   * When \c x is an integral type (\c int, <tt>long int</tt>, etc.), a simple
-   * recursion method is used, along with table values. When \c x is
-   * real-valued, <tt>factorial(x) = tgamma(x+1)</tt>.
-   */
 
   template <typename T>
-  constexpr T factorial(const T x) noexcept {
-    return internal::factorial_recur(x);
+  constexpr T lgamma_begin(const T x) noexcept { // returns lngamma(x+1)
+    return (lgamma_term_1(x) + lgamma_term_2(x));
   }
-
-  /*################################################################################
-  ##
-  ##   Copyright (C) 2016-2020 Keith O'Hara
-  ##
-  ##   This file is part of the GCE-Math C++ library.
-  ##
-  ##   Licensed under the Apache License, Version 2.0 (the "License");
-  ##   you may not use this file except in compliance with the License.
-  ##   You may obtain a copy of the License at
-  ##
-  ##       http://www.apache.org/licenses/LICENSE-2.0
-  ##
-  ##   Unless required by applicable law or agreed to in writing, software
-  ##   distributed under the License is distributed on an "AS IS" BASIS,
-  ##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ##   See the License for the specific language governing permissions and
-  ##   limitations under the License.
-  ##
-  ################################################################################*/
-
-  /**
-   * Compile-time log-beta function
-   *
-   * @param a a real-valued input.
-   * @param b a real-valued input.
-   * @return the log-beta function using \f[ \ln \text{B}(\alpha,\beta) := \ln
-   * \int_0^1 t^{\alpha - 1} (1-t)^{\beta - 1} dt = \ln \Gamma(\alpha) + \ln
-   * \Gamma(\beta) - \ln \Gamma(\alpha + \beta) \f] where \f$ \Gamma \f$ denotes
-   * the gamma function.
-   */
-
-  template <typename T1, typename T2>
-  constexpr common_return_t<T1, T2> lbeta(const T1 a, const T2 b) noexcept {
-    return ((lgamma(a) + lgamma(b)) - lgamma(a + b));
-  }
-
-  /*################################################################################
-  ##
-  ##   Copyright (C) 2016-2020 Keith O'Hara
-  ##
-  ##   This file is part of the GCE-Math C++ library.
-  ##
-  ##   Licensed under the Apache License, Version 2.0 (the "License");
-  ##   you may not use this file except in compliance with the License.
-  ##   You may obtain a copy of the License at
-  ##
-  ##       http://www.apache.org/licenses/LICENSE-2.0
-  ##
-  ##   Unless required by applicable law or agreed to in writing, software
-  ##   distributed under the License is distributed on an "AS IS" BASIS,
-  ##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ##   See the License for the specific language governing permissions and
-  ##   limitations under the License.
-  ##
-  ################################################################################*/
-
-  /**
-   * Compile-time beta function
-   *
-   * @param a a real-valued input.
-   * @param b a real-valued input.
-   * @return the beta function using \f[ \text{B}(\alpha,\beta) := \int_0^1
-   * t^{\alpha - 1} (1-t)^{\beta - 1} dt =
-   * \frac{\Gamma(\alpha)\Gamma(\beta)}{\Gamma(\alpha + \beta)} \f] where \f$
-   * \Gamma \f$ denotes the gamma function.
-   */
-
-  template <typename T1, typename T2>
-  constexpr common_return_t<T1, T2> beta(const T1 a, const T2 b) noexcept {
-    return exp(lbeta(a, b));
-  }
-
-  /*################################################################################
-  ##
-  ##   Copyright (C) 2016-2020 Keith O'Hara
-  ##
-  ##   This file is part of the GCE-Math C++ library.
-  ##
-  ##   Licensed under the Apache License, Version 2.0 (the "License");
-  ##   you may not use this file except in compliance with the License.
-  ##   You may obtain a copy of the License at
-  ##
-  ##       http://www.apache.org/licenses/LICENSE-2.0
-  ##
-  ##   Unless required by applicable law or agreed to in writing, software
-  ##   distributed under the License is distributed on an "AS IS" BASIS,
-  ##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ##   See the License for the specific language governing permissions and
-  ##   limitations under the License.
-  ##
-  ################################################################################*/
-
-  /*
-   * log multivariate gamma function
-   */
-
-  namespace internal {
-
-    // see https://en.wikipedia.org/wiki/Multivariate_gamma_function
-
-    template <typename T1, typename T2>
-    constexpr T1 lmgamma_recur(const T1 a, const T2 p) noexcept {
-      return ( // NaN check
-          is_nan(a) ? GCLIM<T1>::quiet_NaN() :
-                    //
-              p == T2(1)  ? lgamma(a)
-              : p < T2(1) ? GCLIM<T1>::quiet_NaN()
-                          :
-                          // else
-              T1(GCEM_LOG_PI) * (p - T1(1)) / T1(2) + lgamma(a)
-                  + lmgamma_recur(a - T1(0.5), p - T2(1)));
-    }
-
-  }
-
-  /**
-   * Compile-time log multivariate gamma function
-   *
-   * @param a a real-valued input.
-   * @param p integral-valued input.
-   * @return computes log-multivariate gamma function via recursion
-   * \f[ \Gamma_p(a) = \pi^{(p-1)/2} \Gamma(a) \Gamma_{p-1}(a-0.5) \f]
-   * where \f$ \Gamma_1(a) = \Gamma(a) \f$.
-   */
-
-  template <typename T1, typename T2>
-  constexpr return_t<T1> lmgamma(const T1 a, const T2 p) noexcept {
-    return internal::lmgamma_recur(static_cast<return_t<T1>>(a), p);
-  }
-
-  /*################################################################################
-  ##
-  ##   Copyright (C) 2016-2020 Keith O'Hara
-  ##
-  ##   This file is part of the GCE-Math C++ library.
-  ##
-  ##   Licensed under the Apache License, Version 2.0 (the "License");
-  ##   you may not use this file except in compliance with the License.
-  ##   You may obtain a copy of the License at
-  ##
-  ##       http://www.apache.org/licenses/LICENSE-2.0
-  ##
-  ##   Unless required by applicable law or agreed to in writing, software
-  ##   distributed under the License is distributed on an "AS IS" BASIS,
-  ##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ##   See the License for the specific language governing permissions and
-  ##   limitations under the License.
-  ##
-  ################################################################################*/
-
-  namespace internal {
-
-    template <typename T>
-    constexpr T log_binomial_coef_compute(const T n, const T k) noexcept {
-      return (lgamma(n + 1) - (lgamma(k + 1) + lgamma(n - k + 1)));
-    }
-
-    template <typename T1, typename T2, typename TC = common_return_t<T1, T2>>
-    constexpr TC log_binomial_coef_type_check(const T1 n, const T2 k) noexcept {
-      return log_binomial_coef_compute(static_cast<TC>(n), static_cast<TC>(k));
-    }
-
-  }
-
-  /**
-   * Compile-time log binomial coefficient
-   *
-   * @param n integral-valued input.
-   * @param k integral-valued input.
-   * @return computes the log Binomial coefficient
-   * \f[ \ln \frac{n!}{k!(n-k)!} = \ln \Gamma(n+1) - [ \ln \Gamma(k+1) + \ln
-   * \Gamma(n-k+1) ] \f]
-   */
-
-  template <typename T1, typename T2>
-  constexpr common_return_t<T1, T2> log_binomial_coef(
-      const T1 n, const T2 k) noexcept {
-    return internal::log_binomial_coef_type_check(n, k);
-  }
-
-  /*################################################################################
-  \
-  ## \
-  ##   Copyright (C) 2016-2020 Keith O'Hara \
-  ## \
-  ##   This file is part of the GCE-Math C++ library. \
-  ## \
-  ##   Licensed under the Apache License, Version 2.0 (the "License"); \
-  ##   you may not use this file except in compliance with the License. \
-  ##   You may obtain a copy of the License at \
-  ## \
-  ##       http://www.apache.org/licenses/LICENSE-2.0 \
-  ## \
-  ##   Unless required by applicable law or agreed to in writing, software \
-  ##   distributed under the License is distributed on an "AS IS" BASIS, \
-  ##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or \
-  implied. \
-  ##   See the License for the specific language governing permissions and \
-  ##   limitations under the License. \
-  ## \
-  ################################################################################*/
-
-  /*
-   * compile-time error function
-   */
-
-  namespace internal {
-
-    // see
-    // http://functions.wolfram.com/GammaBetaErf/Erf/10/01/0007/
-
-    template <typename T>
-    constexpr T erf_cf_large_recur(const T x, const int depth) noexcept {
-      return (depth < GCEM_ERF_MAX_ITER ? // if
-              x + 2 * depth / erf_cf_large_recur(x, depth + 1)
-                                        :
-                                        // else
-              x);
-    }
-
-    template <typename T>
-    constexpr T erf_cf_large_main(const T x) noexcept {
-      return (T(1)
-          - T(2) * (exp(-x * x) / T(GCEM_SQRT_PI))
-              / erf_cf_large_recur(T(2) * x, 1));
-    }
-
-    // see
-    // http://functions.wolfram.com/GammaBetaErf/Erf/10/01/0005/
-
-    template <typename T>
-    constexpr T erf_cf_small_recur(const T xx, const int depth) noexcept {
-      return (depth < GCEM_ERF_MAX_ITER ? // if
-              (2 * depth - 1) - 2 * xx
-                  + 4 * depth * xx / erf_cf_small_recur(xx, depth + 1)
-                                        :
-                                        // else
-              (2 * depth - 1) - 2 * xx);
-    }
-
-    template <typename T>
-    constexpr T erf_cf_small_main(const T x) noexcept {
-      return (T(2) * x * (exp(-x * x) / T(GCEM_SQRT_PI))
-          / erf_cf_small_recur(x * x, 1));
-    }
-
-    //
-
-    template <typename T>
-    constexpr T erf_begin(const T x) noexcept {
-      return (x > T(2.1) ? // if
-              erf_cf_large_main(x)
-                         :
-                         // else
-              erf_cf_small_main(x));
-    }
-
-    template <typename T>
-    constexpr T erf_check(const T x) noexcept {
-      return ( // NaN check
-          is_nan(x) ? GCLIM<T>::quiet_NaN() :
-                    // +/-Inf
-              is_posinf(x)   ? T(1)
-              : is_neginf(x) ? -T(1)
-                             :
-                             // indistinguishable from zero
-              GCLIM<T>::epsilon() > abs(x) ? T(0)
-                                           :
-                                           // else
-              x < T(0) ? -erf_begin(-x)
-                       : erf_begin(x));
-    }
-
-  }
-
-  /**
-   * Compile-time Gaussian error function
-   *
-   * @param x a real-valued input.
-   * @return computes the Gaussian error function
-   * \f[ \text{erf}(x) = \frac{2}{\sqrt{\pi}} \int_0^x \exp( - t^2) dt \f]
-   * using a continued fraction representation:
-   * \f[ \text{erf}(x) = \frac{2x}{\sqrt{\pi}} \exp(-x^2) \dfrac{1}{1 - 2x^2 +
-   * \dfrac{4x^2}{3 - 2x^2 + \dfrac{8x^2}{5 - 2x^2 + \dfrac{12x^2}{7 - 2x^2 +
-   * \ddots}}}} \f]
-   */
 
   template <typename T>
-  constexpr return_t<T> erf(const T x) noexcept {
-    return internal::erf_check(static_cast<return_t<T>>(x));
-  }
-
-  /*################################################################################
-  ##
-  ##   Copyright (C) 2016-2020 Keith O'Hara
-  ##
-  ##   This file is part of the GCE-Math C++ library.
-  ##
-  ##   Licensed under the Apache License, Version 2.0 (the "License");
-  ##   you may not use this file except in compliance with the License.
-  ##   You may obtain a copy of the License at
-  ##
-  ##       http://www.apache.org/licenses/LICENSE-2.0
-  ##
-  ##   Unless required by applicable law or agreed to in writing, software
-  ##   distributed under the License is distributed on an "AS IS" BASIS,
-  ##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ##   See the License for the specific language governing permissions and
-  ##   limitations under the License.
-  ##
-  ################################################################################*/
-
-  /*
-   * compile-time inverse error function
-   *
-   * Initial approximation based on:
-   * 'Approximating the erfinv function' by Mike Giles
-   */
-
-  namespace internal {
-
-    template <typename T>
-    constexpr T erf_inv_decision(
-        const T value, const T p, const T direc, const int iter_count) noexcept;
-
-    //
-    // initial value
-
-    // two cases: (1) a < 5; and (2) otherwise
-
-    template <typename T>
-    constexpr T erf_inv_initial_val_coef_2(
-        const T a, const T p_term, const int order) noexcept {
-      return (order == 1   ? T(-0.000200214257L)
-              : order == 2 ? T(0.000100950558L) + a * p_term
-              : order == 3 ? T(0.00134934322L) + a * p_term
-              : order == 4 ? T(-0.003673428440L) + a * p_term
-              : order == 5 ? T(0.005739507730L) + a * p_term
-              : order == 6 ? T(-0.00762246130L) + a * p_term
-              : order == 7 ? T(0.009438870470L) + a * p_term
-              : order == 8 ? T(1.001674060000L) + a * p_term
-              : order == 9 ? T(2.83297682000L) + a * p_term
-                           : p_term);
-    }
-
-    template <typename T>
-    constexpr T erf_inv_initial_val_case_2(
-        const T a, const T p_term, const int order) noexcept {
-      return (order == 9 ? // if
-              erf_inv_initial_val_coef_2(a, p_term, order)
-                         :
-                         // else
-              erf_inv_initial_val_case_2(
-                  a, erf_inv_initial_val_coef_2(a, p_term, order), order + 1));
-    }
-
-    template <typename T>
-    constexpr T erf_inv_initial_val_coef_1(
-        const T a, const T p_term, const int order) noexcept {
-      return (order == 1   ? T(2.81022636e-08L)
-              : order == 2 ? T(3.43273939e-07L) + a * p_term
-              : order == 3 ? T(-3.5233877e-06L) + a * p_term
-              : order == 4 ? T(-4.39150654e-06L) + a * p_term
-              : order == 5 ? T(0.00021858087L) + a * p_term
-              : order == 6 ? T(-0.00125372503L) + a * p_term
-              : order == 7 ? T(-0.004177681640L) + a * p_term
-              : order == 8 ? T(0.24664072700L) + a * p_term
-              : order == 9 ? T(1.50140941000L) + a * p_term
-                           : p_term);
-    }
-
-    template <typename T>
-    constexpr T erf_inv_initial_val_case_1(
-        const T a, const T p_term, const int order) noexcept {
-      return (order == 9 ? // if
-              erf_inv_initial_val_coef_1(a, p_term, order)
-                         :
-                         // else
-              erf_inv_initial_val_case_1(
-                  a, erf_inv_initial_val_coef_1(a, p_term, order), order + 1));
-    }
-
-    template <typename T>
-    constexpr T erf_inv_initial_val_int(const T a) noexcept {
-      return (a < T(5) ? // if
-              erf_inv_initial_val_case_1(a - T(2.5), T(0), 1)
-                       :
-                       // else
-              erf_inv_initial_val_case_2(sqrt(a) - T(3), T(0), 1));
-    }
-
-    template <typename T>
-    constexpr T erf_inv_initial_val(const T x) noexcept {
-      return x * erf_inv_initial_val_int(-log((T(1) - x) * (T(1) + x)));
-    }
-
-    //
-    // Halley recursion
-
-    template <typename T>
-    constexpr T erf_inv_err_val(
-        const T value, const T p) noexcept { // err_val = f(x)
-      return (erf(value) - p);
-    }
-
-    template <typename T>
-    constexpr T erf_inv_deriv_1(
-        const T value) noexcept { // derivative of the error function w.r.t. x
-      return (exp(-value * value));
-    }
-
-    template <typename T>
-    constexpr T erf_inv_deriv_2(
-        const T value, const T deriv_1) noexcept { // second derivative of the
-                                                   // error function w.r.t. x
-      return (deriv_1 * (-T(2) * value));
-    }
-
-    template <typename T>
-    constexpr T erf_inv_ratio_val_1(
-        const T value, const T p, const T deriv_1) noexcept {
-      return (erf_inv_err_val(value, p) / deriv_1);
-    }
-
-    template <typename T>
-    constexpr T erf_inv_ratio_val_2(const T value, const T deriv_1) noexcept {
-      return (erf_inv_deriv_2(value, deriv_1) / deriv_1);
-    }
-
-    template <typename T>
-    constexpr T erf_inv_halley(
-        const T ratio_val_1, const T ratio_val_2) noexcept {
-      return (ratio_val_1
-          / max(
-              T(0.8), min(T(1.2), T(1) - T(0.5) * ratio_val_1 * ratio_val_2)));
-    }
-
-    template <typename T>
-    constexpr T erf_inv_recur(const T value,
-        const T p,
-        const T deriv_1,
-        const int iter_count) noexcept {
-      return erf_inv_decision(value,
-          p,
-          erf_inv_halley(erf_inv_ratio_val_1(value, p, deriv_1),
-              erf_inv_ratio_val_2(value, deriv_1)),
-          iter_count);
-    }
-
-    template <typename T>
-    constexpr T erf_inv_decision(const T value,
-        const T p,
-        const T direc,
-        const int iter_count) noexcept {
-      return (iter_count < GCEM_ERF_INV_MAX_ITER ? // if
-              erf_inv_recur(
-                  value - direc, p, erf_inv_deriv_1(value), iter_count + 1)
-                                                 :
-                                                 // else
-              value - direc);
-    }
-
-    template <typename T>
-    constexpr T erf_inv_recur_begin(const T initial_val, const T p) noexcept {
-      return erf_inv_recur(initial_val, p, erf_inv_deriv_1(initial_val), 1);
-    }
-
-    template <typename T>
-    constexpr T erf_inv_begin(const T p) noexcept {
-      return ( // NaN check
-          is_nan(p) ? GCLIM<T>::quiet_NaN() :
-                    // bad values
-              abs(p) > T(1) ? GCLIM<T>::quiet_NaN()
-                            :
-                            // indistinguishable from 1
-              GCLIM<T>::epsilon() > abs(T(1) - p) ? GCLIM<T>::infinity()
-                                                  :
-                                                  // indistinguishable from - 1
-              GCLIM<T>::epsilon() > abs(T(1) + p) ? -GCLIM<T>::infinity()
-                                                  :
-                                                  // else
-              erf_inv_recur_begin(erf_inv_initial_val(p), p));
-    }
-
-  }
-
-  /**
-   * Compile-time inverse Gaussian error function
-   *
-   * @param p a real-valued input with values in the unit-interval.
-   * @return Computes the inverse Gaussian error function, a value \f$ x \f$
-   * such that
-   * \f[ f(x) := \text{erf}(x) - p \f]
-   * is equal to zero, for a given \c p.
-   * GCE-Math finds this root using Halley's method:
-   * \f[ x_{n+1} = x_n - \frac{f(x_n)/f'(x_n)}{1 - 0.5 \frac{f(x_n)}{f'(x_n)}
-   * \frac{f''(x_n)}{f'(x_n)} } \f] where
-   * \f[ \frac{\partial}{\partial x} \text{erf}(x) = \exp(-x^2),
-   * \ \ \frac{\partial^2}{\partial x^2} \text{erf}(x) = -2x\exp(-x^2) \f]
-   */
-
-  template <typename T>
-  constexpr return_t<T> erf_inv(const T p) noexcept {
-    return internal::erf_inv_begin(static_cast<return_t<T>>(p));
-  }
-
-  /*################################################################################
-  ##
-  ##   Copyright (C) 2016-2020 Keith O'Hara
-  ##
-  ##   This file is part of the GCE-Math C++ library.
-  ##
-  ##   Licensed under the Apache License, Version 2.0 (the "License");
-  ##   you may not use this file except in compliance with the License.
-  ##   You may obtain a copy of the License at
-  ##
-  ##       http://www.apache.org/licenses/LICENSE-2.0
-  ##
-  ##   Unless required by applicable law or agreed to in writing, software
-  ##   distributed under the License is distributed on an "AS IS" BASIS,
-  ##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ##   See the License for the specific language governing permissions and
-  ##   limitations under the License.
-  ##
-  ################################################################################*/
-
-  /*
-   * compile-time incomplete beta function
-   *
-   * see eq. 18.5.17a in the Handbook of Continued Fractions for Special
-   * Functions
-   */
-
-  namespace internal {
-
-    template <typename T>
-    constexpr T incomplete_beta_cf(const T a,
-        const T b,
-        const T z,
-        const T c_j,
-        const T d_j,
-        const T f_j,
-        const int depth) noexcept;
-
-    //
-    // coefficients; see eq. 18.5.17b
-
-    template <typename T>
-    constexpr T incomplete_beta_coef_even(
-        const T a, const T b, const T z, const int k) noexcept {
-      return (-z * (a + k) * (a + b + k) / ((a + 2 * k) * (a + 2 * k + T(1))));
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_coef_odd(
-        const T a, const T b, const T z, const int k) noexcept {
-      return (z * k * (b - k) / ((a + 2 * k - T(1)) * (a + 2 * k)));
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_coef(
-        const T a, const T b, const T z, const int depth) noexcept {
-      return (!is_odd(depth)
-              ? incomplete_beta_coef_even(a, b, z, depth / 2)
-              : incomplete_beta_coef_odd(a, b, z, (depth + 1) / 2));
-    }
-
-    //
-    // update formulae for the modified Lentz method
-
-    template <typename T>
-    constexpr T incomplete_beta_c_update(const T a,
-        const T b,
-        const T z,
-        const T c_j,
-        const int depth) noexcept {
-      return (T(1) + incomplete_beta_coef(a, b, z, depth) / c_j);
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_d_update(const T a,
-        const T b,
-        const T z,
-        const T d_j,
-        const int depth) noexcept {
-      return (T(1) / (T(1) + incomplete_beta_coef(a, b, z, depth) * d_j));
-    }
-
-    //
-    // convergence-type condition
-
-    template <typename T>
-    constexpr T incomplete_beta_decision(const T a,
-        const T b,
-        const T z,
-        const T c_j,
-        const T d_j,
-        const T f_j,
-        const int depth) noexcept {
-      return ( // tolerance check
-          abs(c_j * d_j - T(1)) < GCEM_INCML_BETA_TOL ? f_j * c_j * d_j :
-                                                      // max_iter check
-              depth < GCEM_INCML_BETA_MAX_ITER ? // if
-              incomplete_beta_cf(a, b, z, c_j, d_j, f_j * c_j * d_j, depth + 1)
-                                               :
-                                               // else
-              f_j * c_j * d_j);
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_cf(const T a,
-        const T b,
-        const T z,
-        const T c_j,
-        const T d_j,
-        const T f_j,
-        const int depth) noexcept {
-      return incomplete_beta_decision(a,
-          b,
-          z,
-          incomplete_beta_c_update(a, b, z, c_j, depth),
-          incomplete_beta_d_update(a, b, z, d_j, depth),
-          f_j,
-          depth);
-    }
-
-    //
-    // x^a (1-x)^{b} / (a beta(a,b)) * cf
-
-    template <typename T>
-    constexpr T incomplete_beta_begin(
-        const T a, const T b, const T z) noexcept {
-      return ((exp(a * log(z) + b * log(T(1) - z) - lbeta(a, b)) / a)
-          * incomplete_beta_cf(a,
-              b,
-              z,
-              T(1),
-              incomplete_beta_d_update(a, b, z, T(1), 0),
-              incomplete_beta_d_update(a, b, z, T(1), 0),
-              1));
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_check(
-        const T a, const T b, const T z) noexcept {
-      return ( // NaN check
-          any_nan(a, b, z) ? GCLIM<T>::quiet_NaN() :
-                           // indistinguishable from zero
-              GCLIM<T>::epsilon() > z ? T(0)
-                                      :
-                                      // parameter check for performance
-              (a + T(1)) / (a + b + T(2)) > z
-              ? incomplete_beta_begin(a, b, z)
-              : T(1) - incomplete_beta_begin(b, a, T(1) - z));
-    }
-
-    template <typename T1,
-        typename T2,
-        typename T3,
-        typename TC = common_return_t<T1, T2, T3>>
-    constexpr TC incomplete_beta_type_check(
-        const T1 a, const T2 b, const T3 p) noexcept {
-      return incomplete_beta_check(
-          static_cast<TC>(a), static_cast<TC>(b), static_cast<TC>(p));
-    }
-
-  }
-
-  /**
-   * Compile-time regularized incomplete beta function
-   *
-   * @param a a real-valued, non-negative input.
-   * @param b a real-valued, non-negative input.
-   * @param z a real-valued, non-negative input.
-   *
-   * @return computes the regularized incomplete beta function,
-   * \f[ \frac{\text{B}(z;\alpha,\beta)}{\text{B}(\alpha,\beta)} =
-   * \frac{1}{\text{B}(\alpha,\beta)}\int_0^z t^{a-1} (1-t)^{\beta-1} dt \f]
-   * using a continued fraction representation, found in the Handbook of
-   * Continued Fractions for Special Functions, and a modified Lentz method.
-   * \f[ \frac{\text{B}(z;\alpha,\beta)}{\text{B}(\alpha,\beta)} =
-   * \frac{z^{\alpha} (1-t)^{\beta}}{\alpha \text{B}(\alpha,\beta)}
-   * \dfrac{a_1}{1
-   * + \dfrac{a_2}{1 + \dfrac{a_3}{1 + \dfrac{a_4}{1 + \ddots}}}} \f] where \f$
-   * a_1 = 1 \f$ and
-   * \f[ a_{2m+2} = - \frac{(\alpha + m)(\alpha + \beta + m)}{(\alpha +
-   * 2m)(\alpha
-   * + 2m + 1)}, \ m \geq 0 \f]
-   * \f[ a_{2m+1} = \frac{m(\beta - m)}{(\alpha + 2m - 1)(\alpha + 2m)}, \ m
-   * \geq 1 \f] The Lentz method works as follows: let \f$ f_j \f$ denote the
-   * value of the continued fraction up to the first \f$ j \f$ terms; \f$ f_j
-   * \f$ is updated as follows:
-   * \f[ c_j = 1 + a_j / c_{j-1}, \ \ d_j = 1 / (1 + a_j d_{j-1}) \f]
-   * \f[ f_j = c_j d_j f_{j-1} \f]
-   */
-
-  template <typename T1, typename T2, typename T3>
-  constexpr common_return_t<T1, T2, T3> incomplete_beta(
-      const T1 a, const T2 b, const T3 z) noexcept {
-    return internal::incomplete_beta_type_check(a, b, z);
-  }
-
-  /*################################################################################
-  ##
-  ##   Copyright (C) 2016-2020 Keith O'Hara
-  ##
-  ##   This file is part of the GCE-Math C++ library.
-  ##
-  ##   Licensed under the Apache License, Version 2.0 (the "License");
-  ##   you may not use this file except in compliance with the License.
-  ##   You may obtain a copy of the License at
-  ##
-  ##       http://www.apache.org/licenses/LICENSE-2.0
-  ##
-  ##   Unless required by applicable law or agreed to in writing, software
-  ##   distributed under the License is distributed on an "AS IS" BASIS,
-  ##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ##   See the License for the specific language governing permissions and
-  ##   limitations under the License.
-  ##
-  ################################################################################*/
-
-  /*
-   * inverse of the incomplete beta function
-   */
-
-  namespace internal {
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_decision(const T value,
-        const T alpha_par,
-        const T beta_par,
-        const T p,
-        const T direc,
-        const T lb_val,
-        const int iter_count) noexcept;
-
-    //
-    // initial value for Halley
-
-    //
-    // a,b > 1 case
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_initial_val_1_tval(
-        const T p) noexcept { // a > 1.0
-      return (p > T(0.5) ?    // if
-              sqrt(-T(2) * log(T(1) - p))
-                         :
-                         // else
-              sqrt(-T(2) * log(p)));
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_initial_val_1_int_begin(
-        const T t_val) noexcept { // internal for a > 1.0
-      return (t_val
-          - (T(2.515517) + T(0.802853) * t_val + T(0.010328) * t_val * t_val)
-              / (T(1) + T(1.432788) * t_val + T(0.189269) * t_val * t_val
-                  + T(0.001308) * t_val * t_val * t_val));
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_initial_val_1_int_ab1(
-        const T alpha_par, const T beta_par) noexcept {
-      return (T(1) / (2 * alpha_par - T(1)) + T(1) / (2 * beta_par - T(1)));
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_initial_val_1_int_ab2(
-        const T alpha_par, const T beta_par) noexcept {
-      return (T(1) / (2 * beta_par - T(1)) - T(1) / (2 * alpha_par - T(1)));
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_initial_val_1_int_h(
-        const T ab_term_1) noexcept {
-      return (T(2) / ab_term_1);
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_initial_val_1_int_w(
-        const T value, const T ab_term_2, const T h_term) noexcept {
-      // return( value * sqrt(h_term + lambda)/h_term - ab_term_2*(lambda
-      // + 5.0/6.0 -2.0/(3.0*h_term)) );
-      return (value * sqrt(h_term + (value * value - T(3)) / T(6)) / h_term
-          - ab_term_2
-              * ((value * value - T(3)) / T(6) + T(5) / T(6)
-                  - T(2) / (T(3) * h_term)));
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_initial_val_1_int_end(
-        const T alpha_par, const T beta_par, const T w_term) noexcept {
-      return (alpha_par / (alpha_par + beta_par * exp(2 * w_term)));
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_initial_val_1(const T alpha_par,
-        const T beta_par,
-        const T t_val,
-        const T sgn_term) noexcept { // a > 1.0
-      return incomplete_beta_inv_initial_val_1_int_end(alpha_par,
-          beta_par,
-          incomplete_beta_inv_initial_val_1_int_w(
-              sgn_term * incomplete_beta_inv_initial_val_1_int_begin(t_val),
-              incomplete_beta_inv_initial_val_1_int_ab2(alpha_par, beta_par),
-              incomplete_beta_inv_initial_val_1_int_h(
-                  incomplete_beta_inv_initial_val_1_int_ab1(
-                      alpha_par, beta_par))));
-    }
-
-    //
-    // a,b else
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_initial_val_2_s1(
-        const T alpha_par, const T beta_par) noexcept {
-      return (pow(alpha_par / (alpha_par + beta_par), alpha_par) / alpha_par);
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_initial_val_2_s2(
-        const T alpha_par, const T beta_par) noexcept {
-      return (pow(beta_par / (alpha_par + beta_par), beta_par) / beta_par);
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_initial_val_2(const T alpha_par,
-        const T beta_par,
-        const T p,
-        const T s_1,
-        const T s_2) noexcept {
-      return (p <= s_1 / (s_1 + s_2)
-              ? pow(p * (s_1 + s_2) * alpha_par, T(1) / alpha_par)
-              : T(1) - pow(p * (s_1 + s_2) * beta_par, T(1) / beta_par));
-    }
-
-    // initial value
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_initial_val(
-        const T alpha_par, const T beta_par, const T p) noexcept {
-      return ((alpha_par > T(1) && beta_par > T(1)) ?
-                                                    // if
-              incomplete_beta_inv_initial_val_1(alpha_par,
-                  beta_par,
-                  incomplete_beta_inv_initial_val_1_tval(p),
-                  p < T(0.5) ? T(1) : T(-1))
-                                                    :
-                                                    // else
-              p > T(0.5) ?
-                         // if
-                  T(1)
-                      - incomplete_beta_inv_initial_val_2(beta_par,
-                          alpha_par,
-                          T(1) - p,
-                          incomplete_beta_inv_initial_val_2_s1(
-                              beta_par, alpha_par),
-                          incomplete_beta_inv_initial_val_2_s2(
-                              beta_par, alpha_par))
-                         :
-                         // else
-                  incomplete_beta_inv_initial_val_2(alpha_par,
-                      beta_par,
-                      p,
-                      incomplete_beta_inv_initial_val_2_s1(alpha_par, beta_par),
-                      incomplete_beta_inv_initial_val_2_s2(
-                          alpha_par, beta_par)));
-    }
-
-    //
-    // Halley recursion
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_err_val(const T value,
-        const T alpha_par,
-        const T beta_par,
-        const T p) noexcept { // err_val = f(x)
-      return (incomplete_beta(alpha_par, beta_par, value) - p);
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_deriv_1(const T value,
-        const T alpha_par,
-        const T beta_par,
-        const T lb_val) noexcept { // derivative of the incomplete beta function
-                                   // w.r.t. x
-      return (                     // indistinguishable from zero or one
-          GCLIM<T>::epsilon() > abs(value)              ? T(0)
-              : GCLIM<T>::epsilon() > abs(T(1) - value) ? T(0)
-                                                        :
-                                                        // else
-              exp((alpha_par - T(1)) * log(value)
-                  + (beta_par - T(1)) * log(T(1) - value) - lb_val));
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_deriv_2(const T value,
-        const T alpha_par,
-        const T beta_par,
-        const T deriv_1) noexcept { // second derivative of the incomplete beta
-                                    // function w.r.t. x
-      return (deriv_1
-          * ((alpha_par - T(1)) / value - (beta_par - T(1)) / (T(1) - value)));
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_ratio_val_1(const T value,
-        const T alpha_par,
-        const T beta_par,
-        const T p,
-        const T deriv_1) noexcept {
-      return (
-          incomplete_beta_inv_err_val(value, alpha_par, beta_par, p) / deriv_1);
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_ratio_val_2(const T value,
-        const T alpha_par,
-        const T beta_par,
-        const T deriv_1) noexcept {
-      return (incomplete_beta_inv_deriv_2(value, alpha_par, beta_par, deriv_1)
-          / deriv_1);
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_halley(
-        const T ratio_val_1, const T ratio_val_2) noexcept {
-      return (ratio_val_1
-          / max(
-              T(0.8), min(T(1.2), T(1) - T(0.5) * ratio_val_1 * ratio_val_2)));
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_recur(const T value,
-        const T alpha_par,
-        const T beta_par,
-        const T p,
-        const T deriv_1,
-        const T lb_val,
-        const int iter_count) noexcept {
-      return ( // derivative = 0
-          GCLIM<T>::epsilon() > abs(deriv_1)
-              ? incomplete_beta_inv_decision(value,
-                    alpha_par,
-                    beta_par,
-                    p,
-                    T(0),
-                    lb_val,
-                    GCEM_INCML_BETA_INV_MAX_ITER + 1)
-              :
-              // else
-              incomplete_beta_inv_decision(value,
-                  alpha_par,
-                  beta_par,
-                  p,
-                  incomplete_beta_inv_halley(
-                      incomplete_beta_inv_ratio_val_1(
-                          value, alpha_par, beta_par, p, deriv_1),
-                      incomplete_beta_inv_ratio_val_2(
-                          value, alpha_par, beta_par, deriv_1)),
-                  lb_val,
-                  iter_count));
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_decision(const T value,
-        const T alpha_par,
-        const T beta_par,
-        const T p,
-        const T direc,
-        const T lb_val,
-        const int iter_count) noexcept {
-      return (iter_count <= GCEM_INCML_BETA_INV_MAX_ITER ?
-                                                         // if
-              incomplete_beta_inv_recur(value - direc,
-                  alpha_par,
-                  beta_par,
-                  p,
-                  incomplete_beta_inv_deriv_1(
-                      value, alpha_par, beta_par, lb_val),
-                  lb_val,
-                  iter_count + 1)
-                                                         :
-                                                         // else
-              value - direc);
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_begin(const T initial_val,
-        const T alpha_par,
-        const T beta_par,
-        const T p,
-        const T lb_val) noexcept {
-      return incomplete_beta_inv_recur(initial_val,
-          alpha_par,
-          beta_par,
-          p,
-          incomplete_beta_inv_deriv_1(initial_val, alpha_par, beta_par, lb_val),
-          lb_val,
-          1);
-    }
-
-    template <typename T>
-    constexpr T incomplete_beta_inv_check(
-        const T alpha_par, const T beta_par, const T p) noexcept {
-      return ( // NaN check
-          any_nan(alpha_par, beta_par, p) ? GCLIM<T>::quiet_NaN() :
-                                          // indistinguishable from zero or one
-              GCLIM<T>::epsilon() > p               ? T(0)
-              : GCLIM<T>::epsilon() > abs(T(1) - p) ? T(1)
-                                                    :
-                                                    // else
-              incomplete_beta_inv_begin(
-                  incomplete_beta_inv_initial_val(alpha_par, beta_par, p),
-                  alpha_par,
-                  beta_par,
-                  p,
-                  lbeta(alpha_par, beta_par)));
-    }
-
-    template <typename T1,
-        typename T2,
-        typename T3,
-        typename TC = common_t<T1, T2, T3>>
-    constexpr TC incomplete_beta_inv_type_check(
-        const T1 a, const T2 b, const T3 p) noexcept {
-      return incomplete_beta_inv_check(
-          static_cast<TC>(a), static_cast<TC>(b), static_cast<TC>(p));
-    }
-
-  }
-
-  /**
-   * Compile-time inverse incomplete beta function
-   *
-   * @param a a real-valued, non-negative input.
-   * @param b a real-valued, non-negative input.
-   * @param p a real-valued input with values in the unit-interval.
-   *
-   * @return Computes the inverse incomplete beta function, a value \f$ x \f$
-   * such that
-   * \f[ f(x) := \frac{\text{B}(x;\alpha,\beta)}{\text{B}(\alpha,\beta)} - p \f]
-   * equal to zero, for a given \c p.
-   * GCE-Math finds this root using Halley's method:
-   * \f[ x_{n+1} = x_n - \frac{f(x_n)/f'(x_n)}{1 - 0.5 \frac{f(x_n)}{f'(x_n)}
-   * \frac{f''(x_n)}{f'(x_n)} } \f] where
-   * \f[ \frac{\partial}{\partial x}
-   * \left(\frac{\text{B}(x;\alpha,\beta)}{\text{B}(\alpha,\beta)}\right) =
-   * \frac{1}{\text{B}(\alpha,\beta)} x^{\alpha-1} (1-x)^{\beta-1} \f]
-   * \f[ \frac{\partial^2}{\partial x^2}
-   * \left(\frac{\text{B}(x;\alpha,\beta)}{\text{B}(\alpha,\beta)}\right) =
-   * \frac{1}{\text{B}(\alpha,\beta)} x^{\alpha-1} (1-x)^{\beta-1} \left(
-   * \frac{\alpha-1}{x} - \frac{\beta-1}{1 - x} \right) \f]
-   */
-
-  template <typename T1, typename T2, typename T3>
-  constexpr common_t<T1, T2, T3> incomplete_beta_inv(
-      const T1 a, const T2 b, const T3 p) noexcept {
-    return internal::incomplete_beta_inv_type_check(a, b, p);
-  }
-
-  /*################################################################################
-  ##
-  ##   Copyright (C) 2016-2020 Keith O'Hara
-  ##
-  ##   This file is part of the GCE-Math C++ library.
-  ##
-  ##   Licensed under the Apache License, Version 2.0 (the "License");
-  ##   you may not use this file except in compliance with the License.
-  ##   You may obtain a copy of the License at
-  ##
-  ##       http://www.apache.org/licenses/LICENSE-2.0
-  ##
-  ##   Unless required by applicable law or agreed to in writing, software
-  ##   distributed under the License is distributed on an "AS IS" BASIS,
-  ##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ##   See the License for the specific language governing permissions and
-  ##   limitations under the License.
-  ##
-  ################################################################################*/
-
-  /*
-   * compile-time (regularized) incomplete gamma function
-   */
-
-  namespace internal {
-
-    // 50 point Gauss-Legendre quadrature
-
-    template <typename T>
-    constexpr T incomplete_gamma_quad_inp_vals(
-        const T lb, const T ub, const int counter) noexcept {
-      return (ub - lb) * gauss_legendre_50_points[counter] / T(2)
-          + (ub + lb) / T(2);
-    }
-
-    template <typename T>
-    constexpr T incomplete_gamma_quad_weight_vals(
-        const T lb, const T ub, const int counter) noexcept {
-      return (ub - lb) * gauss_legendre_50_weights[counter] / T(2);
-    }
-
-    template <typename T>
-    constexpr T incomplete_gamma_quad_fn(
-        const T x, const T a, const T lg_term) noexcept {
-      return exp(-x + (a - T(1)) * log(x) - lg_term);
-    }
-
-    template <typename T>
-    constexpr T incomplete_gamma_quad_recur(const T lb,
-        const T ub,
-        const T a,
-        const T lg_term,
-        const int counter) noexcept {
-      return (counter < 49 ? // if
-              incomplete_gamma_quad_fn(
-                  incomplete_gamma_quad_inp_vals(lb, ub, counter), a, lg_term)
-                      * incomplete_gamma_quad_weight_vals(lb, ub, counter)
-                  + incomplete_gamma_quad_recur(lb, ub, a, lg_term, counter + 1)
-                           :
-                           // else
-              incomplete_gamma_quad_fn(
-                  incomplete_gamma_quad_inp_vals(lb, ub, counter), a, lg_term)
-                  * incomplete_gamma_quad_weight_vals(lb, ub, counter));
-    }
-
-    template <typename T>
-    constexpr T incomplete_gamma_quad_lb(const T a, const T z) noexcept {
-      return (a > T(1000) ? max(T(0), min(z, a) - 11 * sqrt(a))
-                          : // break integration into ranges
-              a > T(800)   ? max(T(0), min(z, a) - 11 * sqrt(a))
-              : a > T(500) ? max(T(0), min(z, a) - 10 * sqrt(a))
-              : a > T(300) ? max(T(0), min(z, a) - 10 * sqrt(a))
-              : a > T(100) ? max(T(0), min(z, a) - 9 * sqrt(a))
-              : a > T(90)  ? max(T(0), min(z, a) - 9 * sqrt(a))
-              : a > T(70)  ? max(T(0), min(z, a) - 8 * sqrt(a))
-              : a > T(50)  ? max(T(0), min(z, a) - 7 * sqrt(a))
-              : a > T(40)  ? max(T(0), min(z, a) - 6 * sqrt(a))
-              : a > T(30)  ? max(T(0), min(z, a) - 5 * sqrt(a))
-                           :
-                           // else
-              max(T(0), min(z, a) - 4 * sqrt(a)));
-    }
-
-    template <typename T>
-    constexpr T incomplete_gamma_quad_ub(const T a, const T z) noexcept {
-      return (a > T(1000)  ? min(z, a + 10 * sqrt(a))
-              : a > T(800) ? min(z, a + 10 * sqrt(a))
-              : a > T(500) ? min(z, a + 9 * sqrt(a))
-              : a > T(300) ? min(z, a + 9 * sqrt(a))
-              : a > T(100) ? min(z, a + 8 * sqrt(a))
-              : a > T(90)  ? min(z, a + 8 * sqrt(a))
-              : a > T(70)  ? min(z, a + 7 * sqrt(a))
-              : a > T(50)  ? min(z, a + 6 * sqrt(a))
-                           :
-                           // else
-              min(z, a + 5 * sqrt(a)));
-    }
-
-    template <typename T>
-    constexpr T incomplete_gamma_quad(const T a, const T z) noexcept {
-      return incomplete_gamma_quad_recur(incomplete_gamma_quad_lb(a, z),
-          incomplete_gamma_quad_ub(a, z),
-          a,
-          lgamma(a),
-          0);
-    }
-
-    // reverse cf expansion
-    // see: https://functions.wolfram.com/GammaBetaErf/Gamma2/10/0003/
-
-    template <typename T>
-    constexpr T incomplete_gamma_cf_2_recur(
-        const T a, const T z, const int depth) noexcept {
-      return (depth < 100 ? // if
-              (1 + (depth - 1) * 2 - a + z)
-                  + depth * (a - depth)
-                      / incomplete_gamma_cf_2_recur(a, z, depth + 1)
-                          :
-                          // else
-              (1 + (depth - 1) * 2 - a + z));
-    }
-
-    template <typename T>
-    constexpr T incomplete_gamma_cf_2(const T a,
-        const T z) noexcept { // lower (regularized) incomplete gamma function
-      return (T(1.0)
-          - exp(a * log(z) - z - lgamma(a))
-              / incomplete_gamma_cf_2_recur(a, z, 1));
-    }
-
-    // cf expansion
-    // see: http://functions.wolfram.com/GammaBetaErf/Gamma2/10/0009/
-
-    template <typename T>
-    constexpr T incomplete_gamma_cf_1_coef(
-        const T a, const T z, const int depth) noexcept {
-      return (is_odd(depth) ? -(a - 1 + T(depth + 1) / T(2)) * z
-                            : T(depth) / T(2) * z);
-    }
-
-    template <typename T>
-    constexpr T incomplete_gamma_cf_1_recur(
-        const T a, const T z, const int depth) noexcept {
-      return (depth < GCEM_INCML_GAMMA_MAX_ITER ? // if
-              (a + depth - 1)
-                  + incomplete_gamma_cf_1_coef(a, z, depth)
-                      / incomplete_gamma_cf_1_recur(a, z, depth + 1)
+  constexpr T lgamma_check(const T x) noexcept {
+    return ( // NaN check
+        is_nan(x) ? GCLIM<T>::quiet_NaN() :
+                  // indistinguishable from one or <= zero
+            GCLIM<T>::epsilon() > abs(x - T(1)) ? T(0)
+            : GCLIM<T>::epsilon() > x           ? GCLIM<T>::infinity()
                                                 :
                                                 // else
-              (a + depth - 1));
-    }
-
-    template <typename T>
-    constexpr T incomplete_gamma_cf_1(const T a,
-        const T z) noexcept { // lower (regularized) incomplete gamma function
-      return (exp(a * log(z) - z - lgamma(a))
-          / incomplete_gamma_cf_1_recur(a, z, 1));
-    }
-
-    //
-
-    template <typename T>
-    constexpr T incomplete_gamma_check(const T a, const T z) noexcept {
-      return ( // NaN check
-          any_nan(a, z) ? GCLIM<T>::quiet_NaN() :
-                        //
-              a < T(0) ? GCLIM<T>::quiet_NaN()
-                       :
-                       //
-              GCLIM<T>::epsilon() > z ? T(0)
-                                      :
-                                      //
-              GCLIM<T>::epsilon() > a ? T(1)
-                                      :
-                                      // cf or quadrature
-              (a < T(10)) && (z - a < T(10))  ? incomplete_gamma_cf_1(a, z)
-              : (a < T(10)) || (z / a > T(3)) ? incomplete_gamma_cf_2(a, z)
-                                              :
-                                              // else
-              incomplete_gamma_quad(a, z));
-    }
-
-    template <typename T1, typename T2, typename TC = common_return_t<T1, T2>>
-    constexpr TC incomplete_gamma_type_check(const T1 a, const T2 p) noexcept {
-      return incomplete_gamma_check(static_cast<TC>(a), static_cast<TC>(p));
-    }
-
+            lgamma_begin(x - T(1)));
   }
 
-  /**
-   * Compile-time regularized lower incomplete gamma function
-   *
-   * @param a a real-valued, non-negative input.
-   * @param x a real-valued, non-negative input.
-   *
-   * @return the regularized lower incomplete gamma function evaluated at (\c a,
-   * \c x),
-   * \f[ \frac{\gamma(a,x)}{\Gamma(a)} = \frac{1}{\Gamma(a)} \int_0^x t^{a-1}
-   * \exp(-t) dt \f] When \c a is not too large, the value is computed using the
-   * continued fraction representation of the upper incomplete gamma function,
-   * \f$
-   * \Gamma(a,x) \f$, using
-   * \f[ \Gamma(a,x) = \Gamma(a) - \dfrac{x^a\exp(-x)}{a - \dfrac{ax}{a + 1 +
-   * \dfrac{x}{a + 2 - \dfrac{(a+1)x}{a + 3 + \dfrac{2x}{a + 4 - \ddots}}}}} \f]
-   * where \f$ \gamma(a,x) \f$ and \f$ \Gamma(a,x) \f$ are connected via
-   * \f[ \frac{\gamma(a,x)}{\Gamma(a)} + \frac{\Gamma(a,x)}{\Gamma(a)} = 1 \f]
-   * When \f$ a > 10 \f$, a 50-point Gauss-Legendre quadrature scheme is
-   * employed.
-   */
+}
+
+/**
+ * Compile-time log-gamma function
+ *
+ * @param x a real-valued input.
+ * @return computes the log-gamma function
+ * \f[ \ln \Gamma(x) = \ln \int_0^\infty y^{x-1} \exp(-y) dy \f]
+ * using a polynomial form:
+ * \f[ \Gamma(x+1) \approx (x+g+0.5)^{x+0.5} \exp(-x-g-0.5) \sqrt{2 \pi}
+ * \left[ c_0 + \frac{c_1}{x+1} + \frac{c_2}{x+2} + \cdots + \frac{c_n}{x+n}
+ * \right]
+ * \f] where the value \f$ g \f$ and the coefficients \f$ (c_0, c_1, \ldots,
+ * c_n) \f$ are taken from Paul Godfrey, whose note can be found here:
+ * http://my.fit.edu/~gabdo/gamma.txt
+ */
+
+template <typename T>
+constexpr return_t<T> lgamma(const T x) noexcept {
+  return internal::lgamma_check(static_cast<return_t<T>>(x));
+}
+
+/*
+ * the ('true') gamma function
+ */
+
+namespace internal {
+
+  template <typename T>
+  constexpr T tgamma_check(const T x) noexcept {
+    return ( // NaN check
+        is_nan(x) ? GCLIM<T>::quiet_NaN() :
+                  // indistinguishable from one or zero
+            GCLIM<T>::epsilon() > abs(x - T(1)) ? T(1)
+            : GCLIM<T>::epsilon() > abs(x)      ? GCLIM<T>::infinity()
+                                                :
+                                                // negative numbers
+            x < T(0) ? // check for integer
+            GCLIM<T>::epsilon() > abs(x - find_whole(x)) ? GCLIM<T>::quiet_NaN()
+                                                         :
+                                                         // else
+                tgamma_check(x + T(1)) / x
+                     :
+
+                     // else
+            exp(lgamma(x)));
+  }
+
+}
+
+/**
+ * Compile-time gamma function
+ *
+ * @param x a real-valued input.
+ * @return computes the `true' gamma function
+ * \f[ \Gamma(x) = \int_0^\infty y^{x-1} \exp(-y) dy \f]
+ * using a polynomial form:
+ * \f[ \Gamma(x+1) \approx (x+g+0.5)^{x+0.5} \exp(-x-g-0.5) \sqrt{2 \pi}
+ * \left[ c_0 + \frac{c_1}{x+1} + \frac{c_2}{x+2} + \cdots + \frac{c_n}{x+n}
+ * \right]
+ * \f] where the value \f$ g \f$ and the coefficients \f$ (c_0, c_1, \ldots,
+ * c_n) \f$ are taken from Paul Godfrey, whose note can be found here:
+ * http://my.fit.edu/~gabdo/gamma.txt
+ */
+
+template <typename T>
+constexpr return_t<T> tgamma(const T x) noexcept {
+  return internal::tgamma_check(static_cast<return_t<T>>(x));
+}
+
+/*
+ * compile-time factorial function
+ */
+
+namespace internal {
+
+  // T should be int, long int, unsigned int, etc.
+
+  template <typename T>
+  constexpr T factorial_table(
+      const T x) noexcept { // table for x! when x = {2,...,16}
+    return (x == T(2)   ? T(2)
+            : x == T(3) ? T(6)
+            : x == T(4) ? T(24)
+            : x == T(5) ? T(120)
+            : x == T(6) ? T(720)
+            : x == T(7) ? T(5040)
+            : x == T(8) ? T(40320)
+            : x == T(9) ? T(362880)
+                        :
+                        //
+            x == T(10)   ? T(3628800)
+            : x == T(11) ? T(39916800)
+            : x == T(12) ? T(479001600)
+            : x == T(13) ? T(6227020800)
+            : x == T(14) ? T(87178291200)
+            : x == T(15) ? T(1307674368000)
+                         : T(20922789888000));
+  }
+
+  template <typename T,
+      typename std::enable_if<std::is_integral<T>::value>::type* = nullptr>
+  constexpr T factorial_recur(const T x) noexcept {
+    return (x == T(0)   ? T(1)
+            : x == T(1) ? x
+                        :
+                        //
+            x < T(17) ? // if
+            factorial_table(x)
+                      :
+                      // else
+            x * factorial_recur(x - 1));
+  }
+
+  template <typename T,
+      typename std::enable_if<!std::is_integral<T>::value>::type* = nullptr>
+  constexpr T factorial_recur(const T x) noexcept {
+    return tgamma(x + 1);
+  }
+
+}
+
+/**
+ * Compile-time factorial function
+ *
+ * @param x a real-valued input.
+ * @return Computes the factorial value \f$ x! \f$.
+ * When \c x is an integral type (\c int, <tt>long int</tt>, etc.), a simple
+ * recursion method is used, along with table values. When \c x is
+ * real-valued, <tt>factorial(x) = tgamma(x+1)</tt>.
+ */
+
+template <typename T>
+constexpr T factorial(const T x) noexcept {
+  return internal::factorial_recur(x);
+}
+
+/**
+ * Compile-time log-beta function
+ *
+ * @param a a real-valued input.
+ * @param b a real-valued input.
+ * @return the log-beta function using \f[ \ln \text{B}(\alpha,\beta) := \ln
+ * \int_0^1 t^{\alpha - 1} (1-t)^{\beta - 1} dt = \ln \Gamma(\alpha) + \ln
+ * \Gamma(\beta) - \ln \Gamma(\alpha + \beta) \f] where \f$ \Gamma \f$ denotes
+ * the gamma function.
+ */
+
+template <typename T1, typename T2>
+constexpr common_return_t<T1, T2> lbeta(const T1 a, const T2 b) noexcept {
+  return ((lgamma(a) + lgamma(b)) - lgamma(a + b));
+}
+
+/**
+ * Compile-time beta function
+ *
+ * @param a a real-valued input.
+ * @param b a real-valued input.
+ * @return the beta function using \f[ \text{B}(\alpha,\beta) := \int_0^1
+ * t^{\alpha - 1} (1-t)^{\beta - 1} dt =
+ * \frac{\Gamma(\alpha)\Gamma(\beta)}{\Gamma(\alpha + \beta)} \f] where \f$
+ * \Gamma \f$ denotes the gamma function.
+ */
+
+template <typename T1, typename T2>
+constexpr common_return_t<T1, T2> beta(const T1 a, const T2 b) noexcept {
+  return exp(lbeta(a, b));
+}
+
+/*
+ * log multivariate gamma function
+ */
+
+namespace internal {
+
+  // see https://en.wikipedia.org/wiki/Multivariate_gamma_function
 
   template <typename T1, typename T2>
-  constexpr common_return_t<T1, T2> incomplete_gamma(
-      const T1 a, const T2 x) noexcept {
-    return internal::incomplete_gamma_type_check(a, x);
-  }
-
-  /*################################################################################
-  ##
-  ##   Copyright (C) 2016-2020 Keith O'Hara
-  ##
-  ##   This file is part of the GCE-Math C++ library.
-  ##
-  ##   Licensed under the Apache License, Version 2.0 (the "License");
-  ##   you may not use this file except in compliance with the License.
-  ##   You may obtain a copy of the License at
-  ##
-  ##       http://www.apache.org/licenses/LICENSE-2.0
-  ##
-  ##   Unless required by applicable law or agreed to in writing, software
-  ##   distributed under the License is distributed on an "AS IS" BASIS,
-  ##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ##   See the License for the specific language governing permissions and
-  ##   limitations under the License.
-  ##
-  ################################################################################*/
-
-  /*
-   * inverse of the incomplete gamma function
-   */
-
-  namespace internal {
-
-    template <typename T>
-    constexpr T incomplete_gamma_inv_decision(const T value,
-        const T a,
-        const T p,
-        const T direc,
-        const T lg_val,
-        const int iter_count) noexcept;
-
-    //
-    // initial value for Halley
-
-    template <typename T>
-    constexpr T incomplete_gamma_inv_t_val_1(const T p) noexcept { // a > 1.0
-      return (p > T(0.5) ? sqrt(-2 * log(T(1) - p)) : sqrt(-2 * log(p)));
-    }
-
-    template <typename T>
-    constexpr T incomplete_gamma_inv_t_val_2(const T a) noexcept { // a <= 1.0
-      return (T(1) - T(0.253) * a - T(0.12) * a * a);
-    }
-
-    //
-
-    template <typename T>
-    constexpr T incomplete_gamma_inv_initial_val_1_int_begin(
-        const T t_val) noexcept { // internal for a > 1.0
-      return (t_val
-          - (T(2.515517L) + T(0.802853L) * t_val + T(0.010328L) * t_val * t_val)
-              / (T(1) + T(1.432788L) * t_val + T(0.189269L) * t_val * t_val
-                  + T(0.001308L) * t_val * t_val * t_val));
-    }
-
-    template <typename T>
-    constexpr T incomplete_gamma_inv_initial_val_1_int_end(
-        const T value_inp, const T a) noexcept { // internal for a > 1.0
-      return max(T(1E-04),
-          a * pow(T(1) - T(1) / (9 * a) - value_inp / (3 * sqrt(a)), 3));
-    }
-
-    template <typename T>
-    constexpr T incomplete_gamma_inv_initial_val_1(
-        const T a, const T t_val, const T sgn_term) noexcept { // a > 1.0
-      return incomplete_gamma_inv_initial_val_1_int_end(
-          sgn_term * incomplete_gamma_inv_initial_val_1_int_begin(t_val), a);
-    }
-
-    template <typename T>
-    constexpr T incomplete_gamma_inv_initial_val_2(
-        const T a, const T p, const T t_val) noexcept { // a <= 1.0
-      return (p < t_val ?                               // if
-              pow(p / t_val, T(1) / a)
+  constexpr T1 lmgamma_recur(const T1 a, const T2 p) noexcept {
+    return ( // NaN check
+        is_nan(a) ? GCLIM<T1>::quiet_NaN() :
+                  //
+            p == T2(1)  ? lgamma(a)
+            : p < T2(1) ? GCLIM<T1>::quiet_NaN()
                         :
                         // else
-              T(1) - log(T(1) - (p - t_val) / (T(1) - t_val)));
-    }
+            T1(GCEM_LOG_PI) * (p - T1(1)) / T1(2) + lgamma(a)
+                + lmgamma_recur(a - T1(0.5), p - T2(1)));
+  }
 
-    // initial value
+}
 
-    template <typename T>
-    constexpr T incomplete_gamma_inv_initial_val(
-        const T a, const T p) noexcept {
-      return (a > T(1) ? // if
-              incomplete_gamma_inv_initial_val_1(
-                  a, incomplete_gamma_inv_t_val_1(p), p > T(0.5) ? T(-1) : T(1))
-                       :
-                       // else
-              incomplete_gamma_inv_initial_val_2(
-                  a, p, incomplete_gamma_inv_t_val_2(a)));
-    }
+/**
+ * Compile-time log multivariate gamma function
+ *
+ * @param a a real-valued input.
+ * @param p integral-valued input.
+ * @return computes log-multivariate gamma function via recursion
+ * \f[ \Gamma_p(a) = \pi^{(p-1)/2} \Gamma(a) \Gamma_{p-1}(a-0.5) \f]
+ * where \f$ \Gamma_1(a) = \Gamma(a) \f$.
+ */
 
-    //
-    // Halley recursion
+template <typename T1, typename T2>
+constexpr return_t<T1> lmgamma(const T1 a, const T2 p) noexcept {
+  return internal::lmgamma_recur(static_cast<return_t<T1>>(a), p);
+}
 
-    template <typename T>
-    constexpr T incomplete_gamma_inv_err_val(
-        const T value, const T a, const T p) noexcept { // err_val = f(x)
-      return (incomplete_gamma(a, value) - p);
-    }
+namespace internal {
 
-    template <typename T>
-    constexpr T incomplete_gamma_inv_deriv_1(const T value,
-        const T a,
-        const T lg_val) noexcept { // derivative of the incomplete gamma
-                                   // function w.r.t. x
-      return (exp(-value + (a - T(1)) * log(value) - lg_val));
-    }
+  template <typename T>
+  constexpr T log_binomial_coef_compute(const T n, const T k) noexcept {
+    return (lgamma(n + 1) - (lgamma(k + 1) + lgamma(n - k + 1)));
+  }
 
-    template <typename T>
-    constexpr T incomplete_gamma_inv_deriv_2(const T value,
-        const T a,
-        const T deriv_1) noexcept { // second derivative of the incomplete gamma
-                                    // function w.r.t. x
-      return (deriv_1 * ((a - T(1)) / value - T(1)));
-    }
+  template <typename T1, typename T2, typename TC = common_return_t<T1, T2>>
+  constexpr TC log_binomial_coef_type_check(const T1 n, const T2 k) noexcept {
+    return log_binomial_coef_compute(static_cast<TC>(n), static_cast<TC>(k));
+  }
 
-    template <typename T>
-    constexpr T incomplete_gamma_inv_ratio_val_1(
-        const T value, const T a, const T p, const T deriv_1) noexcept {
-      return (incomplete_gamma_inv_err_val(value, a, p) / deriv_1);
-    }
+}
 
-    template <typename T>
-    constexpr T incomplete_gamma_inv_ratio_val_2(
-        const T value, const T a, const T deriv_1) noexcept {
-      return (incomplete_gamma_inv_deriv_2(value, a, deriv_1) / deriv_1);
-    }
+/**
+ * Compile-time log binomial coefficient
+ *
+ * @param n integral-valued input.
+ * @param k integral-valued input.
+ * @return computes the log Binomial coefficient
+ * \f[ \ln \frac{n!}{k!(n-k)!} = \ln \Gamma(n+1) - [ \ln \Gamma(k+1) + \ln
+ * \Gamma(n-k+1) ] \f]
+ */
 
-    template <typename T>
-    constexpr T incomplete_gamma_inv_halley(
-        const T ratio_val_1, const T ratio_val_2) noexcept {
-      return (ratio_val_1
-          / max(
-              T(0.8), min(T(1.2), T(1) - T(0.5) * ratio_val_1 * ratio_val_2)));
-    }
+template <typename T1, typename T2>
+constexpr common_return_t<T1, T2> log_binomial_coef(
+    const T1 n, const T2 k) noexcept {
+  return internal::log_binomial_coef_type_check(n, k);
+}
 
-    template <typename T>
-    constexpr T incomplete_gamma_inv_recur(const T value,
-        const T a,
-        const T p,
-        const T deriv_1,
-        const T lg_val,
-        const int iter_count) noexcept {
-      return incomplete_gamma_inv_decision(value,
-          a,
-          p,
-          incomplete_gamma_inv_halley(
-              incomplete_gamma_inv_ratio_val_1(value, a, p, deriv_1),
-              incomplete_gamma_inv_ratio_val_2(value, a, deriv_1)),
-          lg_val,
-          iter_count);
-    }
+/*################################################################################
+\
+## \
+##   Copyright (C) 2016-2020 Keith O'Hara \
+## \
+##   This file is part of the GCE-Math C++ library. \
+## \
+##   Licensed under the Apache License, Version 2.0 (the "License"); \
+##   you may not use this file except in compliance with the License. \
+##   You may obtain a copy of the License at \
+## \
+##       http://www.apache.org/licenses/LICENSE-2.0 \
+## \
+##   Unless required by applicable law or agreed to in writing, software \
+##   distributed under the License is distributed on an "AS IS" BASIS, \
+##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or \
+implied. \
+##   See the License for the specific language governing permissions and \
+##   limitations under the License. \
+## \
+################################################################################*/
 
-    template <typename T>
-    constexpr T incomplete_gamma_inv_decision(const T value,
-        const T a,
-        const T p,
-        const T direc,
-        const T lg_val,
-        const int iter_count) noexcept {
-      // return( abs(direc) > GCEM_INCML_GAMMA_INV_TOL ?
-      // incomplete_gamma_inv_recur(value - direc, a, p,
-      // incomplete_gamma_inv_deriv_1(value,a,lg_val), lg_val) : value - direc
-      // );
-      return (iter_count <= GCEM_INCML_GAMMA_INV_MAX_ITER ? // if
-              incomplete_gamma_inv_recur(value - direc,
-                  a,
-                  p,
-                  incomplete_gamma_inv_deriv_1(value, a, lg_val),
-                  lg_val,
-                  iter_count + 1)
-                                                          :
-                                                          // else
-              value - direc);
-    }
+/*
+ * compile-time error function
+ */
 
-    template <typename T>
-    constexpr T incomplete_gamma_inv_begin(
-        const T initial_val, const T a, const T p, const T lg_val) noexcept {
-      return incomplete_gamma_inv_recur(initial_val,
-          a,
-          p,
-          incomplete_gamma_inv_deriv_1(initial_val, a, lg_val),
-          lg_val,
-          1);
-    }
+namespace internal {
 
-    template <typename T>
-    constexpr T incomplete_gamma_inv_check(const T a, const T p) noexcept {
-      return ( // NaN check
-          any_nan(a, p) ? GCLIM<T>::quiet_NaN() :
-                        //
-              GCLIM<T>::epsilon() > p               ? T(0)
-              : p > T(1)                            ? GCLIM<T>::quiet_NaN()
-              : GCLIM<T>::epsilon() > abs(T(1) - p) ? GCLIM<T>::infinity()
-                                                    :
-                                                    //
-              GCLIM<T>::epsilon() > a ? T(0)
+  // see
+  // http://functions.wolfram.com/GammaBetaErf/Erf/10/01/0007/
+
+  template <typename T>
+  constexpr T erf_cf_large_recur(const T x, const int depth) noexcept {
+    return (depth < GCEM_ERF_MAX_ITER ? // if
+            x + 2 * depth / erf_cf_large_recur(x, depth + 1)
                                       :
                                       // else
-              incomplete_gamma_inv_begin(
-                  incomplete_gamma_inv_initial_val(a, p), a, p, lgamma(a)));
-    }
-
-    template <typename T1, typename T2, typename TC = common_return_t<T1, T2>>
-    constexpr TC incomplete_gamma_inv_type_check(
-        const T1 a, const T2 p) noexcept {
-      return incomplete_gamma_inv_check(static_cast<TC>(a), static_cast<TC>(p));
-    }
-
+            x);
   }
 
-  /**
-   * Compile-time inverse incomplete gamma function
-   *
-   * @param a a real-valued, non-negative input.
-   * @param p a real-valued input with values in the unit-interval.
-   *
-   * @return Computes the inverse incomplete gamma function, a value \f$ x \f$
-   * such that
-   * \f[ f(x) := \frac{\gamma(a,x)}{\Gamma(a)} - p \f]
-   * equal to zero, for a given \c p.
-   * GCE-Math finds this root using Halley's method:
-   * \f[ x_{n+1} = x_n - \frac{f(x_n)/f'(x_n)}{1 - 0.5 \frac{f(x_n)}{f'(x_n)}
-   * \frac{f''(x_n)}{f'(x_n)} } \f] where
-   * \f[ \frac{\partial}{\partial x} \left(\frac{\gamma(a,x)}{\Gamma(a)}\right)
-   * =
-   * \frac{1}{\Gamma(a)} x^{a-1} \exp(-x) \f]
-   * \f[ \frac{\partial^2}{\partial x^2}
-   * \left(\frac{\gamma(a,x)}{\Gamma(a)}\right) = \frac{1}{\Gamma(a)} x^{a-1}
-   * \exp(-x) \left( \frac{a-1}{x} - 1 \right) \f]
-   */
+  template <typename T>
+  constexpr T erf_cf_large_main(const T x) noexcept {
+    return (T(1)
+        - T(2) * (exp(-x * x) / T(GCEM_SQRT_PI))
+            / erf_cf_large_recur(T(2) * x, 1));
+  }
 
-  template <typename T1, typename T2>
-  constexpr common_return_t<T1, T2> incomplete_gamma_inv(
+  // see
+  // http://functions.wolfram.com/GammaBetaErf/Erf/10/01/0005/
+
+  template <typename T>
+  constexpr T erf_cf_small_recur(const T xx, const int depth) noexcept {
+    return (depth < GCEM_ERF_MAX_ITER ? // if
+            (2 * depth - 1) - 2 * xx
+                + 4 * depth * xx / erf_cf_small_recur(xx, depth + 1)
+                                      :
+                                      // else
+            (2 * depth - 1) - 2 * xx);
+  }
+
+  template <typename T>
+  constexpr T erf_cf_small_main(const T x) noexcept {
+    return (T(2) * x * (exp(-x * x) / T(GCEM_SQRT_PI))
+        / erf_cf_small_recur(x * x, 1));
+  }
+
+  //
+
+  template <typename T>
+  constexpr T erf_begin(const T x) noexcept {
+    return (x > T(2.1) ? // if
+            erf_cf_large_main(x)
+                       :
+                       // else
+            erf_cf_small_main(x));
+  }
+
+  template <typename T>
+  constexpr T erf_check(const T x) noexcept {
+    return ( // NaN check
+        is_nan(x) ? GCLIM<T>::quiet_NaN() :
+                  // +/-Inf
+            is_posinf(x)   ? T(1)
+            : is_neginf(x) ? -T(1)
+                           :
+                           // indistinguishable from zero
+            GCLIM<T>::epsilon() > abs(x) ? T(0)
+                                         :
+                                         // else
+            x < T(0) ? -erf_begin(-x)
+                     : erf_begin(x));
+  }
+
+}
+
+/**
+ * Compile-time Gaussian error function
+ *
+ * @param x a real-valued input.
+ * @return computes the Gaussian error function
+ * \f[ \text{erf}(x) = \frac{2}{\sqrt{\pi}} \int_0^x \exp( - t^2) dt \f]
+ * using a continued fraction representation:
+ * \f[ \text{erf}(x) = \frac{2x}{\sqrt{\pi}} \exp(-x^2) \dfrac{1}{1 - 2x^2 +
+ * \dfrac{4x^2}{3 - 2x^2 + \dfrac{8x^2}{5 - 2x^2 + \dfrac{12x^2}{7 - 2x^2 +
+ * \ddots}}}} \f]
+ */
+
+template <typename T>
+constexpr return_t<T> erf(const T x) noexcept {
+  return internal::erf_check(static_cast<return_t<T>>(x));
+}
+
+/*
+ * compile-time inverse error function
+ *
+ * Initial approximation based on:
+ * 'Approximating the erfinv function' by Mike Giles
+ */
+
+namespace internal {
+
+  template <typename T>
+  constexpr T erf_inv_decision(
+      const T value, const T p, const T direc, const int iter_count) noexcept;
+
+  //
+  // initial value
+
+  // two cases: (1) a < 5; and (2) otherwise
+
+  template <typename T>
+  constexpr T erf_inv_initial_val_coef_2(
+      const T a, const T p_term, const int order) noexcept {
+    return (order == 1   ? T(-0.000200214257L)
+            : order == 2 ? T(0.000100950558L) + a * p_term
+            : order == 3 ? T(0.00134934322L) + a * p_term
+            : order == 4 ? T(-0.003673428440L) + a * p_term
+            : order == 5 ? T(0.005739507730L) + a * p_term
+            : order == 6 ? T(-0.00762246130L) + a * p_term
+            : order == 7 ? T(0.009438870470L) + a * p_term
+            : order == 8 ? T(1.001674060000L) + a * p_term
+            : order == 9 ? T(2.83297682000L) + a * p_term
+                         : p_term);
+  }
+
+  template <typename T>
+  constexpr T erf_inv_initial_val_case_2(
+      const T a, const T p_term, const int order) noexcept {
+    return (order == 9 ? // if
+            erf_inv_initial_val_coef_2(a, p_term, order)
+                       :
+                       // else
+            erf_inv_initial_val_case_2(
+                a, erf_inv_initial_val_coef_2(a, p_term, order), order + 1));
+  }
+
+  template <typename T>
+  constexpr T erf_inv_initial_val_coef_1(
+      const T a, const T p_term, const int order) noexcept {
+    return (order == 1   ? T(2.81022636e-08L)
+            : order == 2 ? T(3.43273939e-07L) + a * p_term
+            : order == 3 ? T(-3.5233877e-06L) + a * p_term
+            : order == 4 ? T(-4.39150654e-06L) + a * p_term
+            : order == 5 ? T(0.00021858087L) + a * p_term
+            : order == 6 ? T(-0.00125372503L) + a * p_term
+            : order == 7 ? T(-0.004177681640L) + a * p_term
+            : order == 8 ? T(0.24664072700L) + a * p_term
+            : order == 9 ? T(1.50140941000L) + a * p_term
+                         : p_term);
+  }
+
+  template <typename T>
+  constexpr T erf_inv_initial_val_case_1(
+      const T a, const T p_term, const int order) noexcept {
+    return (order == 9 ? // if
+            erf_inv_initial_val_coef_1(a, p_term, order)
+                       :
+                       // else
+            erf_inv_initial_val_case_1(
+                a, erf_inv_initial_val_coef_1(a, p_term, order), order + 1));
+  }
+
+  template <typename T>
+  constexpr T erf_inv_initial_val_int(const T a) noexcept {
+    return (a < T(5) ? // if
+            erf_inv_initial_val_case_1(a - T(2.5), T(0), 1)
+                     :
+                     // else
+            erf_inv_initial_val_case_2(sqrt(a) - T(3), T(0), 1));
+  }
+
+  template <typename T>
+  constexpr T erf_inv_initial_val(const T x) noexcept {
+    return x * erf_inv_initial_val_int(-log((T(1) - x) * (T(1) + x)));
+  }
+
+  //
+  // Halley recursion
+
+  template <typename T>
+  constexpr T erf_inv_err_val(
+      const T value, const T p) noexcept { // err_val = f(x)
+    return (erf(value) - p);
+  }
+
+  template <typename T>
+  constexpr T erf_inv_deriv_1(
+      const T value) noexcept { // derivative of the error function w.r.t. x
+    return (exp(-value * value));
+  }
+
+  template <typename T>
+  constexpr T erf_inv_deriv_2(
+      const T value, const T deriv_1) noexcept { // second derivative of the
+                                                 // error function w.r.t. x
+    return (deriv_1 * (-T(2) * value));
+  }
+
+  template <typename T>
+  constexpr T erf_inv_ratio_val_1(
+      const T value, const T p, const T deriv_1) noexcept {
+    return (erf_inv_err_val(value, p) / deriv_1);
+  }
+
+  template <typename T>
+  constexpr T erf_inv_ratio_val_2(const T value, const T deriv_1) noexcept {
+    return (erf_inv_deriv_2(value, deriv_1) / deriv_1);
+  }
+
+  template <typename T>
+  constexpr T erf_inv_halley(
+      const T ratio_val_1, const T ratio_val_2) noexcept {
+    return (ratio_val_1
+        / max(T(0.8), min(T(1.2), T(1) - T(0.5) * ratio_val_1 * ratio_val_2)));
+  }
+
+  template <typename T>
+  constexpr T erf_inv_recur(const T value,
+      const T p,
+      const T deriv_1,
+      const int iter_count) noexcept {
+    return erf_inv_decision(value,
+        p,
+        erf_inv_halley(erf_inv_ratio_val_1(value, p, deriv_1),
+            erf_inv_ratio_val_2(value, deriv_1)),
+        iter_count);
+  }
+
+  template <typename T>
+  constexpr T erf_inv_decision(
+      const T value, const T p, const T direc, const int iter_count) noexcept {
+    return (iter_count < GCEM_ERF_INV_MAX_ITER ? // if
+            erf_inv_recur(
+                value - direc, p, erf_inv_deriv_1(value), iter_count + 1)
+                                               :
+                                               // else
+            value - direc);
+  }
+
+  template <typename T>
+  constexpr T erf_inv_recur_begin(const T initial_val, const T p) noexcept {
+    return erf_inv_recur(initial_val, p, erf_inv_deriv_1(initial_val), 1);
+  }
+
+  template <typename T>
+  constexpr T erf_inv_begin(const T p) noexcept {
+    return ( // NaN check
+        is_nan(p) ? GCLIM<T>::quiet_NaN() :
+                  // bad values
+            abs(p) > T(1) ? GCLIM<T>::quiet_NaN()
+                          :
+                          // indistinguishable from 1
+            GCLIM<T>::epsilon() > abs(T(1) - p) ? GCLIM<T>::infinity()
+                                                :
+                                                // indistinguishable from - 1
+            GCLIM<T>::epsilon() > abs(T(1) + p) ? -GCLIM<T>::infinity()
+                                                :
+                                                // else
+            erf_inv_recur_begin(erf_inv_initial_val(p), p));
+  }
+
+}
+
+/**
+ * Compile-time inverse Gaussian error function
+ *
+ * @param p a real-valued input with values in the unit-interval.
+ * @return Computes the inverse Gaussian error function, a value \f$ x \f$
+ * such that
+ * \f[ f(x) := \text{erf}(x) - p \f]
+ * is equal to zero, for a given \c p.
+ * GCE-Math finds this root using Halley's method:
+ * \f[ x_{n+1} = x_n - \frac{f(x_n)/f'(x_n)}{1 - 0.5 \frac{f(x_n)}{f'(x_n)}
+ * \frac{f''(x_n)}{f'(x_n)} } \f] where
+ * \f[ \frac{\partial}{\partial x} \text{erf}(x) = \exp(-x^2),
+ * \ \ \frac{\partial^2}{\partial x^2} \text{erf}(x) = -2x\exp(-x^2) \f]
+ */
+
+template <typename T>
+constexpr return_t<T> erf_inv(const T p) noexcept {
+  return internal::erf_inv_begin(static_cast<return_t<T>>(p));
+}
+
+/*
+ * compile-time incomplete beta function
+ *
+ * see eq. 18.5.17a in the Handbook of Continued Fractions for Special
+ * Functions
+ */
+
+namespace internal {
+
+  template <typename T>
+  constexpr T incomplete_beta_cf(const T a,
+      const T b,
+      const T z,
+      const T c_j,
+      const T d_j,
+      const T f_j,
+      const int depth) noexcept;
+
+  //
+  // coefficients; see eq. 18.5.17b
+
+  template <typename T>
+  constexpr T incomplete_beta_coef_even(
+      const T a, const T b, const T z, const int k) noexcept {
+    return (-z * (a + k) * (a + b + k) / ((a + 2 * k) * (a + 2 * k + T(1))));
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_coef_odd(
+      const T a, const T b, const T z, const int k) noexcept {
+    return (z * k * (b - k) / ((a + 2 * k - T(1)) * (a + 2 * k)));
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_coef(
+      const T a, const T b, const T z, const int depth) noexcept {
+    return (!is_odd(depth)
+            ? incomplete_beta_coef_even(a, b, z, depth / 2)
+            : incomplete_beta_coef_odd(a, b, z, (depth + 1) / 2));
+  }
+
+  //
+  // update formulae for the modified Lentz method
+
+  template <typename T>
+  constexpr T incomplete_beta_c_update(
+      const T a, const T b, const T z, const T c_j, const int depth) noexcept {
+    return (T(1) + incomplete_beta_coef(a, b, z, depth) / c_j);
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_d_update(
+      const T a, const T b, const T z, const T d_j, const int depth) noexcept {
+    return (T(1) / (T(1) + incomplete_beta_coef(a, b, z, depth) * d_j));
+  }
+
+  //
+  // convergence-type condition
+
+  template <typename T>
+  constexpr T incomplete_beta_decision(const T a,
+      const T b,
+      const T z,
+      const T c_j,
+      const T d_j,
+      const T f_j,
+      const int depth) noexcept {
+    return ( // tolerance check
+        abs(c_j * d_j - T(1)) < GCEM_INCML_BETA_TOL ? f_j * c_j * d_j :
+                                                    // max_iter check
+            depth < GCEM_INCML_BETA_MAX_ITER ? // if
+            incomplete_beta_cf(a, b, z, c_j, d_j, f_j * c_j * d_j, depth + 1)
+                                             :
+                                             // else
+            f_j * c_j * d_j);
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_cf(const T a,
+      const T b,
+      const T z,
+      const T c_j,
+      const T d_j,
+      const T f_j,
+      const int depth) noexcept {
+    return incomplete_beta_decision(a,
+        b,
+        z,
+        incomplete_beta_c_update(a, b, z, c_j, depth),
+        incomplete_beta_d_update(a, b, z, d_j, depth),
+        f_j,
+        depth);
+  }
+
+  //
+  // x^a (1-x)^{b} / (a beta(a,b)) * cf
+
+  template <typename T>
+  constexpr T incomplete_beta_begin(const T a, const T b, const T z) noexcept {
+    return ((exp(a * log(z) + b * log(T(1) - z) - lbeta(a, b)) / a)
+        * incomplete_beta_cf(a,
+            b,
+            z,
+            T(1),
+            incomplete_beta_d_update(a, b, z, T(1), 0),
+            incomplete_beta_d_update(a, b, z, T(1), 0),
+            1));
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_check(const T a, const T b, const T z) noexcept {
+    return ( // NaN check
+        any_nan(a, b, z) ? GCLIM<T>::quiet_NaN() :
+                         // indistinguishable from zero
+            GCLIM<T>::epsilon() > z ? T(0)
+                                    :
+                                    // parameter check for performance
+            (a + T(1)) / (a + b + T(2)) > z
+            ? incomplete_beta_begin(a, b, z)
+            : T(1) - incomplete_beta_begin(b, a, T(1) - z));
+  }
+
+  template <typename T1,
+      typename T2,
+      typename T3,
+      typename TC = common_return_t<T1, T2, T3>>
+  constexpr TC incomplete_beta_type_check(
+      const T1 a, const T2 b, const T3 p) noexcept {
+    return incomplete_beta_check(
+        static_cast<TC>(a), static_cast<TC>(b), static_cast<TC>(p));
+  }
+
+}
+
+/**
+ * Compile-time regularized incomplete beta function
+ *
+ * @param a a real-valued, non-negative input.
+ * @param b a real-valued, non-negative input.
+ * @param z a real-valued, non-negative input.
+ *
+ * @return computes the regularized incomplete beta function,
+ * \f[ \frac{\text{B}(z;\alpha,\beta)}{\text{B}(\alpha,\beta)} =
+ * \frac{1}{\text{B}(\alpha,\beta)}\int_0^z t^{a-1} (1-t)^{\beta-1} dt \f]
+ * using a continued fraction representation, found in the Handbook of
+ * Continued Fractions for Special Functions, and a modified Lentz method.
+ * \f[ \frac{\text{B}(z;\alpha,\beta)}{\text{B}(\alpha,\beta)} =
+ * \frac{z^{\alpha} (1-t)^{\beta}}{\alpha \text{B}(\alpha,\beta)}
+ * \dfrac{a_1}{1
+ * + \dfrac{a_2}{1 + \dfrac{a_3}{1 + \dfrac{a_4}{1 + \ddots}}}} \f] where \f$
+ * a_1 = 1 \f$ and
+ * \f[ a_{2m+2} = - \frac{(\alpha + m)(\alpha + \beta + m)}{(\alpha +
+ * 2m)(\alpha
+ * + 2m + 1)}, \ m \geq 0 \f]
+ * \f[ a_{2m+1} = \frac{m(\beta - m)}{(\alpha + 2m - 1)(\alpha + 2m)}, \ m
+ * \geq 1 \f] The Lentz method works as follows: let \f$ f_j \f$ denote the
+ * value of the continued fraction up to the first \f$ j \f$ terms; \f$ f_j
+ * \f$ is updated as follows:
+ * \f[ c_j = 1 + a_j / c_{j-1}, \ \ d_j = 1 / (1 + a_j d_{j-1}) \f]
+ * \f[ f_j = c_j d_j f_{j-1} \f]
+ */
+
+template <typename T1, typename T2, typename T3>
+constexpr common_return_t<T1, T2, T3> incomplete_beta(
+    const T1 a, const T2 b, const T3 z) noexcept {
+  return internal::incomplete_beta_type_check(a, b, z);
+}
+
+/*
+ * inverse of the incomplete beta function
+ */
+
+namespace internal {
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_decision(const T value,
+      const T alpha_par,
+      const T beta_par,
+      const T p,
+      const T direc,
+      const T lb_val,
+      const int iter_count) noexcept;
+
+  //
+  // initial value for Halley
+
+  //
+  // a,b > 1 case
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_initial_val_1_tval(
+      const T p) noexcept { // a > 1.0
+    return (p > T(0.5) ?    // if
+            sqrt(-T(2) * log(T(1) - p))
+                       :
+                       // else
+            sqrt(-T(2) * log(p)));
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_initial_val_1_int_begin(
+      const T t_val) noexcept { // internal for a > 1.0
+    return (t_val
+        - (T(2.515517) + T(0.802853) * t_val + T(0.010328) * t_val * t_val)
+            / (T(1) + T(1.432788) * t_val + T(0.189269) * t_val * t_val
+                + T(0.001308) * t_val * t_val * t_val));
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_initial_val_1_int_ab1(
+      const T alpha_par, const T beta_par) noexcept {
+    return (T(1) / (2 * alpha_par - T(1)) + T(1) / (2 * beta_par - T(1)));
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_initial_val_1_int_ab2(
+      const T alpha_par, const T beta_par) noexcept {
+    return (T(1) / (2 * beta_par - T(1)) - T(1) / (2 * alpha_par - T(1)));
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_initial_val_1_int_h(
+      const T ab_term_1) noexcept {
+    return (T(2) / ab_term_1);
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_initial_val_1_int_w(
+      const T value, const T ab_term_2, const T h_term) noexcept {
+    // return( value * sqrt(h_term + lambda)/h_term - ab_term_2*(lambda
+    // + 5.0/6.0 -2.0/(3.0*h_term)) );
+    return (value * sqrt(h_term + (value * value - T(3)) / T(6)) / h_term
+        - ab_term_2
+            * ((value * value - T(3)) / T(6) + T(5) / T(6)
+                - T(2) / (T(3) * h_term)));
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_initial_val_1_int_end(
+      const T alpha_par, const T beta_par, const T w_term) noexcept {
+    return (alpha_par / (alpha_par + beta_par * exp(2 * w_term)));
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_initial_val_1(const T alpha_par,
+      const T beta_par,
+      const T t_val,
+      const T sgn_term) noexcept { // a > 1.0
+    return incomplete_beta_inv_initial_val_1_int_end(alpha_par,
+        beta_par,
+        incomplete_beta_inv_initial_val_1_int_w(
+            sgn_term * incomplete_beta_inv_initial_val_1_int_begin(t_val),
+            incomplete_beta_inv_initial_val_1_int_ab2(alpha_par, beta_par),
+            incomplete_beta_inv_initial_val_1_int_h(
+                incomplete_beta_inv_initial_val_1_int_ab1(
+                    alpha_par, beta_par))));
+  }
+
+  //
+  // a,b else
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_initial_val_2_s1(
+      const T alpha_par, const T beta_par) noexcept {
+    return (pow(alpha_par / (alpha_par + beta_par), alpha_par) / alpha_par);
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_initial_val_2_s2(
+      const T alpha_par, const T beta_par) noexcept {
+    return (pow(beta_par / (alpha_par + beta_par), beta_par) / beta_par);
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_initial_val_2(const T alpha_par,
+      const T beta_par,
+      const T p,
+      const T s_1,
+      const T s_2) noexcept {
+    return (p <= s_1 / (s_1 + s_2)
+            ? pow(p * (s_1 + s_2) * alpha_par, T(1) / alpha_par)
+            : T(1) - pow(p * (s_1 + s_2) * beta_par, T(1) / beta_par));
+  }
+
+  // initial value
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_initial_val(
+      const T alpha_par, const T beta_par, const T p) noexcept {
+    return ((alpha_par > T(1) && beta_par > T(1)) ?
+                                                  // if
+            incomplete_beta_inv_initial_val_1(alpha_par,
+                beta_par,
+                incomplete_beta_inv_initial_val_1_tval(p),
+                p < T(0.5) ? T(1) : T(-1))
+                                                  :
+                                                  // else
+            p > T(0.5) ?
+                       // if
+                T(1)
+                    - incomplete_beta_inv_initial_val_2(beta_par,
+                        alpha_par,
+                        T(1) - p,
+                        incomplete_beta_inv_initial_val_2_s1(
+                            beta_par, alpha_par),
+                        incomplete_beta_inv_initial_val_2_s2(
+                            beta_par, alpha_par))
+                       :
+                       // else
+                incomplete_beta_inv_initial_val_2(alpha_par,
+                    beta_par,
+                    p,
+                    incomplete_beta_inv_initial_val_2_s1(alpha_par, beta_par),
+                    incomplete_beta_inv_initial_val_2_s2(alpha_par, beta_par)));
+  }
+
+  //
+  // Halley recursion
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_err_val(const T value,
+      const T alpha_par,
+      const T beta_par,
+      const T p) noexcept { // err_val = f(x)
+    return (incomplete_beta(alpha_par, beta_par, value) - p);
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_deriv_1(const T value,
+      const T alpha_par,
+      const T beta_par,
+      const T lb_val) noexcept { // derivative of the incomplete beta function
+                                 // w.r.t. x
+    return (                     // indistinguishable from zero or one
+        GCLIM<T>::epsilon() > abs(value)              ? T(0)
+            : GCLIM<T>::epsilon() > abs(T(1) - value) ? T(0)
+                                                      :
+                                                      // else
+            exp((alpha_par - T(1)) * log(value)
+                + (beta_par - T(1)) * log(T(1) - value) - lb_val));
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_deriv_2(const T value,
+      const T alpha_par,
+      const T beta_par,
+      const T deriv_1) noexcept { // second derivative of the incomplete beta
+                                  // function w.r.t. x
+    return (deriv_1
+        * ((alpha_par - T(1)) / value - (beta_par - T(1)) / (T(1) - value)));
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_ratio_val_1(const T value,
+      const T alpha_par,
+      const T beta_par,
+      const T p,
+      const T deriv_1) noexcept {
+    return (
+        incomplete_beta_inv_err_val(value, alpha_par, beta_par, p) / deriv_1);
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_ratio_val_2(const T value,
+      const T alpha_par,
+      const T beta_par,
+      const T deriv_1) noexcept {
+    return (incomplete_beta_inv_deriv_2(value, alpha_par, beta_par, deriv_1)
+        / deriv_1);
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_halley(
+      const T ratio_val_1, const T ratio_val_2) noexcept {
+    return (ratio_val_1
+        / max(T(0.8), min(T(1.2), T(1) - T(0.5) * ratio_val_1 * ratio_val_2)));
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_recur(const T value,
+      const T alpha_par,
+      const T beta_par,
+      const T p,
+      const T deriv_1,
+      const T lb_val,
+      const int iter_count) noexcept {
+    return ( // derivative = 0
+        GCLIM<T>::epsilon() > abs(deriv_1)
+            ? incomplete_beta_inv_decision(value,
+                  alpha_par,
+                  beta_par,
+                  p,
+                  T(0),
+                  lb_val,
+                  GCEM_INCML_BETA_INV_MAX_ITER + 1)
+            :
+            // else
+            incomplete_beta_inv_decision(value,
+                alpha_par,
+                beta_par,
+                p,
+                incomplete_beta_inv_halley(
+                    incomplete_beta_inv_ratio_val_1(
+                        value, alpha_par, beta_par, p, deriv_1),
+                    incomplete_beta_inv_ratio_val_2(
+                        value, alpha_par, beta_par, deriv_1)),
+                lb_val,
+                iter_count));
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_decision(const T value,
+      const T alpha_par,
+      const T beta_par,
+      const T p,
+      const T direc,
+      const T lb_val,
+      const int iter_count) noexcept {
+    return (iter_count <= GCEM_INCML_BETA_INV_MAX_ITER ?
+                                                       // if
+            incomplete_beta_inv_recur(value - direc,
+                alpha_par,
+                beta_par,
+                p,
+                incomplete_beta_inv_deriv_1(value, alpha_par, beta_par, lb_val),
+                lb_val,
+                iter_count + 1)
+                                                       :
+                                                       // else
+            value - direc);
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_begin(const T initial_val,
+      const T alpha_par,
+      const T beta_par,
+      const T p,
+      const T lb_val) noexcept {
+    return incomplete_beta_inv_recur(initial_val,
+        alpha_par,
+        beta_par,
+        p,
+        incomplete_beta_inv_deriv_1(initial_val, alpha_par, beta_par, lb_val),
+        lb_val,
+        1);
+  }
+
+  template <typename T>
+  constexpr T incomplete_beta_inv_check(
+      const T alpha_par, const T beta_par, const T p) noexcept {
+    return ( // NaN check
+        any_nan(alpha_par, beta_par, p) ? GCLIM<T>::quiet_NaN() :
+                                        // indistinguishable from zero or one
+            GCLIM<T>::epsilon() > p               ? T(0)
+            : GCLIM<T>::epsilon() > abs(T(1) - p) ? T(1)
+                                                  :
+                                                  // else
+            incomplete_beta_inv_begin(
+                incomplete_beta_inv_initial_val(alpha_par, beta_par, p),
+                alpha_par,
+                beta_par,
+                p,
+                lbeta(alpha_par, beta_par)));
+  }
+
+  template <typename T1,
+      typename T2,
+      typename T3,
+      typename TC = common_t<T1, T2, T3>>
+  constexpr TC incomplete_beta_inv_type_check(
+      const T1 a, const T2 b, const T3 p) noexcept {
+    return incomplete_beta_inv_check(
+        static_cast<TC>(a), static_cast<TC>(b), static_cast<TC>(p));
+  }
+
+}
+
+/**
+ * Compile-time inverse incomplete beta function
+ *
+ * @param a a real-valued, non-negative input.
+ * @param b a real-valued, non-negative input.
+ * @param p a real-valued input with values in the unit-interval.
+ *
+ * @return Computes the inverse incomplete beta function, a value \f$ x \f$
+ * such that
+ * \f[ f(x) := \frac{\text{B}(x;\alpha,\beta)}{\text{B}(\alpha,\beta)} - p \f]
+ * equal to zero, for a given \c p.
+ * GCE-Math finds this root using Halley's method:
+ * \f[ x_{n+1} = x_n - \frac{f(x_n)/f'(x_n)}{1 - 0.5 \frac{f(x_n)}{f'(x_n)}
+ * \frac{f''(x_n)}{f'(x_n)} } \f] where
+ * \f[ \frac{\partial}{\partial x}
+ * \left(\frac{\text{B}(x;\alpha,\beta)}{\text{B}(\alpha,\beta)}\right) =
+ * \frac{1}{\text{B}(\alpha,\beta)} x^{\alpha-1} (1-x)^{\beta-1} \f]
+ * \f[ \frac{\partial^2}{\partial x^2}
+ * \left(\frac{\text{B}(x;\alpha,\beta)}{\text{B}(\alpha,\beta)}\right) =
+ * \frac{1}{\text{B}(\alpha,\beta)} x^{\alpha-1} (1-x)^{\beta-1} \left(
+ * \frac{\alpha-1}{x} - \frac{\beta-1}{1 - x} \right) \f]
+ */
+
+template <typename T1, typename T2, typename T3>
+constexpr common_t<T1, T2, T3> incomplete_beta_inv(
+    const T1 a, const T2 b, const T3 p) noexcept {
+  return internal::incomplete_beta_inv_type_check(a, b, p);
+}
+
+/*
+ * compile-time (regularized) incomplete gamma function
+ */
+
+namespace internal {
+
+  // 50 point Gauss-Legendre quadrature
+
+  template <typename T>
+  constexpr T incomplete_gamma_quad_inp_vals(
+      const T lb, const T ub, const int counter) noexcept {
+    return (ub - lb) * gauss_legendre_50_points[counter] / T(2)
+        + (ub + lb) / T(2);
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_quad_weight_vals(
+      const T lb, const T ub, const int counter) noexcept {
+    return (ub - lb) * gauss_legendre_50_weights[counter] / T(2);
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_quad_fn(
+      const T x, const T a, const T lg_term) noexcept {
+    return exp(-x + (a - T(1)) * log(x) - lg_term);
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_quad_recur(const T lb,
+      const T ub,
+      const T a,
+      const T lg_term,
+      const int counter) noexcept {
+    return (counter < 49 ? // if
+            incomplete_gamma_quad_fn(
+                incomplete_gamma_quad_inp_vals(lb, ub, counter), a, lg_term)
+                    * incomplete_gamma_quad_weight_vals(lb, ub, counter)
+                + incomplete_gamma_quad_recur(lb, ub, a, lg_term, counter + 1)
+                         :
+                         // else
+            incomplete_gamma_quad_fn(
+                incomplete_gamma_quad_inp_vals(lb, ub, counter), a, lg_term)
+                * incomplete_gamma_quad_weight_vals(lb, ub, counter));
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_quad_lb(const T a, const T z) noexcept {
+    return (a > T(1000) ? max(T(0), min(z, a) - 11 * sqrt(a))
+                        : // break integration into ranges
+            a > T(800)   ? max(T(0), min(z, a) - 11 * sqrt(a))
+            : a > T(500) ? max(T(0), min(z, a) - 10 * sqrt(a))
+            : a > T(300) ? max(T(0), min(z, a) - 10 * sqrt(a))
+            : a > T(100) ? max(T(0), min(z, a) - 9 * sqrt(a))
+            : a > T(90)  ? max(T(0), min(z, a) - 9 * sqrt(a))
+            : a > T(70)  ? max(T(0), min(z, a) - 8 * sqrt(a))
+            : a > T(50)  ? max(T(0), min(z, a) - 7 * sqrt(a))
+            : a > T(40)  ? max(T(0), min(z, a) - 6 * sqrt(a))
+            : a > T(30)  ? max(T(0), min(z, a) - 5 * sqrt(a))
+                         :
+                         // else
+            max(T(0), min(z, a) - 4 * sqrt(a)));
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_quad_ub(const T a, const T z) noexcept {
+    return (a > T(1000)  ? min(z, a + 10 * sqrt(a))
+            : a > T(800) ? min(z, a + 10 * sqrt(a))
+            : a > T(500) ? min(z, a + 9 * sqrt(a))
+            : a > T(300) ? min(z, a + 9 * sqrt(a))
+            : a > T(100) ? min(z, a + 8 * sqrt(a))
+            : a > T(90)  ? min(z, a + 8 * sqrt(a))
+            : a > T(70)  ? min(z, a + 7 * sqrt(a))
+            : a > T(50)  ? min(z, a + 6 * sqrt(a))
+                         :
+                         // else
+            min(z, a + 5 * sqrt(a)));
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_quad(const T a, const T z) noexcept {
+    return incomplete_gamma_quad_recur(incomplete_gamma_quad_lb(a, z),
+        incomplete_gamma_quad_ub(a, z),
+        a,
+        lgamma(a),
+        0);
+  }
+
+  // reverse cf expansion
+  // see: https://functions.wolfram.com/GammaBetaErf/Gamma2/10/0003/
+
+  template <typename T>
+  constexpr T incomplete_gamma_cf_2_recur(
+      const T a, const T z, const int depth) noexcept {
+    return (depth < 100 ? // if
+            (1 + (depth - 1) * 2 - a + z)
+                + depth * (a - depth)
+                    / incomplete_gamma_cf_2_recur(a, z, depth + 1)
+                        :
+                        // else
+            (1 + (depth - 1) * 2 - a + z));
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_cf_2(const T a,
+      const T z) noexcept { // lower (regularized) incomplete gamma function
+    return (T(1.0)
+        - exp(a * log(z) - z - lgamma(a))
+            / incomplete_gamma_cf_2_recur(a, z, 1));
+  }
+
+  // cf expansion
+  // see: http://functions.wolfram.com/GammaBetaErf/Gamma2/10/0009/
+
+  template <typename T>
+  constexpr T incomplete_gamma_cf_1_coef(
+      const T a, const T z, const int depth) noexcept {
+    return (is_odd(depth) ? -(a - 1 + T(depth + 1) / T(2)) * z
+                          : T(depth) / T(2) * z);
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_cf_1_recur(
+      const T a, const T z, const int depth) noexcept {
+    return (depth < GCEM_INCML_GAMMA_MAX_ITER ? // if
+            (a + depth - 1)
+                + incomplete_gamma_cf_1_coef(a, z, depth)
+                    / incomplete_gamma_cf_1_recur(a, z, depth + 1)
+                                              :
+                                              // else
+            (a + depth - 1));
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_cf_1(const T a,
+      const T z) noexcept { // lower (regularized) incomplete gamma function
+    return (
+        exp(a * log(z) - z - lgamma(a)) / incomplete_gamma_cf_1_recur(a, z, 1));
+  }
+
+  //
+
+  template <typename T>
+  constexpr T incomplete_gamma_check(const T a, const T z) noexcept {
+    return ( // NaN check
+        any_nan(a, z) ? GCLIM<T>::quiet_NaN() :
+                      //
+            a < T(0) ? GCLIM<T>::quiet_NaN()
+                     :
+                     //
+            GCLIM<T>::epsilon() > z ? T(0)
+                                    :
+                                    //
+            GCLIM<T>::epsilon() > a ? T(1)
+                                    :
+                                    // cf or quadrature
+            (a < T(10)) && (z - a < T(10))  ? incomplete_gamma_cf_1(a, z)
+            : (a < T(10)) || (z / a > T(3)) ? incomplete_gamma_cf_2(a, z)
+                                            :
+                                            // else
+            incomplete_gamma_quad(a, z));
+  }
+
+  template <typename T1, typename T2, typename TC = common_return_t<T1, T2>>
+  constexpr TC incomplete_gamma_type_check(const T1 a, const T2 p) noexcept {
+    return incomplete_gamma_check(static_cast<TC>(a), static_cast<TC>(p));
+  }
+
+}
+
+/**
+ * Compile-time regularized lower incomplete gamma function
+ *
+ * @param a a real-valued, non-negative input.
+ * @param x a real-valued, non-negative input.
+ *
+ * @return the regularized lower incomplete gamma function evaluated at (\c a,
+ * \c x),
+ * \f[ \frac{\gamma(a,x)}{\Gamma(a)} = \frac{1}{\Gamma(a)} \int_0^x t^{a-1}
+ * \exp(-t) dt \f] When \c a is not too large, the value is computed using the
+ * continued fraction representation of the upper incomplete gamma function,
+ * \f$
+ * \Gamma(a,x) \f$, using
+ * \f[ \Gamma(a,x) = \Gamma(a) - \dfrac{x^a\exp(-x)}{a - \dfrac{ax}{a + 1 +
+ * \dfrac{x}{a + 2 - \dfrac{(a+1)x}{a + 3 + \dfrac{2x}{a + 4 - \ddots}}}}} \f]
+ * where \f$ \gamma(a,x) \f$ and \f$ \Gamma(a,x) \f$ are connected via
+ * \f[ \frac{\gamma(a,x)}{\Gamma(a)} + \frac{\Gamma(a,x)}{\Gamma(a)} = 1 \f]
+ * When \f$ a > 10 \f$, a 50-point Gauss-Legendre quadrature scheme is
+ * employed.
+ */
+
+template <typename T1, typename T2>
+constexpr common_return_t<T1, T2> incomplete_gamma(
+    const T1 a, const T2 x) noexcept {
+  return internal::incomplete_gamma_type_check(a, x);
+}
+
+/*
+ * inverse of the incomplete gamma function
+ */
+
+namespace internal {
+
+  template <typename T>
+  constexpr T incomplete_gamma_inv_decision(const T value,
+      const T a,
+      const T p,
+      const T direc,
+      const T lg_val,
+      const int iter_count) noexcept;
+
+  //
+  // initial value for Halley
+
+  template <typename T>
+  constexpr T incomplete_gamma_inv_t_val_1(const T p) noexcept { // a > 1.0
+    return (p > T(0.5) ? sqrt(-2 * log(T(1) - p)) : sqrt(-2 * log(p)));
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_inv_t_val_2(const T a) noexcept { // a <= 1.0
+    return (T(1) - T(0.253) * a - T(0.12) * a * a);
+  }
+
+  //
+
+  template <typename T>
+  constexpr T incomplete_gamma_inv_initial_val_1_int_begin(
+      const T t_val) noexcept { // internal for a > 1.0
+    return (t_val
+        - (T(2.515517L) + T(0.802853L) * t_val + T(0.010328L) * t_val * t_val)
+            / (T(1) + T(1.432788L) * t_val + T(0.189269L) * t_val * t_val
+                + T(0.001308L) * t_val * t_val * t_val));
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_inv_initial_val_1_int_end(
+      const T value_inp, const T a) noexcept { // internal for a > 1.0
+    return max(T(1E-04),
+        a * pow(T(1) - T(1) / (9 * a) - value_inp / (3 * sqrt(a)), 3));
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_inv_initial_val_1(
+      const T a, const T t_val, const T sgn_term) noexcept { // a > 1.0
+    return incomplete_gamma_inv_initial_val_1_int_end(
+        sgn_term * incomplete_gamma_inv_initial_val_1_int_begin(t_val), a);
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_inv_initial_val_2(
+      const T a, const T p, const T t_val) noexcept { // a <= 1.0
+    return (p < t_val ?                               // if
+            pow(p / t_val, T(1) / a)
+                      :
+                      // else
+            T(1) - log(T(1) - (p - t_val) / (T(1) - t_val)));
+  }
+
+  // initial value
+
+  template <typename T>
+  constexpr T incomplete_gamma_inv_initial_val(const T a, const T p) noexcept {
+    return (a > T(1) ? // if
+            incomplete_gamma_inv_initial_val_1(
+                a, incomplete_gamma_inv_t_val_1(p), p > T(0.5) ? T(-1) : T(1))
+                     :
+                     // else
+            incomplete_gamma_inv_initial_val_2(
+                a, p, incomplete_gamma_inv_t_val_2(a)));
+  }
+
+  //
+  // Halley recursion
+
+  template <typename T>
+  constexpr T incomplete_gamma_inv_err_val(
+      const T value, const T a, const T p) noexcept { // err_val = f(x)
+    return (incomplete_gamma(a, value) - p);
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_inv_deriv_1(const T value,
+      const T a,
+      const T lg_val) noexcept { // derivative of the incomplete gamma
+                                 // function w.r.t. x
+    return (exp(-value + (a - T(1)) * log(value) - lg_val));
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_inv_deriv_2(const T value,
+      const T a,
+      const T deriv_1) noexcept { // second derivative of the incomplete gamma
+                                  // function w.r.t. x
+    return (deriv_1 * ((a - T(1)) / value - T(1)));
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_inv_ratio_val_1(
+      const T value, const T a, const T p, const T deriv_1) noexcept {
+    return (incomplete_gamma_inv_err_val(value, a, p) / deriv_1);
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_inv_ratio_val_2(
+      const T value, const T a, const T deriv_1) noexcept {
+    return (incomplete_gamma_inv_deriv_2(value, a, deriv_1) / deriv_1);
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_inv_halley(
+      const T ratio_val_1, const T ratio_val_2) noexcept {
+    return (ratio_val_1
+        / max(T(0.8), min(T(1.2), T(1) - T(0.5) * ratio_val_1 * ratio_val_2)));
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_inv_recur(const T value,
+      const T a,
+      const T p,
+      const T deriv_1,
+      const T lg_val,
+      const int iter_count) noexcept {
+    return incomplete_gamma_inv_decision(value,
+        a,
+        p,
+        incomplete_gamma_inv_halley(
+            incomplete_gamma_inv_ratio_val_1(value, a, p, deriv_1),
+            incomplete_gamma_inv_ratio_val_2(value, a, deriv_1)),
+        lg_val,
+        iter_count);
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_inv_decision(const T value,
+      const T a,
+      const T p,
+      const T direc,
+      const T lg_val,
+      const int iter_count) noexcept {
+    // return( abs(direc) > GCEM_INCML_GAMMA_INV_TOL ?
+    // incomplete_gamma_inv_recur(value - direc, a, p,
+    // incomplete_gamma_inv_deriv_1(value,a,lg_val), lg_val) : value - direc
+    // );
+    return (iter_count <= GCEM_INCML_GAMMA_INV_MAX_ITER ? // if
+            incomplete_gamma_inv_recur(value - direc,
+                a,
+                p,
+                incomplete_gamma_inv_deriv_1(value, a, lg_val),
+                lg_val,
+                iter_count + 1)
+                                                        :
+                                                        // else
+            value - direc);
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_inv_begin(
+      const T initial_val, const T a, const T p, const T lg_val) noexcept {
+    return incomplete_gamma_inv_recur(initial_val,
+        a,
+        p,
+        incomplete_gamma_inv_deriv_1(initial_val, a, lg_val),
+        lg_val,
+        1);
+  }
+
+  template <typename T>
+  constexpr T incomplete_gamma_inv_check(const T a, const T p) noexcept {
+    return ( // NaN check
+        any_nan(a, p) ? GCLIM<T>::quiet_NaN() :
+                      //
+            GCLIM<T>::epsilon() > p               ? T(0)
+            : p > T(1)                            ? GCLIM<T>::quiet_NaN()
+            : GCLIM<T>::epsilon() > abs(T(1) - p) ? GCLIM<T>::infinity()
+                                                  :
+                                                  //
+            GCLIM<T>::epsilon() > a ? T(0)
+                                    :
+                                    // else
+            incomplete_gamma_inv_begin(
+                incomplete_gamma_inv_initial_val(a, p), a, p, lgamma(a)));
+  }
+
+  template <typename T1, typename T2, typename TC = common_return_t<T1, T2>>
+  constexpr TC incomplete_gamma_inv_type_check(
       const T1 a, const T2 p) noexcept {
-    return internal::incomplete_gamma_inv_type_check(a, p);
+    return incomplete_gamma_inv_check(static_cast<TC>(a), static_cast<TC>(p));
   }
+
+}
+
+/**
+ * Compile-time inverse incomplete gamma function
+ *
+ * @param a a real-valued, non-negative input.
+ * @param p a real-valued input with values in the unit-interval.
+ *
+ * @return Computes the inverse incomplete gamma function, a value \f$ x \f$
+ * such that
+ * \f[ f(x) := \frac{\gamma(a,x)}{\Gamma(a)} - p \f]
+ * equal to zero, for a given \c p.
+ * GCE-Math finds this root using Halley's method:
+ * \f[ x_{n+1} = x_n - \frac{f(x_n)/f'(x_n)}{1 - 0.5 \frac{f(x_n)}{f'(x_n)}
+ * \frac{f''(x_n)}{f'(x_n)} } \f] where
+ * \f[ \frac{\partial}{\partial x} \left(\frac{\gamma(a,x)}{\Gamma(a)}\right)
+ * =
+ * \frac{1}{\Gamma(a)} x^{a-1} \exp(-x) \f]
+ * \f[ \frac{\partial^2}{\partial x^2}
+ * \left(\frac{\gamma(a,x)}{\Gamma(a)}\right) = \frac{1}{\Gamma(a)} x^{a-1}
+ * \exp(-x) \left( \frac{a-1}{x} - 1 \right) \f]
+ */
+
+template <typename T1, typename T2>
+constexpr common_return_t<T1, T2> incomplete_gamma_inv(
+    const T1 a, const T2 p) noexcept {
+  return internal::incomplete_gamma_inv_type_check(a, p);
+}
 }
