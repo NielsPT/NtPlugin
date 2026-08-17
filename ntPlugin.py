@@ -81,6 +81,7 @@ def _openInVscode(path: str) -> bool:
     except FileNotFoundError:
         return False
 
+
 def _switchVsCodeSettings(plugin: str) -> bool:
     pluginPath = f"{PLUGINS_DIR}/{plugin}.h"
     if not os.path.exists(pluginPath):
@@ -88,12 +89,16 @@ def _switchVsCodeSettings(plugin: str) -> bool:
         return False
     pluginIds = readPluginIds()
     if plugin not in pluginIds:
-        print(f"{YELLOW}'{plugin}' not found in plugin ID file. Setting "
-        "category to 'Effect'.")
+        print(
+            f"{YELLOW}'{plugin}' not found in plugin ID file. Setting "
+            "category to 'Effect'."
+        )
         cat = "Effect"
     else:
         cat = pluginIds[plugin][AAX_CAT]
-    settingsFilePath = os.path.realpath(f"{REPO_BASE_DIR}/.vscode/settings.json")
+    settingsFilePath = os.path.realpath(
+        f"{REPO_BASE_DIR}/.vscode/settings.json"
+    )
     if not os.path.exists(settingsFilePath):
         return False
     with open(settingsFilePath, "r", encoding="utf-8") as f:
@@ -104,7 +109,7 @@ def _switchVsCodeSettings(plugin: str) -> bool:
     configArgs = settings[cmakeConfArgsKey]
     if not isinstance(configArgs, list):
         return False
-    if len(configArgs)!=3:
+    if len(configArgs) != 3:
         return False
     newConfigArgs = [
         f"-DNTFX_PLUGIN={plugin}",
@@ -468,6 +473,7 @@ def process(args: dict) -> bool:
     Returns:
         bool: True on success.
     """
+    t = time.time()
     plugins = args["plugins"] if "plugins" in args else []
     category = args["category"] if "category" in args else ""
     doTest = args["test"] if "test" in args else False
@@ -518,6 +524,7 @@ def process(args: dict) -> bool:
             return False
     if not package.storeSecrets(secrets):
         return False
+    print(f"Time elapsed: {time.time() - t:.2f}.")
     return True
 
 
@@ -598,7 +605,7 @@ def createParser() -> argparse.ArgumentParser:
         help="Add test file to 'testWrapper/tests'.",
     )
     switchParser = subParsers.add_parser(
-        "switch", 
+        "switch",
         help="Switch VsCode context to a different plugin.",
     )
     switchParser.add_argument("name", help="Name of plugin")

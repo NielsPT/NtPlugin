@@ -137,9 +137,9 @@ struct ComponentTestSet {
       std::cout << "No tests.\033[0m\n";
       return false;
     }
-    std::cout << "Ran a total of " << this->nTests << " test on "
-              << this->tests.size() << " objects. " << this->nSuccessful
-              << " succeeded. ("
+    std::cout << this->name << ": Ran a total of " << this->nTests
+              << " test on " << this->tests.size() << " objects. "
+              << this->nSuccessful << " succeeded. ("
               << 100.0 * double(this->nSuccessful) / double(this->nTests)
               << "%)."
               << "\033[0m" << "\n";
@@ -241,8 +241,9 @@ struct ComponentTest {
     } else {
       std::cout << "\033[31m";
     }
-    std::cout << "Test '" << stimulus << "' for object '" << this->objName
-              << "' in file '" << this->p_owner->name << "'";
+    std::cout << this->p_owner->name << ": Test '" << stimulus
+              << "' for object '" << this->objName << "' in file '"
+              << this->p_owner->name << "'";
     std::cout << (success ? " passed." : " failed.") << "\033[0m" << "\n";
     return success;
   }
@@ -275,7 +276,8 @@ struct ComponentTest {
         + this->objName + SEPARATOR + stimulus + SEPARATOR + "expected.txt";
     bool expFileExists = std::filesystem::exists(expPath);
     if (!expFileExists) {
-      std::cout << "File with expected results not found at path '" + expPath
+      std::cout << this->p_owner->name
+                << ": File with expected results not found at path '" + expPath
               + "'. Skipping comparison."
                 << "\n";
       return { };
@@ -299,8 +301,10 @@ struct ComponentTest {
       std::string stimulus, const std::vector<Stereo<signal_t>>& y) {
     auto e = this->_readExpected(stimulus);
     if (e.size() != y.size()) {
-      std::cout << "Expected result has different length that result. Aborting."
-                << " e: " << e.size() << ", y: " << y.size() << "\n";
+      std::cout
+          << this->p_owner->name
+          << ": Expected result has different length that result. Aborting."
+          << " e: " << e.size() << ", y: " << y.size() << "\n";
       return false;
     }
     auto acceptedDiff = signal_t(0.0001);

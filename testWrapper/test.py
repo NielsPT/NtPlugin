@@ -24,8 +24,10 @@ import argparse
 import shutil
 import platform
 import numpy as np
+import time
 from matplotlib import pyplot as p
 from scipy import signal as s
+import multiprocessing as mp
 
 SEPARATOR = "."
 EXPECTED_DIR = "in"
@@ -44,6 +46,7 @@ RED = "\033[31m"
 GREEN = "\033[32m"
 YELLOW = "\033[33m"
 BLUE = "\033[34m"
+
 
 def generateImpulse(n: int) -> np.ndarray:
     """
@@ -191,7 +194,7 @@ def generateTestVectors(
     return (impulse, linearSweep, syncSweep, dynamic_alternating)
 
 
-def _buildTestProg(cppPath: str) -> bool:
+def _buildTestProg(cppPath: str, component: str) -> bool:
     os.makedirs(f"{FILE_DIR}/{TMP_DIR}", exist_ok=True)
     args = ["g++"]
     if platform.system() == "Darwin":
@@ -199,19 +202,19 @@ def _buildTestProg(cppPath: str) -> bool:
     args += [
         cppPath,
         "-o",
-        f"{FILE_DIR}/{TMP_DIR}/main",
+        f"{FILE_DIR}/{TMP_DIR}/{component}_main",
         f"-I{os.path.abspath(FILE_DIR)}/..",
         f"-I{os.path.abspath(FILE_DIR)}/../lib/gcem/include",
         "--std=c++20",
         "-DNTFX_FS=48e3f",
         "-DNTFX_TESTING=1",
-        "-O0", 
+        "-O0",
     ]
     if platform.system() == "Windows":
         args = [
             "cl.exe",
             cppPath,
-            f"/Fe{FILE_DIR}{os.sep}{TMP_DIR}{os.sep}main.exe",
+            f"/Fe{FILE_DIR}{os.sep}{TMP_DIR}{os.sep}{component}_main.exe",
             f"/I{os.path.abspath(FILE_DIR)}{os.sep}..{os.sep}",
             f"/I{os.path.abspath(FILE_DIR)}{os.sep}..{os.sep}lib{os.sep}gcem{os.sep}include",
             "/std:c++20",
@@ -229,9 +232,9 @@ def _buildTestProg(cppPath: str) -> bool:
     return True
 
 
-def _runTestProg() -> int:
+def _runTestProg(component: str) -> int:
     res = sp.run(
-        [f"{FILE_DIR}/{TMP_DIR}/main"],
+        [f"{FILE_DIR}/{TMP_DIR}/{component}_main"],
         check=False,
     )
     if res.returncode < 0:
@@ -595,13 +598,15 @@ def _plotDynamic(
     testFileName: str,
     legends: dict[str, list[str]],
     fs: float,
-)->bool:
+) -> bool:
     if not (name in results and results[name]):
         return False
     try:
         data = np.concatenate(results[name])
     except ValueError as e:
-        print(f"{RED}Failed to read test result data for '{testFileName}': {e}{BLACK}")
+        print(
+            f"{RED}Failed to read test result data for '{testFileName}': {e}{BLACK}"
+        )
         return False
     for i in range(3):
         plotDynamic(
@@ -612,7 +617,6 @@ def _plotDynamic(
             i,
         )
     return True
-    
 
 
 def _readAndPlotTestResults(testFileName: str, fs: float):
@@ -633,7 +637,11 @@ def _readAndPlotTestResults(testFileName: str, fs: float):
                 continue
             expectedFiles += [info[0] + SEPARATOR + info[1]]
     results, legends = _parseFiles(resultFiles, expectedFiles)
-    if "impulse" in results and results["impulse"] and np.any(np.isnan(np.concatenate(results["impulse"]))):
+    if (
+        "impulse" in results
+        and results["impulse"]
+        and np.any(np.isnan(np.concatenate(results["impulse"])))
+    ):
         print(f"{RED}NaN is impulse.{BLACK}")
     _plotResults(results, legends, testFileName, fs)
 
@@ -689,29 +697,36 @@ def clean() -> bool:
     return True
 
 
-def runTests(path: str, fs: float) -> bool:
+fs = 48e3
+
+
+def runTests(cppPath: str) -> int:
     """
     Runs tests for a specific test program. Build the program, runs it and
     collects results.
 
     Args:
-        path (str): _description_
-        fs (float): _description_
+        path (str): Path to test program cpp file.
+        fs (float): Sample rate.
 
     Returns:
-        bool: _description_
+        int: Return code of test program.
     """
-    testFileName = (
-        os.path.basename(path).replace("_test", "").replace(".cpp", "")
+    if not cppPath.endswith(".cpp"):
+        if not cppPath.endswith("_test"):
+            cppPath = f"{cppPath}_test"
+        cppPath = f"{FILE_DIR}/tests/{cppPath}.cpp"
+    if not os.path.exists(cppPath):
+        print(f"File '{cppPath}' not found. Skipping test.")
+        return -1
+    component = (
+        os.path.basename(cppPath).replace("_test", "").replace(".cpp", "")
     )
-    print(f"Testing '{testFileName}'")
-    if not _buildTestProg(path):
-        return False
-    returncode = _runTestProg()
-    if returncode < 0:
-        return False
-    _readAndPlotTestResults(testFileName, fs)
-    return returncode == 0
+    if not _buildTestProg(cppPath, component):
+        return -1
+    returncode = _runTestProg(component)
+    _readAndPlotTestResults(component, fs)
+    return returncode
 
 
 def _readAggregateResults() -> dict[str, int]:
@@ -756,32 +771,32 @@ def run(args: dict):
     Returns:
         bool: True on success.
     """
+    global fs
+    t = time.time()
     os.makedirs(f"{FILE_DIR}/{EXPECTED_DIR}", exist_ok=True)
     os.makedirs(f"{FILE_DIR}/{TMP_DIR}", exist_ok=True)
     clean()
-    success = True
     files = args["files"]
     if not files or files == ["all"]:
         files = _findAllTests()
-    for file in files:
-        if not file.endswith(".cpp"):
-            if not file.endswith("_test"):
-                file = f"{file}_test"
-            file = f"{FILE_DIR}/tests/{file}.cpp"
-        if not os.path.exists(file):
-            print(f"File '{file}' not found. Skipping test.")
-            continue
-        # TODO: Abort on segfault.
-        success &= runTests(file, args["fs"])
-        print()
+    fs = args["fs"]
+    pool = mp.Pool()
+    returncodes = pool.map(runTests, files)
+    success = True
+    for i, file in enumerate(returncodes):
+        if returncodes[i] < 0:
+            print(f"{RED}ABORT{BLACK}")
+            return False
+        success &= returncodes[i] == 0
     results = _readAggregateResults()
     if not results:
         return True
     print(
         f"Ran {results["nTests"]} tests "
-        f"in {results["nFiles"]} test files. "
-        f"{results["nSuccessful"]} succeeded. "
-        f"({100.0 * results["nSuccessful"] /  results["nTests"]:.2f} %)"
+        f"in {results["nFiles"]} programs, "
+        f"{results["nSuccessful"]} succeeded "
+        f"({100.0 * results["nSuccessful"] /  results["nTests"]:.2f} %). "
+        f"Time elapsed: {time.time() - t:.2f} seconds."
     )
     if success:
         print("\033[32m", end="")
@@ -814,8 +829,10 @@ def createParser() -> argparse.ArgumentParser:
         "files",
         nargs="*",
         type=str,
-        help="Cpp-files to run. If 'all' or nothing, dir 'test' will be searched"
-        " for files ending with '_test.cpp' and those will be used.",
+        help="Cpp programs to run. '_test' and '.cpp' are ignored "
+        "and can be omitted. If set to 'all', dir 'tests' will be searched"
+        " for files ending with '_test.cpp' and those will be used. Defaults to "
+        "'all'",
     )
     generateParser = subparsers.add_parser(
         "generate", help="Generate needed input files."
@@ -830,7 +847,7 @@ def createParser() -> argparse.ArgumentParser:
         "file",
         nargs=1,
         help="File containing tests to approve. '_test' and '.cpp' are ignored "
-        "and can be omitted",
+        "and can be omitted.",
     )
     approveParser.add_argument(
         "objects",
