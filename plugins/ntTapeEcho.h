@@ -39,6 +39,15 @@ enum SubDev : int {
   sixteenth,
 };
 
+const std::vector<std::string> subDevOptions {
+  "half",
+  "fourth",
+  "eighth dot",
+  "eighth",
+  "sixteenth dot",
+  "sixteenth",
+};
+
 struct ntTapeEcho final : public NtFx::Plugin {
   NtFx::Delay::LongGlided<2e3, signal_t> dlL;
   NtFx::Delay::LongGlided<2e3, signal_t> dlR;
@@ -47,25 +56,32 @@ struct ntTapeEcho final : public NtFx::Plugin {
   NtFx::Biquad::EqBand lpf;
   NtFx::DryMix dryMix;
   Audio fbState;
-  signal_t t_ms { 500 };
+  Audio fb_lin { 0.2 };
+  signal_t tL_ms { 500 };
+  signal_t tR_ms { 500 };
   signal_t fb_percent { 20 };
   signal_t clipG_db { 0.0 };
   signal_t tOffset { 0.0 };
   signal_t noise_db { -100 };
-  signal_t tempoScale { 1 };
-  SubDev subDev { SubDev::fourth };
-  signal_t fb_lin { 0.2 };
+  signal_t tempoScaleL { 1 };
+  signal_t tempoScaleR { 1 };
   signal_t noise_lin { 0 };
   size_t iStore { 0 };
   signal_t aClip_lin { 1 };
+  SubDev subDevL { SubDev::fourth };
+  SubDev subDevR { SubDev::fourth };
+  // Mode mode { Mode::indvidual };
+  bool linkEnable { true };
   bool syncEnable { false };
   bool modEnable { true };
   bool clipEnable { true };
   bool bypassEnable { false };
+  bool swapEnable { false };
 
   ntTapeEcho() {
     this->primaryKnobs = {
-      { &this->t_ms, "Time", " ms", 20, 2e3 },
+      { &this->tL_ms, "Time Left", " ms", 20, 2e3 },
+      { &this->tR_ms, "Time Right", " ms", 20, 2e3 },
       { &this->fb_percent, "Feedback", " %", 0, 200 },
       { &this->clipG_db, "Drive", " dB", -20, 20 },
       { &this->hpf.settings.fc_hz, "HPF", " Hz", 20, 2000, 200 },
@@ -83,24 +99,34 @@ struct ntTapeEcho final : public NtFx::Plugin {
     };
 
     this->dropdowns = {
+      // {
+      //     .p_val    = (int*)&this->mode,
+      //     .name     = "Mode",
+      //     .options  = { "Dual", "Link",
+      //       // "Sync",
+      //       // "Ping Pong",
+      //     },
+      //     .hideName = true,
+      // },
       {
-          .p_val = (int*)&this->subDev,
-          .name = "Subdevision",
-          .options = {
-              "half",
-              "fourth",
-              "eighth dot",
-              "eighth",
-              "sixteenth dot",
-              "sixteenth",
-          }, 
+          .p_val    = (int*)&this->subDevL,
+          .name     = "Subdev L",
+          .options  = subDevOptions,
+          .hideName = true,
+      },
+      {
+          .p_val    = (int*)&this->subDevR,
+          .name     = "Subdev R",
+          .options  = subDevOptions,
           .hideName = true,
       },
     };
     this->toggles = {
+      { &this->linkEnable, "Link" },
       { &this->syncEnable, "Sync" },
       { &this->modEnable, "Mod" },
       { &this->clipEnable, "Softclip" },
+      { &this->swapEnable, "Swap FB" },
       { &this->bypassEnable, "Bypass" },
     };
     this->meters = { { "IN" }, { .name = "OUT", .hasScale = true } };
@@ -115,7 +141,9 @@ struct ntTapeEcho final : public NtFx::Plugin {
     auto xNoisy = x + NtFx::rand<signal_t>() * this->noise_lin;
     NtFx::ensureFinite(xNoisy);
     NtFx::ensureFinite(this->fbState);
-    auto xMod = xNoisy + this->fb_lin * this->fbState;
+    auto xMod = xNoisy
+        + this->fb_lin
+            * (this->swapEnable ? this->fbState.swap() : this->fbState);
     auto yMod = xMod;
     if (this->modEnable) { yMod = this->mod.process(xMod); }
     Audio yDelay = { this->dlL.process(yMod.l), this->dlR.process(yMod.r) };
@@ -139,33 +167,52 @@ struct ntTapeEcho final : public NtFx::Plugin {
 
   void update() noexcept override {
     this->aClip_lin = NtFx::invDb(this->clipG_db);
-    this->fb_lin    = this->fb_percent / 100;
     this->noise_lin = NtFx::invDb(this->noise_db);
-    switch (this->subDev) {
-    case SubDev::half:
-      this->tempoScale = 2;
-      break;
-    case SubDev::fourth:
-      this->tempoScale = 1;
-      break;
-    case SubDev::eighth_dot:
-      this->tempoScale = 0.5 * 1.5;
-      break;
-    case SubDev::eighth:
-      this->tempoScale = 0.5;
-      break;
-    case SubDev::sixteenth_dot:
-      this->tempoScale = 0.25 * 1.5;
-      break;
-    case SubDev::sixteenth:
-      this->tempoScale = 0.25;
-      break;
+    if (this->modEnable) {
+      this->activateParameter("Mod Freq");
+      this->activateParameter("Mod Depth");
+      this->activateParameter("Mod Phase");
+    } else {
+      this->deactivateParameter("Mod Freq");
+      this->deactivateParameter("Mod Depth");
+      this->deactivateParameter("Mod Phase");
     }
-    this->onTempoChanged();
+    if (this->linkEnable) {
+      this->tR_ms    = this->tL_ms + this->tOffset;
+      this->fb_lin.r = this->fb_lin.l;
+      this->deactivateParameter("Time Right");
+      this->activateParameter("Offset");
+    } else {
+      this->activateParameter("Time Right");
+      this->deactivateParameter("Offset");
+    }
+    if (this->syncEnable) {
+      this->tempoScaleL = _tempoScale(this->subDevL);
+      this->tL_ms       = 60 / this->tempo * this->tempoScaleL * 1000;
+      if (!this->linkEnable) {
+        this->tempoScaleR = _tempoScale(this->subDevR);
+        this->tR_ms       = 60 / this->tempo * this->tempoScaleR * 1000;
+      }
+      this->deactivateParameter("Time Left");
+      this->deactivateParameter("Time Right");
+    } else {
+      this->activateParameter("Time Left");
+      if (!this->linkEnable) { this->activateParameter("Time Right"); }
+    }
+    this->fb_lin = this->fb_percent / 100;
+    if (this->tL_ms > this->tR_ms) {
+      auto t60 = -3 * this->tL_ms / gcem::log10(this->fb_lin.l);
+      this->fb_lin.r =
+          gcem::pow(signal_t(10), signal_t(-3) * this->tR_ms / t60);
+    } else {
+      auto t60 = -3 * this->tR_ms / gcem::log10(this->fb_lin.r);
+      this->fb_lin.l =
+          gcem::pow(signal_t(10), signal_t(-3) * this->tL_ms / t60);
+    }
+    this->dlL.t_ms.ui = this->tL_ms;
+    this->dlR.t_ms.ui = this->tR_ms;
     this->mod.update();
-    this->dlL.t_ms.ui = this->t_ms;
     this->dlL.update();
-    this->dlR.t_ms.ui = this->t_ms + this->tOffset;
     this->dlR.update();
     this->hpf.update();
     this->lpf.update();
@@ -183,12 +230,30 @@ struct ntTapeEcho final : public NtFx::Plugin {
   }
 
   void onTempoChanged() noexcept override {
-    if (this->syncEnable && (this->tempo != 0.0)) {
-      this->t_ms = 60 / this->tempo * this->tempoScale * 1000;
-      this->primaryKnobs[0].isActive = false;
-    } else {
-      this->primaryKnobs[0].isActive = true;
+    if (this->syncEnable && (this->tempo != 0.0)) { this->update(); }
+  }
+
+  signal_t _tempoScale(SubDev subDev) {
+    switch (subDev) {
+    case SubDev::half:
+      return 2;
+      break;
+    default:
+    case SubDev::fourth:
+      return 1;
+      break;
+    case SubDev::eighth_dot:
+      return 0.5 * 1.5;
+      break;
+    case SubDev::eighth:
+      return 0.5;
+      break;
+    case SubDev::sixteenth_dot:
+      return 0.25 * 1.5;
+      break;
+    case SubDev::sixteenth:
+      return 0.25;
+      break;
     }
-    this->uiNeedsUpdate = true;
   }
 };

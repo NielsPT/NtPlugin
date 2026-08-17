@@ -154,7 +154,7 @@ void NtPluginAudioProcessorEditor::_initRadioButton(
     this->toggleAttachments.emplace_back(
         new juce::AudioProcessorValueTreeState::ButtonAttachment(
             this->proc.paramLayout,
-            NtFx::mangleName("radioButton", spec.name, spec.options[i]),
+            NtFx::mangleName("rb", spec.name, spec.options[i]),
             *group->toggles[i].get()));
   }
   this->radioButtons.push_back(std::move(group));
@@ -169,8 +169,7 @@ void NtPluginAudioProcessorEditor::_initToggleGroup(
     this->toggleAttachments.emplace_back(
         new juce::AudioProcessorValueTreeState::ButtonAttachment(
             this->proc.paramLayout,
-            NtFx::mangleName(
-                "toggleGroup", r_spec.name, r_spec.toggles[i].name),
+            NtFx::mangleName("tg", r_spec.name, r_spec.toggles[i].name),
             *group->toggles[i].get()));
   }
   this->toggleSets.push_back(std::move(group));
@@ -222,7 +221,7 @@ void NtPluginAudioProcessorEditor::_initKnobGroup(
 void NtPluginAudioProcessorEditor::_initGroupKnob(
     size_t iGroup, NtFx::KnobSpec& r_spec) {
   auto p_knob  = std::make_unique<juce::Slider>(NtFx::mangleName(
-      "knobGroup", this->proc.plug.knobGroups[iGroup].name, r_spec.name));
+      "kg", this->proc.plug.knobGroups[iGroup].name, r_spec.name));
   auto p_label = this->_makeLabel(r_spec.name);
   this->_initKnob(r_spec, p_knob);
   this->knobGroups[iGroup].push_back(std::move(p_knob));
@@ -730,26 +729,36 @@ void NtPluginAudioProcessorEditor::timerCallback() {
 void NtPluginAudioProcessorEditor::sliderValueChanged(juce::Slider* p_slider) {
   auto name   = p_slider->getName().toStdString();
   auto* p_val = this->proc.plug.getKnobValuePtr(name);
+  *p_val      = signal_t(p_slider->getValue());
   if (!p_val) {
     DBG("Knob name in UI not found in plugin knobs: '" + name + '.');
     return;
   }
-  *p_val = signal_t(p_slider->getValue());
+  this->proc.plug.update();
+  this->_conformUiSilderValues();
+}
+
+void NtPluginAudioProcessorEditor::_conformUiSilderValues() {
+  // TODO: conform dropdowns, toggles, radiobuttons and groups.
+  // TODO: DRY
+  bool updateNeeded { false };
   for (size_t i = 0; i < this->primaryKnobs.size(); i++) {
     auto juceSliderVal = this->primaryKnobs[i]->getValue();
     auto ntKnobVal     = *this->proc.plug.primaryKnobs[i].p_val;
-    if (ntKnobVal - juceSliderVal < 1e-6) {
+    if (gcem::abs(ntKnobVal - juceSliderVal) > 1e-6) {
       this->primaryKnobs[i]->setValue(ntKnobVal, juce::dontSendNotification);
+      updateNeeded = true;
     }
   }
   for (size_t i = 0; i < this->secondaryKnobs.size(); i++) {
     auto juceSliderVal = this->secondaryKnobs[i]->getValue();
     auto ntKnobVal     = *this->proc.plug.secondaryKnobs[i].p_val;
-    if (ntKnobVal - juceSliderVal < 1e-6) {
+    if (gcem::abs(ntKnobVal - juceSliderVal) > 1e-6) {
       this->secondaryKnobs[i]->setValue(ntKnobVal, juce::dontSendNotification);
+      updateNeeded = true;
     }
   }
-  this->proc.plug.update();
+  if (updateNeeded) { this->proc.plug.update(); }
 }
 
 void NtPluginAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
@@ -761,6 +770,7 @@ void NtPluginAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
   }
   *p_val = p_button->getToggleState();
   this->proc.plug.update();
+  this->_conformUiSilderValues();
 }
 
 void NtPluginAudioProcessorEditor::changeListenerCallback(
@@ -786,6 +796,7 @@ void NtPluginAudioProcessorEditor::changeListenerCallback(
     }
     this->proc.plug.update();
     this->proc.plug.uiNeedsUpdate = true;
+    this->_conformUiSilderValues();
     return;
   }
   DBG("RadioButton name in UI not found in plugin toggles.");
@@ -808,6 +819,7 @@ void NtPluginAudioProcessorEditor::comboBoxChanged(juce::ComboBox* p_box) {
   }
   *p_val = p_box->getSelectedId() - 1;
   this->proc.plug.update();
+  this->_conformUiSilderValues();
 }
 
 void NtPluginAudioProcessorEditor::_updateUiScale() {

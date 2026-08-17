@@ -8,3 +8,4 @@ CompileFlags:
     - -Wimplicit-int-float-conversion
     - -Wno-missing-field-initializers
     - -Wno-float-equal
+    - -Wsign-conversion

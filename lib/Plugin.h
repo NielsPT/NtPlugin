@@ -28,6 +28,7 @@
 #include "lib/utils.h"
 
 #include <array>
+#include <cassert>
 #include <cstddef>
 #include <string>
 #include <vector>
@@ -157,12 +158,10 @@ struct Plugin : public ComponentBase<Audio> {
     }
     for (auto& g : this->knobGroups) {
       for (auto p : g.primaryKnobs) {
-        if (name == NtFx::mangleName("knobGroup", g.name, p.name)) {
-          return p.p_val;
-        }
+        if (name == NtFx::mangleName("kg", g.name, p.name)) { return p.p_val; }
       }
       // for (auto p : g.secondaryKnobs) {
-      //   if (name == NtFx::mangleName("knobGroup", g.name, p.name)) {
+      //   if (name == NtFx::mangleName("kg", g.name, p.name)) {
       //     return p.p_val;
       //   }
       // }
@@ -245,6 +244,7 @@ struct Plugin : public ComponentBase<Audio> {
     //     return;
     //   }
     // }
+    assert(!bool("Parameter not found."));
   }
 
   void deactivateParameter(std::string name) {

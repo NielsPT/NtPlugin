@@ -175,5 +175,6 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
       float rowHeight,
       float pad);
   std::unique_ptr<juce::Label> _makeLabel(const std::string name);
+  void _conformUiSilderValues();
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtPluginAudioProcessorEditor)
 };

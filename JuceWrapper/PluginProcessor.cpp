@@ -193,7 +193,7 @@ void NtPluginAudioProcessor::loadRadioButtons(
     int val { 0 };
     for (size_t i = 0; i < p.options.size(); i++) {
       auto par = this->paramLayout.getParameterAsValue(
-          NtFx::mangleName("radioButton", p.name, p.options[i]));
+          NtFx::mangleName("rb", p.name, p.options[i]));
       if (par.getValue()) { val = i; }
     }
     *p.p_val = val;
@@ -205,8 +205,7 @@ void NtPluginAudioProcessor::loadToggleSets(
     std::vector<NtFx::ToggleSetSpec>& v) {
   for (auto& p : v) {
     for (size_t i = 0; i < p.toggles.size(); i++) {
-      auto mangledName =
-          NtFx::mangleName("toggleGroup", p.name, p.toggles[i].name);
+      auto mangledName    = NtFx::mangleName("tg", p.name, p.toggles[i].name);
       auto par            = this->paramLayout.getParameterAsValue(mangledName);
       *p.toggles[i].p_val = par.getValue();
       DBG("Loaded '" << mangledName << "': " << float(*p.toggles[i].p_val));
@@ -217,7 +216,7 @@ void NtPluginAudioProcessor::loadToggleSets(
 void NtPluginAudioProcessor::loadGroupKnobs(
     std::vector<NtFx::KnobSpec>& v, std::string groupName) {
   for (auto& p : v) {
-    auto mangledName = NtFx::mangleName("knobGroup", groupName, p.name);
+    auto mangledName = NtFx::mangleName("kg", groupName, p.name);
     auto par         = this->paramLayout.getParameterAsValue(mangledName);
     *p.p_val         = par.getValue();
     DBG("Loaded '" << mangledName << "': " << float(*p.p_val));
@@ -252,14 +251,14 @@ NtPluginAudioProcessor::createParameterLayout() {
   for (auto& p : this->plug.radioButtons) {
     vTmpToggles.clear();
     for (auto& option : p.options) {
-      vTmpToggles.push_back(NtFx::makeTmpToggle("radioButton", p.name, option));
+      vTmpToggles.push_back(NtFx::makeTmpToggle("rb", p.name, option));
     }
     this->createParameters<bool>(vTmpToggles, parameters, i);
   }
   for (auto& r : this->plug.toggleSets) {
     vTmpToggles.clear();
     for (auto& t : r.toggles) {
-      vTmpToggles.push_back(NtFx::makeTmpToggle("toggleGroup", r.name, t.name));
+      vTmpToggles.push_back(NtFx::makeTmpToggle("tg", r.name, t.name));
     }
     this->createParameters<bool>(vTmpToggles, parameters, i);
   }
@@ -275,7 +274,7 @@ void NtPluginAudioProcessor::createKnobGroupParameters(std::string groupName,
   std::vector<NtFx::KnobSpec> vTmpKnobs;
   for (auto& k : groupParams) {
     NtFx::KnobSpec _k = k;
-    _k.name           = NtFx::mangleName("knobGroup", groupName, k.name);
+    _k.name           = NtFx::mangleName("kg", groupName, k.name);
     vTmpKnobs.push_back(_k);
   }
   this->createParameters<float>(vTmpKnobs, parameters, i);

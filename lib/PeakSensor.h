@@ -173,7 +173,7 @@ struct PeakHoldSensor : public PeakSensor {
    *
    */
   void update() noexcept override {
-    this->_nHold = this->tHold_ms * this->_fs / 1000;
+    this->_nHold = this->tHold_ms * this->_fs / 1000.0;
     this->_nHold =
         (this->_nHold >= delayLineLength ? delayLineLength - 1 : this->_nHold);
     this->PeakSensor::update();

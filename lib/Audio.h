@@ -342,6 +342,13 @@ struct Stereo {
   Stereo<signal_t> abs() const noexcept {
     return { gcem::abs(this->l), gcem::abs(this->r) };
   }
+
+  /**
+   * @brief Returns a new Stereo with left and right channels swapped.
+   *
+   * @return Stereo<signal_t>
+   */
+  Stereo<signal_t> swap() const noexcept { return { this->r, this->l }; }
 };
 template <typename signal_t>
 static inline Stereo<signal_t> operator+(
