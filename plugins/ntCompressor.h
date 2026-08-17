@@ -31,7 +31,7 @@
 enum scMode { feedForward = 0, feedback, external };
 
 struct ntCompressor final : public NtFx::Plugin {
-  NtFx::Delay::Short<10.0> dl;
+  NtFx::Delay::Long<10.0> dl;
   NtFx::Comp::ScSettings scSettings;
   NtFx::Comp::PeakSideChainDb peakScDb;
   NtFx::Comp::PeakSideChainLin peakScLin;

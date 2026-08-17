@@ -30,7 +30,7 @@
 enum Mode { wide, shelf, bell };
 
 struct ntDeEsser final : public NtFx::Plugin {
-  NtFx::Delay::Short<10.0> dl;
+  NtFx::Delay::Long<10.0> dl;
   NtFx::Comp::PeakSideChainLin sc;
   NtFx::Biquad::EqBand scBpf;
   NtFx::DynamicFilter::ShelfFixedZeros shelf;
@@ -138,7 +138,7 @@ struct ntDeEsser final : public NtFx::Plugin {
 
   void update() noexcept override {
     this->sc.settings.tPeakHold_ms = this->dl.t_ms;
-    this->sc.settings.tAtt_ms      = gcem::max(this->dl.t_ms, 0.1);
+    this->sc.settings.tAtt_ms      = gcem::max(this->dl.t_ms, signal_t(0.1));
     this->sc.update();
 
     this->shelf.fc_hz = this->fc_hz;

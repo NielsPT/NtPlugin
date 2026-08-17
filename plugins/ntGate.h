@@ -36,7 +36,7 @@ struct ntGate final : public NtFx::Plugin {
   NtFx::DynamicFilter::ShelfFixedPoles flt;
   NtFx::Biquad::EqBand hpf;
   NtFx::Biquad::EqBand lpf;
-  NtFx::Delay::Short<10.0> dl;
+  NtFx::Delay::Long<10.0> dl;
   int scMode { 0 };
   bool bypassEnable { false };
   bool scListenEnable { false };
