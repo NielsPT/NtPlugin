@@ -53,7 +53,7 @@ const std::vector<std::string> bandOptions {
 };
 
 struct ntEqualizer final : public NtFx::Plugin {
-  NtFx::Biquad::Eq<fN> cascade;
+  NtFx::Biquad::Cascade<fN> cascade;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> firstOrderHpf;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> firstOrderLpf;
   signal_t fHpf_hz { 20 };

@@ -31,7 +31,7 @@ import multiprocessing as mp
 
 SEPARATOR = "."
 EXPECTED_DIR = "in"
-TMP_DIR = "out"
+OUT_DIR = "out"
 STIMULI = [
     "impulse",
     "linearSweep",
@@ -171,7 +171,7 @@ def generateTestVectors(
         tuple: The generated test vectors.
     """
     os.makedirs(f"{FILE_DIR}/{EXPECTED_DIR}", exist_ok=True)
-    os.makedirs(f"{FILE_DIR}/{TMP_DIR}", exist_ok=True)
+    os.makedirs(f"{FILE_DIR}/{OUT_DIR}", exist_ok=True)
     n = int(t * fs)
     outputPath = f"{FILE_DIR}/{EXPECTED_DIR}/"
     _impulse = generateImpulse(n)
@@ -195,14 +195,14 @@ def generateTestVectors(
 
 
 def _buildTestProg(cppPath: str, component: str) -> bool:
-    os.makedirs(f"{FILE_DIR}/{TMP_DIR}", exist_ok=True)
+    os.makedirs(f"{FILE_DIR}/{OUT_DIR}", exist_ok=True)
     args = ["g++"]
     if platform.system() == "Darwin":
         args = ["clang++"]
     args += [
         cppPath,
         "-o",
-        f"{FILE_DIR}/{TMP_DIR}/{component}_main",
+        f"{FILE_DIR}/{OUT_DIR}/{component}_main",
         f"-I{os.path.abspath(FILE_DIR)}/..",
         f"-I{os.path.abspath(FILE_DIR)}/../lib/gcem/include",
         "--std=c++20",
@@ -214,7 +214,7 @@ def _buildTestProg(cppPath: str, component: str) -> bool:
         args = [
             "cl.exe",
             cppPath,
-            f"/Fe{FILE_DIR}{os.sep}{TMP_DIR}{os.sep}{component}_main.exe",
+            f"/Fe{FILE_DIR}{os.sep}{OUT_DIR}{os.sep}{component}_main.exe",
             f"/I{os.path.abspath(FILE_DIR)}{os.sep}..{os.sep}",
             f"/I{os.path.abspath(FILE_DIR)}{os.sep}..{os.sep}lib{os.sep}gcem{os.sep}include",
             "/std:c++20",
@@ -234,15 +234,15 @@ def _buildTestProg(cppPath: str, component: str) -> bool:
 
 def _runTestProg(component: str) -> int:
     res = sp.run(
-        [f"{FILE_DIR}/{TMP_DIR}/{component}_main"],
+        [f"{FILE_DIR}/{OUT_DIR}/{component}_main"],
         check=False,
     )
     if res.returncode < 0:
-        print(f"{RED}Return code: {res.returncode}.{BLACK}")
+        print(f"{RED}{component}: Return code: {res.returncode}.{BLACK}")
     if res.returncode == -1:
-        print(f"{RED}PROCESS HUNG UP.{BLACK}")
+        print(f"{RED}{component}: PROCESS HUNG UP.{BLACK}")
     if res.returncode == -11:
-        print(f"{RED}SEGMENTATION FAULT.{BLACK}")
+        print(f"{RED}{component}: SEGMENTATION FAULT.{BLACK}")
     return res.returncode
 
 
@@ -417,7 +417,9 @@ def plotSpectrum(
             _x = x[3, :]
         else:
             _x = x[0, :]
-    p.specgram(_x, Fs=fs)
+    _x = np.maximum(np.abs(_x), 1e-12)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        p.specgram(_x, Fs=fs)
     p.grid(True)
     p.xlabel("Time / s")
     p.ylabel("Frequency / Hz")
@@ -525,7 +527,7 @@ def _parseFiles(files: list[str], exceptedFiles: list[str]):
         if len(info) != 5:
             print(f"Bad filename: '{file}'.")
             continue
-        result = _readResult(f"{FILE_DIR}/{TMP_DIR}/" + file)
+        result = _readResult(f"{FILE_DIR}/{OUT_DIR}/" + file)
         if result is None:
             print(f"'{file}' not found.")
             continue
@@ -621,7 +623,7 @@ def _plotDynamic(
 
 def _readAndPlotTestResults(testFileName: str, fs: float):
     resultFiles: list[str] = []
-    outFiles = os.listdir(f"{FILE_DIR}/{TMP_DIR}")
+    outFiles = os.listdir(f"{FILE_DIR}/{OUT_DIR}")
     for file in outFiles:
         if file.startswith(testFileName) and file.endswith(
             f"{SEPARATOR}result.txt"
@@ -659,30 +661,36 @@ def acceptLatestResult(files: list[str], objects: list[str]) -> bool:
     Returns:
         bool: True on success.
     """
-    resultFiles = os.listdir(f"{FILE_DIR}/{TMP_DIR}")
+    # if not objects:
+    #     objects = ["all"]
+    _files = []
+    for file in files:
+        _files.append(file.replace("_test", ""))
+    resultFiles = os.listdir(f"{FILE_DIR}/{OUT_DIR}")
     filesToCopy: list[str] = []
     for file in resultFiles:
-        if file.endswith(f"{SEPARATOR}result.txt"):
-            info = file.split(SEPARATOR)
-            if len(info) != 5:
-                print(f"Bad filename: {file}")
-                continue
-            if files and files != ["all"] and info[0] not in files:
-                continue
-            if objects and objects != ["all"] and info[1] not in objects:
-                continue
-            filesToCopy += [file]
+        if not file.endswith(f"{SEPARATOR}result.txt"):
+            continue
+        info = file.split(SEPARATOR)
+        if len(info) != 5:
+            print(f"Bad filename: {file}")
+            continue
+        if files and files != ["all"] and info[0] not in _files:
+            continue
+        if objects and objects != ["all"] and info[1] not in objects:
+            continue
+        filesToCopy += [file]
     if not filesToCopy:
-        print("No result files found.")
+        print(f"{RED}No result files found.{BLACK}")
         return False
     for file in filesToCopy:
         storeFile = file.replace("result", "expected")
-        with open(f"{FILE_DIR}/{TMP_DIR}/" + file, "r", encoding="utf8") as x:
+        with open(f"{FILE_DIR}/{OUT_DIR}/" + file, "r", encoding="utf8") as x:
             with open(
                 f"{FILE_DIR}/{EXPECTED_DIR}/" + storeFile, "w", encoding="utf8"
             ) as y:
                 y.write(x.read())
-    print(f"Copied {len(filesToCopy)} files with expected results to `in`.")
+    print(f"{GREEN}Approved {len(filesToCopy)} tests.{BLACK}")
     return True
 
 
@@ -693,7 +701,7 @@ def clean() -> bool:
     Returns:
         bool: True on success.
     """
-    shutil.rmtree(f"{FILE_DIR}/{TMP_DIR}")
+    shutil.rmtree(f"{FILE_DIR}/{OUT_DIR}")
     return True
 
 
@@ -731,7 +739,7 @@ def runTests(cppPath: str) -> int:
 
 def _readAggregateResults() -> dict[str, int]:
     results = {}
-    path = f"{FILE_DIR}/{TMP_DIR}/results.txt"
+    path = f"{FILE_DIR}/{OUT_DIR}/results.txt"
     if not os.path.exists(path):
         return {}
     with open(path, encoding="utf8") as f:
@@ -774,7 +782,7 @@ def run(args: dict):
     global fs
     t = time.time()
     os.makedirs(f"{FILE_DIR}/{EXPECTED_DIR}", exist_ok=True)
-    os.makedirs(f"{FILE_DIR}/{TMP_DIR}", exist_ok=True)
+    os.makedirs(f"{FILE_DIR}/{OUT_DIR}", exist_ok=True)
     clean()
     files = args["files"]
     if not files or files == ["all"]:
@@ -851,8 +859,8 @@ def createParser() -> argparse.ArgumentParser:
     )
     approveParser.add_argument(
         "objects",
-        nargs="+",
-        help="Objects to accept results for.",
+        nargs="*",
+        help="Objects to accept results for. If omitted, approve all results.",
     )
     parser.add_argument(
         "--fs",

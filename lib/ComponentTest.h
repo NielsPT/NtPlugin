@@ -35,6 +35,7 @@
 
 #include "lib/Audio.h"
 #include "lib/Component.h"
+#include "lib/utils.h"
 #include <algorithm>
 #include <cstring>
 #include <filesystem>
@@ -58,9 +59,6 @@ consteval auto testFileBaseName(std::string_view fileName) {
   baseNameNoExt      = baseNameNoExt.substr(0, _end);
   return baseNameNoExt;
 }
-
-#define NTFX_QUOTE(str) #str
-#define NTFX_EXPAND_AND_QUOTE(str) NTFX_QUOTE(str)
 
 #define NTFX_ADD_TEST_IMPL(set, object, stimuli)                               \
   set.addTest(&(object), NTFX_EXPAND_AND_QUOTE(object), { stimuli })
@@ -162,11 +160,11 @@ struct ComponentTestSet {
       std::string objName,
       std::vector<std::string> stimuli);
 
-  bool addTest(ComponentBase<Stereo<signal_t>>** componentObj,
-      std::string objName,
-      std::vector<std::string> stimuli) {
-    return this->addTest(*componentObj, objName, stimuli);
-  }
+  // bool addTest(ComponentBase<Stereo<signal_t>>** componentObj,
+  //     std::string objName,
+  //     std::vector<std::string> stimuli) {
+  //   return this->addTest(*componentObj, objName, stimuli);
+  // }
 
   /**
    * @brief Runs all tests added to test set.

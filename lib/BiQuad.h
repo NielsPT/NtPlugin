@@ -421,7 +421,7 @@ namespace Biquad {
   };
 
   template <int nStages>
-  struct Eq final : public ComponentBase<Audio> {
+  struct Cascade final : public ComponentBase<Audio> {
     std::array<Settings, nStages> settings;
     CascadeCoeffs<nStages> coeffs;
     CascadeState<nStages> stateL;

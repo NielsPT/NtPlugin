@@ -4,7 +4,8 @@ CompileFlags:
     # - "-Ilib/gcem/include"
     # - "-I../../lib/gcem/include"
     - -Wimplicit-float-conversion
-    # - -Wimplicit-fixed-point-conversion
+    - -Wfloat-conversion
+    - -Wimplicit-fixed-point-conversion
     - -Wimplicit-int-float-conversion
     - -Wno-missing-field-initializers
     - -Wno-float-equal

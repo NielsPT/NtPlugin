@@ -31,7 +31,7 @@
 #include "juce_events/juce_events.h"
 #include "juce_graphics/juce_graphics.h"
 #include "juce_gui_basics/juce_gui_basics.h"
-#include "lib/utils.h"
+#include "utils.h"
 
 #include <cstddef>
 #include <memory>
@@ -236,7 +236,8 @@ void NtPluginAudioProcessorEditor::_initKnob(
   r_slider->setSliderStyle(juce::Slider::SliderStyle::Rotary);
   r_slider->addListener(this);
   this->addAndMakeVisible(r_slider.get());
-  DBG("Creating attachment for slider '" + r_slider->getName() + "'.");
+  DBG(NTFX_PLUGIN_NAME + ": Creating attachment for slider '"
+      + r_slider->getName() + "'.");
   this->knobAttachments.emplace_back(
       new juce::AudioProcessorValueTreeState::SliderAttachment(
           this->proc.paramLayout, r_slider->getName(), *r_slider));
@@ -389,7 +390,7 @@ void NtPluginAudioProcessorEditor::paint(juce::Graphics& g) {
 }
 
 void NtPluginAudioProcessorEditor::resized() {
-  DBG("Resized");
+  DBG(NTFX_PLUGIN_NAME + ": Resized");
   this->_updateUi();
 }
 
@@ -731,7 +732,8 @@ void NtPluginAudioProcessorEditor::sliderValueChanged(juce::Slider* p_slider) {
   auto* p_val = this->proc.plug.getKnobValuePtr(name);
   *p_val      = signal_t(p_slider->getValue());
   if (!p_val) {
-    DBG("Knob name in UI not found in plugin knobs: '" + name + '.');
+    DBG(NTFX_PLUGIN_NAME + ": Knob name in UI not found in plugin knobs: '"
+        + name + '.');
     return;
   }
   this->proc.plug.update();
@@ -765,7 +767,8 @@ void NtPluginAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
   auto name   = p_button->getName().toStdString();
   auto* p_val = this->proc.plug.getToggleValuePtr(name);
   if (!p_val) {
-    DBG("Toggle name in UI not found in plugin toggles: '" + name + "'.");
+    DBG(NTFX_PLUGIN_NAME + ": Toggle name in UI not found in plugin toggles: '"
+        + name + "'.");
     return;
   }
   *p_val = p_button->getToggleState();
@@ -789,7 +792,7 @@ void NtPluginAudioProcessorEditor::changeListenerCallback(
     for (size_t j = 0; j < this->proc.plug.toggleSets[i].toggles.size(); j++) {
       auto& t = this->proc.plug.toggleSets[i].toggles[j];
       if (!t.p_val) {
-        DBG("Toggle value in group is null.");
+        DBG(NTFX_PLUGIN_NAME + ": Toggle value in group is null.");
         continue;
       }
       *t.p_val = g->toggles[j]->getToggleState();
@@ -799,7 +802,8 @@ void NtPluginAudioProcessorEditor::changeListenerCallback(
     this->_conformUiSilderValues();
     return;
   }
-  DBG("RadioButton name in UI not found in plugin toggles.");
+  DBG(NTFX_PLUGIN_NAME
+      + ": RadioButton name in UI not found in plugin toggles.");
 }
 
 void NtPluginAudioProcessorEditor::comboBoxChanged(juce::ComboBox* p_box) {
@@ -814,7 +818,8 @@ void NtPluginAudioProcessorEditor::comboBoxChanged(juce::ComboBox* p_box) {
   auto name  = p_box->getName().toStdString();
   auto p_val = this->proc.plug.getDropDownValuePtr(name);
   if (!p_val) {
-    DBG("Failed to get dropdown value for '" + name + "'.");
+    DBG(NTFX_PLUGIN_NAME + ": Failed to get dropdown value for '" + name
+        + "'.");
     return;
   }
   *p_val = p_box->getSelectedId() - 1;

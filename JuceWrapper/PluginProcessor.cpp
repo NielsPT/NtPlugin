@@ -25,7 +25,7 @@
 #include "PluginProcessor.h"
 #include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/system/juce_PlatformDefs.h"
-#include "lib/utils.h"
+#include "utils.h"
 #include <cstddef>
 #include <string>
 #include <type_traits>
@@ -183,7 +183,7 @@ void NtPluginAudioProcessor::loadParameter(std::vector<T>& v) {
     auto par = this->paramLayout.getParameterAsValue(
         NtFx::spacesToUnderscores(p.name));
     *p.p_val = par.getValue();
-    DBG("Loaded '" << p.name << "': " << float(*p.p_val));
+    DBG(NTFX_PLUGIN_NAME + ": Loaded '" << p.name << "': " << float(*p.p_val));
   }
 }
 
@@ -197,7 +197,7 @@ void NtPluginAudioProcessor::loadRadioButtons(
       if (par.getValue()) { val = i; }
     }
     *p.p_val = val;
-    DBG("Loaded '" << p.name << "': " << float(*p.p_val));
+    DBG(NTFX_PLUGIN_NAME + ": Loaded '" << p.name << "': " << float(*p.p_val));
   }
 }
 
@@ -208,7 +208,8 @@ void NtPluginAudioProcessor::loadToggleSets(
       auto mangledName    = NtFx::mangleName("tg", p.name, p.toggles[i].name);
       auto par            = this->paramLayout.getParameterAsValue(mangledName);
       *p.toggles[i].p_val = par.getValue();
-      DBG("Loaded '" << mangledName << "': " << float(*p.toggles[i].p_val));
+      DBG(NTFX_PLUGIN_NAME + ": Loaded '"
+          << mangledName << "': " << float(*p.toggles[i].p_val));
     }
   }
 }
@@ -219,7 +220,8 @@ void NtPluginAudioProcessor::loadGroupKnobs(
     auto mangledName = NtFx::mangleName("kg", groupName, p.name);
     auto par         = this->paramLayout.getParameterAsValue(mangledName);
     *p.p_val         = par.getValue();
-    DBG("Loaded '" << mangledName << "': " << float(*p.p_val));
+    DBG(NTFX_PLUGIN_NAME + ": Loaded '" << mangledName
+                                        << "': " << float(*p.p_val));
   }
 }
 
@@ -230,7 +232,8 @@ void NtPluginAudioProcessor::updateOversampling(int mode) {
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
-  DBG("Creating new NtFx plugin editor for '" << JucePlugin_Name << "'.");
+  DBG(NTFX_PLUGIN_NAME + ": Creating new NtFx plugin editor for '"
+      << JucePlugin_Name << "'.");
   return new NtPluginAudioProcessor();
 }
 
@@ -262,7 +265,7 @@ NtPluginAudioProcessor::createParameterLayout() {
     }
     this->createParameters<bool>(vTmpToggles, parameters, i);
   }
-  DBG("Created " + std::to_string(i - 1) + " paramters.");
+  DBG(NTFX_PLUGIN_NAME + ": Created " + std::to_string(i - 1) + " paramters.");
   return parameters;
 }
 
@@ -303,6 +306,6 @@ void NtPluginAudioProcessor::createParameters(std::vector<t_spec>& vParams,
       paramLayout.add(std::make_unique<juce::AudioParameterFloat>(
           id, mangledName, p.minVal, p.maxVal, p._defaultVal));
     }
-    DBG("Created parameter '" << mangledName << "'.");
+    DBG(NTFX_PLUGIN_NAME + ": Created parameter '" << mangledName << "'.");
   }
 }

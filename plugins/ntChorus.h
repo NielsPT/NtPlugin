@@ -22,6 +22,7 @@
 
 #include "lib/Audio.h"
 #include "lib/Delay.h"
+#include "lib/DryMix.h"
 #include "lib/FirstOrder.h"
 #include "lib/Glider.h"
 #include "lib/Plugin.h"
@@ -34,31 +35,27 @@ struct ntChorus final : public NtFx::Plugin {
   NtFx::Delay::ShortGlided<tWetDlMax_ms, Audio> dlWet;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> hpf;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> lpf;
-
-  signal_t gWet_db { -3 };
-  signal_t gDry_db { -3 };
-  signal_t gWet_lin { 1 };
-  signal_t gDry_lin { 1 };
-  signal_t fcHpf_hz { 20 };
-  signal_t fcLpf_hz { 20e3 };
+  NtFx::DryMix mix;
   bool bypassEnable { false };
 
   ntChorus() {
     this->primaryKnobs = {
       { &this->dlMod.fMod_hz.ui, "Rate", " Hz", this->dlMod.minRate_hz, 10, 1 },
-      { &this->dlWet.t_ms.ui, "Delay", " ms", 0, tWetDlMax_ms },
       { &this->dlMod.depth_p, "Depth", " %", 0, 100 },
+      { &this->dlWet.t_ms.ui, "Delay", " ms", 0, tWetDlMax_ms },
     };
     this->secondaryKnobs = {
       { &this->dlMod.phaseMod_deg, "Mod phase", " deg", 0, 180 },
-      { &this->fcHpf_hz, "HPF", " Hz", 20, 20e3, 2e3 },
-      { &this->fcLpf_hz, "LPF", " Hz", 20, 20e3, 2e3 },
-      { &this->gDry_db, "Dry", " dB", -100, 0 },
-      { &this->gWet_db, "Wet", " dB", -100, 0 },
+      { &this->hpf.fc_hz, "HPF", " Hz", 20, 20e3, 2e3 },
+      { &this->lpf.fc_hz, "LPF", " Hz", 20, 20e3, 2e3 },
+      { &this->mix.mix_p, "Dry Mix", " %", 0, 100 },
     };
     this->toggles       = { { &this->bypassEnable, "Bypass" } };
     this->dlWet.t_ms.ui = 10;
     this->dlWet.t_ms.pr = 10;
+    this->hpf.fc_hz     = 200;
+    this->lpf.fc_hz     = 4000;
+    this->mix.mix_p     = 50;
     this->updateDefaults();
   }
 
@@ -74,18 +71,15 @@ struct ntChorus final : public NtFx::Plugin {
     Audio xFlt   = this->dlWet.process(xDlWet);
     Audio yHpf   = this->hpf.process(xFlt);
     Audio xMix   = this->lpf.process(yHpf);
-    Audio y      = xMix * gWet_lin + x * gDry_lin;
+    Audio y      = this->mix.process(xMix, x);
     this->template updatePeakLevel<1>(y);
     return y;
   }
 
   void update() noexcept override {
     this->dlMod.update();
-    this->gWet_lin = NtFx::invDb(this->gWet_db);
-    this->gDry_lin = NtFx::invDb(this->gDry_db);
     this->dlWet.update();
-    this->hpf.fc_hz = this->fcHpf_hz;
-    this->lpf.fc_hz = this->fcLpf_hz;
+    this->mix.update();
     this->hpf.update();
     this->lpf.update();
   }

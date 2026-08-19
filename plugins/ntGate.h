@@ -255,6 +255,7 @@ struct ntGate final : public NtFx::Plugin {
 
   void reset(float fs) noexcept override {
     this->_fs = fs;
+    this->dl.reset(fs);
     this->sc.reset(fs);
     this->scHf.reset(fs);
     this->hpf.settings.shape = NtFx::Biquad::Shape::hpf;

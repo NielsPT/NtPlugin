@@ -33,6 +33,11 @@ enum Order : int {
   fourth,
 };
 
+constexpr signal_t butterworthFourthOrderQ0 = 0.5411961f;
+constexpr signal_t butterworthFourthOrderQ1 = 1.3065630f;
+
+enum CascadeIdx { bqHpf0, bqHpf1, bqLpf0, bqLpf1 };
+
 struct ntFilters final : public NtFx::Plugin {
   signal_t fHpf = 20;
   signal_t fLpf = 20000;
@@ -45,10 +50,7 @@ struct ntFilters final : public NtFx::Plugin {
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> firstOrderHpf;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpfZero>
       firstOrderLpf;
-  NtFx::Biquad::EqBand bqLpf0;
-  NtFx::Biquad::EqBand bqLpf1;
-  NtFx::Biquad::EqBand bqHpf0;
-  NtFx::Biquad::EqBand bqHpf1;
+  NtFx::Biquad::Cascade<4> cascade;
   ntFilters() {
 
     this->primaryKnobs = {
@@ -83,7 +85,7 @@ struct ntFilters final : public NtFx::Plugin {
           .maxVal = 2,
       },
     };
-    this->dropdowns = {
+    this->radioButtons = {
       {
           (int*)&this->orderHpf,
           "HPF Order",
@@ -119,71 +121,68 @@ struct ntFilters final : public NtFx::Plugin {
   }
 
   Audio process(Audio x) noexcept override {
-    auto xBqHpf0 = x;
-    if ((this->orderHpf + 1) % 2) { xBqHpf0 = this->firstOrderHpf.process(x); }
-    auto yBqHpf0 = this->bqHpf0.process(xBqHpf0);
-    auto yBqHpf1 = this->bqHpf1.process(yBqHpf0);
-
-    auto xLpf = yBqHpf1;
-    if (!this->enableHpf) { xLpf = x; }
-    auto xBqLpf0 = xLpf;
-    if ((this->orderLpf + 1) % 2) {
-      xBqLpf0 = this->firstOrderLpf.process(xLpf);
+    auto y1stHpf = x;
+    if (this->enableHpf && (this->orderHpf + 1) % 2) {
+      y1stHpf = this->firstOrderHpf.process(x);
     }
-    auto yBqLpf0 = this->bqLpf0.process(xBqLpf0);
-    auto yBqLpf1 = this->bqLpf1.process(yBqLpf0);
-
-    auto y = yBqLpf1;
-    if (!this->enableLpf) { y = xLpf; }
+    auto y1stLpf = y1stHpf;
+    if (this->enableLpf && (this->orderLpf + 1) % 2) {
+      y1stLpf = this->firstOrderLpf.process(y1stHpf);
+    }
+    auto y = this->cascade.process(y1stLpf);
     this->template updatePeakLevel<0>(x);
     this->template updatePeakLevel<1>(y);
     return y;
   }
 
   void update() noexcept override {
-    this->primaryKnobs[1].isActive = true;
-    this->primaryKnobs[3].isActive = true;
-    this->firstOrderHpf.fc_hz      = fHpf;
-    this->firstOrderHpf.update();
+    this->activateParameter("Q HPF");
+    this->activateParameter("Q LPF");
+    this->firstOrderHpf.fc_hz = fHpf;
     if (this->orderHpf == Order::fourth) {
-      this->bqHpf0.settings.q     = gcem::sqrt(this->qHpf);
-      this->bqHpf1.settings.q     = gcem::sqrt(this->qHpf);
-      this->bqHpf0.settings.shape = NtFx::Biquad::Shape::hpf;
-      this->bqHpf1.settings.shape = NtFx::Biquad::Shape::hpf;
-    } else if (this->orderHpf == Order::first) {
-      this->bqHpf0.settings.shape    = NtFx::Biquad::Shape::none;
-      this->bqHpf1.settings.shape    = NtFx::Biquad::Shape::none;
-      this->primaryKnobs[1].isActive = false;
+      auto qScale                          = this->qHpf / signal_t(0.707);
+      this->cascade.settings[bqHpf0].q     = butterworthFourthOrderQ0 * qScale;
+      this->cascade.settings[bqHpf1].q     = butterworthFourthOrderQ1 * qScale;
+      this->cascade.settings[bqHpf0].shape = NtFx::Biquad::Shape::hpf;
+      this->cascade.settings[bqHpf1].shape = NtFx::Biquad::Shape::hpf;
+    } else if (this->orderHpf == Order::first || !this->enableHpf) {
+      this->cascade.settings[bqHpf0].shape = NtFx::Biquad::Shape::none;
+      this->cascade.settings[bqHpf1].shape = NtFx::Biquad::Shape::none;
+      this->deactivateParameter("Q HPF");
     } else {
-      this->bqHpf0.settings.q     = this->qHpf;
-      this->bqHpf0.settings.shape = NtFx::Biquad::Shape::hpf;
-      this->bqHpf1.settings.shape = NtFx::Biquad::Shape::none;
+      this->cascade.settings[bqHpf0].q     = this->qHpf;
+      this->cascade.settings[bqHpf0].shape = NtFx::Biquad::Shape::hpf;
+      this->cascade.settings[bqHpf1].shape = NtFx::Biquad::Shape::none;
     }
-    this->bqHpf0.settings.fc_hz = fHpf;
-    this->bqHpf1.settings.fc_hz = fHpf;
-    this->bqHpf0.update();
-    this->bqHpf1.update();
-
-    this->firstOrderLpf.fc_hz = fLpf;
-    this->firstOrderLpf.update();
+    this->cascade.settings[bqHpf0].fc_hz = fHpf;
+    this->cascade.settings[bqHpf1].fc_hz = fHpf;
+    this->firstOrderLpf.fc_hz            = fLpf;
     if (this->orderLpf == Order::fourth) {
-      this->bqLpf0.settings.q     = gcem::sqrt(this->qLpf);
-      this->bqLpf1.settings.q     = gcem::sqrt(this->qLpf);
-      this->bqLpf0.settings.shape = NtFx::Biquad::Shape::lpf;
-      this->bqLpf1.settings.shape = NtFx::Biquad::Shape::lpf;
-    } else if (this->orderLpf == Order::first) {
-      this->bqLpf0.settings.shape    = NtFx::Biquad::Shape::none;
-      this->bqLpf1.settings.shape    = NtFx::Biquad::Shape::none;
-      this->primaryKnobs[3].isActive = false;
+      auto qScale                          = this->qLpf / signal_t(0.707);
+      this->cascade.settings[bqLpf0].q     = butterworthFourthOrderQ0 * qScale;
+      this->cascade.settings[bqLpf1].q     = butterworthFourthOrderQ1 * qScale;
+      this->cascade.settings[bqLpf0].shape = NtFx::Biquad::Shape::lpf;
+      this->cascade.settings[bqLpf1].shape = NtFx::Biquad::Shape::lpf;
+    } else if (this->orderLpf == Order::first || !this->enableLpf) {
+      this->cascade.settings[bqLpf0].shape = NtFx::Biquad::Shape::none;
+      this->cascade.settings[bqLpf1].shape = NtFx::Biquad::Shape::none;
+      this->deactivateParameter("Q LPF");
     } else {
-      this->bqLpf0.settings.q     = this->qLpf;
-      this->bqLpf0.settings.shape = NtFx::Biquad::Shape::lpf;
-      this->bqLpf1.settings.shape = NtFx::Biquad::Shape::none;
+      this->cascade.settings[bqLpf0].q     = this->qLpf;
+      this->cascade.settings[bqLpf0].shape = NtFx::Biquad::Shape::lpf;
+      this->cascade.settings[bqLpf1].shape = NtFx::Biquad::Shape::none;
     }
-    this->bqLpf0.settings.fc_hz = fLpf;
-    this->bqLpf1.settings.fc_hz = fLpf;
-    this->bqLpf0.update();
-    this->bqLpf1.update();
+    if (this->orderLpf == Order::third) {
+      this->cascade.settings[bqLpf0].q = this->qLpf / signal_t(0.707);
+    }
+    if (this->orderHpf == Order::third) {
+      this->cascade.settings[bqHpf0].q = this->qHpf / signal_t(0.707);
+    }
+    this->cascade.settings[bqLpf0].fc_hz = fLpf;
+    this->cascade.settings[bqLpf1].fc_hz = fLpf;
+    this->firstOrderHpf.update();
+    this->firstOrderLpf.update();
+    this->cascade.update();
     this->uiNeedsUpdate = true;
   }
 
@@ -191,10 +190,7 @@ struct ntFilters final : public NtFx::Plugin {
     this->_fs = fs;
     this->firstOrderHpf.reset(fs);
     this->firstOrderLpf.reset(fs);
-    this->bqHpf0.reset(fs);
-    this->bqHpf1.reset(fs);
-    this->bqLpf0.reset(fs);
-    this->bqLpf1.reset(fs);
+    this->cascade.reset(fs);
     this->update();
   }
 };

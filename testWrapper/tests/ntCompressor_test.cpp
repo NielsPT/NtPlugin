@@ -1,9 +1,22 @@
 #include "lib/ComponentTest.h"
 #include "plugins/ntCompressor.h"
+#include <memory>
 
 int main() {
   auto set = NtFx::ComponentTestSet(std::string(testFileBaseName(__FILE__)));
-  auto compressor_dB                   = new ntCompressor();
+
+  auto compressorDefaultsStorage = std::make_unique<ntCompressor>();
+  auto* compressorDefaults       = compressorDefaultsStorage.get();
+  NTFX_ADD_TEST_PTR(set, compressorDefaults, "impulse");
+  NTFX_ADD_TEST_PTR(set, compressorDefaults, "dynamic_matched");
+
+  auto compressorBypassStorage   = std::make_unique<ntCompressor>();
+  auto* compressorBypass         = compressorBypassStorage.get();
+  compressorBypass->bypassEnable = true;
+  NTFX_ADD_TEST_PTR(set, compressorBypass, "impulse");
+
+  auto compressor_dBStorage            = std::make_unique<ntCompressor>();
+  auto* compressor_dB                  = compressor_dBStorage.get();
   compressor_dB->scSettings.ratio      = 3;
   compressor_dB->scSettings.knee_db    = 0;
   compressor_dB->scSettings.thresh_db  = -6;
@@ -14,7 +27,8 @@ int main() {
   compressor_dB->clip                  = false;
   NTFX_ADD_TEST_PTR(set, compressor_dB, "linearSweep");
   NTFX_ADD_TEST_PTR(set, compressor_dB, "dynamic_alternating");
-  auto compressor_lin                  = new ntCompressor();
+  auto compressor_linStorage           = std::make_unique<ntCompressor>();
+  auto* compressor_lin                 = compressor_linStorage.get();
   compressor_lin->scSettings.ratio     = 3;
   compressor_lin->scSettings.tRel_ms   = 100;
   compressor_lin->scSettings.tAtt_ms   = 1;
@@ -23,14 +37,16 @@ int main() {
   compressor_lin->clip                 = false;
   NTFX_ADD_TEST_PTR(set, compressor_lin, "linearSweep");
   NTFX_ADD_TEST_PTR(set, compressor_lin, "dynamic_alternating");
-  auto compressor_lin_fb                  = new ntCompressor();
+  auto compressor_lin_fbStorage           = std::make_unique<ntCompressor>();
+  auto* compressor_lin_fb                 = compressor_lin_fbStorage.get();
   compressor_lin_fb->scSettings.thresh_db = -24;
   compressor_lin_fb->linEnable            = true;
   compressor_lin_fb->scMode               = 1;
   compressor_lin_fb->clip                 = false;
   NTFX_ADD_TEST_PTR(set, compressor_lin_fb, "linearSweep");
   NTFX_ADD_TEST_PTR(set, compressor_lin_fb, "dynamic_alternating");
-  auto compressor_dB_fb                  = new ntCompressor();
+  auto compressor_dB_fbStorage           = std::make_unique<ntCompressor>();
+  auto* compressor_dB_fb                 = compressor_dB_fbStorage.get();
   compressor_dB_fb->scSettings.thresh_db = -30;
   compressor_dB_fb->linEnable            = false;
   compressor_dB_fb->scMode               = 1;

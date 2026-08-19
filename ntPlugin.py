@@ -88,12 +88,9 @@ def _switchVsCodeSettings(plugin: str) -> bool:
         print(f"{RED}Plugin '{plugin}' not found.{BLACK}")
         return False
     pluginIds = readPluginIds()
+    cat = ""
     if plugin not in pluginIds:
-        print(
-            f"{YELLOW}'{plugin}' not found in plugin ID file. Setting "
-            "category to 'Effect'."
-        )
-        cat = "Effect"
+        print(f"{YELLOW}'{plugin}' not found in plugin ID file.")
     else:
         cat = pluginIds[plugin][AAX_CAT]
     settingsFilePath = os.path.realpath(
@@ -111,11 +108,13 @@ def _switchVsCodeSettings(plugin: str) -> bool:
         return False
     if len(configArgs) != 3:
         return False
-    newConfigArgs = [
-        f"-DNTFX_PLUGIN={plugin}",
-        f"-DNTFX_AAX_CATEGORY={cat}",
-        f"-DNTFX_VST3_CATEGORY={CATEGORY_MAP[cat]}",
-    ]
+    newConfigArgs = [f"-DNTFX_PLUGIN={plugin}"]
+    if cat:
+        newConfigArgs += [
+            f"-DNTFX_AAX_CATEGORY={cat}",
+            f"-DNTFX_VST3_CATEGORY={CATEGORY_MAP[cat]}",
+        ]
+
     settings[cmakeConfArgsKey] = newConfigArgs
     newSettingJson = json.dumps(settings, indent=2)
     with open(settingsFilePath, "w", encoding="utf-8") as f:
@@ -317,7 +316,7 @@ def configure(
     if plugin not in pluginIds:
         if not addNewPluginId(plugin, cmakeOut, category):
             return False
-    elif len(pluginIds[plugin]) < 2 or pluginIds[plugin][VST3_CAT] != category:
+    elif len(pluginIds[plugin]) < 2 or pluginIds[plugin][AAX_CAT] != category:
         if category:
             if not updatePluginId(plugin, category):
                 return False
@@ -362,7 +361,7 @@ def _overwriteIdFile(pluginIds: dict[str, list[str]]) -> bool:
     os.remove(ID_FILE)
     for name, info in pluginIds.items():
         if not _writePluginId(
-            name, info[ID], info[AAX_CAT] if len(info) > 1 else ""
+            name, info[ID], info[AAX_CAT] if len(info) > 2 else ""
         ):
             return False
     return True
@@ -372,10 +371,13 @@ def updatePluginId(plugin: str, category: str) -> bool:
     pluginIds = readPluginIds()
     if not pluginIds or plugin not in pluginIds:
         return False
+    aax_cat = category.strip()
+    vst3_cat = CATEGORY_MAP[aax_cat]
     if len(pluginIds[plugin]) < 2:
-        pluginIds[plugin] += [category.strip()]
+        pluginIds[plugin] += [aax_cat, vst3_cat]
     else:
-        pluginIds[plugin][VST3_CAT] = category
+        pluginIds[plugin][AAX_CAT] = aax_cat
+        pluginIds[plugin][VST3_CAT] = vst3_cat
     if not _overwriteIdFile(pluginIds):
         return False
     return True

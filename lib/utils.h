@@ -17,13 +17,15 @@
 
 #pragma once
 #include "lib/gcem.h"
-// #include "gcem.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <limits>
 #include <string>
 #include <vector>
+
+#define NTFX_QUOTE(str) #str
+#define NTFX_EXPAND_AND_QUOTE(str) NTFX_QUOTE(str)
 
 namespace NtFx {
 

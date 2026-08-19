@@ -132,8 +132,10 @@ struct ntTapeEcho final : public NtFx::Plugin {
     this->meters = { { "IN" }, { .name = "OUT", .hasScale = true } };
     this->lpf.settings.shape = NtFx::Biquad::Shape::lpf;
     this->hpf.settings.shape = NtFx::Biquad::Shape::hpf;
-    this->lpf.settings.fc_hz = 20e3;
-    this->hpf.settings.fc_hz = 20;
+    this->lpf.settings.fc_hz = 2e3;
+    this->hpf.settings.fc_hz = 300;
+    this->lpf.settings.q     = 0.6;
+    this->hpf.settings.q     = 0.6;
     this->updateDefaults();
   }
 

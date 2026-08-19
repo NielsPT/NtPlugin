@@ -39,7 +39,7 @@
 
 namespace NtFx {
 struct Meter final : public juce::Component {
-  PeakHoldSensor<> peakSensor;
+  PeakHoldSensor<192 * 8 * 100> peakSensor;
   MeterSpec& meterSpec;
   UiSpec& uiSpec;
   std::string label { "" };
@@ -176,7 +176,7 @@ struct Meter final : public juce::Component {
     jassert(this->fractPeak <= 1 && this->fractPeak >= 0);
 
     auto w = float(this->getWidth());
-    if (!repaint || w != 0.0f) { w = this->uiSpec.meterWidth; }
+    if (!repaint || w == 0.0f) { w = this->uiSpec.meterWidth; }
     this->pad         = w * 10.0f / this->uiSpec.meterWidth;
     this->dotDiameter = w * 15.0f / this->uiSpec.meterWidth;
     this->dotDist     = this->pad + this->dotDiameter;
@@ -185,7 +185,7 @@ struct Meter final : public juce::Component {
 
   void updateRelease(float fs) {
     this->peakSensor.tPeak_ms = this->meterSpec.decay_s * 1000;
-    this->peakSensor.tHold_ms = this->meterSpec.hold_s * 1000;
+    this->peakSensor.tHold_ms = 100;
     this->peakSensor.reset(fs);
     this->nHold_frames =
         int(this->meterSpec.hold_s * this->uiSpec.meterRefreshRate_hz);
@@ -332,10 +332,10 @@ struct MeterGroup : public juce::Component {
     }
   }
   void setUiScale(float uiScale) {
-    for (auto& m : meters) { m->uiScale = uiScale; }
+    for (auto& m : this->meters) { m->uiScale = uiScale; }
   }
   void setOnlyShowLeft(bool onlyShowLeft) {
-    for (auto& m : meters) { m->onlyShowLeft = onlyShowLeft; }
+    for (auto& m : this->meters) { m->onlyShowLeft = onlyShowLeft; }
     if (onlyShowLeft) { this->nChs = 1; }
   }
   void updateRelease(float fs) {
