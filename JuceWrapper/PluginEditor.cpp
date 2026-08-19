@@ -94,8 +94,9 @@ NtPluginAudioProcessorEditor::NtPluginAudioProcessorEditor(
     this->_initDropDown(d, true);
   }
 
+  auto title = std::string(TITLE);
   this->pluginNameLabel.setText(
-      TITLE.begin(), juce::NotificationType::dontSendNotification);
+      title, juce::NotificationType::dontSendNotification);
   this->pluginNameLabel.setJustificationType(juce::Justification::right);
   this->addAndMakeVisible(this->pluginNameLabel);
 
