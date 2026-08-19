@@ -315,6 +315,7 @@ def zipPackage(plugins: list[str], targets: list[str], version: str) -> bool:
     Args:
         plugins (list[str]): Plugins to package.
         targets (list[str]): Target formats to package.
+        version (str): Version
 
     Returns:
         bool: True on success.
@@ -557,10 +558,6 @@ def main(args: dict) -> bool:
         bool: True on success.
     """
     # print(f"args: {json.dumps(args, indent=2)}")
-    if sys.platform != "darwin":
-        print(f"{RED}Packaging only available for MacOS.{BLACK}")
-        return False
-
     os.makedirs(PACKAGING_DIR, exist_ok=True)
     plugins = args["plugins"]
     targets = list(TARGET_EXT_MAP.keys())
@@ -579,6 +576,8 @@ def main(args: dict) -> bool:
     if not version:
         print(f"{RED}Version is not provided. Aborting.{BLACK}")
         return False
+    if sys.platform != "darwin":
+        return zipPackage(plugins, targets, version)
     secrets["version"] = version
     if not storeSecrets(secrets):
         return False
