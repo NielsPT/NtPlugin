@@ -481,6 +481,7 @@ def process(args: dict) -> bool:
     doTest = args["test"] if "test" in args else False
     doPackage = args["package"] if "package" in args else False
     company = args["company"]
+    version = args["version"] if "version" in args else ""
     secrets = package.loadSecrets()
     for secret in SECRETS:
         if secret in args and args[secret]:
@@ -488,7 +489,8 @@ def process(args: dict) -> bool:
     if not secrets:
         print(f"{RED}Faild to get credentials.{BLACK}")
         return False
-    version = package.findVersion(args, secrets)
+    if not version:
+        version = package.findVersion(args, secrets)
     if not version:
         print(f"{RED}Version is not provided. Aborting.{BLACK}")
         return False
