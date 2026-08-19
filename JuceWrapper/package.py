@@ -577,7 +577,7 @@ def main(args: dict) -> bool:
         print(f"{RED}Version is not provided. Aborting.{BLACK}")
         return False
     if sys.platform != "darwin":
-        return zipPackage(plugins, targets, version)
+        return zipPackage(plugins, ["VST3"], version)
     secrets["version"] = version
     if not storeSecrets(secrets):
         return False
