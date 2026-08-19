@@ -569,7 +569,7 @@ def main(args: dict) -> bool:
     for secret in SECRETS:
         if secret in args and args[secret]:
             secrets[secret] = args[secret].replace("/n", "")
-    if not secretsAreValid(secrets):
+    if sys.platform == "darwin" and not secretsAreValid(secrets):
         print(f"{RED}Faild to get credentials.{BLACK}")
         return False
     version = findVersion(args, secrets)
