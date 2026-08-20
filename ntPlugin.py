@@ -83,6 +83,31 @@ def _openInVscode(path: str) -> bool:
 
 
 def _switchVsCodeSettings(plugin: str) -> bool:
+    settingsFilePath = os.path.realpath(
+        f"{REPO_BASE_DIR}/.vscode/settings.json"
+    )
+    if not os.path.exists(settingsFilePath):
+        return False
+
+    with open(settingsFilePath, "r", encoding="utf-8") as f:
+        settings = json.loads(f.read())
+    cmakeConfArgsKey = "cmake.configureArgs"
+    if cmakeConfArgsKey not in settings:
+        return False
+    configArgs: list[str] = settings[cmakeConfArgsKey]
+    if not isinstance(configArgs, list):
+        return False
+    if len(configArgs) != 3:
+        return False
+
+    for line in configArgs:
+        if not line.startswith("-DNTFX_PLUGIN="):
+            continue
+        selectedPlugin = line.replace("-DNTFX_PLUGIN=", "")
+        print(f"Currently selected plugin: {selectedPlugin}")
+        if selectedPlugin == plugin or plugin == "":
+            return True
+
     pluginPath = f"{PLUGINS_DIR}/{plugin}.h"
     if not os.path.exists(pluginPath):
         print(f"{RED}Plugin '{plugin}' not found.{BLACK}")
@@ -93,28 +118,12 @@ def _switchVsCodeSettings(plugin: str) -> bool:
         print(f"{YELLOW}'{plugin}' not found in plugin ID file.")
     else:
         cat = pluginIds[plugin][AAX_CAT]
-    settingsFilePath = os.path.realpath(
-        f"{REPO_BASE_DIR}/.vscode/settings.json"
-    )
-    if not os.path.exists(settingsFilePath):
-        return False
-    with open(settingsFilePath, "r", encoding="utf-8") as f:
-        settings = json.loads(f.read())
-    cmakeConfArgsKey = "cmake.configureArgs"
-    if cmakeConfArgsKey not in settings:
-        return False
-    configArgs = settings[cmakeConfArgsKey]
-    if not isinstance(configArgs, list):
-        return False
-    if len(configArgs) != 3:
-        return False
     newConfigArgs = [f"-DNTFX_PLUGIN={plugin}"]
     if cat:
         newConfigArgs += [
             f"-DNTFX_AAX_CATEGORY={cat}",
             f"-DNTFX_VST3_CATEGORY={CATEGORY_MAP[cat]}",
         ]
-
     settings[cmakeConfArgsKey] = newConfigArgs
     newSettingJson = json.dumps(settings, indent=2)
     with open(settingsFilePath, "w", encoding="utf-8") as f:
@@ -175,7 +184,7 @@ struct {name} final : public NtFx::NtPlugin {{
   void update() noexcept override {{
   }}
 
-  void reset(float fs) noexcept override {{
+  void reset(signal_t fs) noexcept override {{
     this->_fs = fs;
     this->update();
   }}
@@ -613,6 +622,10 @@ def createParser() -> argparse.ArgumentParser:
         help="Switch VsCode context to a different plugin.",
     )
     switchParser.add_argument("name", help="Name of plugin")
+    whichParser = subParsers.add_parser(
+        "which",
+        help="Display currently selected plugin in Vscode settings.",
+    )
     return parser
 
 
@@ -635,6 +648,8 @@ def main(args: dict) -> bool:
         return package.main(args)
     if args["task"] == "switch":
         return _switchVsCodeSettings(args["name"])
+    if args["task"] == "which":
+        return _switchVsCodeSettings("")
     print(f"{RED}Unknown command: {args["task"]}{BLACK}.")
     return False
 

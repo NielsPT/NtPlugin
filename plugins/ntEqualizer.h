@@ -134,7 +134,7 @@ struct ntEqualizer final : public NtFx::Plugin {
     this->cascade.update();
   }
 
-  void reset(float fs) noexcept override {
+  void reset(signal_t fs) noexcept override {
     this->_fs = fs;
     this->firstOrderHpf.reset(fs);
     this->firstOrderLpf.reset(fs);

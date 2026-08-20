@@ -77,7 +77,7 @@ namespace FirstOrder {
       }
     }
 
-    void reset(float fs) noexcept override {
+    void reset(signal_t fs) noexcept override {
       this->_fs  = fs;
       this->_xn1 = 0;
       this->_yn1 = 0;
@@ -108,7 +108,7 @@ namespace FirstOrder {
       this->r.update();
     }
 
-    void reset(float fs) noexcept override {
+    void reset(signal_t fs) noexcept override {
       this->l.reset(fs);
       this->r.reset(fs);
     }

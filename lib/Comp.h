@@ -109,7 +109,7 @@ namespace Comp {
      * @brief Reset component with new sample rate
      * @param fs Sample rate in Hz
      */
-    void reset(float fs) noexcept override {
+    void reset(signal_t fs) noexcept override {
       this->peakSensor.reset(fs);
       this->_fs = fs;
       this->update();
@@ -259,7 +259,7 @@ namespace Comp {
      * @brief Reset component with new sample rate
      * @param fs Sample rate in Hz
      */
-    void reset(float fs) noexcept override {
+    void reset(signal_t fs) noexcept override {
       this->rmsSensor.reset(fs);
       this->PeakSideChainDb::reset(fs);
     }
@@ -304,7 +304,7 @@ namespace Comp {
      * @brief Reset component with new sample rate
      * @param fs Sample rate in Hz
      */
-    void reset(float fs) noexcept override {
+    void reset(signal_t fs) noexcept override {
       this->rmsSensor.reset(fs);
       this->PeakSideChainLin::reset(fs);
     }

@@ -71,7 +71,7 @@ struct PeakSensor : public ComponentBase<signal_t> {
     this->_alpha = gcem::exp(-2200.0 / (this->tPeak_ms * this->_fs));
   }
 
-  void reset(float fs) noexcept override {
+  void reset(signal_t fs) noexcept override {
     this->_fs    = fs;
     this->_alpha = 0;
     this->_state = 0;

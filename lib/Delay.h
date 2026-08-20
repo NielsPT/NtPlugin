@@ -94,7 +94,7 @@ namespace Delay {
      *
      * @param fs Sample rate in Hz (e.g., 48000)
      */
-    void reset(float fs) noexcept override {
+    void reset(signal_t fs) noexcept override {
       this->_fs = fs;
       std::fill(this->dl.begin(), this->dl.end(), 0);
       this->update();
@@ -148,7 +148,7 @@ namespace Delay {
      *
      * @param fs Sample rate in Hz
      */
-    void reset(float fs) noexcept override {
+    void reset(signal_t fs) noexcept override {
       this->_fs = fs;
       this->nDl = int(gcem::ceil(dlLen_ms * 0.001 * this->_fs));
       this->dl.resize(this->nDl);
@@ -199,7 +199,7 @@ namespace Delay {
     /**
      * @brief Initialize with sample rate and clear buffer.
      */
-    void reset(float fs) noexcept override {
+    void reset(signal_t fs) noexcept override {
       this->_fs = fs;
       std::fill(this->dl.begin(), this->dl.end(), 0);
       this->update();
@@ -247,7 +247,7 @@ namespace Delay {
     /**
      * @brief Initialize with sample rate, allocating the dynamic buffer.
      */
-    void reset(float fs) noexcept override {
+    void reset(signal_t fs) noexcept override {
       this->_fs = fs;
       this->update();
       this->_nDl = int(gcem::ceil(dlLen_ms * 0.001 * this->_fs));
@@ -357,7 +357,7 @@ namespace Delay {
       }
     }
 
-    void reset(float fs) noexcept override {
+    void reset(signal_t fs) noexcept override {
       this->_fs = fs;
       std::fill(this->dl.begin(), this->dl.end(), 0);
       this->update();
@@ -395,7 +395,7 @@ namespace Delay {
     }; /**< Smoothed LFO frequency in Hz (default 0.25 Hz) */
     signal_t depth_p { 25 };      /**< Modulation depth as percentage (0-100) */
     signal_t phaseMod_deg { 90 }; /**< Phase offset between L/R in degrees */
-    signal_t _tSample { 1 / 48e3 }; /**< Sample period for LFO calculation */
+    signal_t _tSample { 1 };      /**< Sample period for LFO calculation */
     signal_t _t { 0 }; /**< Current LFO phase accumulator (0 to 1/fMod_hz) */
 
     /**
@@ -450,7 +450,7 @@ namespace Delay {
      *
      * @param fs Sample rate in Hz
      */
-    void reset(float fs) noexcept override {
+    void reset(signal_t fs) noexcept override {
       this->_fs = fs;
       this->l.reset(fs);
       this->r.reset(fs);

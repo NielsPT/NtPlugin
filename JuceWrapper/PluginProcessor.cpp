@@ -36,7 +36,7 @@ NtPluginAudioProcessor::NtPluginAudioProcessor()
               .withInput("Input", juce::AudioChannelSet::stereo(), true)
               .withOutput("Output", juce::AudioChannelSet::stereo(), true)
               .withInput("SideChain", juce::AudioChannelSet::mono(), true)),
-      src(plug), paramLayout(*this,
+      src(plug), _paramLayout(*this,
                      nullptr,
                      juce::Identifier(JucePlugin_Name),
                      createParameterLayout()) { }
@@ -60,9 +60,14 @@ const juce::String NtPluginAudioProcessor::getProgramName(int) {
 void NtPluginAudioProcessor::changeProgramName(int, const juce::String&) { }
 
 void NtPluginAudioProcessor::prepareToPlay(double sampleRate, int) {
-  if (!this->plug.isInitialized) { return; }
   if (sampleRate == 0.0) { return; }
-  this->_fsBase = float(sampleRate);
+  if (!this->plug.isInitialized) {
+    DBG(NTFX_PLUGIN_NAME
+        + ": Plugin not initialized. Did you call UpupdateDefaults?");
+    return;
+  }
+  if (sampleRate == this->_fsBase) { return; }
+  this->_fsBase = signal_t(sampleRate);
   this->updateOversampling();
   this->plug.xRms[0].reset(this->_fsBase);
   this->plug.xRms[1].reset(this->_fsBase);
@@ -115,13 +120,13 @@ void NtPluginAudioProcessor::processBlock(
   if (p_posInfo) {
     auto p_tempo = p_posInfo->getBpm();
     if (p_tempo && p_tempo != this->plug.tempo) {
-      this->plug.tempo = *p_tempo;
+      this->plug.tempo = signal_t(*p_tempo);
       this->plug.onTempoChanged();
     }
   }
 
-  this->setLatencySamples(this->plug.latency / this->src.coeffs.osFactor
-      + this->src.coeffs.osFirLenMult - 2);
+  this->setLatencySamples(int(this->plug.latency / this->src.coeffs.osFactor
+      + this->src.coeffs.osFirLenMult - 2));
 
   for (int i = 0; i < buffer.getNumSamples(); i++) {
     if (p_xSc) { this->plug.xSc = p_xSc[i]; }
@@ -146,7 +151,7 @@ juce::AudioProcessorEditor* NtPluginAudioProcessor::createEditor() {
 }
 
 void NtPluginAudioProcessor::getStateInformation(juce::MemoryBlock& destData) {
-  auto state = this->paramLayout.copyState();
+  auto state = this->_paramLayout.copyState();
   std::unique_ptr<juce::XmlElement> xml(state.createXml());
   copyXmlToBinary(*xml, destData);
 }
@@ -156,8 +161,8 @@ void NtPluginAudioProcessor::setStateInformation(
   std::unique_ptr<juce::XmlElement> xmlState(
       getXmlFromBinary(data, sizeInBytes));
   if (xmlState.get() == nullptr) { return; }
-  if (!xmlState->hasTagName(this->paramLayout.state.getType())) { return; }
-  this->paramLayout.replaceState(juce::ValueTree::fromXml(*xmlState));
+  if (!xmlState->hasTagName(this->_paramLayout.state.getType())) { return; }
+  this->_paramLayout.replaceState(juce::ValueTree::fromXml(*xmlState));
   for (auto& g : this->plug.knobGroups) {
     this->loadGroupKnobs(g.primaryKnobs, g.name);
     // this->loadGroupKnobs(g.secondaryKnobs, g.name);
@@ -168,7 +173,7 @@ void NtPluginAudioProcessor::setStateInformation(
   this->loadParameter(this->plug.dropdowns);
   this->loadRadioButtons(this->plug.radioButtons);
   this->loadToggleSets(this->plug.toggleSets);
-  auto par = this->paramLayout.getParameterAsValue("Oversampling");
+  auto par = this->_paramLayout.getParameterAsValue("Oversampling");
   auto val = par.getValue();
   if (val) {
     this->src.mode = NtFx::Src::oversamplingMode((int)val);
@@ -180,7 +185,7 @@ template <typename T>
 void NtPluginAudioProcessor::loadParameter(std::vector<T>& v) {
   for (auto& p : v) {
     if (!p.p_val) { continue; }
-    auto par = this->paramLayout.getParameterAsValue(
+    auto par = this->_paramLayout.getParameterAsValue(
         NtFx::spacesToUnderscores(p.name));
     *p.p_val = par.getValue();
     DBG(NTFX_PLUGIN_NAME + ": Loaded '" << p.name << "': " << float(*p.p_val));
@@ -192,9 +197,9 @@ void NtPluginAudioProcessor::loadRadioButtons(
   for (auto& p : v) {
     int val { 0 };
     for (size_t i = 0; i < p.options.size(); i++) {
-      auto par = this->paramLayout.getParameterAsValue(
+      auto par = this->_paramLayout.getParameterAsValue(
           NtFx::mangleName("rb", p.name, p.options[i]));
-      if (par.getValue()) { val = i; }
+      if (par.getValue()) { val = int(i); }
     }
     *p.p_val = val;
     DBG(NTFX_PLUGIN_NAME + ": Loaded '" << p.name << "': " << float(*p.p_val));
@@ -206,7 +211,7 @@ void NtPluginAudioProcessor::loadToggleSets(
   for (auto& p : v) {
     for (size_t i = 0; i < p.toggles.size(); i++) {
       auto mangledName    = NtFx::mangleName("tg", p.name, p.toggles[i].name);
-      auto par            = this->paramLayout.getParameterAsValue(mangledName);
+      auto par            = this->_paramLayout.getParameterAsValue(mangledName);
       *p.toggles[i].p_val = par.getValue();
       DBG(NTFX_PLUGIN_NAME + ": Loaded '"
           << mangledName << "': " << float(*p.toggles[i].p_val));
@@ -218,7 +223,7 @@ void NtPluginAudioProcessor::loadGroupKnobs(
     std::vector<NtFx::KnobSpec>& v, std::string groupName) {
   for (auto& p : v) {
     auto mangledName = NtFx::mangleName("kg", groupName, p.name);
-    auto par         = this->paramLayout.getParameterAsValue(mangledName);
+    auto par         = this->_paramLayout.getParameterAsValue(mangledName);
     *p.p_val         = par.getValue();
     DBG(NTFX_PLUGIN_NAME + ": Loaded '" << mangledName
                                         << "': " << float(*p.p_val));

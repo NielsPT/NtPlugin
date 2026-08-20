@@ -84,7 +84,7 @@ struct gainExample final : public NtFx::Plugin {
   }
 
   // Override the reset method.
-  void reset(float fs) noexcept override {
+  void reset(signal_t fs) noexcept override {
     this->_fs = fs;
     this->update();
   }

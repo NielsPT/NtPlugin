@@ -55,7 +55,7 @@ struct ntTransformer final : public NtFx::Plugin {
     this->transformer.update();
     this->bqHpf0.update();
   }
-  void reset(float fs) noexcept override {
+  void reset(signal_t fs) noexcept override {
     this->_fs = fs;
     this->transformer.reset(fs);
     this->bqHpf0.settings.fc_hz = 40;

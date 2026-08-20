@@ -136,7 +136,7 @@ struct Plugin : public ComponentBase<Audio> {
    * @brief Latency in measured in samples. Reported to the host for latency
    * compensation.
    */
-  int latency { 0 };
+  size_t latency { 0 };
 
   /**
    * @brief Called by the wrapper whenever the tempo changes.

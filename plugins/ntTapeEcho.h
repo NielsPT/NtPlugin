@@ -221,7 +221,7 @@ struct ntTapeEcho final : public NtFx::Plugin {
     this->dryMix.update();
   }
 
-  void reset(float fs) noexcept override {
+  void reset(signal_t fs) noexcept override {
     this->_fs = fs;
     this->dlL.reset(fs);
     this->dlR.reset(fs);

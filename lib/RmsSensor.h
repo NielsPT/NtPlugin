@@ -63,7 +63,7 @@ struct ShortRmsSensorMono final : public ComponentBase<signal_t> {
     this->_acc = 0;
     std::fill(this->_dl.begin(), this->_dl.end(), 0);
   }
-  void reset(float fs) noexcept override {
+  void reset(signal_t fs) noexcept override {
     this->_fs = fs;
     this->_dl.resize(int(tRmsMax_ms * 0.001 * double(this->_fs)));
     this->update();
@@ -172,7 +172,7 @@ struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
    *
    * @param fs The new sample rate in Hz
    */
-  void reset(float fs) noexcept override {
+  void reset(signal_t fs) noexcept override {
     this->_fs            = fs;
     this->sampleDLineLen = fs / 1000;
     this->resetAccums    = true;

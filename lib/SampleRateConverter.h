@@ -133,7 +133,7 @@ namespace Src {
     /**
      * @brief Sampling rate
      */
-    float _fs { 48e3 };
+    signal_t _fs { 1 };
 
     /**
      * @brief Constructor
@@ -229,7 +229,7 @@ namespace Src {
      * @brief Reset the sample rate converter and change the sample rate.
      * @param fs Sampling rate
      */
-    inline void reset(float fs) {
+    inline void reset(signal_t fs) {
       this->_fs             = fs;
       this->state.iStoreIn  = 0;
       this->state.iStoreOut = 0;

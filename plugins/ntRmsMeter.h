@@ -61,7 +61,7 @@ struct ntRmsMeter final : public NtFx::Plugin {
     this->uiNeedsUpdate = true;
   }
 
-  void reset(float fs) noexcept override {
+  void reset(signal_t fs) noexcept override {
     this->_fs = fs;
     this->msSensor.reset(fs);
     this->update();

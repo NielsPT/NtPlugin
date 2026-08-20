@@ -211,7 +211,7 @@ struct ntDynamicEq final : public NtFx::Plugin {
     this->uiNeedsUpdate = true;
   }
 
-  void reset(float fs) noexcept override {
+  void reset(signal_t fs) noexcept override {
     this->_fs = fs;
     for (size_t i = 0; i < Bands::n; i++) {
       this->bands[i].settings.shape = NtFx::Biquad::Shape::bpf;

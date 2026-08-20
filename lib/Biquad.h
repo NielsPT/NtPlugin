@@ -306,7 +306,7 @@ namespace Biquad {
 
   template <int nStages = 1>
   static inline CascadeCoeffs<nStages> calcCascadeCoeffs(
-      const std::array<Settings, nStages>& ra_settings, float fs) {
+      const std::array<Settings, nStages>& ra_settings, signal_t fs) {
     CascadeCoeffs<nStages> coeffs;
     for (size_t i = 0; i < nStages; i++) {
       auto coeffs5     = calcCoeffs5(ra_settings[i], fs);
@@ -359,7 +359,7 @@ namespace Biquad {
     void update() noexcept override {
       this->coeffs = calcCoeffs5(this->settings, this->_fs);
     }
-    void reset(float fs) noexcept override {
+    void reset(signal_t fs) noexcept override {
       this->_fs   = fs;
       this->state = { { 0, 0 }, { 0, 0 } };
       this->update();
@@ -378,7 +378,7 @@ namespace Biquad {
     void update() noexcept override {
       this->coeffs = calcCoeffs6(settings, this->_fs);
     }
-    void reset(float fs) noexcept override {
+    void reset(signal_t fs) noexcept override {
       this->_fs = fs;
       this->update();
     }
@@ -393,7 +393,7 @@ namespace Biquad {
     void update() noexcept override {
       this->coeffs = calcCoeffs6(settings, this->_fs);
     }
-    void reset(float fs) noexcept override {
+    void reset(signal_t fs) noexcept override {
       this->_fs = fs;
       this->update();
     }
@@ -412,7 +412,7 @@ namespace Biquad {
     void update() noexcept override {
       this->coeffs = calcCoeffs5(this->settings, this->_fs);
     }
-    void reset(float fs) noexcept override {
+    void reset(signal_t fs) noexcept override {
       this->_fs    = fs;
       this->stateL = { { 0, 0 }, { 0, 0 } };
       this->stateR = { { 0, 0 }, { 0, 0 } };

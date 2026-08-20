@@ -66,7 +66,7 @@ namespace DynamicFilter {
       this->calcCoeffsUpdate();
     }
 
-    void reset(float fs) noexcept override {
+    void reset(signal_t fs) noexcept override {
       this->_fs = fs;
       this->_flt.reset(fs);
       this->update();

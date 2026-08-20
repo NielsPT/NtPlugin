@@ -156,7 +156,7 @@ struct ntDeEsser final : public NtFx::Plugin {
     this->latency = this->dl._n;
   }
 
-  void reset(float fs) noexcept override {
+  void reset(signal_t fs) noexcept override {
     this->sc.reset(fs);
     this->shelf.reset(fs);
     this->scBpf.reset(fs);

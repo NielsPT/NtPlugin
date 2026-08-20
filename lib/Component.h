@@ -40,7 +40,7 @@ struct ComponentBase {
    * @brief Sample rate of component.
    *
    */
-  float _fs { 48e3 };
+  signal_t _fs { 1 };
 
   /**
    * @brief Called for every sample as audio is processed.
@@ -63,7 +63,7 @@ struct ComponentBase {
    *
    * @param fs Sample rate. If you need it for calculateCoeffs, store it.
    */
-  virtual void reset(float fs) noexcept {
+  virtual void reset(signal_t fs) noexcept {
     this->_fs = fs;
     this->update();
   }
@@ -90,7 +90,7 @@ struct StereoComponent : public ComponentBase<Stereo<signal_t>> {
     this->r.update();
   }
 
-  void reset(float fs) noexcept override {
+  void reset(signal_t fs) noexcept override {
     this->l.reset(fs);
     this->r.reset(fs);
   }
@@ -113,7 +113,7 @@ struct MonoComponent : public ComponentBase<Mono<signal_t>> {
   }
 
   void update() noexcept override { this->l.update(); }
-  void reset(float fs) noexcept override { this->l.reset(fs); }
+  void reset(signal_t fs) noexcept override { this->l.reset(fs); }
 };
 
 template <typename signal_t, typename component_t>

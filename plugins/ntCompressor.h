@@ -257,7 +257,7 @@ struct ntCompressor final : public NtFx::Plugin {
     this->mix_lin    = signal_t(this->mix_percent / 100.0);
   }
 
-  void reset(float fs) noexcept override {
+  void reset(signal_t fs) noexcept override {
     this->_fs     = fs;
     this->fbState = signal_t(0);
     this->peakScDb.reset(this->_fs);

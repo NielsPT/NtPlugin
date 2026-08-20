@@ -253,7 +253,7 @@ struct ntGate final : public NtFx::Plugin {
     this->scHf.update();
   }
 
-  void reset(float fs) noexcept override {
+  void reset(signal_t fs) noexcept override {
     this->_fs = fs;
     this->dl.reset(fs);
     this->sc.reset(fs);

@@ -227,7 +227,7 @@ struct ntMultiband3 final : public NtFx::Plugin {
     this->_updateMutes();
   }
 
-  void reset(float fs) noexcept override {
+  void reset(signal_t fs) noexcept override {
     this->_fs = fs;
     this->hiFlt.reset(this->_fs);
     this->hiMidFlt.reset(this->_fs);

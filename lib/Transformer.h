@@ -43,7 +43,7 @@ struct Transformer final : public ComponentBase<Audio> {
     this->lpf.update();
     this->hpf.update();
   }
-  void reset(float fs) noexcept override {
+  void reset(signal_t fs) noexcept override {
     this->_fs       = fs;
     this->lpf.fc_hz = this->lfCutoff_hz;
     this->lpf.reset(fs);

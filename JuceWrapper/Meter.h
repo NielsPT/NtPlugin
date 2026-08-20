@@ -183,7 +183,7 @@ struct Meter final : public juce::Component {
     if (repaint) { this->repaint(); }
   }
 
-  void updateRelease(float fs) {
+  void updateRelease(signal_t fs) {
     this->peakSensor.tPeak_ms = this->meterSpec.decay_s * 1000;
     this->peakSensor.tHold_ms = 100;
     this->peakSensor.reset(fs);
@@ -338,7 +338,7 @@ struct MeterGroup : public juce::Component {
     for (auto& m : this->meters) { m->onlyShowLeft = onlyShowLeft; }
     if (onlyShowLeft) { this->nChs = 1; }
   }
-  void updateRelease(float fs) {
+  void updateRelease(signal_t fs) {
     for (auto& m : this->meters) {
       m->l.updateRelease(fs);
       m->r.updateRelease(fs);

@@ -18,6 +18,8 @@
  **/
 #pragma once
 
+#include "lib/Audio.h"
+#include <cstddef>
 #define Q(x) #x
 #define QUOTE(x) Q(x)
 
@@ -95,10 +97,10 @@ struct NtPluginAudioProcessor : public juce::AudioProcessor {
   juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
   NtFx::TitleBarSpec titleBarSpec;
-  float _fsBase = 48000;
+  signal_t _fsBase = 1;
   NTFX_PLUGIN plug;
   NtFx::Src::SampleRateConverter src;
-  juce::AudioProcessorValueTreeState paramLayout;
+  juce::AudioProcessorValueTreeState _paramLayout;
   bool monoMode { false };
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtPluginAudioProcessor)

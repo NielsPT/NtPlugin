@@ -42,29 +42,6 @@
 
 // TODO: Major refactor. There are SO many repitions in this file.
 
-// https://stackoverflow.com/questions/38955940/how-to-concatenate-static-strings-at-compile-time
-template <std::string_view const&... Strs>
-struct join {
-  // Join all strings into a single std::array of chars
-  static constexpr auto impl() noexcept {
-    constexpr std::size_t len = (Strs.size() + ... + 0);
-    std::array<char, len + 1> arr { };
-    auto append = [i = 0, &arr](auto const& s) mutable {
-      for (auto c : s) arr[size_t(i++)] = c;
-    };
-    (append(Strs), ...);
-    arr[len] = 0;
-    return arr;
-  }
-  // Give the joined string static storage
-  static constexpr auto _arr = impl();
-  // View as a std::string_view
-  static constexpr std::string_view value { _arr.data(), _arr.size() - 1 };
-};
-// Helper to get the value out
-template <std::string_view const&... Strs>
-static constexpr auto join_v = join<Strs...>::value;
-
 constexpr auto NAME         = std::string_view(JucePlugin_Name);
 constexpr auto SPACE        = std::string_view(" ");
 constexpr auto VERSION      = std::string_view(JucePlugin_VersionString);
@@ -132,7 +109,7 @@ void NtPluginAudioProcessorEditor::_initDropDown(
   auto p_label = this->_makeLabel(spec.name);
   this->dropDownAttachments.emplace_back(
       new juce::AudioProcessorValueTreeState::ComboBoxAttachment(
-          this->proc.paramLayout,
+          this->proc._paramLayout,
           NtFx::spacesToUnderscores(spec.name),
           *p_box));
   if (addToTitleBar) {
@@ -154,7 +131,7 @@ void NtPluginAudioProcessorEditor::_initRadioButton(
   for (size_t i = 0; i < spec.options.size(); i++) {
     this->toggleAttachments.emplace_back(
         new juce::AudioProcessorValueTreeState::ButtonAttachment(
-            this->proc.paramLayout,
+            this->proc._paramLayout,
             NtFx::mangleName("rb", spec.name, spec.options[i]),
             *group->toggles[i].get()));
   }
@@ -169,7 +146,7 @@ void NtPluginAudioProcessorEditor::_initToggleGroup(
   for (size_t i = 0; i < r_spec.toggles.size(); i++) {
     this->toggleAttachments.emplace_back(
         new juce::AudioProcessorValueTreeState::ButtonAttachment(
-            this->proc.paramLayout,
+            this->proc._paramLayout,
             NtFx::mangleName("tg", r_spec.name, r_spec.toggles[i].name),
             *group->toggles[i].get()));
   }
@@ -241,7 +218,7 @@ void NtPluginAudioProcessorEditor::_initKnob(
       + r_slider->getName() + "'.");
   this->knobAttachments.emplace_back(
       new juce::AudioProcessorValueTreeState::SliderAttachment(
-          this->proc.paramLayout, r_slider->getName(), *r_slider));
+          this->proc._paramLayout, r_slider->getName(), *r_slider));
   r_slider->setRange(r_spec.minVal, r_spec.maxVal);
   if (r_spec.midPoint != 0.0) {
     r_slider->setSkewFactorFromMidPoint(r_spec.midPoint);
@@ -264,7 +241,7 @@ void NtPluginAudioProcessorEditor::_initToggle(
   p_toggle->setButtonText(r_spec.name);
   this->toggleAttachments.emplace_back(
       new juce::AudioProcessorValueTreeState::ButtonAttachment(
-          this->proc.paramLayout,
+          this->proc._paramLayout,
           NtFx::spacesToUnderscores(r_spec.name),
           *p_toggle));
 }

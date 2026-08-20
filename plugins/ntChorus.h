@@ -84,7 +84,7 @@ struct ntChorus final : public NtFx::Plugin {
     this->lpf.update();
   }
 
-  void reset(float fs) noexcept override {
+  void reset(signal_t fs) noexcept override {
     this->_fs = fs;
     this->dlMod.reset(fs);
     this->dlWet.reset(fs);
