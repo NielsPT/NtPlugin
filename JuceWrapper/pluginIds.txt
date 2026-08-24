@@ -12,3 +12,4 @@ ntChorus:Yheu:Modulation:Modulation
 ntDynamicEq:Dukg:Dynamics:Dynamics
 ntEqualizer:Fqwo:EQ:EQ
 linkTest:Qlcn:Fx:Effect
+ntDeEsser2:Aagq

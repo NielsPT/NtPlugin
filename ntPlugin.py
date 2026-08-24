@@ -158,7 +158,7 @@ def newPlugin(name: str) -> bool:
 #include "lib/Audio.h"
 
 
-struct {name} final : public NtFx::NtPlugin {{
+struct {name} final : public NtFx::Plugin {{
   bool bypassEnable {{ false }};
 
   {name}() {{
@@ -208,18 +208,22 @@ def newPluginTest(name: str):
     Returns:
         bool: True on success.
     """
-    template = f"""#include "lib/ComponentTest.h"
+    template = f"""
+#include "lib/Audio.h"
+#include "lib/ComponentTest.h"
 #include "plugins/{name}.h"
+#include <memory>
 
-NTFX_TEST_BEGIN
-
-NTFX_TEST() {{
-  auto bypass = {name}();
+int main() {{
+  auto set = NtFx::ComponentTestSet(std::string(testFileBaseName(__FILE__)));
+  auto bypass_ = std::make_unique<{name}>();
+  auto& bypass = *bypass_;
   bypass.bypassEnable = true;
   NTFX_ADD_TEST(set, bypass, "impulse");
-  auto defaults = {name}();
+  auto defaults_ = std::make_unique<{name}>();
+  auto& defaults = *defaults_;
   NTFX_ADD_TEST(set, defaults, "impulse");
-  return NTFX_RUN_TESTS();
+  return set.runAllTests();
 }}
 """
     path = f"{REPO_BASE_DIR}/testWrapper/tests/{name}_test.cpp"

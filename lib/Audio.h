@@ -313,8 +313,10 @@ struct Stereo {
    * @return signal_t Result.
    */
   signal_t avgSquared() const noexcept {
-    return (this->l * this->l + this->r * this->r) * 0.5f;
+    return (this->l * this->l + this->r * this->r) * 0.5;
   }
+
+  signal_t avg() const noexcept { return (this->l + this->r) * 0.5; }
 
   /**
    * @brief Returns the larges of left and right disregarding sign.

@@ -26,8 +26,9 @@
 #include "lib/Delay.h"
 #include "lib/DynamicFilter.h"
 #include "lib/Plugin.h"
+#include <cstddef>
 
-enum Mode { wide, shelf, bell };
+enum Mode { wide, shelf, bell, adaptive };
 
 struct ntDeEsser final : public NtFx::Plugin {
   NtFx::Delay::Long<10.0> dl;
@@ -36,6 +37,8 @@ struct ntDeEsser final : public NtFx::Plugin {
   NtFx::DynamicFilter::ShelfFixedZeros shelf;
   NtFx::Biquad::EqBand bpf;
   signal_t q { 1.0 };
+  signal_t ratio_p { 100 };
+  signal_t ratio_lin { 100 };
   signal_t fc_hz { 4e3 };
   Mode mode { Mode::bell };
   bool bypassEnable { false };
@@ -56,6 +59,13 @@ struct ntDeEsser final : public NtFx::Plugin {
           .suffix = " dB",
           .minVal = -60,
           .maxVal = 0,
+      },
+      {
+          .p_val  = &this->ratio_p,
+          .name   = "Ratio",
+          .suffix = " %",
+          .minVal = 0,
+          .maxVal = 100,
       },
     };
     this->secondaryKnobs = {
@@ -87,7 +97,7 @@ struct ntDeEsser final : public NtFx::Plugin {
       {
           .p_val   = (int*)&this->mode,
           .name    = "Mode",
-          .options = { "Wideband", "Shelf", "Bell" },
+          .options = { "Wideband", "Shelf", "Bell", "Adaptive" },
       },
     };
     this->toggles = {
@@ -96,11 +106,10 @@ struct ntDeEsser final : public NtFx::Plugin {
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
     this->meters.push_back({ .name = "GR", .invert = true });
-    this->sc.settings.ratio      = 20;
     this->sc.settings.knee_db    = 3;
     this->sc.settings.linkEnable = true;
-    this->dl.t_ms                = 1;
     this->sc.settings.tRel_ms    = 30;
+    this->dl.t_ms                = 1;
     this->bpf.settings.shape     = NtFx::Biquad::Shape::bpf;
     this->scBpf.settings.shape   = NtFx::Biquad::Shape::bpf;
     this->updateDefaults();
@@ -115,18 +124,23 @@ struct ntDeEsser final : public NtFx::Plugin {
     }
 
     Audio yScFlt, gr, y;
-    yScFlt = this->scBpf.process(x);
-    gr     = sc.process(yScFlt);
+    if (this->mode != Mode::adaptive) {
+      yScFlt = this->scBpf.process(x);
+      gr     = sc.process(yScFlt);
+    }
     switch (this->mode) {
     case Mode::bell:
       y = yDl - this->bpf.process(yDl) * (Audio(1) - gr);
       break;
     case Mode::shelf:
       this->shelf.gain_lin = gr.absMin();
-      y                    = shelf.process(yDl);
+      y                    = this->shelf.process(yDl);
       break;
     case Mode::wide:
       y = yDl * gr;
+      break;
+    case Mode::adaptive:
+
       break;
     }
 
@@ -137,6 +151,8 @@ struct ntDeEsser final : public NtFx::Plugin {
   }
 
   void update() noexcept override {
+    this->ratio_lin                = this->ratio_p / 100;
+    this->sc.settings.ratio        = 20 * this->ratio_lin;
     this->sc.settings.tPeakHold_ms = this->dl.t_ms;
     this->sc.settings.tAtt_ms      = gcem::max(this->dl.t_ms, signal_t(0.1));
     this->sc.update();
@@ -153,7 +169,7 @@ struct ntDeEsser final : public NtFx::Plugin {
     this->scBpf.update();
 
     this->dl.update();
-    this->latency = this->dl._n;
+    this->latency = size_t(this->dl._n);
   }
 
   void reset(signal_t fs) noexcept override {
