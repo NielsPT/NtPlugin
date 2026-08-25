@@ -37,6 +37,7 @@
 #include "lib/Component.h"
 #include "lib/utils.h"
 #include <algorithm>
+#include <cassert>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -204,9 +205,9 @@ struct ComponentTest {
     for (auto& stimulus : stimuli) {
       if (std::find(STIMULI_NAMES.begin(), STIMULI_NAMES.end(), stimulus)
           == STIMULI_NAMES.end()) {
-        std::cout << "Stimuli name '" << stimulus << "' not accepted.";
-        this->activeStimuli.clear();
-        return;
+        std::cout << "\033[31mStimuli name '" << stimulus
+                  << "' not accepted.\033[0m\n";
+        assert(false);
       }
     }
     this->activeStimuli = stimuli;

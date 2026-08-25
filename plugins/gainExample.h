@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (C) 2026 Niels Thøgersen, NTlyd
  *
@@ -17,8 +19,6 @@
  * You are free to download, build and use this code for commercial
  * purposes. Just don't resell it or a build of it, modified or otherwise.
  **/
-
-#pragma once
 
 #include "lib/Audio.h"
 #include "lib/Plugin.h"

@@ -87,17 +87,18 @@ def _switchVsCodeSettings(plugin: str) -> bool:
         f"{REPO_BASE_DIR}/.vscode/settings.json"
     )
     if not os.path.exists(settingsFilePath):
+        print(f"{RED}No Vscode settings found.{BLACK}")
         return False
 
     with open(settingsFilePath, "r", encoding="utf-8") as f:
         settings = json.loads(f.read())
     cmakeConfArgsKey = "cmake.configureArgs"
     if cmakeConfArgsKey not in settings:
+        print(f"{RED}No Cmake config setting in Vscode settings.{BLACK}")
         return False
     configArgs: list[str] = settings[cmakeConfArgsKey]
     if not isinstance(configArgs, list):
-        return False
-    if len(configArgs) != 3:
+        print(f"{RED}No Cmake config settings bad datatype.{BLACK}")
         return False
 
     for line in configArgs:
@@ -209,7 +210,6 @@ def newPluginTest(name: str):
         bool: True on success.
     """
     template = f"""
-#include "lib/Audio.h"
 #include "lib/ComponentTest.h"
 #include "plugins/{name}.h"
 #include <memory>
@@ -541,7 +541,7 @@ def process(args: dict) -> bool:
             return False
     if not package.storeSecrets(secrets):
         return False
-    print(f"Time elapsed: {time.time() - t:.2f}.")
+    print(f"Time elapsed: {time.time() - t:.2f} seconds.")
     return True
 
 

@@ -460,7 +460,7 @@ def plotDynamic(
         p.plot(tAx, xDb)
     if zoom == 1:
         p.xlim([0.9 * nSamples / (fs * 5), 3 * nSamples / (fs * 5)])
-    p.ylim([-14, 2])
+    p.ylim([-40, 2])
     if zoom == 2:
         p.xlim([0.9 * 2 * nSamples / (fs * 5), 1.1 * 2 * nSamples / (fs * 5)])
         p.ylim([-1, 1])
@@ -532,7 +532,7 @@ def _parseFiles(files: list[str], exceptedFiles: list[str]):
             print(f"'{file}' not found.")
             continue
         legends = ["result left", "result right"]
-        if info[0] + SEPARATOR + info[1] in exceptedFiles:
+        if info[0] + SEPARATOR + info[1] + SEPARATOR + info[2] in exceptedFiles:
             excepted = _readResult(
                 f"{FILE_DIR}/{EXPECTED_DIR}/{file.replace("result", "expected")}"
             )
@@ -637,7 +637,9 @@ def _readAndPlotTestResults(testFileName: str, fs: float):
             if len(info) != 5:
                 print(f"Bad filename: {file}")
                 continue
-            expectedFiles += [info[0] + SEPARATOR + info[1]]
+            expectedFiles += [
+                info[0] + SEPARATOR + info[1] + SEPARATOR + info[2]
+            ]
     results, legends = _parseFiles(resultFiles, expectedFiles)
     if (
         "impulse" in results
@@ -666,6 +668,11 @@ def acceptLatestResult(files: list[str], objects: list[str]) -> bool:
     _files = []
     for file in files:
         _files.append(file.replace("_test", ""))
+    if not os.path.exists(f"{FILE_DIR}/{OUT_DIR}"):
+        print(
+            f"{RED}No output dir found at '{FILE_DIR}/{OUT_DIR}'. Aborting approval.{BLACK}"
+        )
+        return False
     resultFiles = os.listdir(f"{FILE_DIR}/{OUT_DIR}")
     filesToCopy: list[str] = []
     for file in resultFiles:
@@ -852,15 +859,21 @@ def createParser() -> argparse.ArgumentParser:
         "approve", help="Set selected results in output dir as new expected."
     )
     approveParser.add_argument(
-        "file",
-        nargs=1,
-        help="File containing tests to approve. '_test' and '.cpp' are ignored "
+        "files",
+        nargs="+",
+        help="Files containing tests to approve. '_test' and '.cpp' are ignored "
         "and can be omitted.",
     )
     approveParser.add_argument(
         "objects",
         nargs="*",
         help="Objects to accept results for. If omitted, approve all results.",
+    )
+    approveParser.add_argument(
+        "--fs",
+        type=float,
+        default=48e3,
+        help="Sample rate to test at.",
     )
     parser.add_argument(
         "--fs",
@@ -897,8 +910,10 @@ def main(args: dict) -> bool:
     if args["test_task"] == "clean":
         return clean()
     if args["test_task"] == "approve":
-        return acceptLatestResult(args["file"], args["objects"])
-    print(f"Unknown command: '{args['task']}'.")
+        if not acceptLatestResult(args["files"], args["objects"]):
+            return False
+        return run(args)
+    print(f"Unknown command: '{args['test_task']}'.")
     return False
 
 

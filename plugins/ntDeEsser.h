@@ -28,7 +28,7 @@
 #include "lib/Plugin.h"
 #include <cstddef>
 
-enum Mode { wide, shelf, bell, adaptive };
+enum Mode { wide, shelf, bell };
 
 struct ntDeEsser final : public NtFx::Plugin {
   NtFx::Delay::Long<10.0> dl;
@@ -37,8 +37,8 @@ struct ntDeEsser final : public NtFx::Plugin {
   NtFx::DynamicFilter::ShelfFixedZeros shelf;
   NtFx::Biquad::EqBand bpf;
   signal_t q { 1.0 };
-  signal_t ratio_p { 100 };
-  signal_t ratio_lin { 100 };
+  signal_t red_p { 100 };
+  signal_t red_lin { 100 };
   signal_t fc_hz { 4e3 };
   Mode mode { Mode::bell };
   bool bypassEnable { false };
@@ -62,7 +62,7 @@ struct ntDeEsser final : public NtFx::Plugin {
       },
       {
           .p_val  = &this->ratio_p,
-          .name   = "Ratio",
+          .name   = "Reduction",
           .suffix = " %",
           .minVal = 0,
           .maxVal = 100,
@@ -97,7 +97,7 @@ struct ntDeEsser final : public NtFx::Plugin {
       {
           .p_val   = (int*)&this->mode,
           .name    = "Mode",
-          .options = { "Wideband", "Shelf", "Bell", "Adaptive" },
+          .options = { "Wideband", "Shelf", "Bell" },
       },
     };
     this->toggles = {
@@ -124,10 +124,8 @@ struct ntDeEsser final : public NtFx::Plugin {
     }
 
     Audio yScFlt, gr, y;
-    if (this->mode != Mode::adaptive) {
-      yScFlt = this->scBpf.process(x);
-      gr     = sc.process(yScFlt);
-    }
+    yScFlt = this->scBpf.process(x);
+    gr     = sc.process(yScFlt);
     switch (this->mode) {
     case Mode::bell:
       y = yDl - this->bpf.process(yDl) * (Audio(1) - gr);
@@ -139,9 +137,6 @@ struct ntDeEsser final : public NtFx::Plugin {
     case Mode::wide:
       y = yDl * gr;
       break;
-    case Mode::adaptive:
-
-      break;
     }
 
     this->template updatePeakLevel<1>(y);
@@ -151,8 +146,8 @@ struct ntDeEsser final : public NtFx::Plugin {
   }
 
   void update() noexcept override {
-    this->ratio_lin                = this->ratio_p / 100;
-    this->sc.settings.ratio        = 20 * this->ratio_lin;
+    this->red_lin                  = this->red_p / 100;
+    this->sc.settings.ratio        = 20 * this->red_lin;
     this->sc.settings.tPeakHold_ms = this->dl.t_ms;
     this->sc.settings.tAtt_ms      = gcem::max(this->dl.t_ms, signal_t(0.1));
     this->sc.update();
