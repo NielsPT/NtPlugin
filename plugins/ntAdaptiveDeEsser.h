@@ -22,14 +22,19 @@
 
 #include "lib/AdaptiveDeEssSc.h"
 #include "lib/Audio.h"
+#include "lib/Delay.h"
 #include "lib/DynamicFilter.h"
 #include "lib/Plugin.h"
+#include "lib/utils.h"
 
 struct ntAdaptiveDeEsser final : public NtFx::Plugin {
+  // NtFx::Delay::Short<10.0> dl;
   NtFx::AdaptiveDeEssSc sc;
   NtFx::DynamicFilter::ShelfFixedPoles shelf;
   signal_t red_p { 100 };
   signal_t red_lin { 100 };
+  signal_t range_db { 24 };
+  signal_t range_lin { 0.125 };
   bool bypassEnable { false };
 
   ntAdaptiveDeEsser() {
@@ -49,39 +54,80 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
           .minVal = 0,
           .maxVal = 100,
       },
+      {
+          .p_val  = &this->range_db,
+          .name   = "Range",
+          .suffix = " dB",
+          .minVal = 0,
+          .maxVal = 24,
+      },
+    };
+    this->secondaryKnobs = {
+      // {
+      //     .p_val    = &this->dl.t_ms,
+      //     .name     = "Lookahead",
+      //     .suffix   = " ms",
+      //     .minVal   = 0,
+      //     .maxVal   = 10,
+      //     .midPoint = 1,
+      // },
+      {
+          .p_val    = &this->sc.settings.tAtt_ms,
+          .name     = "Attack",
+          .suffix   = " ms",
+          .minVal   = 0,
+          .maxVal   = 10,
+          .midPoint = 1,
+      },
+      {
+          .p_val    = &this->sc.settings.tRel_ms,
+          .name     = "Release",
+          .suffix   = " ms",
+          .minVal   = 1.0,
+          .maxVal   = 100.0,
+          .midPoint = 10.0,
+      },
     };
     this->toggles = {
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
     this->meters.push_back({ .name = "GR", .invert = true });
-    this->shelf.q1 = 0.508;
-    this->shelf.q2 = 0.508;
+    // this->shelf.q1 = 0.508;
+    // this->shelf.q2 = 0.508;
     this->updateDefaults();
   }
 
   Audio process(Audio x) noexcept override {
+    // auto yDl = this->dl.process(x);
     this->template updatePeakLevel<0>(x);
     if (this->bypassEnable) {
       this->template updatePeakLevel<1>(x);
       return x;
     }
-    this->shelf.gain_lin =
+    auto ySc =
         (this->sc.process(x) * this->red_lin - this->red_lin + 1).absMin();
-    auto y = this->shelf.process(x);
+    // if (ySc < this->range_lin) { ySc = this->range_lin; }
+    this->shelf.gain_lin = ySc;
+    auto y               = this->shelf.process(x);
     this->template updatePeakLevel<1>(y);
-    this->template updatePeakLevel<2, true>(this->shelf.gain_lin);
+    this->template updatePeakLevel<2, true>(ySc);
     return y;
   }
 
   void update() noexcept override {
-    this->red_lin     = this->red_p / 100;
+    // this->sc.settings.tPeakHold_ms = this->dl.t_ms;
+    // this->sc.settings.tAtt_ms      = gcem::max(this->dl.t_ms, signal_t(0.1));
+    // this->range_lin   = NtFx::invDb(-this->range_db);
+    this->red_lin     = this->red_p / signal_t(100.0);
     this->shelf.fc_hz = this->sc.fc_hz;
-    this->shelf.update();
+    // this->dl.update();
     this->sc.update();
+    this->shelf.update();
   }
 
   void reset(signal_t fs) noexcept override {
     this->_fs = fs;
+    // this->dl.reset(fs);
     this->sc.reset(fs);
     this->shelf.reset(fs);
     this->update();

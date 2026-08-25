@@ -31,7 +31,7 @@
 enum Mode { wide, shelf, bell };
 
 struct ntDeEsser final : public NtFx::Plugin {
-  NtFx::Delay::Long<10.0> dl;
+  NtFx::Delay::Short<10.0> dl;
   NtFx::Comp::PeakSideChainLin sc;
   NtFx::Biquad::EqBand scBpf;
   NtFx::DynamicFilter::ShelfFixedZeros shelf;
@@ -61,7 +61,7 @@ struct ntDeEsser final : public NtFx::Plugin {
           .maxVal = 0,
       },
       {
-          .p_val  = &this->ratio_p,
+          .p_val  = &this->red_p,
           .name   = "Reduction",
           .suffix = " %",
           .minVal = 0,
@@ -83,7 +83,6 @@ struct ntDeEsser final : public NtFx::Plugin {
           .maxVal   = 10,
           .midPoint = 1,
       },
-
       {
           .p_val    = &this->sc.settings.tRel_ms,
           .name     = "Release",

@@ -44,8 +44,8 @@ namespace DynamicFilter {
     Biquad::EqBand6 _flt;
     signal_t fc_hz { 2000 }; ///< Cutoff frequency.
     signal_t gain_lin { 1 }; ///< Gain in linear domain.
-    signal_t q1 = 0.707; ///< Q at the cutoff frequency.
-    signal_t q2 = 0.707; ///< Q where the response flattens.
+    signal_t q1 { 0.707 };   ///< Q at the cutoff frequency.
+    signal_t q2 { 0.707 };   ///< Q where the response flattens.
     signal_t _alphaSquared { 0 };
     signal_t _beta1 { 0 };
     signal_t _beta2 { 0 };
@@ -56,7 +56,7 @@ namespace DynamicFilter {
     }
 
     void update() noexcept override {
-      auto alpha          = signal_t(2 * GCEM_PI * this->fc_hz / this->_fs);
+      auto alpha = signal_t(2.0) * signal_t(GCEM_PI) * this->fc_hz / this->_fs;
       this->_alphaSquared = alpha * alpha;
       this->_beta1        = signal_t(2) * alpha / this->q1;
       this->_beta2        = signal_t(2) * alpha / this->q2;
