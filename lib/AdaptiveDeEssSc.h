@@ -53,9 +53,9 @@ struct AdaptiveDeEssSc : public ComponentBase<Audio> {
     this->sc.settings.tRel_ms      = 30;
     this->xOverLpf.settings.q      = 0.508;
     this->xOverHpf.settings.q      = 0.508;
-    this->scHpf.settings.fc_hz     = 200;
+    this->scHpf.settings.fc_hz     = 50;
     this->scHpf.settings.shape     = NtFx::Biquad::Shape::hpf;
-    this->peakLo.tHold_ms          = 2.5;
+    this->peakLo.tHold_ms          = 10;
     this->peakLo.tRel_ms           = 20;
   }
 

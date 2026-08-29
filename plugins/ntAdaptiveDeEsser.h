@@ -160,9 +160,6 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
   }
 
   void update() noexcept override {
-    // this->sc.sc.settings.tPeakHold_ms = this->dl.t_ms;
-    // this->sc.sc.settings.tAtt_ms      = gcem::max(this->dl.t_ms,
-    // signal_t(0.1));
     this->range_lin   = NtFx::invDb(-this->range_db);
     this->red_lin     = this->red_p / signal_t(100.0);
     this->shelf.fc_hz = this->sc.fc_hz;
