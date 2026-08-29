@@ -38,7 +38,7 @@
 #include <vector>
 
 namespace NtFx {
-struct Meter final : public juce::Component {
+struct MeterBase : public juce::Component {
   PeakHoldSensor<192 * 8 * 100> peakSensor;
   MeterSpec& meterSpec;
   UiSpec& uiSpec;
@@ -61,17 +61,59 @@ struct Meter final : public juce::Component {
   int iHoldDot { 0 };
   bool hasScale { false };
 
-  Meter(MeterSpec& _meterSpec, UiSpec& _uiSpec)
+  MeterBase(MeterSpec& _meterSpec, UiSpec& _uiSpec)
       : meterSpec(_meterSpec), uiSpec(_uiSpec),
         nDots(_uiSpec.meterHeight_dots) {
     this->updateRelease(48000);
     this->refresh();
   }
-  ~Meter() override         = default;
-  Meter(Meter&&)            = delete;
-  Meter(Meter&)             = delete;
-  Meter& operator=(Meter&&) = delete;
-  Meter& operator=(Meter&)  = delete;
+  ~MeterBase() override                  = default;
+  MeterBase(const MeterBase&)            = delete;
+  MeterBase& operator=(const MeterBase&) = delete;
+  MeterBase(MeterBase&&)                 = delete;
+  MeterBase& operator=(MeterBase&&)      = delete;
+
+  virtual void fillDots(
+      juce::Graphics& g, int i, float fillX, float fillY, float fillDiameter) {
+    if (i >= this->nActiveDotsPeak) {
+      auto _opacity = uint8_t(255.0f * this->opacity);
+      g.setColour(juce::Colour((this->uiSpec.foregroundColour & 0x00FFFFFF)
+          | uint32_t(_opacity << 24u)));
+      g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
+    }
+  }
+
+  virtual void fillFract(
+      juce::Graphics& g, int i, float fillX, float fillY, float fillDiameter) {
+    if (i == this->nActiveDotsPeak - 1) {
+      auto _opacity = uint8_t(255.0f * this->fractPeak);
+      g.setColour(juce::Colour((this->uiSpec.foregroundColour & 0x00FFFFFF)
+          | uint32_t(_opacity << 24)));
+      g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
+    }
+  }
+
+  virtual void fillRms(
+      juce::Graphics& g, int i, float fillX, float fillY, float fillDiameter) {
+    if (i >= this->nActiveDotsRms) {
+      // auto _opacity = uint8_t(255.0f * this->opacity);
+      // g.setColour(juce::Colour((this->uiSpec.foregroundColour & 0x00FFFFFF)
+      //     | uint32_t(_opacity << 24)));
+      g.setColour(juce::Colour(0x000000FF));
+      g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
+    }
+  }
+
+  virtual void drawPeakRing(
+      juce::Graphics& g, int i, float fillX, float fillY, float fillDiameter) {
+    if (i == this->iHoldDot && (this->meterSpec.hold_s != 0.0f)) {
+      g.setColour(juce::Colour(
+          this->uiSpec.foregroundColour)); // & 0x00FFFFFF | 0x8F000000));
+      g.drawEllipse(fillX, fillY, fillDiameter, fillDiameter, 1);
+    }
+  }
+
+  virtual float sensor() { return peakSensor.process(this->peakVal_lin); }
 
   void paint(juce::Graphics& g) override {
     if (this->getWidth() <= 0) { return; }
@@ -92,47 +134,10 @@ struct Meter final : public juce::Component {
       if (fillDiameter < 0) { return; }
       auto fillX = this->pad + fillPad / 2;
       auto fillY = y + fillPad / 2;
-
-      // Filled regular dots.
-      if ((!this->meterSpec.invert && i >= this->nActiveDotsPeak)
-          || ((this->meterSpec.invert && i <= this->nActiveDotsPeak - 1)
-              && this->nActiveDotsPeak != 0)) {
-        auto _opacity = uint8_t(255.0f * this->opacity);
-        g.setColour(juce::Colour((this->uiSpec.foregroundColour & 0x00FFFFFF)
-            | uint32_t(_opacity << 24u)));
-        g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
-      }
-
-      // Fractional.
-      if (this->meterSpec.invert && i == this->nActiveDotsPeak
-          && this->nActiveDotsPeak != 0) {
-        auto _opacity = uint8_t(255.0f * this->fractPeak);
-        g.setColour(juce::Colour((this->uiSpec.foregroundColour & 0x00FFFFFF)
-            | uint32_t(_opacity << 24)));
-        g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
-      }
-      if (!this->meterSpec.invert && i == this->nActiveDotsPeak - 1) {
-        auto _opacity = uint8_t(255.0f * this->fractPeak);
-        g.setColour(juce::Colour((this->uiSpec.foregroundColour & 0x00FFFFFF)
-            | uint32_t(_opacity << 24)));
-        g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
-      }
-
-      // RMS overlay.
-      if (!this->meterSpec.invert && i >= this->nActiveDotsRms) {
-        auto _opacity = uint8_t(255.0f * this->opacity);
-        g.setColour(juce::Colour((this->uiSpec.foregroundColour & 0x00FFFFFF)
-            | uint32_t(_opacity << 24)));
-        g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
-      }
-
-      // Peak hold ring.
-      if (i == this->iHoldDot && (this->meterSpec.hold_s != 0.0f)
-          && !(this->meterSpec.invert && i == 0)) {
-        g.setColour(juce::Colour(
-            this->uiSpec.foregroundColour)); // & 0x00FFFFFF | 0x8F000000));
-        g.drawEllipse(fillX, fillY, fillDiameter, fillDiameter, 1);
-      }
+      this->fillDots(g, i, fillX, fillY, fillDiameter);
+      this->fillFract(g, i, fillX, fillY, fillDiameter);
+      this->fillRms(g, i, fillX, fillY, fillDiameter);
+      this->drawPeakRing(g, i, fillX, fillY, fillDiameter);
     }
   }
 
@@ -145,13 +150,8 @@ struct Meter final : public juce::Component {
   }
 
   void refresh(bool repaint = true) {
-    float ySens { 0 };
     ensureFinite(this->peakVal_lin);
-    if (this->meterSpec.invert) {
-      ySens = 1.0f - peakSensor.process(1.0f - this->peakVal_lin);
-    } else {
-      ySens = peakSensor.process(this->peakVal_lin);
-    }
+    float ySens   = this->sensor();
     float peak_db = NtFx::db(ySens);
     float rms_db  = NtFx::db(this->rmsVal_lin);
 
@@ -184,7 +184,7 @@ struct Meter final : public juce::Component {
   }
 
   void updateRelease(signal_t fs) {
-    this->peakSensor.tPeak_ms = this->meterSpec.decay_s * 1000;
+    this->peakSensor.tRel_ms  = this->meterSpec.decay_s * 1000;
     this->peakSensor.tHold_ms = 100;
     this->peakSensor.reset(fs);
     this->nHold_frames =
@@ -193,16 +193,15 @@ struct Meter final : public juce::Component {
         / float(this->nDots);
   }
 
-  int calcActiveDots(float peak_db) {
+  virtual int calcActiveDots(float peak_db) {
     int nActiveDots =
         int((peak_db + this->meterSpec.maxVal_db - this->meterSpec.minVal_db)
             / this->dbPrDot);
     return this->nDots - nActiveDots;
   }
 
-  void refreshPeakHold(float peak_db) {
-    if ((!this->meterSpec.invert && peak_db > this->holdVal_db)
-        || (this->meterSpec.invert && peak_db < this->holdVal_db)) {
+  virtual void refreshPeakHold(float peak_db) {
+    if (peak_db > this->holdVal_db) {
       this->holdVal_db         = peak_db;
       this->iHoldDot           = this->nActiveDotsPeak - 1;
       this->holdCounter_frames = 0;
@@ -211,19 +210,90 @@ struct Meter final : public juce::Component {
     this->holdCounter_frames++;
     if (this->holdCounter_frames > this->nHold_frames) {
       this->holdCounter_frames = 0;
-      if (this->meterSpec.invert) {
-        this->holdVal_db = this->meterSpec.maxVal_db;
-      } else {
-        this->holdVal_db = this->meterSpec.minVal_db;
-      }
-      this->iHoldDot = this->nActiveDotsPeak - 1;
+      this->holdVal_db         = this->meterSpec.minVal_db;
+      this->iHoldDot           = this->nActiveDotsPeak - 1;
+    }
+  }
+};
+
+struct Meter : public MeterBase {
+  Meter(MeterSpec& _meterSpec, UiSpec& _uiSpec)
+      : MeterBase(_meterSpec, _uiSpec) { }
+};
+
+struct GrMeter : public MeterBase {
+  GrMeter(MeterSpec& _meterSpec, UiSpec& _uiSpec)
+      : MeterBase(_meterSpec, _uiSpec) { }
+  void fillDots(juce::Graphics& g,
+      int i,
+      float fillX,
+      float fillY,
+      float fillDiameter) override {
+    if (i < this->nActiveDotsPeak) {
+      auto _opacity = uint8_t(255.0f * this->opacity);
+      g.setColour(juce::Colour((this->uiSpec.foregroundColour & 0x00FFFFFF)
+          | uint32_t(_opacity << 24u)));
+      g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
+    }
+  }
+
+  void fillFract(juce::Graphics& g,
+      int i,
+      float fillX,
+      float fillY,
+      float fillDiameter) override {
+    if (i == this->nActiveDotsPeak) {
+      auto _opacity = uint8_t(255.0f * this->fractPeak);
+      g.setColour(juce::Colour((this->uiSpec.foregroundColour & 0x00FFFFFF)
+          | uint32_t(_opacity << 24)));
+      g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
+    }
+  }
+
+  void fillRms(juce::Graphics&, int, float, float, float) override { }
+
+  float sensor() override {
+    return 1.0f - peakSensor.process(1.0f - this->peakVal_lin);
+  }
+
+  void drawPeakRing(juce::Graphics& g,
+      int i,
+      float fillX,
+      float fillY,
+      float fillDiameter) override {
+    if (i == this->iHoldDot && (this->meterSpec.hold_s != 0.0f)) {
+      g.setColour(juce::Colour(
+          this->uiSpec.foregroundColour)); // & 0x00FFFFFF | 0x8F000000));
+      g.drawEllipse(fillX, fillY, fillDiameter, fillDiameter, 1);
+    }
+  }
+
+  int calcActiveDots(float peak_db) override {
+    int nActiveDots =
+        int((peak_db + this->meterSpec.maxVal_db - this->meterSpec.minVal_db)
+            / this->dbPrDot);
+    return this->nDots - nActiveDots - 1;
+  }
+
+  void refreshPeakHold(float peak_db) override {
+    if (peak_db < this->holdVal_db) {
+      this->holdVal_db         = peak_db;
+      this->iHoldDot           = this->nActiveDotsPeak - 1;
+      this->holdCounter_frames = 0;
+      return;
+    }
+    this->holdCounter_frames++;
+    if (this->holdCounter_frames > this->nHold_frames) {
+      this->holdCounter_frames = 0;
+      this->holdVal_db         = this->meterSpec.maxVal_db;
+      this->iHoldDot           = this->nActiveDotsPeak - 1;
     }
   }
 };
 
 struct MeterScale : public juce::Component {
-  Meter& meter;
-  MeterScale(Meter& m) : meter(m) { }
+  MeterBase& meter;
+  MeterScale(MeterBase& m) : meter(m) { }
   void paint(juce::Graphics& g) override {
     auto offset = this->meter.pad + this->meter.dotDist;
     g.setColour(juce::Colour(meter.uiSpec.foregroundColour));
@@ -241,19 +311,35 @@ struct MeterScale : public juce::Component {
   }
 };
 
-struct StereoMeter : public juce::Component {
-  Meter l;
-  Meter r;
-  UiSpec& spec;
-  juce::Label label;
+struct StereoMeterBase : public juce::Component {
   float fontSize { 0 };
   float uiScale { 1 };
   bool hasScale { false };
   bool onlyShowLeft { false };
 
+  StereoMeterBase()                                  = default;
+  ~StereoMeterBase() override                        = default;
+  StereoMeterBase(const StereoMeterBase&)            = delete;
+  StereoMeterBase& operator=(const StereoMeterBase&) = delete;
+  StereoMeterBase(StereoMeterBase&&)                 = delete;
+  StereoMeterBase& operator=(StereoMeterBase&&)      = delete;
+  virtual MeterBase& leftMeter() noexcept            = 0;
+  virtual MeterBase& rightMeter() noexcept           = 0;
+  virtual void refresh(Audio xPeak, Audio xRms)      = 0;
+  virtual void updateRelease(signal_t fs)            = 0;
+  virtual int labelHeight() const noexcept           = 0;
+};
+
+template <typename T>
+struct StereoMeter : public StereoMeterBase {
+  T l;
+  T r;
+  UiSpec& spec;
+  juce::Label label;
+
   StereoMeter(MeterSpec& meterSpec, UiSpec& uiSpec)
-      : l(meterSpec, uiSpec), r(meterSpec, uiSpec), spec(uiSpec),
-        label(meterSpec.name, meterSpec.name) {
+      : StereoMeterBase(), l(meterSpec, uiSpec), r(meterSpec, uiSpec),
+        spec(uiSpec), label(meterSpec.name, meterSpec.name) {
     this->addAndMakeVisible(this->label);
     this->addAndMakeVisible(this->l);
     this->addAndMakeVisible(this->r);
@@ -282,35 +368,47 @@ struct StereoMeter : public juce::Component {
     this->l.setBounds(lArea);
     this->r.setBounds(area);
   }
-  void refresh(Audio xPeak, Audio xRms) {
+  void refresh(Audio xPeak, Audio xRms) override {
     this->l.refresh(xPeak.l, xRms.l);
     this->r.refresh(xPeak.r, xRms.r);
   }
+  MeterBase& leftMeter() noexcept override { return this->l; }
+  MeterBase& rightMeter() noexcept override { return this->r; }
+  void updateRelease(signal_t fs) override {
+    this->l.updateRelease(fs);
+    this->r.updateRelease(fs);
+  }
+  int labelHeight() const noexcept override { return this->label.getHeight(); }
 };
 
 struct MeterGroup : public juce::Component {
-  std::vector<std::unique_ptr<StereoMeter>> meters;
+  std::vector<std::unique_ptr<StereoMeterBase>> meters;
   std::vector<std::unique_ptr<MeterScale>> scales;
   int nChs { 2 };
+  MeterGroup(UiSpec& uiSpec, std::vector<MeterSpec>& meterSpecs) {
+    for (auto& spec : meterSpecs) {
+      std::unique_ptr<StereoMeterBase> meter;
+      if (spec.invert) {
+        meter = std::make_unique<StereoMeter<GrMeter>>(spec, uiSpec);
+      } else {
+        meter = std::make_unique<StereoMeter<Meter>>(spec, uiSpec);
+      }
+      this->addAndMakeVisible(meter.get());
+      if (spec.hasScale) {
+        meter->hasScale = true;
+        auto scale      = std::make_unique<MeterScale>(meter->leftMeter());
+        this->addAndMakeVisible(scale.get());
+        scales.push_back(std::move(scale));
+      }
+      meters.push_back(std::move(meter));
+    }
+  }
   void resized() override {
     this->updateUi();
     this->repaint();
   }
   virtual void setFontSize(float size) {
     for (auto& m : this->meters) { m->fontSize = size; }
-  }
-  MeterGroup(UiSpec& uiSpec, std::vector<MeterSpec>& meterSpecs) {
-    for (auto& spec : meterSpecs) {
-      auto meter = std::make_unique<StereoMeter>(spec, uiSpec);
-      this->addAndMakeVisible(meter.get());
-      if (spec.hasScale) {
-        meter->hasScale = true;
-        auto scale      = std::make_unique<MeterScale>(meter->l);
-        this->addAndMakeVisible(scale.get());
-        scales.push_back(std::move(scale));
-      }
-      meters.push_back(std::move(meter));
-    }
   }
   void refresh(size_t idx, Audio xPeak, Audio xRms) {
     this->meters[idx]->refresh(xPeak, xRms);
@@ -326,7 +424,7 @@ struct MeterGroup : public juce::Component {
       m->setBounds(area.removeFromLeft(meterWidth));
       if (m->hasScale) {
         auto scaleArea = area.removeFromLeft(scaleWidth);
-        scaleArea.removeFromTop(m->label.getHeight());
+        scaleArea.removeFromTop(m->labelHeight());
         this->scales[iScale++]->setBounds(scaleArea);
       }
     }
@@ -339,20 +437,17 @@ struct MeterGroup : public juce::Component {
     if (onlyShowLeft) { this->nChs = 1; }
   }
   void updateRelease(signal_t fs) {
-    for (auto& m : this->meters) {
-      m->l.updateRelease(fs);
-      m->r.updateRelease(fs);
-    }
+    for (auto& m : this->meters) { m->updateRelease(fs); }
   }
   float getMinimalWidth() const noexcept {
     if (!this->meters.size()) { return 0; }
-    return this->meters[0]->l.uiSpec.meterWidth
+    return this->meters[0]->leftMeter().uiSpec.meterWidth
         * (float(this->meters.size()) * float(this->nChs)
             + float(this->scales.size()));
   }
   float getMinimalHeight() const noexcept {
     if (!this->meters.size()) { return 0; }
-    auto& m = this->meters[0]->l;
+    auto& m = this->meters[0]->leftMeter();
     m.refresh(false);
     return (m.uiSpec.labelHeight) * float(this->nChs)
         + float(m.nDots + 2) * float(m.dotDist) + float(m.pad);

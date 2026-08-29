@@ -61,9 +61,9 @@ struct ntChorus final : public NtFx::Plugin {
 
   Audio process(Audio x) noexcept override {
 
-    this->template updatePeakLevel<0>(x);
+    this->updatePeakLevel(0, x);
     if (this->bypassEnable) {
-      this->template updatePeakLevel<1>(x);
+      this->updatePeakLevel(1, x);
       return x;
     }
 
@@ -72,7 +72,7 @@ struct ntChorus final : public NtFx::Plugin {
     Audio yHpf   = this->hpf.process(xFlt);
     Audio xMix   = this->lpf.process(yHpf);
     Audio y      = this->mix.process(xMix, x);
-    this->template updatePeakLevel<1>(y);
+    this->updatePeakLevel(1, y);
     return y;
   }
 

@@ -172,13 +172,13 @@ struct {name} final : public NtFx::Plugin {{
   }}
 
   Audio process(Audio x) noexcept override {{
-    this->template updatePeakLevel<0>(x);
+    this->updatePeakLevel(0, x);
     if (this->bypassEnable) {{
-      this->template updatePeakLevel<1>(x);
+      this->updatePeakLevel(1, x);
       return x;
     }}
     Audio y = {{ 0, 0 }};
-    this->template updatePeakLevel<1>(y);
+    this->updatePeakLevel(1, y);
     return y;
   }}
 

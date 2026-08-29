@@ -201,11 +201,11 @@ struct ntMultiband3 final : public NtFx::Plugin {
       if (!this->mutes[i]) { yComp += tmp * this->makeup_lin[i]; }
     }
     auto y = yComp * this->ouputGain_lin;
-    this->template updatePeakLevel<0>(x);
-    this->template updatePeakLevel<1>(y);
-    this->template updatePeakLevel<2, true>(gr[Bands::lo]);
-    this->template updatePeakLevel<3, true>(gr[Bands::mid]);
-    this->template updatePeakLevel<4, true>(gr[Bands::hi]);
+    this->updatePeakLevel(0, x);
+    this->updatePeakLevel(1, y);
+    this->updatePeakLevel(2, gr[Bands::lo]);
+    this->updatePeakLevel(3, gr[Bands::mid]);
+    this->updatePeakLevel(4, gr[Bands::hi]);
     // if (this->noise) { return NtFx::rand() * 0.125; }
     return y;
   }

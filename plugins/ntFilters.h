@@ -130,8 +130,8 @@ struct ntFilters final : public NtFx::Plugin {
       y1stLpf = this->firstOrderLpf.process(y1stHpf);
     }
     auto y = this->cascade.process(y1stLpf);
-    this->template updatePeakLevel<0>(x);
-    this->template updatePeakLevel<1>(y);
+    this->updatePeakLevel(0, x);
+    this->updatePeakLevel(1, y);
     return y;
   }
 

@@ -161,9 +161,9 @@ struct ntDynamicEq final : public NtFx::Plugin {
   }
 
   Audio process(Audio x) noexcept override {
-    this->template updatePeakLevel<0>(x);
+    this->updatePeakLevel(0, x);
     if (this->bypassEnable) {
-      this->template updatePeakLevel<1>(x);
+      this->updatePeakLevel(1, x);
       return x;
     }
     Audio acc { 0, 0 };
@@ -176,11 +176,11 @@ struct ntDynamicEq final : public NtFx::Plugin {
       acc += yFlt * !(this->soloAny ^ this->solos[i])
           * (gr[i] * this->gain_lin[i] - 1);
     }
-    this->template updatePeakLevel<2, true>(gr[0]);
-    this->template updatePeakLevel<3, true>(gr[1]);
-    this->template updatePeakLevel<4, true>(gr[2]);
-    this->template updatePeakLevel<5, true>(gr[3]);
-    this->template updatePeakLevel<1>(acc);
+    this->updatePeakLevel(2, gr[0]);
+    this->updatePeakLevel(3, gr[1]);
+    this->updatePeakLevel(4, gr[2]);
+    this->updatePeakLevel(5, gr[3]);
+    this->updatePeakLevel(1, acc);
     return acc;
   }
 

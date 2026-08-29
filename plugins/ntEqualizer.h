@@ -111,9 +111,9 @@ struct ntEqualizer final : public NtFx::Plugin {
   }
 
   Audio process(Audio x) noexcept override {
-    this->template updatePeakLevel<0>(x);
+    this->updatePeakLevel(0, x);
     if (this->bypassEnable) {
-      this->template updatePeakLevel<1>(x);
+      this->updatePeakLevel(1, x);
       return x;
     }
     auto yCascade       = cascade.process(x);
@@ -123,7 +123,7 @@ struct ntEqualizer final : public NtFx::Plugin {
     }
     auto y = yFirstOrderHpf;
     if (this->orderLpf % 2) { y = this->firstOrderLpf.process(yFirstOrderHpf); }
-    this->template updatePeakLevel<1>(y);
+    this->updatePeakLevel(1, y);
     return y;
   }
 

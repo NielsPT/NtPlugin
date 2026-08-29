@@ -93,6 +93,7 @@ struct StereoComponent : public ComponentBase<Stereo<signal_t>> {
   void reset(signal_t fs) noexcept override {
     this->l.reset(fs);
     this->r.reset(fs);
+    this->update();
   }
 };
 

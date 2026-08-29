@@ -49,8 +49,8 @@ struct ntRmsMeter final : public NtFx::Plugin {
   }
 
   Audio process(Audio x) noexcept override {
-    this->template updatePeakLevel<Peak>(x);
-    this->template updatePeakLevel<RMS>(msSensor.process(x));
+    this->updatePeakLevel(Peak, x);
+    this->updatePeakLevel(RMS, msSensor.process(x));
     return x;
   }
 

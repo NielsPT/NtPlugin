@@ -27,6 +27,7 @@
 #include "lib/Plugin.h"
 #include "lib/SoftClip.h"
 #include "lib/utils.h"
+#include <cstddef>
 
 enum scMode { feedForward = 0, feedback, external };
 
@@ -191,9 +192,9 @@ struct ntCompressor final : public NtFx::Plugin {
   }
 
   Audio process(Audio x) noexcept override {
-    this->template updatePeakLevel<0>(x);
+    this->updatePeakLevel(0, x);
     if (this->bypassEnable) {
-      this->template updatePeakLevel<1>(x);
+      this->updatePeakLevel(1, x);
       return x;
     }
     NtFx::ensureFinite(x);
@@ -221,7 +222,7 @@ struct ntCompressor final : public NtFx::Plugin {
         gr = peakScDb.process(xSc);
       }
     }
-    this->template updatePeakLevel<2, true>(gr);
+    this->updatePeakLevel(2, gr);
     NtFx::ensureFinite(gr, signal_t(1.0));
     auto xComp    = yDl;
     auto yComp    = xComp * gr;
@@ -230,7 +231,7 @@ struct ntCompressor final : public NtFx::Plugin {
     auto xMix     = xClip;
     if (this->clip) { xMix = NtFx::softClip5thStereo(xClip); }
     auto y = this->mix_lin * xMix + (1 - this->mix_lin) * xComp;
-    this->template updatePeakLevel<1>(y);
+    this->updatePeakLevel(1, y);
     if (this->scListenEnable) { return xSc; }
     return y;
   }
@@ -252,7 +253,7 @@ struct ntCompressor final : public NtFx::Plugin {
     this->rmsScDb.update();
     this->rmsScLin.update();
     this->dl.update();
-    this->latency    = this->dl._n;
+    this->latency    = size_t(this->dl._n);
     this->makeup_lin = NtFx::invDb(this->makeup_db);
     this->mix_lin    = signal_t(this->mix_percent / 100.0);
   }

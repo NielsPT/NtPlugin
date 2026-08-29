@@ -27,28 +27,36 @@
 #include "lib/Audio.h"
 #include "lib/Biquad.h"
 #include "lib/Comp.h"
+#include "lib/Component.h"
 #include "lib/PeakSensor.h"
+#include "lib/utils.h"
 
 namespace NtFx {
-struct AdaptiveDeEssSc : public Comp::PeakSideChainLin {
+struct AdaptiveDeEssSc : public ComponentBase<Audio> {
   Biquad::EqBand xOverLpf;
   Biquad::EqBand xOverHpf;
   Biquad::EqBand scHpf;
   PeakHoldSensorStereo<> peakLo;
+  Comp::PeakSideChainLin sc;
   signal_t fc_hz { 2000 };
+  signal_t offset_db { 0 };
+  signal_t offset_lin { 1 };
+  bool scListen { false };
 
   AdaptiveDeEssSc() {
-    this->xOverLpf.settings.shape = NtFx::Biquad::Shape::lpf;
-    this->xOverHpf.settings.shape = NtFx::Biquad::Shape::hpf;
-    this->settings.tPeakHold_ms   = 2.5;
-    this->settings.ratio          = 20;
-    this->settings.knee_db        = 3;
-    this->settings.linkEnable     = true;
-    this->settings.tRel_ms        = 30;
-    this->xOverLpf.settings.q     = 0.508;
-    this->xOverHpf.settings.q     = 0.508;
-    this->scHpf.settings.fc_hz    = 200;
-    this->scHpf.settings.shape    = NtFx::Biquad::Shape::hpf;
+    this->xOverLpf.settings.shape  = NtFx::Biquad::Shape::lpf;
+    this->xOverHpf.settings.shape  = NtFx::Biquad::Shape::hpf;
+    this->sc.settings.tPeakHold_ms = 2.5;
+    this->sc.settings.ratio        = 20;
+    this->sc.settings.knee_db      = 3;
+    this->sc.settings.linkEnable   = true;
+    this->sc.settings.tRel_ms      = 30;
+    this->xOverLpf.settings.q      = 0.508;
+    this->xOverHpf.settings.q      = 0.508;
+    this->scHpf.settings.fc_hz     = 200;
+    this->scHpf.settings.shape     = NtFx::Biquad::Shape::hpf;
+    this->peakLo.tHold_ms          = 2.5;
+    this->peakLo.tRel_ms           = 20;
   }
 
   Audio process(Audio x) noexcept override {
@@ -56,24 +64,25 @@ struct AdaptiveDeEssSc : public Comp::PeakSideChainLin {
     auto yLpf     = this->xOverLpf.process(yHpfMain);
     auto yHpf     = this->xOverHpf.process(yHpfMain);
     auto yPeakLo  = this->peakLo.process(yLpf);
-    auto yPeakHi  = this->peakSensor.process(yHpf);
+    auto yPeakHi  = this->sc.peakSensor.process(yHpf);
     Audio ySc;
-    ySc.l = this->_gainComputer_lin(
-        yPeakHi.l / (yPeakLo.l + signal_t(1e-8)), this->stateFilter.l);
-    ySc.r = this->_gainComputer_lin(
-        yPeakHi.r / (yPeakLo.r + signal_t(1e-8)), this->stateFilter.r);
-    if (this->settings.linkEnable) { ySc = ySc.absMin(); }
+    auto xGc = yPeakHi / (yPeakLo + signal_t(1e-8)) * this->offset_lin;
+    ySc.l    = this->sc._gainComputer_lin(xGc.l, this->sc.stateFilter.l);
+    ySc.r    = this->sc._gainComputer_lin(xGc.r, this->sc.stateFilter.r);
+    if (this->sc.settings.linkEnable) { ySc = ySc.absMin(); }
+    if (this->scListen) { return yHpf; }
     return ySc;
   }
 
   void update() noexcept override {
+    this->offset_lin              = NtFx::invDb(this->offset_db);
     this->xOverHpf.settings.fc_hz = this->fc_hz;
     this->xOverLpf.settings.fc_hz = this->fc_hz;
-    this->peakLo.setT_ms(this->settings.tPeakHold_ms);
     this->xOverLpf.update();
     this->xOverHpf.update();
     this->scHpf.update();
     this->peakLo.update();
+    this->sc.update();
   }
 
   void reset(signal_t fs) noexcept override {
@@ -82,6 +91,7 @@ struct AdaptiveDeEssSc : public Comp::PeakSideChainLin {
     this->xOverHpf.reset(fs);
     this->scHpf.reset(fs);
     this->peakLo.reset(fs);
+    this->sc.reset(fs);
     this->update();
   }
 };

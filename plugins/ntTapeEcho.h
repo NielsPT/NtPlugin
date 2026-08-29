@@ -158,12 +158,12 @@ struct ntTapeEcho final : public NtFx::Plugin {
     auto yOutClip = yLp;
     if (this->clipEnable) { yOutClip = NtFx::softClip5thStereo(yLp); }
     auto y = this->dryMix.process(yOutClip, x);
-    this->template updatePeakLevel<0>(x);
+    this->updatePeakLevel(0, x);
     if (this->bypassEnable) {
-      this->template updatePeakLevel<1>(x);
+      this->updatePeakLevel(1, x);
       return x;
     }
-    this->template updatePeakLevel<1>(y);
+    this->updatePeakLevel(1, y);
     return y;
   }
 

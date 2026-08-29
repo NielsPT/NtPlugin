@@ -66,13 +66,13 @@ struct gainExample final : public NtFx::Plugin {
   Audio process(Audio x) noexcept override {
 
     // Update the input meter.
-    this->template updatePeakLevel<0>(x);
+    this->updatePeakLevel(0, x);
 
     // Calculate gain
     Audio y = x * this->gain_lin;
 
     // Update output meter.
-    this->template updatePeakLevel<1>(y);
+    this->updatePeakLevel(1, y);
     return y;
   }
 

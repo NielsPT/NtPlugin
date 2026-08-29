@@ -39,15 +39,15 @@ struct ntTransformer final : public NtFx::Plugin {
     this->toggles = { { &this->bypass, "Bypass" } };
   }
   Audio process(Audio x) noexcept override {
-    this->template updatePeakLevel<0>(x);
+    this->updatePeakLevel(0, x);
     if (this->bypass) {
-      this->template updatePeakLevel<1>(x);
+      this->updatePeakLevel(1, x);
       return x;
     }
     auto xTrans = this->bqHpf0.process(x);
     auto y =
         this->transformer.process(xTrans * this->drive_lin) / this->drive_lin;
-    this->template updatePeakLevel<1>(y);
+    this->updatePeakLevel(1, y);
     return y;
   }
   void update() noexcept override {

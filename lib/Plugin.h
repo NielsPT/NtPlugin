@@ -303,10 +303,9 @@ struct Plugin : public ComponentBase<Audio> {
    value, the current peak value will be overridden.
    * @return
    */
-  template <size_t idx, bool invert = false>
-  Audio updatePeakLevel(Audio val) noexcept {
-    static_assert(idx < nMetersMax, "Meter index is out of bounds.");
-    if constexpr (invert) {
+  Audio updatePeakLevel(size_t idx, Audio val) noexcept {
+    if (idx >= this->meters.size()) { assert(false); }
+    if (this->meters[idx].invert) {
       if (val < this->peakLevels[idx]) { this->peakLevels[idx] = val; }
     } else {
       if (val > this->peakLevels[idx]) { this->peakLevels[idx] = val; }

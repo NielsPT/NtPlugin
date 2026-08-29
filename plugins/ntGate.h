@@ -176,10 +176,10 @@ struct ntGate final : public NtFx::Plugin {
 
   Audio process(Audio x) noexcept override {
     auto xDl = dl.process(x);
-    this->template updatePeakLevel<0>(x);
+    this->updatePeakLevel(0, x);
     if (this->bypassEnable) {
-      this->template updatePeakLevel<1>(x);
-      this->template updatePeakLevel<2>(1);
+      this->updatePeakLevel(1, x);
+      this->updatePeakLevel(2, 1);
       return x;
     }
     auto xSc = x;
@@ -192,7 +192,7 @@ struct ntGate final : public NtFx::Plugin {
     auto yHpf = this->hpf.process(xSc);
     auto yLpf = this->lpf.process(yHpf);
     if (this->scListenEnable) {
-      this->template updatePeakLevel<1>(yLpf);
+      this->updatePeakLevel(1, yLpf);
       return yLpf;
     }
     auto gr   = this->sc.process(yLpf);
@@ -206,9 +206,9 @@ struct ntGate final : public NtFx::Plugin {
       flt.gain_lin = A.absMax();
       y            = this->flt.process(xGr) * gr;
     }
-    this->template updatePeakLevel<1>(y);
-    this->template updatePeakLevel<2, true>(gr);
-    this->template updatePeakLevel<3, true>(grHf);
+    this->updatePeakLevel(1, y);
+    this->updatePeakLevel(2, gr);
+    this->updatePeakLevel(3, grHf);
     return y;
   }
 

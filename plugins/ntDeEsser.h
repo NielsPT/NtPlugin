@@ -116,9 +116,9 @@ struct ntDeEsser final : public NtFx::Plugin {
 
   Audio process(Audio x) noexcept override {
     auto yDl = this->dl.process(x);
-    this->template updatePeakLevel<0>(x);
+    this->updatePeakLevel(0, x);
     if (this->bypassEnable) {
-      this->template updatePeakLevel<1>(x);
+      this->updatePeakLevel(1, x);
       return x;
     }
 
@@ -138,8 +138,8 @@ struct ntDeEsser final : public NtFx::Plugin {
       break;
     }
 
-    this->template updatePeakLevel<1>(y);
-    this->template updatePeakLevel<2, true>(gr);
+    this->updatePeakLevel(1, y);
+    this->updatePeakLevel(2, gr);
     if (this->scListenEnable) { return yScFlt; }
     return y;
   }

@@ -100,8 +100,8 @@ namespace Comp {
       this->alphaRel =
           gcem::exp(signal_t(-2200.0) / (this->settings.tRel_ms * this->_fs));
       if (this->alphaRel < this->alphaAtt) { this->alphaRel = this->alphaAtt; }
-      this->peakSensor.setT_ms(this->settings.tPeak_ms);
-      this->peakSensor.setTHold_ms(this->settings.tPeakHold_ms);
+      this->peakSensor.tRel_ms  = this->settings.tPeak_ms;
+      this->peakSensor.tHold_ms = this->settings.tPeakHold_ms;
       this->peakSensor.update();
     }
 

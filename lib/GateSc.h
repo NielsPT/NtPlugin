@@ -65,10 +65,10 @@ namespace Gate {
     }
 
     void reset(signal_t fs) noexcept override {
-      this->_fs             = fs;
-      _stateAtt             = -100;
-      _stateRel             = -100;
-      this->sensor.tPeak_ms = 1;
+      this->_fs            = fs;
+      _stateAtt            = -100;
+      _stateRel            = -100;
+      this->sensor.tRel_ms = 1;
       this->sensor.reset(fs);
       this->update();
     }

@@ -42,11 +42,9 @@ namespace NtFx {
  * @tparam signal_t The type of the audio signal (e.g., float, double).
  */
 struct PeakSensor : public ComponentBase<signal_t> {
-  signal_t tPeak_ms {
-    1
-  }; ///< Time constant for peak detection in milliseconds.
-  signal_t _alpha { 0 }; ///< Smoothing factor for the peak detection.
-  signal_t _state { 0 }; ///< Internal state of the peak sensor.
+  signal_t tRel_ms { 0 }; ///< Time constant for peak detection in milliseconds.
+  signal_t _alpha { 0 };  ///< Smoothing factor for the peak detection.
+  signal_t _state { 0 };  ///< Internal state of the peak sensor.
 
   /**
    * @brief Processes the input signal to detect and track the peak amplitude.
@@ -68,7 +66,7 @@ struct PeakSensor : public ComponentBase<signal_t> {
    * time constant (tPeak_ms) and sample rate (fs).
    */
   void update() noexcept override {
-    this->_alpha = gcem::exp(-2200.0 / (this->tPeak_ms * this->_fs));
+    this->_alpha = gcem::exp(-2200.0 / (this->tRel_ms * this->_fs));
   }
 
   void reset(signal_t fs) noexcept override {
@@ -112,16 +110,12 @@ struct PeakSensor : public ComponentBase<signal_t> {
  * @tparam signal_t The type of the audio signal (e.g., float, double).
  */
 struct PeakSensorStereo : public AudioComponent<signal_t, PeakSensor> {
-  /**
-   * @brief Sets the time constant for peak detection in milliseconds.
-   *
-   * This method updates the time constant for both the left and right channels.
-   *
-   * @param t_ms The time constant in milliseconds.
-   */
-  void setT_ms(signal_t t_ms) {
-    this->l.tPeak_ms = t_ms;
-    this->r.tPeak_ms = t_ms;
+  signal_t tRel_ms { 0 };
+  void update() noexcept override {
+    this->l.tRel_ms = this->tRel_ms;
+    this->r.tRel_ms = this->tRel_ms;
+    this->l.update();
+    this->r.update();
   }
 };
 
@@ -183,26 +177,15 @@ struct PeakHoldSensor : public PeakSensor {
 template <int delayLineLength = defaultPeakSensorDelayLineLength>
 struct PeakHoldSensorStereo
     : public AudioComponent<signal_t, PeakHoldSensor<delayLineLength>> {
-  /**
-   * @brief Sets the time constant for peak detection in milliseconds.
-   *
-   * This method updates the time constant for both the left and right channels.
-   *
-   * @param t_ms The time constant in milliseconds.
-   */
-  void setT_ms(signal_t t_ms) {
-    this->l.tPeak_ms = t_ms;
-    this->r.tPeak_ms = t_ms;
-  }
-
-  /**
-   * @brief Set the hold time in miliseconds.
-   *
-   * @param tHold_ms Hold time.
-   */
-  void setTHold_ms(signal_t tHold_ms) {
-    this->l.tHold_ms = tHold_ms;
-    this->r.tHold_ms = tHold_ms;
+  signal_t tRel_ms { 0 };
+  signal_t tHold_ms { 0 };
+  void update() noexcept override {
+    this->l.tRel_ms  = this->tRel_ms;
+    this->r.tRel_ms  = this->tRel_ms;
+    this->l.tHold_ms = this->tHold_ms;
+    this->r.tHold_ms = this->tHold_ms;
+    this->l.update();
+    this->r.update();
   }
 };
 }
