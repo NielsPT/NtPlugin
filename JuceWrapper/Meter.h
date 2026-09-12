@@ -39,7 +39,7 @@
 
 namespace NtFx {
 struct MeterBase : public juce::Component {
-  PeakHoldSensor<192 * 8 * 100> peakSensor;
+  PeakHoldSensorMono<192 * 8 * 100> peakSensor;
   MeterSpec& meterSpec;
   UiSpec& uiSpec;
   std::string label { "" };
@@ -173,8 +173,9 @@ struct MeterBase : public juce::Component {
     this->fractPeak =
         gcem::abs(peak_db + float(this->nActiveDotsPeak) * this->dbPrDot)
         / this->dbPrDot;
-    jassert(this->fractPeak <= 1 && this->fractPeak >= 0);
-
+    if (!(this->fractPeak <= 1 && this->fractPeak >= 0)) {
+      this->fractPeak = 0;
+    }
     auto w = float(this->getWidth());
     if (!repaint || w == 0.0f) { w = this->uiSpec.meterWidth; }
     this->pad         = w * 10.0f / this->uiSpec.meterWidth;

@@ -36,7 +36,7 @@ struct AdaptiveDeEssSc : public ComponentBase<Audio> {
   Biquad::EqBand xOverLpf;
   Biquad::EqBand xOverHpf;
   Biquad::EqBand scHpf;
-  PeakHoldSensorStereo<> peakLo;
+  PeakHoldSensor<> peakLo;
   Comp::PeakSideChainLin sc;
   signal_t fc_hz { 2000 };
   signal_t offset_db { 0 };
@@ -64,7 +64,7 @@ struct AdaptiveDeEssSc : public ComponentBase<Audio> {
     auto yLpf     = this->xOverLpf.process(yHpfMain);
     auto yHpf     = this->xOverHpf.process(yHpfMain);
     auto yPeakLo  = this->peakLo.process(yLpf);
-    auto yPeakHi  = this->sc.peakSensor.process(yHpf);
+    auto yPeakHi  = this->sc.sensor.process(yHpf);
     Audio ySc;
     auto xGc = yPeakHi / (yPeakLo + signal_t(1e-8)) * this->offset_lin;
     ySc.l    = this->sc._gainComputer_lin(xGc.l, this->sc.stateFilter.l);

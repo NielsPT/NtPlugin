@@ -276,3 +276,4 @@ __marimo__/
 JuceWrapper/aax-sdk-*
 JuceWrapper/external/*
 .secrets.txt
+compile_commands.json

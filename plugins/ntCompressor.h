@@ -37,7 +37,7 @@ struct ntCompressor final : public NtFx::Plugin {
   NtFx::Comp::PeakSideChainDb peakScDb;
   NtFx::Comp::PeakSideChainLin peakScLin;
   NtFx::Comp::RmsSideChainDb rmsScDb;
-  NtFx::Comp::RmsSideChainLinear rmsScLin;
+  NtFx::Comp::RmsSideChainLin rmsScLin;
   NtFx::Biquad::EqBand hpf;
   NtFx::Biquad::EqBand boost;
 
@@ -122,7 +122,7 @@ struct ntCompressor final : public NtFx::Plugin {
           .name   = "RMS Time",
           .suffix = " ms",
           .minVal = 1.0,
-          .maxVal = 100.0,
+          .maxVal = 40.0,
       },
       {
           .p_val    = &this->hpf.settings.fc_hz,
@@ -243,8 +243,10 @@ struct ntCompressor final : public NtFx::Plugin {
     this->rmsScLin.settings  = this->scSettings;
     if (this->rmsEnable) {
       this->activateParameter("RMS Time");
+      this->deactivateParameter("Peak Hold");
     } else {
       this->deactivateParameter("RMS Time");
+      this->activateParameter("Peak Hold");
     }
     this->hpf.update();
     this->boost.update();

@@ -54,6 +54,7 @@ static inline signal_t invDb(signal_t x) noexcept {
 }
 
 // #define NTFX_OPTIMIZE_ENSURE_FINITE
+// #define NTFX_DISABLE_ENSURE_FINITE
 
 /**
  * @brief Sets input to 'def' if not a finite number.
@@ -65,6 +66,9 @@ static inline signal_t invDb(signal_t x) noexcept {
 template <typename signal_t>
 static inline void ensureFinite(
     signal_t& x, signal_t def = signal_t(0)) noexcept {
+#ifdef NTFX_DISABLE_ENSURE_FINITE
+  return;
+#endif
 #ifdef NTFX_OPTIMIZE_ENSURE_FINITE
   signal_t y = def;
   if (x == x) {

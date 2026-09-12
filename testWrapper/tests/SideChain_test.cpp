@@ -33,7 +33,7 @@ int main() {
   auto& rmsScDb       = *rmsScDbStorage;
   rmsScDb.settings    = rmsSettings;
   NTFX_ADD_TEST(set, rmsScDb, "dynamic_alternating");
-  auto rmsScLinStorage = std::make_unique<NtFx::Comp::RmsSideChainLinear>();
+  auto rmsScLinStorage = std::make_unique<NtFx::Comp::RmsSideChainLin>();
   auto& rmsScLin       = *rmsScLinStorage;
   rmsScLin.settings    = rmsSettings;
   NTFX_ADD_TEST(set, rmsScLin, "dynamic_alternating");

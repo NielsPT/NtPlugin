@@ -23,6 +23,7 @@ import sys
 import argparse
 import shutil
 import platform
+import json
 import numpy as np
 import time
 from matplotlib import pyplot as p
@@ -226,9 +227,33 @@ def _buildTestProg(cppPath: str, component: str) -> bool:
         args,
         check=False,
     )
+    _updateCompileCommands(cppPath, args)
     if res.returncode:
         print(f"Build failed: {res.stdout}, {res.stderr}")
         return False
+    return True
+
+
+def _updateCompileCommands(cppPath: str, args: list[str]) -> bool:
+    ccFile = f"{FILE_DIR}/compile_commands.json"
+    ccs = []
+    if os.path.exists(ccFile):
+        with open(ccFile, "r", encoding="utf-8") as f:
+            data = f.read()
+            if not data:
+                return False
+            ccs = json.loads(data)
+    newCc = {
+        "directory": f"{FILE_DIR}/tests",
+        "command": " ".join(args),
+        "file": cppPath,
+    }
+    if newCc in ccs:
+        return True
+    ccs += [newCc]
+    # TODO: This is a possible race condition.
+    with open(ccFile, "w", encoding="utf-8") as f:
+        f.write(json.dumps(ccs, indent=2))
     return True
 
 
@@ -449,6 +474,9 @@ def plotDynamic(
         zoom (int, optional): Zoom level. 1 for whole plot. Defaults to 1.
     """
     xDb = 20 * np.log10(np.abs(x) + 1e-8)
+    minVal = -40
+    if np.min(xDb) > minVal:
+        minVal = np.min(xDb) - 2
     try:
         nSamples = xDb.shape[1]
         tAx = np.array(range(nSamples)) / fs
@@ -460,7 +488,7 @@ def plotDynamic(
         p.plot(tAx, xDb)
     if zoom == 1:
         p.xlim([0.9 * nSamples / (fs * 5), 3 * nSamples / (fs * 5)])
-    p.ylim([-40, 2])
+    p.ylim([minVal, 2])
     if zoom == 2:
         p.xlim([0.9 * 2 * nSamples / (fs * 5), 1.1 * 2 * nSamples / (fs * 5)])
         p.ylim([-1, 1])
@@ -663,8 +691,9 @@ def acceptLatestResult(files: list[str], objects: list[str]) -> bool:
     Returns:
         bool: True on success.
     """
-    # if not objects:
-    #     objects = ["all"]
+    if objects and len(files) != 1:
+        print(f"{RED}Only choose specific objects for a single file.{BLACK}")
+        return False
     _files = []
     for file in files:
         _files.append(file.replace("_test", ""))
@@ -865,8 +894,9 @@ def createParser() -> argparse.ArgumentParser:
         "and can be omitted.",
     )
     approveParser.add_argument(
-        "objects",
-        nargs="*",
+        "--objects",
+        "-o",
+        nargs="+",
         help="Objects to accept results for. If omitted, approve all results.",
     )
     approveParser.add_argument(

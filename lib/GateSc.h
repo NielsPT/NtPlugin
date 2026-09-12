@@ -38,7 +38,7 @@ namespace Gate {
   enum State { open, hold, release, closed };
 
   struct Sc : public ComponentBase<Audio> {
-    PeakSensor sensor;
+    PeakSensorMono sensor;
     ScSettings settings;
     State state;
     signal_t _slopeRel { 0 };

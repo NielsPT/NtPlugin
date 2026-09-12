@@ -26,6 +26,7 @@
 #include "lib/RmsSensor.h"
 #include "lib/gcem.h"
 #include "lib/utils.h"
+#include <type_traits>
 
 namespace NtFx {
 namespace Comp {
@@ -44,33 +45,28 @@ namespace Comp {
     signal_t knee_db { 12 };     ///< Knee width in dB
     signal_t tAtt_ms { 0.1 };    ///< Attack time in milliseconds
     signal_t tRel_ms { 100 };    ///< Release time in milliseconds
-    signal_t tRms_ms { 80 };     ///< RMS time constant in milliseconds
+    signal_t tRms_ms { 10 };     ///< RMS time constant in milliseconds
     signal_t tPeak_ms { 20 };    ///< Peak time constant in milliseconds
     signal_t tPeakHold_ms { 0 }; ///< Peak sensor hold time.
     bool linkEnable = false;
   };
 
-  /**
-   * @brief Peak-based side chain processor using dB domain
-   *
-   * This component processes audio signals using peak detection and computes
-   * gain reduction in the dB domain. It includes attack and release time
-   * constants for dynamic control.
-   *
-   * @tparam signal_t The signal type (e.g., float, double)
-   */
-  struct PeakSideChainDb : public ComponentBase<Audio> {
-    PeakHoldSensorStereo<> peakSensor; ///< Peak sensor for stereo signals
-    ScSettings settings;               ///< Side chain settings
-    signal_t alphaAtt = signal_t(0);   ///< Attack coefficient
-    signal_t alphaRel = signal_t(0);   ///< Release coefficient
-    Audio stateFilter = Audio(0.0);    ///< State filter for gain computation
-    PeakSideChainDb() = default;
-    PeakSideChainDb(PeakSideChainDb&)                  = default;
-    PeakSideChainDb(PeakSideChainDb&&)                 = default;
-    virtual ~PeakSideChainDb()                         = default;
-    PeakSideChainDb& operator=(PeakSideChainDb const&) = default;
-    PeakSideChainDb& operator=(PeakSideChainDb&&)      = default;
+  template <typename t_sensorType, bool t_linDomain>
+  struct SideChain : public ComponentBase<Audio> {
+    t_sensorType sensor;                 ///< Peak sensor for stereo signals
+    ScSettings settings;                 ///< Side chain settings
+    signal_t thresh_lin   = signal_t(1); ///< Threshold in linear domain
+    signal_t ratio_lin    = signal_t(1); ///< Compression ratio in linear domain
+    signal_t knee_lin     = signal_t(1); ///< Knee width in linear domain
+    signal_t alphaAtt     = signal_t(0); ///< Attack coefficient
+    signal_t alphaRel     = signal_t(0); ///< Release coefficient
+    Audio stateFilter     = Audio(0.0);  ///< State filter for gain computation
+    SideChain()           = default;
+    SideChain(SideChain&) = default;
+    SideChain(SideChain&&)                 = default;
+    virtual ~SideChain()                   = default;
+    SideChain& operator=(SideChain const&) = default;
+    SideChain& operator=(SideChain&&)      = default;
 
     /**
      * @brief Process stereo audio signal
@@ -78,12 +74,21 @@ namespace Comp {
      * @return Gain reduction in linear domain.
      */
     Audio process(Audio x) noexcept override {
-      auto ySens = this->peakSensor.process(x);
+      auto ySens = this->sensor.process(x);
       ensureFinite(this->stateFilter);
-      auto y = Audio({
+      Audio y;
+      if constexpr (t_linDomain) {
+        y = {
+          this->_gainComputer_lin(ySens.l, this->stateFilter.l),
+          this->_gainComputer_lin(ySens.r, this->stateFilter.r),
+        };
+      } else {
+        y = {
           this->_gainComputer_db(ySens.l, this->stateFilter.l),
           this->_gainComputer_db(ySens.r, this->stateFilter.r),
-      });
+        };
+      }
+
       if (this->settings.linkEnable) {
         auto _y = y.absMin();
         return { _y, _y };
@@ -100,9 +105,21 @@ namespace Comp {
       this->alphaRel =
           gcem::exp(signal_t(-2200.0) / (this->settings.tRel_ms * this->_fs));
       if (this->alphaRel < this->alphaAtt) { this->alphaRel = this->alphaAtt; }
-      this->peakSensor.tRel_ms  = this->settings.tPeak_ms;
-      this->peakSensor.tHold_ms = this->settings.tPeakHold_ms;
-      this->peakSensor.update();
+      this->thresh_lin            = invDb(this->settings.thresh_db);
+      this->knee_lin              = invDb(this->settings.knee_db);
+      const signal_t oneOverSqrt2 = signal_t(1.0 / gcem::sqrt(2.0));
+      const signal_t tmp          = oneOverSqrt2
+          - (this->settings.ratio - signal_t(3.0)) / signal_t(18.0);
+      this->ratio_lin = (signal_t(1.0) - signal_t(1.0) / this->settings.ratio)
+          * (oneOverSqrt2 - tmp * tmp * tmp * tmp * tmp);
+      if constexpr (std::is_same_v<t_sensorType, ShortRmsSensor>) {
+        this->sensor.setT_ms(this->settings.tRms_ms);
+        this->sensor.update();
+      } else {
+        this->sensor.tRel_ms  = this->settings.tPeak_ms;
+        this->sensor.tHold_ms = this->settings.tPeakHold_ms;
+      }
+      this->sensor.update();
     }
 
     /**
@@ -110,7 +127,7 @@ namespace Comp {
      * @param fs Sample rate in Hz
      */
     void reset(signal_t fs) noexcept override {
-      this->peakSensor.reset(fs);
+      this->sensor.reset(fs);
       this->_fs = fs;
       this->update();
     }
@@ -145,55 +162,6 @@ namespace Comp {
       state = yFilter;
       return invDb(-yFilter);
     }
-  };
-
-  /**
-   * @brief Peak-based side chain processor using linear domain
-   *
-   * This component processes audio signals using peak detection and computes
-   * gain reduction in the linear domain. It extends PeakSideChainDb with
-   * linear domain calculations.
-   *
-   * @tparam signal_t The signal type (e.g., float, double)
-   */
-  struct PeakSideChainLin : public PeakSideChainDb {
-    signal_t thresh_lin = signal_t(1); ///< Threshold in linear domain
-    signal_t ratio_lin  = signal_t(1); ///< Compression ratio in linear domain
-    signal_t knee_lin   = signal_t(1); ///< Knee width in linear domain
-
-    /**
-     * @brief Process stereo audio signal
-     * @param x Input stereo signal
-     * @return Result of side chain. Multiply your input by this to apply side
-     * chain.
-     */
-    Audio process(Audio x) noexcept override {
-      auto ySens = this->peakSensor.process(x);
-      ensureFinite(this->stateFilter);
-      Audio y {
-        this->_gainComputer_lin(ySens.l, this->stateFilter.l),
-        this->_gainComputer_lin(ySens.r, this->stateFilter.r),
-      };
-      if (this->settings.linkEnable) {
-        auto _y = y.absMin();
-        return { _y, _y };
-      }
-      return y;
-    }
-
-    /**
-     * @brief Update component coefficients
-     */
-    void update() noexcept override {
-      this->PeakSideChainDb::update();
-      this->thresh_lin            = invDb(this->settings.thresh_db);
-      this->knee_lin              = invDb(this->settings.knee_db);
-      const signal_t oneOverSqrt2 = signal_t(1.0 / gcem::sqrt(2.0));
-      const signal_t tmp          = oneOverSqrt2
-          - (this->settings.ratio - signal_t(3.0)) / signal_t(18.0);
-      this->ratio_lin = (signal_t(1.0) - signal_t(1.0) / this->settings.ratio)
-          * (oneOverSqrt2 - tmp * tmp * tmp * tmp * tmp);
-    }
 
     /**
      * @brief Compute gain reduction in linear domain
@@ -220,94 +188,19 @@ namespace Comp {
   };
 
   /**
-   * @brief RMS-based side chain processor using dB domain
+   * @brief Peak-based side chain processor using dB domain
    *
-   * This component processes audio signals using RMS detection and computes
-   * gain reduction in the dB domain. It extends PeakSideChainDb with RMS
-   * detection capabilities.
-   *
-   * @tparam signal_t The signal type (e.g., float, double)
-   */
-  struct RmsSideChainDb : public PeakSideChainDb {
-    ShortRmsSensor<10.0> rmsSensor; ///< RMS sensor for stereo signals
-
-    /**
-     * @brief Process stereo audio signal
-     * @param x Input stereo signal
-     * @return Processed stereo signal with gain reduction applied
-     */
-    Audio process(Audio x) noexcept override {
-      auto ySens = rmsSensor.process(x);
-
-      ensureFinite(this->stateFilter);
-      return {
-        this->_gainComputer_db(ySens.l, this->stateFilter.l),
-        this->_gainComputer_db(ySens.r, this->stateFilter.r),
-      };
-    }
-
-    /**
-     * @brief Update component parameters
-     */
-    void update() noexcept override {
-      this->rmsSensor.setT_ms(this->settings.tRms_ms);
-      this->rmsSensor.update();
-      this->PeakSideChainDb::update();
-    }
-
-    /**
-     * @brief Reset component with new sample rate
-     * @param fs Sample rate in Hz
-     */
-    void reset(signal_t fs) noexcept override {
-      this->rmsSensor.reset(fs);
-      this->PeakSideChainDb::reset(fs);
-    }
-  };
-
-  /**
-   * @brief RMS-based side chain processor using linear domain
-   *
-   * This component processes audio signals using RMS detection and computes
-   * gain reduction in the linear domain. It extends PeakSideChainLinear with
-   * RMS detection capabilities.
+   * This component processes audio signals using peak detection and computes
+   * gain reduction in the dB domain. It includes attack and release time
+   * constants for dynamic control.
    *
    * @tparam signal_t The signal type (e.g., float, double)
    */
-  struct RmsSideChainLinear : public PeakSideChainLin {
-    LongRmsSensor<> rmsSensor; ///< RMS sensor for stereo signals
-
-    /**
-     * @brief Process stereo audio signal
-     * @param x Input stereo signal
-     * @return Processed stereo signal with gain reduction applied
-     */
-    Audio process(Audio x) noexcept override {
-      auto ySens = rmsSensor.process(x);
-      ensureFinite(this->stateFilter);
-      return {
-        this->_gainComputer_lin(ySens.l, this->stateFilter.l),
-        this->_gainComputer_lin(ySens.r, this->stateFilter.r),
-      };
-    }
-
-    /**
-     * @brief Update component parameters
-     */
-    void update() noexcept override {
-      this->rmsSensor.setT_ms(this->settings.tRms_ms);
-      this->rmsSensor.update();
-      this->PeakSideChainLin::update();
-    }
-
-    /**
-     * @brief Reset component with new sample rate
-     * @param fs Sample rate in Hz
-     */
-    void reset(signal_t fs) noexcept override {
-      this->rmsSensor.reset(fs);
-      this->PeakSideChainLin::reset(fs);
-    }
-  };
+  using PeakSideChainDb =
+      SideChain<PeakHoldSensor<size_t(20 * 192 * 8)>, false>;
+  using PeakSideChainLin =
+      SideChain<PeakHoldSensor<size_t(20 * 192 * 8)>, true>;
+  using RmsSideChainDb  = SideChain<ShortRmsSensor, false>;
+  using RmsSideChainLin = SideChain<ShortRmsSensor, true>;
+} // namespace Comp
 } // namespace NtFx
-}

@@ -33,7 +33,7 @@ struct KnobLookAndFeel : public juce::LookAndFeel_V4 {
   uint32_t backgroundColour { 0xFFD3D3D3 };
   uint32_t foregroundColour { 0xFF000000 };
 
-  juce::Font getLabelFont(juce::Label& l) override {
+  juce::Font getLabelFont(juce::Label&) override {
     return juce::Font(juce::FontOptions(this->fontSize));
   }
   void drawRotarySlider(juce::Graphics& g,
@@ -45,12 +45,13 @@ struct KnobLookAndFeel : public juce::LookAndFeel_V4 {
       const float rotaryStartAngle,
       const float rotaryEndAngle,
       juce::Slider& slider) override {
-    auto centreX = x + width / 2.0f;
-    auto centreY = y + height / 2.0f;
+    auto centreX = float(x + width) / 2.0f;
+    auto centreY = float(y + height) / 2.0f;
     auto angle =
         rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
     juce::Path knobPath;
-    auto outerRadius = std::min(width / 2.0f, height / 2.0f) - 2 * uiScale;
+    auto outerRadius =
+        std::min(float(width) / 2.0f, float(height) / 2.0f) - 2 * uiScale;
     knobPath.addPolygon({ 0, 0 }, 12, outerRadius);
     knobPath.applyTransform(
         juce::AffineTransform::rotation(angle).translated(centreX, centreY));
@@ -60,8 +61,8 @@ struct KnobLookAndFeel : public juce::LookAndFeel_V4 {
     g.strokePath(knobPath, juce::PathStrokeType(2 * this->uiScale));
     g.setColour(juce::Colour(this->backgroundColour));
     g.fillPath(knobPath);
-    auto pointerLength    = outerRadius * 0.5;
-    auto pointerThickness = 4.0;
+    auto pointerLength    = outerRadius * 0.5f;
+    auto pointerThickness = 4.0f;
     juce::Path pointerPath;
     g.setColour(juce::Colour(color));
     pointerPath.addRectangle(-pointerThickness * 0.5f,
@@ -80,7 +81,7 @@ struct TitleBarLookAndFeel : public juce::LookAndFeel_V4 {
   uint32_t backgroundColour { 0xFFD3D3D3 };
   uint32_t foregroundColour { 0xFF000000 };
 
-  juce::Font getLabelFont(juce::Label& l) override {
+  juce::Font getLabelFont(juce::Label&) override {
     return juce::Font(juce::FontOptions(this->fontSize));
   }
 };

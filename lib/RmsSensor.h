@@ -27,14 +27,15 @@
 #include "lib/Component.h"
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <vector>
 
 namespace NtFx {
 
 template <double tRmsMax_ms>
 struct ShortRmsSensorMono final : public ComponentBase<signal_t> {
-  // constexpr static const int nDlMax = int(tRmsMax_ms * 192.0 * 8.0);
-  std::vector<signal_t> _dl; ///< Sample delay line.
+  constexpr static const int nDlMax = int(tRmsMax_ms * 192.0 * 8.0);
+  std::array<signal_t, nDlMax> _dl; ///< Sample delay line.
   signal_t tRms_ms { 0 };
   signal_t _acc { 0 };
   int _i { 0 };
@@ -46,8 +47,8 @@ struct ShortRmsSensorMono final : public ComponentBase<signal_t> {
   void processDelayLine(signal_t x) noexcept {
     auto x2 = x * x;
     if (x2 != x2) { x2 = signal_t(0.0); }
-    this->_acc += x2 - this->_dl[this->_i];
-    this->_dl[this->_i++] = x2;
+    this->_acc += x2 - this->_dl[size_t(this->_i)];
+    this->_dl[size_t(this->_i++)] = x2;
     if (this->_i >= this->_n) { this->_i = 0; }
   }
   signal_t getRms() const noexcept {
@@ -62,11 +63,6 @@ struct ShortRmsSensorMono final : public ComponentBase<signal_t> {
     this->_i   = 0;
     this->_acc = 0;
     std::fill(this->_dl.begin(), this->_dl.end(), 0);
-  }
-  void reset(signal_t fs) noexcept override {
-    this->_fs = fs;
-    this->_dl.resize(int(tRmsMax_ms * 0.001 * double(this->_fs)));
-    this->update();
   }
 };
 
@@ -83,8 +79,7 @@ struct ShortRmsSensorStereo
   }
 };
 
-template <double tRmsMax_ms = 100.0>
-using ShortRmsSensor = ShortRmsSensorStereo<tRmsMax_ms>;
+using ShortRmsSensor = ShortRmsSensorStereo<40.0>;
 
 /**
  * @brief RMS (Root Mean Square) sensor component for audio signal processing
@@ -137,12 +132,12 @@ struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
   void processDelayLine(signal_t x) noexcept {
     auto x2 = x * x;
     if (x2 != x2) { x2 = signal_t(0.0); }
-    this->sampleAccum += x2 - this->sampleDLine[this->sampleIdx];
-    this->sampleDLine[this->sampleIdx] = x2;
+    this->sampleAccum += x2 - this->sampleDLine[size_t(this->sampleIdx)];
+    this->sampleDLine[size_t(this->sampleIdx)] = x2;
     if (++this->sampleIdx < this->sampleDLineLen) { return; }
     this->sampleIdx = 0;
-    this->msAccum += sampleAccum - this->msDLine[this->msIdx];
-    this->msDLine[this->msIdx] = sampleAccum;
+    this->msAccum += sampleAccum - this->msDLine[size_t(this->msIdx)];
+    this->msDLine[size_t(this->msIdx)] = sampleAccum;
     if (++this->msIdx >= this->msDLineLen) { this->msIdx = 0; }
   }
 
@@ -174,7 +169,7 @@ struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
    */
   void reset(signal_t fs) noexcept override {
     this->_fs            = fs;
-    this->sampleDLineLen = fs / 1000;
+    this->sampleDLineLen = int(fs / 1000.0);
     this->resetAccums    = true;
     this->update();
   }
@@ -237,6 +232,7 @@ struct LongRmsSensorStereo
     this->l.setT_ms(t_ms);
     this->r.setT_ms(t_ms);
   }
+
   /**
    * @brief Get the current RMS values for both channels
    *

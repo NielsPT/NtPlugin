@@ -41,7 +41,7 @@ namespace NtFx {
  *
  * @tparam signal_t The type of the audio signal (e.g., float, double).
  */
-struct PeakSensor : public ComponentBase<signal_t> {
+struct PeakSensorMono : public ComponentBase<signal_t> {
   signal_t tRel_ms { 0 }; ///< Time constant for peak detection in milliseconds.
   signal_t _alpha { 0 };  ///< Smoothing factor for the peak detection.
   signal_t _state { 0 };  ///< Internal state of the peak sensor.
@@ -109,7 +109,7 @@ struct PeakSensor : public ComponentBase<signal_t> {
  *
  * @tparam signal_t The type of the audio signal (e.g., float, double).
  */
-struct PeakSensorStereo : public AudioComponent<signal_t, PeakSensor> {
+struct PeakSensorStereo : public AudioComponent<signal_t, PeakSensorMono> {
   signal_t tRel_ms { 0 };
   void update() noexcept override {
     this->l.tRel_ms = this->tRel_ms;
@@ -130,7 +130,7 @@ constexpr int defaultPeakSensorDelayLineLength = 192 * 10 * 8;
  * @tparam delayLineLength Maximum delay time.
  */
 template <int delayLineLength = defaultPeakSensorDelayLineLength>
-struct PeakHoldSensor : public PeakSensor {
+struct PeakHoldSensorMono : public PeakSensorMono {
   std::array<signal_t, delayLineLength> _dl;
   signal_t tHold_ms { 0 };
   signal_t _xMax { 0 };
@@ -170,13 +170,13 @@ struct PeakHoldSensor : public PeakSensor {
     this->_nHold = this->tHold_ms * this->_fs / 1000.0;
     this->_nHold =
         (this->_nHold >= delayLineLength ? delayLineLength - 1 : this->_nHold);
-    this->PeakSensor::update();
+    this->PeakSensorMono::update();
   }
 };
 
 template <int delayLineLength = defaultPeakSensorDelayLineLength>
 struct PeakHoldSensorStereo
-    : public AudioComponent<signal_t, PeakHoldSensor<delayLineLength>> {
+    : public AudioComponent<signal_t, PeakHoldSensorMono<delayLineLength>> {
   signal_t tRel_ms { 0 };
   signal_t tHold_ms { 0 };
   void update() noexcept override {
@@ -188,4 +188,8 @@ struct PeakHoldSensorStereo
     this->r.update();
   }
 };
+
+template <int delayLineLength = defaultPeakSensorDelayLineLength>
+using PeakHoldSensor = PeakHoldSensorStereo<defaultPeakSensorDelayLineLength>;
+using PeakSensor     = PeakSensorStereo;
 }

@@ -102,6 +102,7 @@ struct NtPluginAudioProcessor : public juce::AudioProcessor {
   NtFx::Src::SampleRateConverter src;
   juce::AudioProcessorValueTreeState _paramLayout;
   bool monoMode { false };
+  bool paramsAreLoaded { false };
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtPluginAudioProcessor)
 };

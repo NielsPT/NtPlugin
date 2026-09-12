@@ -66,6 +66,10 @@ void NtPluginAudioProcessor::prepareToPlay(double sampleRate, int) {
         + ": Plugin not initialized. Did you call UpupdateDefaults?");
     return;
   }
+  if (!this->paramsAreLoaded) {
+    DBG(NTFX_PLUGIN_NAME + ": Parameters are not loaded.");
+    return;
+  }
   if (sampleRate == this->_fsBase) { return; }
   this->_fsBase = signal_t(sampleRate);
   this->updateOversampling();
@@ -179,6 +183,8 @@ void NtPluginAudioProcessor::setStateInformation(
     this->src.mode = NtFx::Src::oversamplingMode((int)val);
     this->src.reset(this->_fsBase);
   }
+  this->paramsAreLoaded = true;
+  this->plug.update();
 }
 
 template <typename T>

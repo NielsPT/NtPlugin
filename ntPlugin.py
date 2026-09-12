@@ -285,6 +285,7 @@ def configure(
         f"-DNTFX_PLUGIN={plugin}",
         f"-DCMAKE_BUILD_TYPE={buildType}",
         "-DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE",
+        "-G Ninja",
     ]
     if sys.platform == "win32":
         args += ["-A", "x64"]
