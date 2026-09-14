@@ -68,7 +68,7 @@ void NtPluginAudioProcessor::prepareToPlay(double sampleRate, int) {
   }
   if (!this->paramsAreLoaded) {
     DBG(NTFX_PLUGIN_NAME + ": Parameters are not loaded.");
-    return;
+    // return;
   }
   if (sampleRate == this->_fsBase) { return; }
   this->_fsBase = signal_t(sampleRate);
@@ -299,6 +299,7 @@ void NtPluginAudioProcessor::createParameters(std::vector<t_spec>& vParams,
     juce::AudioProcessorValueTreeState::ParameterLayout& paramLayout,
     int& i) {
   for (auto p : vParams) {
+    if (p.name == "") { continue; }
     std::string mangledName = NtFx::spacesToUnderscores(p.name);
     juce::ParameterID id(mangledName, i++);
     if constexpr (std::is_same_v<t_val, int>) {

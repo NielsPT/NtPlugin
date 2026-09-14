@@ -29,14 +29,18 @@
 struct ntTransformer final : public NtFx::Plugin {
   NtFx::Biquad::EqBand bqHpf0;
   NtFx::Transformer transformer;
-  signal_t drive_db  = -10;
-  signal_t drive_lin = 0.3;
-  bool bypass        = false;
+  signal_t drive_db { -10 };
+  signal_t drive_lin { 0.3 };
+  bool bypass { false };
   ntTransformer() {
     this->primaryKnobs = {
-      { &this->drive_db, "Drive", " dB", -24, 24 },
+      { }, { &this->drive_db, "Drive", " dB", -24, 24 }, { }
     };
-    this->toggles = { { &this->bypass, "Bypass" } };
+    this->toggles               = { { &this->bypass, "Bypass" } };
+    this->bqHpf0.settings.fc_hz = 40;
+    this->bqHpf0.settings.q     = 1.1;
+    this->bqHpf0.settings.shape = NtFx::Biquad::Shape::hpf;
+    this->updateDefaults();
   }
   Audio process(Audio x) noexcept override {
     this->updatePeakLevel(0, x);
@@ -58,9 +62,6 @@ struct ntTransformer final : public NtFx::Plugin {
   void reset(signal_t fs) noexcept override {
     this->_fs = fs;
     this->transformer.reset(fs);
-    this->bqHpf0.settings.fc_hz = 40;
-    this->bqHpf0.settings.q     = 1.1;
-    this->bqHpf0.settings.shape = NtFx::Biquad::Shape::hpf;
     this->bqHpf0.reset(fs);
     this->update();
   }

@@ -594,6 +594,7 @@ def createParser() -> argparse.ArgumentParser:
     )
     buildParser.add_argument(
         "--version",
+        "-v",
         help="Version to be used for all plugins and installer. Cached and "
         "minor minor number auto-incremented if not given.",
     )

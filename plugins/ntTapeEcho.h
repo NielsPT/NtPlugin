@@ -226,8 +226,8 @@ struct ntTapeEcho final : public NtFx::Plugin {
     this->dlL.reset(fs);
     this->dlR.reset(fs);
     this->mod.reset(fs);
-    this->hpf.reset(this->_fs);
-    this->lpf.reset(this->_fs);
+    this->hpf.reset(fs);
+    this->lpf.reset(fs);
     this->update();
   }
 

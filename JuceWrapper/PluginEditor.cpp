@@ -723,6 +723,7 @@ void NtPluginAudioProcessorEditor::_conformUiSilderValues() {
   // TODO: DRY
   bool updateNeeded { false };
   for (size_t i = 0; i < this->primaryKnobs.size(); i++) {
+    if (this->proc.plug.primaryKnobs[i].name == "") { continue; }
     auto juceSliderVal = this->primaryKnobs[i]->getValue();
     auto ntKnobVal     = *this->proc.plug.primaryKnobs[i].p_val;
     if (gcem::abs(ntKnobVal - juceSliderVal) > 1e-6) {
