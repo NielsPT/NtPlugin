@@ -285,11 +285,11 @@ def configure(
         f"-DNTFX_PLUGIN={plugin}",
         f"-DCMAKE_BUILD_TYPE={buildType}",
         "-DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE",
-        "-G Ninja",
     ]
     if sys.platform == "win32":
         args += ["-A", "x64"]
     if sys.platform == "darwin":
+        args += ["-G Ninja"]
         args += ["CMAKE_C_COMPILER:FILEPATH=/usr/bin/clang"]
         args += ["CMAKE_CXX_COMPILER:FILEPATH=/usr/bin/clang++"]
     if version:
