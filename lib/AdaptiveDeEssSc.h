@@ -75,7 +75,7 @@ struct AdaptiveDeEssSc : public ComponentBase<Audio> {
   }
 
   void update() noexcept override {
-    this->offset_lin              = NtFx::invDb(this->offset_db);
+    this->offset_lin              = NtFx::invDb(-this->offset_db);
     this->xOverHpf.settings.fc_hz = this->fc_hz;
     this->xOverLpf.settings.fc_hz = this->fc_hz;
     this->xOverLpf.update();

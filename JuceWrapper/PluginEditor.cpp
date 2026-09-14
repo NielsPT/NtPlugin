@@ -309,11 +309,11 @@ void NtPluginAudioProcessorEditor::_initWindowHeight(int nRows) {
                          + this->proc.plug.uiSpec.groupPad)
           * float(nGroupKnobsMax);
     } else {
-      groupsHeight = (this->proc.plug.uiSpec.groupKnobHeight
-                         + this->proc.plug.uiSpec.groupPad)
-              * (float(nGroupKnobsMax % 2) + float(nGroupKnobsMax) / 2)
-          + this->proc.plug.uiSpec.groupEvenColOffset
-              * float(nGroupKnobsMax % 2);
+      groupsHeight += (this->proc.plug.uiSpec.groupKnobHeight
+                          + this->proc.plug.uiSpec.groupPad)
+          * (float(nGroupKnobsMax % 2) + float(nGroupKnobsMax) / 2);
+      groupsHeight -=
+          this->proc.plug.uiSpec.groupEvenColOffset * float(nGroupKnobsMax % 2);
     }
     if (groupsHeight > primHeight) { height += groupsHeight - primHeight; }
   }
@@ -403,6 +403,7 @@ void NtPluginAudioProcessorEditor::_updateUi() {
   }
   if (this->proc.plug.knobGroups.size()) { this->_placeKnobGroups(area); }
   if (this->proc.plug.primaryKnobs.size()) { this->_placePrimaryKnobs(area); }
+  this->_conformUiSilderValues();
   this->repaint();
 }
 
@@ -601,6 +602,7 @@ void NtPluginAudioProcessorEditor::_placeGruopKnobColumn(
     size_t nCols,
     bool even) {
   for (size_t j = 0; j < n; j++) {
+    colArea.removeFromTop(int(this->proc.plug.uiSpec.pad * this->uiScale));
     auto kArea = colArea.removeFromTop(
         int(this->proc.plug.uiSpec.groupKnobHeight * this->uiScale));
     auto labelArea = kArea.removeFromTop(
@@ -692,6 +694,9 @@ void NtPluginAudioProcessorEditor::_updateColours() {
       juce::Colour(this->proc.plug.uiSpec.foregroundColour));
   for (auto& knob : this->primaryKnobs) { knob->lookAndFeelChanged(); }
   for (auto& knob : this->secondaryKnobs) { knob->lookAndFeelChanged(); }
+  for (auto& g : this->knobGroups) {
+    for (auto& knob : g) { knob->lookAndFeelChanged(); }
+  }
 }
 
 void NtPluginAudioProcessorEditor::timerCallback() {
@@ -719,7 +724,7 @@ void NtPluginAudioProcessorEditor::sliderValueChanged(juce::Slider* p_slider) {
 }
 
 void NtPluginAudioProcessorEditor::_conformUiSilderValues() {
-  // TODO: conform dropdowns, toggles, radiobuttons and groups.
+  // TODO: conform dropdowns, toggles, radiobuttons.
   // TODO: DRY
   bool updateNeeded { false };
   for (size_t i = 0; i < this->primaryKnobs.size(); i++) {
@@ -737,6 +742,16 @@ void NtPluginAudioProcessorEditor::_conformUiSilderValues() {
     if (gcem::abs(ntKnobVal - juceSliderVal) > 1e-6) {
       this->secondaryKnobs[i]->setValue(ntKnobVal, juce::dontSendNotification);
       updateNeeded = true;
+    }
+  }
+  for (size_t i = 0; i < this->knobGroups.size(); i++) {
+    for (size_t j = 0; j < this->knobGroups[i].size(); j++) {
+      auto juceSliderVal = this->knobGroups[i][j]->getValue();
+      auto ntKnobVal     = *this->proc.plug.knobGroups[i].primaryKnobs[j].p_val;
+      if (gcem::abs(ntKnobVal - juceSliderVal) > 1e-6) {
+        this->knobGroups[i][j]->setValue(ntKnobVal, juce::dontSendNotification);
+        updateNeeded = true;
+      }
     }
   }
   if (updateNeeded) { this->proc.plug.update(); }

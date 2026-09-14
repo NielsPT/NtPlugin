@@ -170,7 +170,7 @@ struct UiSpec {
   float groupWidth { 200 };
   float groupEvenColOffset { 40 };
   float groupKnobWidth { groupWidth / 2 };
-  float groupKnobHeight { 150 };
+  float groupKnobHeight { 130 };
   float groupPad { 10 };
   int groupSingleColumnLimit { 4 };
   bool includeMeters { true };         ///< Add meters to the UI.

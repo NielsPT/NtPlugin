@@ -92,7 +92,7 @@ struct ntDynamicEq final : public NtFx::Plugin {
           .name     = "Attack",
           .suffix   = " ms",
           .minVal   = 0.01,
-          .maxVal   = 50.0,
+          .maxVal   = 200.0,
           .midPoint = 5,
           .isActive = false,
       });
@@ -100,8 +100,8 @@ struct ntDynamicEq final : public NtFx::Plugin {
           .p_val    = &this->scs[i].settings.tRel_ms,
           .name     = "Release",
           .suffix   = " ms",
-          .minVal   = 10.0,
-          .maxVal   = 1000.0,
+          .minVal   = 0.1,
+          .maxVal   = 800.0,
           .midPoint = 100.0,
           .isActive = false,
       });
@@ -109,14 +109,14 @@ struct ntDynamicEq final : public NtFx::Plugin {
     this->secondaryKnobs = {
       {
           .p_val    = &this->attScale,
-          .name     = "Attack",
-          .minVal   = 1.0 / 16.0,
+          .name     = "Relative Att",
+          .minVal   = 1.0 / 4.0,
           .maxVal   = 4.0,
-          .midPoint = 1.0 / 4.0,
+          .midPoint = 1.0,
       },
       {
           .p_val    = &this->relScale,
-          .name     = "Release",
+          .name     = "Relative Rel",
           .minVal   = 1.0,
           .maxVal   = 16.0,
           .midPoint = 4.0,
@@ -125,6 +125,7 @@ struct ntDynamicEq final : public NtFx::Plugin {
     this->toggleSets = {
       { "Solo", { } },
       { "Bypass", { } },
+      { "Link", { } },
     };
     this->radioButtons = {
       { (int*)&this->attRelMode, "Att/Rel", { "Relative", "Variable" } },
@@ -136,6 +137,10 @@ struct ntDynamicEq final : public NtFx::Plugin {
       });
       this->toggleSets[1].toggles.push_back({
           .p_val = &this->mutes[i],
+          .name  = bandNames[i],
+      });
+      this->toggleSets[2].toggles.push_back({
+          .p_val = &this->scs[i].settings.linkEnable,
           .name  = bandNames[i],
       });
     }
@@ -173,8 +178,11 @@ struct ntDynamicEq final : public NtFx::Plugin {
       if (this->mutes[i]) { continue; }
       auto yFlt = this->bands[i].process(x);
       gr[i]     = this->scs[i].process(yFlt);
-      acc += yFlt * !(this->soloAny ^ this->solos[i])
-          * (gr[i] * this->gain_lin[i] - 1);
+      if (!this->soloAny) {
+        acc += yFlt * (gr[i] * this->gain_lin[i] - 1);
+      } else if (this->solos[i]) {
+        acc += yFlt * gr[i] * this->gain_lin[i];
+      }
     }
     this->updatePeakLevel(2, gr[0]);
     this->updatePeakLevel(3, gr[1]);
@@ -196,8 +204,8 @@ struct ntDynamicEq final : public NtFx::Plugin {
       this->gain_lin[i] = NtFx::invDb(this->bands[i].settings.gain_db);
       if (this->attRelMode == relative) {
         auto tau = signal_t(1) / this->bands[i].settings.fc_hz;
-        this->scs[i].settings.tAtt_ms                = tau * this->attScale;
-        this->scs[i].settings.tRel_ms                = tau * this->relScale;
+        this->scs[i].settings.tAtt_ms = tau * this->attScale * 1000;
+        this->scs[i].settings.tRel_ms = tau * this->relScale * 1000;
         this->knobGroups[i].primaryKnobs[5].isActive = false;
         this->knobGroups[i].primaryKnobs[6].isActive = false;
       } else {

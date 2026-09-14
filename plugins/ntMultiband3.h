@@ -54,7 +54,6 @@ struct ntMultiband3 final : public NtFx::Plugin {
   std::array<bool, Bands::n> mutes        = { false, false, false };
   std::array<bool, Bands::n> compDisables = { false, false, false };
 
-  std::array<NtFx::Comp::ScSettings, Bands::n> scSettings;
   std::array<NtFx::Comp::PeakSideChainLin, Bands::n> sc;
   std::array<signal_t, Bands::n> makeup_db { 0, 0, 0 };
   std::array<signal_t, Bands::n> makeup_lin { 1, 1, 1 };
@@ -69,14 +68,14 @@ struct ntMultiband3 final : public NtFx::Plugin {
 
     for (size_t i = 0; i < Bands::n; i++) {
       this->primaryKnobs.push_back({
-          .p_val  = &this->scSettings[i].thresh_db,
+          .p_val  = &this->sc[i].settings.thresh_db,
           .name   = bandNames[i] + "_Threshold",
           .suffix = " dB",
           .minVal = -60,
           .maxVal = 0,
       });
       this->primaryKnobs.push_back({
-          .p_val    = &this->scSettings[i].ratio,
+          .p_val    = &this->sc[i].settings.ratio,
           .name     = bandNames[i] + "_Ratio",
           .suffix   = "",
           .minVal   = 1.0,
@@ -84,7 +83,7 @@ struct ntMultiband3 final : public NtFx::Plugin {
           .midPoint = 2.0,
       });
       this->primaryKnobs.push_back({
-          .p_val    = &this->scSettings[i].tAtt_ms,
+          .p_val    = &this->sc[i].settings.tAtt_ms,
           .name     = bandNames[i] + "_Attack",
           .suffix   = " ms",
           .minVal   = 0.01,
@@ -92,7 +91,7 @@ struct ntMultiband3 final : public NtFx::Plugin {
           .midPoint = 5,
       });
       this->primaryKnobs.push_back({
-          .p_val    = &this->scSettings[i].tRel_ms,
+          .p_val    = &this->sc[i].settings.tRel_ms,
           .name     = bandNames[i] + "_Release",
           .suffix   = " ms",
           .minVal   = 10.0,
@@ -167,7 +166,6 @@ struct ntMultiband3 final : public NtFx::Plugin {
     }
     this->meters[Bands::n - 1 + 2].hasScale = true;
     this->uiSpec.meterHeight_dots           = 25;
-    this->uiSpec.pad                        = 15;
     for (auto& m : this->meters) { m.minVal_db = -50; }
     this->updateDefaults();
   }
@@ -229,11 +227,11 @@ struct ntMultiband3 final : public NtFx::Plugin {
 
   void reset(signal_t fs) noexcept override {
     this->_fs = fs;
-    this->hiFlt.reset(this->_fs);
-    this->hiMidFlt.reset(this->_fs);
-    this->loMidFlt.reset(this->_fs);
-    this->loFlt.reset(this->_fs);
-    for (size_t i = 0; i < Bands::n; i++) { this->sc[i].reset(this->_fs); }
+    this->hiFlt.reset(fs);
+    this->hiMidFlt.reset(fs);
+    this->loMidFlt.reset(fs);
+    this->loFlt.reset(fs);
+    for (size_t i = 0; i < Bands::n; i++) { this->sc[i].reset(fs); }
     this->update();
   }
 
