@@ -242,7 +242,10 @@ def _updateCompileCommands(cppPath: str, args: list[str]) -> bool:
             data = f.read()
             if not data:
                 return False
-            ccs = json.loads(data)
+            try:
+                ccs = json.loads(data)
+            except:
+                return False
     newCc = {
         "directory": f"{FILE_DIR}/tests",
         "command": " ".join(args),
