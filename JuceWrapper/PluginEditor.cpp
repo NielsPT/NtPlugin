@@ -311,10 +311,13 @@ void NtPluginAudioProcessorEditor::_initWindowHeight(int nRows) {
     } else {
       groupsHeight += (this->proc.plug.uiSpec.groupKnobHeight
                           + this->proc.plug.uiSpec.groupPad)
-          * (float(nGroupKnobsMax % 2) + float(nGroupKnobsMax) / 2);
-      groupsHeight -=
-          this->proc.plug.uiSpec.groupEvenColOffset * float(nGroupKnobsMax % 2);
+          * float(nGroupKnobsMax % 2 + nGroupKnobsMax / 2);
+      // groupsHeight -=
+      //     this->proc.plug.uiSpec.groupEvenColOffset * float(nGroupKnobsMax %
+      //     2);
     }
+    groupsHeight += this->proc.plug.uiSpec.labelHeight;
+    groupsHeight += this->proc.plug.uiSpec.groupPad * 2;
     if (groupsHeight > primHeight) { height += groupsHeight - primHeight; }
   }
   if (this->proc.plug.uiSpec.includeMeters) {
@@ -562,10 +565,13 @@ void NtPluginAudioProcessorEditor::_placeSecondaryKnobs(
 
 void NtPluginAudioProcessorEditor::_placeKnobGroups(
     juce::Rectangle<int>& area) {
+
   for (size_t i = 0; i < this->proc.plug.knobGroups.size(); i++) {
     auto groupArea = area.removeFromLeft(
         int(this->proc.plug.uiSpec.groupWidth * this->uiScale));
     this->borderedAreas.push_back(groupArea);
+    groupArea.removeFromBottom(
+        int(this->proc.plug.uiSpec.groupPad * this->uiScale));
     groupArea.removeFromLeft(
         int(this->proc.plug.uiSpec.groupPad * this->uiScale));
     groupArea.removeFromRight(
@@ -587,10 +593,14 @@ void NtPluginAudioProcessorEditor::_placeKnobGroups(
           int(float(this->proc.plug.uiSpec.groupKnobWidth
                   - this->proc.plug.uiSpec.groupPad)
               * this->uiScale));
+      auto pad = int(this->proc.plug.uiSpec.groupPad / 2.0f * this->uiScale);
+      lArea.removeFromRight(pad);
       this->_placeGruopKnobColumn(lArea, nLhs, i, 2, false);
-      groupArea.removeFromTop(
+      auto rArea = groupArea;
+      rArea.removeFromTop(
           int(this->proc.plug.uiSpec.groupEvenColOffset * this->uiScale));
-      this->_placeGruopKnobColumn(groupArea, nRhs, i, 2, true);
+      rArea.removeFromLeft(pad);
+      this->_placeGruopKnobColumn(rArea, nRhs, i, 2, true);
     }
   }
 }
@@ -602,7 +612,7 @@ void NtPluginAudioProcessorEditor::_placeGruopKnobColumn(
     size_t nCols,
     bool even) {
   for (size_t j = 0; j < n; j++) {
-    colArea.removeFromTop(int(this->proc.plug.uiSpec.pad * this->uiScale));
+    colArea.removeFromTop(int(this->proc.plug.uiSpec.groupPad * this->uiScale));
     auto kArea = colArea.removeFromTop(
         int(this->proc.plug.uiSpec.groupKnobHeight * this->uiScale));
     auto labelArea = kArea.removeFromTop(

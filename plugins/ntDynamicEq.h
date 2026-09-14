@@ -175,13 +175,17 @@ struct ntDynamicEq final : public NtFx::Plugin {
     if (!this->soloAny) { acc = x; }
     std::array<Audio, Bands::n> gr { 1, 1, 1, 1 };
     for (size_t i = 0; i < Bands::n; i++) {
-      if (this->mutes[i]) { continue; }
       auto yFlt = this->bands[i].process(x);
       gr[i]     = this->scs[i].process(yFlt);
       if (!this->soloAny) {
+        if (this->mutes[i]) { continue; }
         acc += yFlt * (gr[i] * this->gain_lin[i] - 1);
       } else if (this->solos[i]) {
-        acc += yFlt * gr[i] * this->gain_lin[i];
+        if (this->mutes[i]) {
+          acc += yFlt;
+        } else {
+          acc += yFlt * gr[i] * this->gain_lin[i];
+        }
       }
     }
     this->updatePeakLevel(2, gr[0]);
