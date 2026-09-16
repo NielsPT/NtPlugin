@@ -28,6 +28,9 @@
 #define NTFX_QUOTE(str) #str
 #define NTFX_EXPAND_AND_QUOTE(str) NTFX_QUOTE(str)
 
+#define NTFX_CAT_IMPL(a, b) a##b
+#define NTFX_CAT(a, b) NTFX_CAT_IMPL(a, b)
+
 namespace NtFx {
 
 /**
@@ -154,38 +157,23 @@ inline std::string mangleName(
   return spacesToUnderscores(paramType + ":" + groupName + ":" + paramName);
 }
 
-// Source - https://stackoverflow.com/a/21429452
-// Posted by Erbureth, modified by community. See post 'Timeline' for change
-// history Retrieved 2026-09-14, License - CC BY-SA 3.0
-
-template <typename T>
-class Logspace {
-private:
-  T curValue, base;
-
-public:
-  Logspace(T first, T base) : curValue(first), base(base) { }
-
-  T operator()() {
-    T retval = curValue;
-    curValue *= base;
-    return retval;
+template <typename signal_t>
+static inline std::vector<signal_t> logspace(
+    signal_t start, signal_t stop, size_t n, signal_t base = 10) {
+  std::vector<signal_t> y;
+  auto step = (stop - start) / signal_t(n - 1);
+  for (size_t i = 0; i < n; i++) {
+    y.push_back(gcem::pow(base, start + signal_t(i) * step));
   }
-};
+  return y;
+}
 
-// Source - https://stackoverflow.com/a/21429452
-// Posted by Erbureth, modified by community. See post 'Timeline' for change
-// history Retrieved 2026-09-14, License - CC BY-SA 3.0
-
-std::vector<double> logspace(
-    double start, double stop, size_t n = 50, double base = 10) {
-  double realStart = pow(base, start);
-  double realBase  = pow(base, (stop - start) / double(n));
-
-  std::vector<double> retval;
-  retval.reserve(n);
-  std::generate_n(
-      std::back_inserter(retval), n, Logspace<double>(realStart, realBase));
-  return retval;
+template <typename signal_t>
+static inline std::vector<signal_t> linspace(
+    signal_t start, signal_t stop, size_t n) {
+  std::vector<signal_t> y;
+  auto step = (stop - start) / signal_t(n - 1);
+  for (size_t i = 0; i < n; i++) { y.push_back(start + signal_t(i) * step); }
+  return y;
 }
 }

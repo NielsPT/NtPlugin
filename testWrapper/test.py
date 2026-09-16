@@ -29,6 +29,7 @@ import time
 from matplotlib import pyplot as p
 from scipy import signal as s
 import multiprocessing as mp
+from itertools import repeat
 
 SEPARATOR = "."
 EXPECTED_DIR = "in"
@@ -195,7 +196,7 @@ def generateTestVectors(
     return (impulse, linearSweep, syncSweep, dynamic_alternating)
 
 
-def _buildTestProg(cppPath: str, component: str) -> bool:
+def _buildTestProg(cppPath: str, component: str, fs: float) -> bool:
     os.makedirs(f"{FILE_DIR}/{OUT_DIR}", exist_ok=True)
     args = ["g++"]
     if platform.system() == "Darwin":
@@ -207,7 +208,7 @@ def _buildTestProg(cppPath: str, component: str) -> bool:
         f"-I{os.path.abspath(FILE_DIR)}/..",
         f"-I{os.path.abspath(FILE_DIR)}/../lib/gcem/include",
         "--std=c++20",
-        "-DNTFX_FS=48e3f",
+        f"-DNTFX_FS={fs}",
         "-DNTFX_TESTING=1",
         "-O0",
     ]
@@ -219,7 +220,7 @@ def _buildTestProg(cppPath: str, component: str) -> bool:
             f"/I{os.path.abspath(FILE_DIR)}{os.sep}..{os.sep}",
             f"/I{os.path.abspath(FILE_DIR)}{os.sep}..{os.sep}lib{os.sep}gcem{os.sep}include",
             "/std:c++20",
-            "/DNTFX_FS=48e3f",
+            f"/DNTFX_FS={fs}",
             "/DNTFX_TESTING=1",
             "/EHsc",
         ]
@@ -244,7 +245,7 @@ def _updateCompileCommands(cppPath: str, args: list[str]) -> bool:
                 return False
             try:
                 ccs = json.loads(data)
-            except:
+            except ValueError as e:
                 return False
     newCc = {
         "directory": f"{FILE_DIR}/tests",
@@ -744,10 +745,7 @@ def clean() -> bool:
     return True
 
 
-fs = 48e3
-
-
-def runTests(cppPath: str) -> int:
+def runTests(cppPath: str, fs: float) -> int:
     """
     Runs tests for a specific test program. Build the program, runs it and
     collects results.
@@ -769,7 +767,7 @@ def runTests(cppPath: str) -> int:
     component = (
         os.path.basename(cppPath).replace("_test", "").replace(".cpp", "")
     )
-    if not _buildTestProg(cppPath, component):
+    if not _buildTestProg(cppPath, component, fs):
         return -1
     returncode = _runTestProg(component)
     _readAndPlotTestResults(component, fs)
@@ -818,7 +816,6 @@ def run(args: dict):
     Returns:
         bool: True on success.
     """
-    global fs
     t = time.time()
     os.makedirs(f"{FILE_DIR}/{EXPECTED_DIR}", exist_ok=True)
     os.makedirs(f"{FILE_DIR}/{OUT_DIR}", exist_ok=True)
@@ -828,7 +825,7 @@ def run(args: dict):
         files = _findAllTests()
     fs = args["fs"]
     pool = mp.Pool()
-    returncodes = pool.map(runTests, files)
+    returncodes = pool.starmap(runTests, zip(files, repeat(fs, len(files))))
     success = True
     for i, file in enumerate(returncodes):
         if returncodes[i] < 0:
@@ -912,7 +909,7 @@ def createParser() -> argparse.ArgumentParser:
         "--fs",
         type=float,
         default=48e3,
-        help="Sample rate to test at.",
+        help="Sample rate to test at. Defaults to 48000 Hz.",
     )
     generateParser.add_argument(
         "--duration",

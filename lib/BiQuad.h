@@ -1,5 +1,9 @@
-/*
- * Copyright (C) 2026 Niels Thøgersen, NTlyd
+/**
+ * @file Biquad.h
+ * @author Niels Thøgersen (niels.thoegersen@gmail.com)
+ * @brief Biquad filters.
+ *
+ * @copyright 2026 Niels Thøgersen, NTlyd
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License as published by the Free

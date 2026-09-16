@@ -331,6 +331,7 @@ bool ComponentTestSet::addTest(ComponentBase<Stereo<signal_t>>* componentObj,
 }
 
 int ComponentTestSet::runAllTests() {
+  std::cout << "Testing '" << this->name << "' at " << NTFX_FS << " Hz.\n";
   for (auto& stimulus : STIMULI_NAMES) {
     for (size_t i = 0; i < tests.size(); i++) { tests[i]->run(stimulus); }
   }
