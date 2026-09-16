@@ -295,6 +295,7 @@ def plotImpulse(
     fs: float,
     filename: str,
     legends: list | None = None,
+    expectedExists: bool = True,
 ):
     """
     Plots the results of an impulse response an frequency amplitude and phase
@@ -310,7 +311,9 @@ def plotImpulse(
     xAbs = np.abs(xFft)
     xPhase = np.angle(xFft)
     xDb = 20 * np.log10(xAbs + 1e-8)
-    plotFrequencyDomain(xDb, fs, filename, legends)
+    plotFrequencyDomain(
+        xDb, fs, filename, legends, expectedExists=expectedExists
+    )
     plotFrequencyDomain(
         xPhase,
         fs,
@@ -318,12 +321,14 @@ def plotImpulse(
         legends,
         [-np.pi, np.pi],
         "Phase / radians",
+        expectedExists,
     )
     plotTimeDomain(
         x,
         fs,
         filename.replace(f"{SEPARATOR}magnitude.png", f"{SEPARATOR}time.png"),
         legends,
+        expectedExists=expectedExists,
     )
 
 
@@ -334,6 +339,7 @@ def plotTimeDomain(
     legends: list | None = None,
     ylim: list | None = None,
     ylabel: str | None = None,
+    expectedExists: bool = True,
 ) -> None:
     """
     Plots signal in time domain.
@@ -351,7 +357,10 @@ def plotTimeDomain(
         t = 1000 * n / fs
         tAx = np.linspace(0, t, n)
         for i, v in enumerate(x):
-            p.plot(tAx, v, linestyle=_idxToLineStyle(i))
+            style = "-"
+            if expectedExists:
+                style = _idxToLineStyle(i)
+            p.plot(tAx, v, linestyle=style)
     except IndexError:
         n = x.shape[0]
         t = 1000 * n / fs
@@ -381,6 +390,7 @@ def plotFrequencyDomain(
     legends: list | None = None,
     ylim: list | None = None,
     ylabel: str | None = None,
+    expectedExists: bool = True,
 ) -> None:
     """
     Plots signal in frequency domain.
@@ -397,7 +407,10 @@ def plotFrequencyDomain(
         n = x.shape[1]
         fAx = np.linspace(0, fs - fs / n, n)
         for i, v in enumerate(x):
-            p.semilogx(fAx, v, linestyle=_idxToLineStyle(i))
+            style = "-"
+            if expectedExists:
+                style = _idxToLineStyle(i)
+            p.semilogx(fAx, v, linestyle=style)
     except IndexError:
         n = x.shape[0]
         fAx = np.linspace(0, fs - fs / n, n)
@@ -607,6 +620,7 @@ def _plotResults(
     legends: dict[str, list[str]],
     testFileName: str,
     fs: float,
+    expectedExists: bool = True,
 ):
     os.makedirs(f"{FILE_DIR}/img", exist_ok=True)
     if "impulse" in results and results["impulse"]:
@@ -615,6 +629,7 @@ def _plotResults(
             fs,
             f"{FILE_DIR}/img/{testFileName}{SEPARATOR}magnitude.png",
             legends["impulse"],
+            expectedExists=expectedExists,
         )
     if "linearSweep" in results and results["linearSweep"]:
         plotSweeps(
@@ -657,21 +672,23 @@ def _readAndPlotTestResults(testFileName: str, fs: float):
     resultFiles: list[str] = []
     outFiles = os.listdir(f"{FILE_DIR}/{OUT_DIR}")
     for file in outFiles:
-        if file.startswith(testFileName) and file.endswith(
-            f"{SEPARATOR}result.txt"
-        ):
-            resultFiles += [file]
+        if not file.endswith(f"{SEPARATOR}result.txt"):
+            continue
+        if not file.startswith(testFileName):
+            continue
+        resultFiles += [file]
     expectedFiles: list[str] = []
     inFiles = os.listdir(f"{FILE_DIR}/{EXPECTED_DIR}")
     for file in inFiles:
-        if file.endswith(f"{SEPARATOR}expected.txt"):
-            info = file.split(SEPARATOR)
-            if len(info) != 5:
-                print(f"Bad filename: {file}")
-                continue
-            expectedFiles += [
-                info[0] + SEPARATOR + info[1] + SEPARATOR + info[2]
-            ]
+        if not file.endswith(f"{SEPARATOR}expected.txt"):
+            continue
+        if not file.startswith(testFileName):
+            continue
+        info = file.split(SEPARATOR)
+        if len(info) != 5:
+            print(f"Bad filename: {file}")
+            continue
+        expectedFiles += [info[0] + SEPARATOR + info[1] + SEPARATOR + info[2]]
     results, legends = _parseFiles(resultFiles, expectedFiles)
     if (
         "impulse" in results
@@ -679,7 +696,7 @@ def _readAndPlotTestResults(testFileName: str, fs: float):
         and np.any(np.isnan(np.concatenate(results["impulse"])))
     ):
         print(f"{RED}NaN is impulse.{BLACK}")
-    _plotResults(results, legends, testFileName, fs)
+    _plotResults(results, legends, testFileName, fs, bool(expectedFiles))
 
 
 def acceptLatestResult(files: list[str], objects: list[str]) -> bool:
