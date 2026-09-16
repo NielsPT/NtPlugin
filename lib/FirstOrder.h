@@ -22,7 +22,7 @@
 
 #include "lib/Audio.h"
 #include "lib/Component.h"
-#include <math.h>
+#include "lib/gcem.h"
 
 namespace NtFx {
 namespace FirstOrder {

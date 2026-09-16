@@ -19,6 +19,7 @@
 #include "lib/gcem.h"
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <string>
@@ -151,5 +152,40 @@ inline std::string spacesToUnderscores(std::string x) {
 inline std::string mangleName(
     std::string paramType, std::string groupName, std::string paramName) {
   return spacesToUnderscores(paramType + ":" + groupName + ":" + paramName);
+}
+
+// Source - https://stackoverflow.com/a/21429452
+// Posted by Erbureth, modified by community. See post 'Timeline' for change
+// history Retrieved 2026-09-14, License - CC BY-SA 3.0
+
+template <typename T>
+class Logspace {
+private:
+  T curValue, base;
+
+public:
+  Logspace(T first, T base) : curValue(first), base(base) { }
+
+  T operator()() {
+    T retval = curValue;
+    curValue *= base;
+    return retval;
+  }
+};
+
+// Source - https://stackoverflow.com/a/21429452
+// Posted by Erbureth, modified by community. See post 'Timeline' for change
+// history Retrieved 2026-09-14, License - CC BY-SA 3.0
+
+std::vector<double> logspace(
+    double start, double stop, size_t n = 50, double base = 10) {
+  double realStart = pow(base, start);
+  double realBase  = pow(base, (stop - start) / double(n));
+
+  std::vector<double> retval;
+  retval.reserve(n);
+  std::generate_n(
+      std::back_inserter(retval), n, Logspace<double>(realStart, realBase));
+  return retval;
 }
 }

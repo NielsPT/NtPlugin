@@ -330,7 +330,7 @@ def zipPackage(plugins: list[str], targets: list[str], version: str) -> bool:
     zipFileName = PACKAGE_ARTIFACT
     if len(plugins) == 1:
         zipFileName = plugins[0]
-    outPath = f"{ARTIFACTS_DIR}/{zipFileName}_{version}.zip"
+    outPath = f"{ARTIFACTS_DIR}/{zipFileName}_{version}_{sys.platform}.zip"
     res = subprocess.run(
         ["zip", "-r", outPath] + files,
         check=False,
