@@ -24,6 +24,7 @@
 #include "lib/Biquad.h"
 #include "lib/Delay.h"
 #include "lib/DryMix.h"
+#include "lib/Generator.h"
 #include "lib/Glider.h"
 #include "lib/Plugin.h"
 #include "lib/SoftClip.h"
@@ -140,7 +141,7 @@ struct ntTapeEcho final : public NtFx::Plugin {
   }
 
   Audio process(Audio x) noexcept override {
-    auto xNoisy = x + NtFx::rand<signal_t>() * this->noise_lin;
+    auto xNoisy = x + NtFx::Generator::rand<signal_t>() * this->noise_lin;
     NtFx::ensureFinite(xNoisy);
     NtFx::ensureFinite(this->fbState);
     auto xMod = xNoisy

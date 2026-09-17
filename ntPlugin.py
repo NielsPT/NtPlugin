@@ -510,7 +510,7 @@ def process(args: dict) -> bool:
         return False
     secrets["version"] = version
     if doTest:
-        if not test.run({"files": plugins, "fs": 48e3}):
+        if not test.run({"files": plugins, "fs": 48e3, "no_plot": True}):
             return False
     pluginIds = readPluginIds()
     allPlugins = package.readPlugins()

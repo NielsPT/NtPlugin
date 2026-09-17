@@ -412,7 +412,7 @@ namespace Delay {
       this->_tDelayMod_s.process();
       this->_phaseMod_rad.process();
       this->fMod_hz.process();
-      signal_t omegaT_rad = 2 * GCEM_PI * this->fMod_hz.pr * this->_t;
+      signal_t omegaT_rad = 2 * NTFX_PI * this->fMod_hz.pr * this->_t;
       this->_t += this->_tSample;
       if (this->_t >= 1 / this->fMod_hz.pr) { this->_t = 0; }
       // Left channel: modulate delay with unshifted sine
@@ -437,7 +437,7 @@ namespace Delay {
       // Modulation depth = depth_p% * max_delay_ms, adjusted for frequency
       this->_tDelayMod_s.ui = this->depth_p * tModDlMax_ms / 2000000;
       this->_tDelayMod_s.ui /= this->fMod_hz.ui;
-      this->_phaseMod_rad.ui = this->phaseMod_deg * GCEM_PI / 180;
+      this->_phaseMod_rad.ui = this->phaseMod_deg * NTFX_PI / 180;
       this->_tSample         = 1 / this->_fs;
       if (this->fMod_hz.ui < 0.1) { this->fMod_hz.ui = 0.1; }
       this->fMod_hz.update(this->_fs);

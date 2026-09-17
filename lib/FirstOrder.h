@@ -69,7 +69,7 @@ namespace FirstOrder {
 
     void update() noexcept override {
       if (this->_fs <= 0) { return; }
-      signal_t z = 2 * GCEM_PI * this->fc_hz / this->_fs;
+      signal_t z = 2 * NTFX_PI * this->fc_hz / this->_fs;
       if constexpr (shape == Shape::hpf) {
         this->_a = 1.0 / (z + 1.0);
       } else {

@@ -22,7 +22,7 @@
  */
 
 #include "lib/gcem.h"
-#include "lib/utils.h"
+#include <cmath>
 #include <cstddef>
 #include <type_traits>
 
@@ -443,6 +443,34 @@ static inline Stereo<signal_t> operator*(
   return { (y.l * signal_t(x)), (y.r * signal_t(x)) };
 }
 
+// #define NTFX_OPTIMIZE_ENSURE_FINITE
+// #define NTFX_DISABLE_ENSURE_FINITE
+
+/**
+ * @brief Sets input to 'def' if not a finite number.
+ *
+ * @tparam signal_t Datatype.
+ * @param x Value to validate.
+ * @param def Default value to use if 'x' is not valid.
+ */
+template <typename signal_t>
+static inline void ensureFinite(
+    signal_t& x, signal_t def = signal_t(0)) noexcept {
+#ifdef NTFX_DISABLE_ENSURE_FINITE
+  return;
+#endif
+#ifdef NTFX_OPTIMIZE_ENSURE_FINITE
+  signal_t y = def;
+  if (x == x) {
+    if (gcem::abs(x) > std::numeric_limits<signal_t>::max()) { x = y; }
+  } else {
+    x = y;
+  }
+#else
+  if (!std::isfinite(x)) { x = def; }
+#endif
+}
+
 /**
  * @brief Sets 'x' to 0 if it is not a finite number.
  *
@@ -464,3 +492,4 @@ typedef double signal_t;
 typedef float signal_t;
 #endif
 using Audio = NtFx::Stereo<signal_t>;
+#define NTFX_PI signal_t(GCEM_PI)

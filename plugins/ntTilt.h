@@ -10,10 +10,10 @@ struct ntTilt final : public NtFx::Plugin {
   bool bypassEnable { false };
 
   ntTilt() {
-    this->primaryKnobs = { { &this->filter.tilt_db, "Tilt", " dB", -12, 12 } };
-    this->toggles      = {
-      { .p_val = &this->bypassEnable, .name = "Bypass" },
+    this->primaryKnobs = {
+      { &this->filter.tilt_db, "Tilt", " dB/dec", -10, 10 }
     };
+    this->toggles = { { .p_val = &this->bypassEnable, .name = "Bypass" } };
     this->updateDefaults();
   }
 

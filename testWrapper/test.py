@@ -424,6 +424,8 @@ def plotFrequencyDomain(
             _ylim[0] = x.min() * 1.1
         if x.max() > 10:
             _ylim[1] = x.max() * 1.1
+        if x.max() > 30:
+            _ylim = [0, x.max() * 1.1]
     p.ylim(_ylim)
     p.grid(True)
     if legends:
@@ -762,7 +764,7 @@ def clean() -> bool:
     return True
 
 
-def runTests(cppPath: str, fs: float) -> int:
+def runTests(cppPath: str, fs: float, plot: bool = True) -> int:
     """
     Runs tests for a specific test program. Build the program, runs it and
     collects results.
@@ -787,7 +789,8 @@ def runTests(cppPath: str, fs: float) -> int:
     if not _buildTestProg(cppPath, component, fs):
         return -1
     returncode = _runTestProg(component)
-    _readAndPlotTestResults(component, fs)
+    if plot:
+        _readAndPlotTestResults(component, fs)
     return returncode
 
 
@@ -842,7 +845,14 @@ def run(args: dict):
         files = _findAllTests()
     fs = args["fs"]
     pool = mp.Pool()
-    returncodes = pool.starmap(runTests, zip(files, repeat(fs, len(files))))
+    returncodes = pool.starmap(
+        runTests,
+        zip(
+            files,
+            repeat(fs, len(files)),
+            repeat(not args["no_plot"], len(files)),
+        ),
+    )
     success = True
     for i, file in enumerate(returncodes):
         if returncodes[i] < 0:
@@ -894,6 +904,13 @@ def createParser() -> argparse.ArgumentParser:
         "and can be omitted. If set to 'all', dir 'tests' will be searched"
         " for files ending with '_test.cpp' and those will be used. Defaults to "
         "'all'",
+    )
+    runParser.add_argument(
+        "--no-plot",
+        "--no_plot",
+        "-n",
+        help="Do not plot results.",
+        action="store_true",
     )
     generateParser = subparsers.add_parser(
         "generate", help="Generate needed input files."

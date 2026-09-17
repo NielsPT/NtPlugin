@@ -47,7 +47,6 @@ struct ntMultiband3 final : public NtFx::Plugin {
   bool linkEnable { false };
   bool feedbackEnable { false };
   bool bypassEnable { false };
-  // bool noise { false };
 
   std::array<bool, Bands::n> solos        = { false, false, false };
   std::array<bool, Bands::n> mutesUi      = { false, false, false };
@@ -136,7 +135,6 @@ struct ntMultiband3 final : public NtFx::Plugin {
       { &this->linkEnable, "Link" },
       { &this->feedbackEnable, "Feedback" },
       { &this->bypassEnable, "Bypass" },
-      // { &this->noise, "Noise" },
     };
     this->toggleSets = {
       { "Solo", { } },
@@ -204,7 +202,6 @@ struct ntMultiband3 final : public NtFx::Plugin {
     this->updatePeakLevel(2, gr[Bands::lo]);
     this->updatePeakLevel(3, gr[Bands::mid]);
     this->updatePeakLevel(4, gr[Bands::hi]);
-    // if (this->noise) { return NtFx::rand() * 0.125; }
     return y;
   }
 

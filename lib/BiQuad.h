@@ -99,7 +99,7 @@ namespace Biquad {
 
   static inline Coeffs6 calcCoeffsBell(
       signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
-    double w0  = 2.0 * GCEM_PI * fc_hz / fs;
+    double w0  = 2.0 * NTFX_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
     Coeffs6 c;
@@ -114,7 +114,7 @@ namespace Biquad {
 
   static inline Coeffs6 calcCoeffsLoShelf(
       signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
-    double w0  = 2.0 * GCEM_PI * fc_hz / fs;
+    double w0  = 2.0 * NTFX_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (signal_t(2.0) * q);
     Coeffs6 c;
@@ -133,7 +133,7 @@ namespace Biquad {
 
   static inline Coeffs6 calcCoeffsHiShelf(
       signal_t fs, signal_t fc_hz, signal_t q, signal_t a) {
-    double w0  = 2.0 * GCEM_PI * fc_hz / fs;
+    double w0  = 2.0 * NTFX_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
     Coeffs6 c;
@@ -151,7 +151,7 @@ namespace Biquad {
   }
 
   static inline Coeffs6 calcCoeffsHpf(signal_t fs, signal_t fc_hz, signal_t q) {
-    double w0  = 2.0 * GCEM_PI * fc_hz / fs;
+    double w0  = 2.0 * NTFX_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
     Coeffs6 c;
@@ -165,7 +165,7 @@ namespace Biquad {
   }
 
   static inline Coeffs6 calcCoeffsLpf(signal_t fs, signal_t fc_hz, signal_t q) {
-    double w0  = 2.0 * GCEM_PI * fc_hz / fs;
+    double w0  = 2.0 * NTFX_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
     Coeffs6 c;
@@ -179,7 +179,7 @@ namespace Biquad {
   }
 
   static inline Coeffs6 calcCoeffsApf(signal_t fs, signal_t fc_hz, signal_t q) {
-    double w0  = 2.0 * GCEM_PI * fc_hz / fs;
+    double w0  = 2.0 * NTFX_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
     Coeffs6 c;
@@ -193,7 +193,7 @@ namespace Biquad {
   }
 
   static inline Coeffs6 calcCoeffsBpf(signal_t fs, signal_t fc_hz, signal_t q) {
-    double w0  = 2.0 * GCEM_PI * fc_hz / fs;
+    double w0  = 2.0 * NTFX_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
     Coeffs6 c;
@@ -208,7 +208,7 @@ namespace Biquad {
 
   static inline Coeffs6 calcCoeffsNotch(
       signal_t fs, signal_t fc_hz, signal_t q) {
-    double w0  = 2.0 * GCEM_PI * fc_hz / fs;
+    double w0  = 2.0 * NTFX_PI * fc_hz / fs;
     auto cosW0 = gcem::cos(w0);
     auto alpha = gcem::sin(w0) / (2.0 * q);
     Coeffs6 c;

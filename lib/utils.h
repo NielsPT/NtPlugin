@@ -18,10 +18,7 @@
 #pragma once
 #include "lib/gcem.h"
 #include <algorithm>
-#include <cmath>
 #include <cstddef>
-#include <cstdint>
-#include <limits>
 #include <string>
 #include <vector>
 
@@ -57,93 +54,9 @@ static inline signal_t invDb(signal_t x) noexcept {
   return gcem::pow(signal_t(10.0), x * signal_t(0.05));
 }
 
-// #define NTFX_OPTIMIZE_ENSURE_FINITE
-// #define NTFX_DISABLE_ENSURE_FINITE
-
-/**
- * @brief Sets input to 'def' if not a finite number.
- *
- * @tparam signal_t Datatype.
- * @param x Value to validate.
- * @param def Default value to use if 'x' is not valid.
- */
-template <typename signal_t>
-static inline void ensureFinite(
-    signal_t& x, signal_t def = signal_t(0)) noexcept {
-#ifdef NTFX_DISABLE_ENSURE_FINITE
-  return;
-#endif
-#ifdef NTFX_OPTIMIZE_ENSURE_FINITE
-  signal_t y = def;
-  if (x == x) {
-    if (gcem::abs(x) > std::numeric_limits<signal_t>::max()) { x = y; }
-  } else {
-    x = y;
-  }
-#else
-  if (!std::isfinite(x)) { x = def; }
-#endif
-}
-
 template <typename T>
 static inline std::vector<T> zeros(size_t n) {
   return std::vector<T>(n, 0.0);
-}
-
-/**
- * @brief Saw wave generator.
- *
- * @tparam T Datatype.
- * @param x Input in radians. Same as input for 'sin' function.
- * @return T Output.
- */
-template <typename T>
-static inline T saw(T x) {
-  const T alpha = 2 / GCEM_PI;
-
-  T x_ = gcem::fmod(x, T(2.0) * GCEM_PI);
-  x_   = (x_ < 0 ? x_ + 2 * GCEM_PI : x_);
-  T y;
-  if (x_ < 0.5 * GCEM_PI) {
-    y = x_ * alpha;
-  } else if (x_ < 1.5 * GCEM_PI) {
-    y = -x_ * alpha + 2;
-  } else {
-    y = x_ * alpha - 4;
-  }
-  return y;
-}
-
-/**
- * @brief Pseudorandom unsigned long.
- *
- * Marsaglia, George (2003) "Random Number Generators,"Journal of Modern Applied
- * Statistical Methods: Vol. 2 : Iss. 1 , Article 2.
- * DOI: 10.22237/jmasm/1051747320
- *
- * @return unsigned long
- */
-static inline uint64_t KISS() noexcept {
-  static uint64_t x = 123456789, y = 362436000, z = 521288629, c = 7654321, t;
-  x = 69069 * x + 12345;
-  y ^= y << 13;
-  y ^= y >> 17;
-  y ^= y << 5;
-  t = 698769069ULL * z + c;
-  c = t >> 32;
-  return x + y + (z = t);
-}
-
-/**
- * @brief Returns a pseudorandom number in the range -1:1.
- *
- * @tparam T Datatype to return.
- * @return T Pseudorandom number.
- */
-template <typename T>
-static inline T rand() noexcept {
-  const uint64_t uintMax = std::numeric_limits<uint64_t>::max();
-  return T(KISS() - (uintMax >> 1)) / T(uintMax) * 2 - 1;
 }
 
 inline std::string spacesToUnderscores(std::string x) {

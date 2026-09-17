@@ -56,7 +56,7 @@ namespace DynamicFilter {
     }
 
     void update() noexcept override {
-      auto alpha = signal_t(2.0) * signal_t(GCEM_PI) * this->fc_hz / this->_fs;
+      auto alpha = signal_t(2.0) * signal_t(NTFX_PI) * this->fc_hz / this->_fs;
       this->_alphaSquared = alpha * alpha;
       this->_beta1        = signal_t(2) * alpha / this->q1;
       this->_beta2        = signal_t(2) * alpha / this->q2;
