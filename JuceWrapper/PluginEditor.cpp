@@ -268,6 +268,21 @@ int NtPluginAudioProcessorEditor::_getNKnobsInLargestKnobGroup() {
 }
 
 void NtPluginAudioProcessorEditor::_initWindowWidth(int nCols) {
+  int pad              = int(4.0f);
+  int minDropDownWidth = 0;
+  int titleBarWidth    = 0;
+  for (size_t i = 0; i < this->proc.titleBarSpec.dropdowns.size(); i++) {
+    auto labelWidth = int(juce::TextLayout::getStringWidth(
+        juce::AttributedString(this->proc.titleBarSpec.dropdowns[i].name)));
+    for (auto option : this->proc.titleBarSpec.dropdowns[i].options) {
+      auto w =
+          int(juce::TextLayout::getStringWidth(juce::AttributedString(option)));
+      if (w > minDropDownWidth) { minDropDownWidth = w; }
+    }
+    titleBarWidth += minDropDownWidth + labelWidth + 50;
+  }
+  titleBarWidth += pad * 2;
+
   float width = 0;
   if (this->proc.plug.uiSpec.includeMeters) {
     width += this->meters.getMinimalWidth();
@@ -284,7 +299,7 @@ void NtPluginAudioProcessorEditor::_initWindowWidth(int nCols) {
       * this->proc.plug.uiSpec.groupWidth;
   knobGroupWidth += 2 * this->proc.plug.uiSpec.groupPad;
   width += gcem::max(gcem::max(primKnobsWidth, secKnobWidth), knobGroupWidth);
-  this->unscaledWindowWidth = int(width);
+  this->unscaledWindowWidth = gcem::max(titleBarWidth, int(width));
 }
 
 void NtPluginAudioProcessorEditor::_initWindowHeight(int nRows) {

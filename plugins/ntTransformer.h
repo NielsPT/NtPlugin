@@ -33,10 +33,8 @@ struct ntTransformer final : public NtFx::Plugin {
   signal_t drive_lin { 0.3 };
   bool bypass { false };
   ntTransformer() {
-    this->primaryKnobs = {
-      { }, { &this->drive_db, "Drive", " dB", -24, 24 }, { }
-    };
-    this->toggles               = { { &this->bypass, "Bypass" } };
+    this->primaryKnobs = { { &this->drive_db, "Drive", " dB", -24, 24 } };
+    this->toggles      = { { &this->bypass, "Bypass" } };
     this->bqHpf0.settings.fc_hz = 40;
     this->bqHpf0.settings.q     = 1.1;
     this->bqHpf0.settings.shape = NtFx::Biquad::Shape::hpf;
