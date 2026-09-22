@@ -24,6 +24,7 @@
 
 #include "lib/Audio.h"
 #include "lib/Component.h"
+#include "lib/FirstOrder.h"
 #include "lib/utils.h"
 #include <array>
 
@@ -69,7 +70,6 @@ constexpr std::array<signal_t, 2> _coeffsThird =
 /**
  * @brief Applied soft clipping using a third order polynomial.
  *
- * @tparam signal_t Audio datatype.
  * @param x Input sample.
  * @return signal_t Output sample.
  */
@@ -85,7 +85,6 @@ static inline signal_t softClip3rdMono(signal_t x) {
  * @brief Applied soft clipping using a third order polynomial on a stereo
  * signal.
  *
- * @tparam signal_t Audio datatype.
  * @param x Input sample.
  * @return signal_t Output sample.
  */
@@ -96,7 +95,6 @@ static inline Audio softClip3rdStereo(Audio x) {
 /**
  * @brief Applied soft clipping using a fifth order polynomial.
  *
- * @tparam signal_t Audio datatype.
  * @param x Input sample.
  * @return signal_t Output sample.
  */
@@ -113,7 +111,6 @@ static inline signal_t softClip5thMono(signal_t x) noexcept {
  * @brief Applied soft clipping using a fifth order polynomial on a stereo
  * signal.
  *
- * @tparam signal_t Audio datatype.
  * @param x Input sample.
  * @return signal_t Output sample.
  */
@@ -124,7 +121,6 @@ static inline Audio softClip5thStereo(Audio x) noexcept {
 /**
  * @brief Third order soft clipper wrapped in a Component.
  *
- * @tparam signal_t Audio datatype.
  */
 struct SoftClip3 final : public ComponentBase<Audio> {
   signal_t gain_db { 0 };
@@ -136,9 +132,36 @@ struct SoftClip3 final : public ComponentBase<Audio> {
 };
 
 /**
+ * @brief Third order soft clipper with rudimental antialiasing filter.
+ *
+ */
+struct SoftClip3AntiAlias final : public ComponentBase<Audio> {
+  FirstOrder::StereoFilter<FirstOrder::Shape::lpfZero> lpf;
+  FirstOrder::StereoFilter<FirstOrder::Shape::hpf> hpf;
+  FirstOrder::StereoFilter<FirstOrder::Shape::hpf> hpf2;
+  signal_t gain_db { 0 };
+  signal_t gain_lin { 1 };
+  bool bypass1Enable { true };
+  bool bypass2Enable { true };
+  Audio process(Audio x) noexcept override {
+    return softClip3rdStereo(this->lpf.process(x) * gain_lin) / gain_lin
+        + this->hpf.process(x) * this->bypass1Enable
+        + this->hpf2.process(x) * this->bypass2Enable;
+  }
+  void update() noexcept override { this->gain_lin = invDb(this->gain_db); }
+  void reset(signal_t fs) noexcept override {
+    this->lpf.fc_hz  = fs / 4;
+    this->hpf.fc_hz  = fs / 4;
+    this->hpf2.fc_hz = fs / 2;
+    this->lpf.reset(fs);
+    this->hpf.reset(fs);
+    this->hpf2.reset(fs);
+  }
+};
+
+/**
  * @brief Fifth order soft clipper wrapped in a Component.
  *
- * @tparam signal_t Audio datatype.
  */
 struct SoftClip5 final : public ComponentBase<Audio> {
   signal_t gain_db { 0 };
