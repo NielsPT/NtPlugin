@@ -15,3 +15,4 @@ linkTest:Qlcn:Fx:Effect
 ntDeEsser2:Aagq
 ntAdaptiveDeEsser:Lihv:Dynamics:Dynamics
 ntTilt:Ohmy
+ntGenerator:Gnlv

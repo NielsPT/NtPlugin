@@ -22,7 +22,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "lib/gcem.h"
 #include <cassert>
 #include <cmath>
 #include <complex>
@@ -96,7 +95,7 @@ inline static std::vector<T> cosineWindow(
     for (size_t i = 0; i < n; ++i) {
       T wi = 0.0;
       for (size_t j = 0; j < nCoeffs; ++j) {
-        wi += coeffs[j] * cos(i * j * 2.0 * NTFX_PI / wlength);
+        wi += coeffs[j] * cos(i * j * 2.0 * M_PI / wlength);
       }
       w.push_back(wi);
     }
@@ -203,7 +202,7 @@ inline static std::vector<T> barthannwin(size_t n) noexcept {
   } else {
     for (size_t i = 0; i < n; ++i) {
       const T x = std::abs(i / (n - 1.0) - 0.5);
-      w.push_back(0.62 - 0.48 * x + 0.38 * cos(2.0 * NTFX_PI * x));
+      w.push_back(0.62 - 0.48 * x + 0.38 * cos(2.0 * M_PI * x));
     }
   }
   return w;
@@ -217,7 +216,7 @@ inline static std::vector<T> bohmanwin(size_t n) noexcept {
   } else {
     for (size_t i = 0; i < n; ++i) {
       const T x = std::abs(2.0 * i - (n - 1)) / (n - 1);
-      w.push_back((1.0 - x) * cos(NTFX_PI * x) + sin(NTFX_PI * x) / NTFX_PI);
+      w.push_back((1.0 - x) * cos(M_PI * x) + sin(M_PI * x) / M_PI);
     }
   }
   return w;
@@ -267,7 +266,7 @@ inline static std::vector<T> tukeywin(size_t n, T r) noexcept {
           (cos(std::max(std::abs((T)i - (n - 1) / 2.0) * (2.0 / (n - 1) / r)
                        - (1.0 / r - 1.0),
                    0.0)
-               * NTFX_PI)
+               * M_PI)
               + 1.0)
           / 2.0);
     }
@@ -285,7 +284,7 @@ inline static std::vector<T> taylorwin(size_t n, size_t nbar, T sll) noexcept {
   std::vector<T> w;
   w.reserve(n);
   const T amplification = pow(10.0, -sll / 20.0);
-  const T a             = acosh(amplification) / NTFX_PI;
+  const T a             = acosh(amplification) / M_PI;
   const T a2            = sq(a);
   const T sp2           = sq(nbar) / (a2 + sq(nbar - 0.5));
   for (size_t i = 0; i < n; ++i) { w.push_back(1.0); }
@@ -298,7 +297,7 @@ inline static std::vector<T> taylorwin(size_t n, size_t nbar, T sll) noexcept {
     }
     const T Fm = -(numerator / denominator);
     for (size_t i = 0; i < n; ++i) {
-      const T x = 2 * NTFX_PI * (i + 0.5) / n;
+      const T x = 2 * M_PI * (i + 0.5) / n;
       w[i] += Fm * cos(m * x);
     }
   }
@@ -417,7 +416,7 @@ inline static void fft_radix2(std::complex<T>* z, size_t size) noexcept {
   auto ww            = new std::complex<T>[size / 2];
 
   for (size_t i = 0; i < size / 2; ++i) {
-    ww[i] = std::exp(static_cast<T>(-2.0) * static_cast<T>(NTFX_PI)
+    ww[i] = std::exp(static_cast<T>(-2.0) * static_cast<T>(M_PI)
         * std::complex<T>(0.0, 1.0) * static_cast<T>(i) / static_cast<T>(size));
   }
 
@@ -513,7 +512,7 @@ inline static void czt_fft(std::complex<T>* z, size_t size) noexcept {
     fft_radix2(z, size);
   } else {
     const std::complex<T> w =
-        std::exp(static_cast<T>(-2.0) * static_cast<T>(NTFX_PI)
+        std::exp(static_cast<T>(-2.0) * static_cast<T>(M_PI)
             * std::complex<T>(0.0, 1.0) / static_cast<std::complex<T>>(size));
     const std::complex<T> a = 1;
     czt(z, size, z, size, w, a);
@@ -561,7 +560,7 @@ inline static std::vector<T> chebwin(size_t n, T r) noexcept {
     std::complex<T> p[n];
     if (n % 2 != 0) {
       for (size_t i = 0; i < n; ++i) {
-        const T x = beta * cos(NTFX_PI * i / n);
+        const T x = beta * cos(M_PI * i / n);
         if (x > 1.0) {
           p[i] = cosh(order * acosh(x));
         } else if (x < -1.0) {
@@ -578,8 +577,8 @@ inline static std::vector<T> chebwin(size_t n, T r) noexcept {
       }
     } else {
       for (size_t i = 0; i < n; ++i) {
-        const T x               = beta * cos(NTFX_PI * i / n);
-        const std::complex<T> z = std::exp(NTFX_PI * std::complex<T>(0.0, 1.0)
+        const T x               = beta * cos(M_PI * i / n);
+        const std::complex<T> z = std::exp(M_PI * std::complex<T>(0.0, 1.0)
             * static_cast<T>(i) / static_cast<T>(n));
         if (x > 1) {
           p[i] = z * cosh(order * acosh(x));
