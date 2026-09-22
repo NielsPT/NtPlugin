@@ -294,7 +294,7 @@ void NtPluginAudioProcessorEditor::_initWindowWidth(int nCols) {
   auto primKnobsWidth = float(nCols) * this->proc.plug.uiSpec.knobWidth;
   auto secKnobWidth   = float(this->proc.plug.secondaryKnobs.size())
           * this->proc.plug.uiSpec.secondaryKnobWidth
-      + 2.0f * this->_pad;
+      + 4.0f * this->_pad;
   auto knobGroupWidth = float(this->proc.plug.knobGroups.size())
       * this->proc.plug.uiSpec.groupWidth;
   knobGroupWidth += 2 * this->proc.plug.uiSpec.groupPad;

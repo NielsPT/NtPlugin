@@ -24,12 +24,12 @@ import argparse
 import shutil
 import platform
 import json
-import numpy as np
 import time
-from matplotlib import pyplot as p
-from scipy import signal as s
 import multiprocessing as mp
 from itertools import repeat
+import numpy as np
+from matplotlib import pyplot as p
+from scipy import signal as s
 
 SEPARATOR = "."
 EXPECTED_DIR = "in"
@@ -247,7 +247,7 @@ def _updateCompileCommands(cppPath: str, args: list[str]) -> bool:
                 return False
             try:
                 ccs = json.loads(data)
-            except ValueError as e:
+            except ValueError:
                 return False
     newCc = {
         "directory": f"{FILE_DIR}/tests",
@@ -464,8 +464,11 @@ def plotSpectrum(
         else:
             _x = x[0, :]
     _x[_x == 0] = 1e-12
+
+    fig = p.figure()
     with np.errstate(divide="ignore", invalid="ignore"):
-        p.specgram(_x, Fs=fs)
+        pxx, freq, t, cax = p.specgram(_x, Fs=fs)
+    fig.colorbar(cax).set_label('Intensity [dB]')
     p.grid(True)
     p.xlabel("Time / s")
     p.ylabel("Frequency / Hz")

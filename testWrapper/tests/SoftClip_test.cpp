@@ -19,20 +19,20 @@ int main() {
   auto fifthStorage = std::make_unique<NtFx::SoftClip5>();
   auto& fifth       = *fifthStorage;
   NTFX_ADD_TEST(set, fifth, "linearSweep");
-  auto thirdAntiliasStorage  = std::make_unique<NtFx::SoftClip3AntiAlias>();
-  auto& thirdAntiliasDefault = *thirdAntiliasStorage;
-  NTFX_ADD_TEST(set, thirdAntiliasDefault, "linearSweep");
-  NTFX_ADD_TEST(set, thirdAntiliasDefault, "impulse");
-  auto thirdAntiliasOneBypassStorage =
+  auto thirdAntialiasStorage  = std::make_unique<NtFx::SoftClip3AntiAlias>();
+  auto& thirdAntialiasDefault = *thirdAntialiasStorage;
+  NTFX_ADD_TEST(set, thirdAntialiasDefault, "linearSweep");
+  NTFX_ADD_TEST(set, thirdAntialiasDefault, "impulse");
+  auto thirdAntialiasOneBypassStorage =
       std::make_unique<NtFx::SoftClip3AntiAlias>();
-  auto& thirdAntiliasOneBypass         = *thirdAntiliasOneBypassStorage;
-  thirdAntiliasOneBypass.bypass2Enable = false;
-  NTFX_ADD_TEST(set, thirdAntiliasOneBypass, "impulse");
-  auto thirdAntiliasNoBypassStorage =
+  auto& thirdAntialiasOneBypass         = *thirdAntialiasOneBypassStorage;
+  thirdAntialiasOneBypass.bypass2Enable = false;
+  NTFX_ADD_TEST(set, thirdAntialiasOneBypass, "impulse");
+  auto thirdAntialiasNoBypassStorage =
       std::make_unique<NtFx::SoftClip3AntiAlias>();
-  auto& thirdAntiliasNoBypass         = *thirdAntiliasNoBypassStorage;
-  thirdAntiliasNoBypass.bypass1Enable = false;
-  thirdAntiliasNoBypass.bypass2Enable = false;
-  NTFX_ADD_TEST(set, thirdAntiliasNoBypass, "impulse");
+  auto& thirdAntialiasNoBypass         = *thirdAntialiasNoBypassStorage;
+  thirdAntialiasNoBypass.bypass1Enable = false;
+  thirdAntialiasNoBypass.bypass2Enable = false;
+  NTFX_ADD_TEST(set, thirdAntialiasNoBypass, "impulse");
   return set.runAllTests();
 }

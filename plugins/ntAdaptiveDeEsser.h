@@ -25,7 +25,6 @@
 #include "lib/Delay.h"
 #include "lib/DynamicFilter.h"
 #include "lib/Plugin.h"
-#include "lib/gcem.h"
 #include "lib/utils.h"
 #include <cstddef>
 
@@ -63,47 +62,40 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
           .minVal = 0,
           .maxVal = 100,
       },
-      // {
-      //     .p_val  = &this->range_db,
-      //     .name   = "Range",
-      //     .suffix = " dB",
-      //     .minVal = 0,
-      //     .maxVal = 24,
-      // },
     };
     this->secondaryKnobs = {
-      // {
-      //     .p_val    = &this->sc.scHpf.settings.fc_hz,
-      //     .name     = "SC HPF",
-      //     .suffix   = " Hz",
-      //     .minVal   = 20,
-      //     .maxVal   = 2000,
-      //     .midPoint = 200,
-      // },
-      // {
-      //     .p_val    = &this->sc.peakLo.tHold_ms,
-      //     .name     = "LF peak hold",
-      //     .suffix   = " ms",
-      //     .minVal   = 0,
-      //     .maxVal   = 10,
-      //     .midPoint = 1,
-      // },
-      // {
-      //     .p_val    = &this->sc.peakLo.tRel_ms,
-      //     .name     = "LF release",
-      //     .suffix   = " ms",
-      //     .minVal   = 0,
-      //     .maxVal   = 100,
-      //     .midPoint = 10,
-      // },
-      // {
-      //     .p_val    = &this->dl.t_ms,
-      //     .name     = "Lookahead",
-      //     .suffix   = " ms",
-      //     .minVal   = 0,
-      //     .maxVal   = 10,
-      //     .midPoint = 1,
-      // },
+      {
+          .p_val    = &this->sc.scHpf.settings.fc_hz,
+          .name     = "SC HPF",
+          .suffix   = " Hz",
+          .minVal   = 20,
+          .maxVal   = 2000,
+          .midPoint = 200,
+      },
+      {
+          .p_val    = &this->sc.peakLo.tHold_ms,
+          .name     = "LF peak hold",
+          .suffix   = " ms",
+          .minVal   = 0,
+          .maxVal   = 10,
+          .midPoint = 1,
+      },
+      {
+          .p_val    = &this->sc.peakLo.tRel_ms,
+          .name     = "LF release",
+          .suffix   = " ms",
+          .minVal   = 0,
+          .maxVal   = 100,
+          .midPoint = 10,
+      },
+      {
+          .p_val    = &this->dl.t_ms,
+          .name     = "Lookahead",
+          .suffix   = " ms",
+          .minVal   = 0,
+          .maxVal   = 10,
+          .midPoint = 1,
+      },
       {
           .p_val    = &this->sc.sc.settings.tAtt_ms,
           .name     = "Attack",
@@ -112,14 +104,14 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
           .maxVal   = 10,
           .midPoint = 1,
       },
-      // {
-      //     .p_val    = &this->sc.sc.settings.tPeakHold_ms,
-      //     .name     = "Peak Hold",
-      //     .suffix   = " ms",
-      //     .minVal   = 0,
-      //     .maxVal   = 10,
-      //     .midPoint = 1,
-      // },
+      {
+          .p_val    = &this->sc.sc.settings.tPeakHold_ms,
+          .name     = "Peak Hold ",
+          .suffix   = " ms",
+          .minVal   = 0,
+          .maxVal   = 10,
+          .midPoint = 1,
+      },
       {
           .p_val    = &this->sc.sc.settings.tRel_ms,
           .name     = "Release",
@@ -128,15 +120,16 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
           .maxVal   = 100.0,
           .midPoint = 10.0,
       },
-
     };
     this->toggles = {
       { .p_val = &this->bypassEnable, .name = "Bypass" },
       { .p_val = &this->sc.scListen, .name = "SC Listen" },
     };
     this->meters.push_back({ .name = "GR", .invert = true });
-    this->shelf.q1 = 0.508;
-    this->shelf.q2 = 0.508;
+    this->dl.t_ms                = 1.25;
+    this->sc.sc.settings.tAtt_ms = 1;
+    this->shelf.q1               = 0.508;
+    this->shelf.q2               = 0.508;
     this->updateDefaults();
   }
 
@@ -162,10 +155,8 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
   }
 
   void update() noexcept override {
-    this->dl.t_ms                     = this->sc.sc.settings.tAtt_ms;
-    this->sc.sc.settings.tPeakHold_ms = this->sc.sc.settings.tAtt_ms;
-    this->range_lin                   = NtFx::invDb(-this->range_db);
-    this->red_lin     = gcem::sqrt(this->red_p / signal_t(100.0));
+    this->range_lin   = NtFx::invDb(-this->range_db);
+    this->red_lin     = this->red_p / signal_t(100.0);
     this->shelf.fc_hz = this->sc.fc_hz;
     this->latency     = size_t(this->dl.t_ms * this->_fs);
     this->dl.update();
