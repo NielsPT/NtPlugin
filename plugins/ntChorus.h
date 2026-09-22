@@ -26,7 +26,6 @@
 #include "lib/FirstOrder.h"
 #include "lib/Glider.h"
 #include "lib/Plugin.h"
-#include "lib/utils.h"
 
 constexpr double tWetDlMax_ms = 100;
 
@@ -60,7 +59,6 @@ struct ntChorus final : public NtFx::Plugin {
   }
 
   Audio process(Audio x) noexcept override {
-
     this->updatePeakLevel(0, x);
     if (this->bypassEnable) {
       this->updatePeakLevel(1, x);

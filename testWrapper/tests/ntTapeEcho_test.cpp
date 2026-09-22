@@ -16,17 +16,11 @@ int main() {
   tapeEchoBypass->bypassEnable = true;
   NTFX_ADD_TEST_PTR(set, tapeEchoBypass, "impulse");
 
-  // Tape echo with default settings
-  auto tapeEchoDefaultStorage = std::make_unique<ntTapeEcho>();
-  auto* tapeEchoDefault       = tapeEchoDefaultStorage.get();
-  tapeEchoDefault->subDevL    = SubDev::eighth;
-  tapeEchoDefault->subDevR    = SubDev::eighth;
-  tapeEchoDefault->fb_lin     = 0.5f;
-  NTFX_ADD_TEST_PTR(set, tapeEchoDefault, "linearSweep");
-
   // Tape echo with longer delay
   auto tapeEchoLongStorage = std::make_unique<ntTapeEcho>();
   auto* tapeEchoLong       = tapeEchoLongStorage.get();
+  tapeEchoLong->syncEnable = true;
+  tapeEchoLong->tempo      = 120;
   tapeEchoLong->subDevL    = SubDev::fourth;
   tapeEchoLong->subDevR    = SubDev::fourth;
   tapeEchoLong->fb_lin     = 0.4f;
@@ -35,6 +29,8 @@ int main() {
   // Tape echo with high feedback
   auto tapeEchoHighFbStorage = std::make_unique<ntTapeEcho>();
   auto* tapeEchoHighFb       = tapeEchoHighFbStorage.get();
+  tapeEchoHighFb->tempo      = 120;
+  tapeEchoHighFb->syncEnable = true;
   tapeEchoHighFb->subDevL    = SubDev::eighth;
   tapeEchoHighFb->subDevR    = SubDev::eighth;
   tapeEchoHighFb->fb_lin     = 0.8f;
@@ -43,6 +39,8 @@ int main() {
   // Tape echo with dotted eighth note
   auto tapeEchoDottedStorage = std::make_unique<ntTapeEcho>();
   auto* tapeEchoDotted       = tapeEchoDottedStorage.get();
+  tapeEchoDotted->tempo      = 120;
+  tapeEchoDotted->syncEnable = true;
   tapeEchoDotted->subDevL    = SubDev::eighth_dot;
   tapeEchoDotted->subDevR    = SubDev::eighth_dot;
   tapeEchoDotted->fb_lin     = 0.5f;

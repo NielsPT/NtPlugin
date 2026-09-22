@@ -140,8 +140,9 @@ def generateLinearSweep(fs: float, t: float) -> np.ndarray:
     Returns:
         np.ndarray: Linear sweep.
     """
-    n = int(fs * t)
-    tAx = np.arange(n) * t / n
+    # n = int(fs * t)
+    # tAx = np.arange(n) * t / n
+    tAx = np.linspace(0, t, int(fs * t))
     return s.chirp(tAx, 20, t, 20e3)
 
 
@@ -191,6 +192,7 @@ def generateTestVectors(
     syncSweep = np.array([_syncSweep, _syncSweep])
     _storeStereoTestVector(syncSweep, outputPath + "syncSweep.txt")
     _linearSweep = generateLinearSweep(fs, 1)
+    plotSpectrum(_linearSweep, fs, f"{FILE_DIR}/img/linearSweep.png")
     linearSweep = np.array([_linearSweep, _linearSweep])
     _storeStereoTestVector(linearSweep, outputPath + "linearSweep.txt")
     return (impulse, linearSweep, syncSweep, dynamic_alternating)
@@ -424,7 +426,7 @@ def plotFrequencyDomain(
             _ylim[0] = x.min() * 1.1
         if x.max() > 10:
             _ylim[1] = x.max() * 1.1
-        if x.max() > 30:
+        if x.max() > 40:
             _ylim = [0, x.max() * 1.1]
     p.ylim(_ylim)
     p.grid(True)
@@ -461,7 +463,7 @@ def plotSpectrum(
             _x = x[3, :]
         else:
             _x = x[0, :]
-    _x = np.maximum(np.abs(_x), 1e-12)
+    _x[_x == 0] = 1e-12
     with np.errstate(divide="ignore", invalid="ignore"):
         p.specgram(_x, Fs=fs)
     p.grid(True)
@@ -905,7 +907,7 @@ def createParser() -> argparse.ArgumentParser:
         " for files ending with '_test.cpp' and those will be used. Defaults to "
         "'all'",
     )
-    runParser.add_argument(
+    parser.add_argument(
         "--no-plot",
         "--no_plot",
         "-n",

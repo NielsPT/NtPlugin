@@ -23,6 +23,7 @@
 
 #include "lib/Audio.h"
 #include "lib/Component.h"
+#include "lib/SoftClip.h"
 #include "lib/Tilt.h"
 #include "lib/Transformer.h"
 #include <cstddef>
@@ -49,6 +50,26 @@ namespace Generator {
       y = -x_ * alpha + 2;
     } else {
       y = x_ * alpha - 4;
+    }
+    return y;
+  }
+
+  /**
+   * @brief Saw wave generator.
+   *
+   * @tparam T Datatype.
+   * @param x Input in radians. Same as input for 'sin' function.
+   * @return T Output.
+   */
+  template <typename T>
+  static inline T square(T x) {
+    T x_ = gcem::fmod(x, T(2.0) * NTFX_PI);
+    x_   = (x_ < 0 ? x_ + 2 * NTFX_PI : x_);
+    T y;
+    if (x_ < NTFX_PI) {
+      y = 1;
+    } else {
+      y = -1;
     }
     return y;
   }
@@ -117,9 +138,10 @@ namespace Generator {
   };
   struct PinkNoise final : public ComponentBase<Audio> {
     Tilt<> tilt;
+    HardClip clip;
     PinkNoise() { this->tilt.tilt_db = -10; }
     Audio process(Audio) noexcept override {
-      return tilt.process({ rand<signal_t>(), rand<signal_t>() });
+      return clip.process(tilt.process({ rand<signal_t>(), rand<signal_t>() }));
     }
     void update() noexcept override { this->tilt.update(); }
     void reset(signal_t fs) noexcept override { this->tilt.reset(fs); }
@@ -178,6 +200,26 @@ namespace Generator {
       auto w = this->_w * signal_t(this->_i) + this->ph_rad;
       if (++this->_i >= _n) { _i = 0; }
       return saw(w);
+    }
+    void update() noexcept override {
+      this->_n = size_t(this->_fs / this->f_hz);
+      this->_w = 2 * NTFX_PI * this->f_hz / this->_fs;
+    }
+    void reset(signal_t fs) noexcept override {
+      this->_fs = fs;
+      this->update();
+    }
+  };
+  struct Square final : public ComponentBase<Audio> {
+    signal_t f_hz { 1e3 };
+    signal_t ph_rad { 0 };
+    size_t _i { 0 };
+    size_t _n { 1 };
+    signal_t _w { 0 };
+    Audio process(Audio) noexcept override {
+      auto w = this->_w * signal_t(this->_i) + this->ph_rad;
+      if (++this->_i >= _n) { _i = 0; }
+      return square(w);
     }
     void update() noexcept override {
       this->_n = size_t(this->_fs / this->f_hz);

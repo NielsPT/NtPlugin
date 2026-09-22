@@ -135,9 +135,8 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
       { .p_val = &this->sc.scListen, .name = "SC Listen" },
     };
     this->meters.push_back({ .name = "GR", .invert = true });
-    this->shelf.q1               = 0.508;
-    this->shelf.q2               = 0.508;
-    this->sc.sc.settings.tAtt_ms = 0.25;
+    this->shelf.q1 = 0.508;
+    this->shelf.q2 = 0.508;
     this->updateDefaults();
   }
 

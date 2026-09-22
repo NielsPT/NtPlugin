@@ -10,6 +10,7 @@
 enum Mode : int {
   e_sin,
   e_saw,
+  e_square,
   e_white,
   e_pink,
   e_filteredWhite,
@@ -20,6 +21,7 @@ enum Mode : int {
 struct ntGenerator final : public NtFx::Plugin {
   NtFx::Generator::Sin sin;
   NtFx::Generator::Saw saw;
+  NtFx::Generator::Square square;
   NtFx::Generator::WhiteNoise white;
   NtFx::Generator::PinkNoise pink;
   NtFx::Generator::FilteredWhiteNoise filteredWhite;
@@ -50,6 +52,7 @@ struct ntGenerator final : public NtFx::Plugin {
           {
               "Sine Wave",
               "Saw Wave",
+              "Square Wave",
               "White Noise",
               "Pink Noise",
               "Filtered White",
@@ -69,6 +72,9 @@ struct ntGenerator final : public NtFx::Plugin {
       break;
     case Mode::e_saw:
       yGen = this->saw.process(x);
+      break;
+    case Mode::e_square:
+      yGen = this->square.process(x);
       break;
     case Mode::e_white:
       yGen = this->white.process(x);
@@ -100,13 +106,15 @@ struct ntGenerator final : public NtFx::Plugin {
     this->filteredWhite.hpf.fc_hz = this->fHpf;
     this->sin.f_hz                = this->f_hz;
     this->saw.f_hz                = this->f_hz;
+    this->square.f_hz             = this->f_hz;
     sin.update();
     saw.update();
+    square.update();
     white.update();
     pink.update();
     filteredWhite.update();
     filteredPink.update();
-    if (this->mode <= Mode::e_saw) {
+    if (this->mode <= Mode::e_square) {
       this->activateParameter("Frequency");
     } else {
       this->deactivateParameter("Frequency");
@@ -123,6 +131,7 @@ struct ntGenerator final : public NtFx::Plugin {
   void reset(signal_t fs) noexcept override {
     sin.reset(fs);
     saw.reset(fs);
+    square.reset(fs);
     white.reset(fs);
     pink.reset(fs);
     filteredWhite.reset(fs);

@@ -45,5 +45,12 @@ int main() {
   Saw100ph90.f_hz        = 100;
   Saw100ph90.ph_rad      = NTFX_PI / 2;
   NTFX_ADD_TEST(set, Saw100ph90, "impulse");
+  auto square1kStorage = std::make_unique<NtFx::Generator::Square>();
+  auto& square1k       = *square1kStorage;
+  NTFX_ADD_TEST(set, square1k, "impulse");
+  auto square100Storage = std::make_unique<NtFx::Generator::Square>();
+  auto& square100       = *square100Storage;
+  square100.f_hz        = 100;
+  NTFX_ADD_TEST(set, square100, "impulse");
   return set.runAllTests();
 }

@@ -184,8 +184,7 @@ namespace Delay {
       this->t_ms.process();
       this->dl[this->_i++] = x;
       if (this->_i >= this->_nDl) { this->_i = 0; }
-      int n { 0 };
-      n = int(this->t_ms.pr * 0.001 * this->_fs);
+      auto n = int(this->t_ms.pr * 0.001 * this->_fs);
       if (n == 0) { return x; }
       if (n >= this->_nDl) { n = this->_nDl; }
       auto i = this->_i - n;

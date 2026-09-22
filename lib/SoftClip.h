@@ -24,9 +24,18 @@
 
 #include "lib/Audio.h"
 #include "lib/Component.h"
+#include "lib/utils.h"
 #include <array>
 
 namespace NtFx {
+
+static inline signal_t hardClipMono(signal_t x) {
+  return (x > 1 ? 1 : x < -1 ? -1 : x);
+}
+
+static inline Audio hardClipStereo(Audio x) noexcept {
+  return { hardClipMono(x.l), hardClipMono(x.r) };
+}
 
 /**
  * @brief Calculates coefficients for symmetrical soft clipper
@@ -58,6 +67,33 @@ constexpr std::array<signal_t, 2> _coeffsThird =
     _calculateSoftClipCoeffs<signal_t, 1>();
 
 /**
+ * @brief Applied soft clipping using a third order polynomial.
+ *
+ * @tparam signal_t Audio datatype.
+ * @param x Input sample.
+ * @return signal_t Output sample.
+ */
+static inline signal_t softClip3rdMono(signal_t x) {
+  if (x > 1.0) { return signal_t(1.0); }
+  if (x < -1.0) { return signal_t(-1.0); }
+  auto x_ = x / _coeffsThird[0];
+  auto x3 = x_ * x_ * x_;
+  return x + _coeffsThird[1] * x3;
+}
+
+/**
+ * @brief Applied soft clipping using a third order polynomial on a stereo
+ * signal.
+ *
+ * @tparam signal_t Audio datatype.
+ * @param x Input sample.
+ * @return signal_t Output sample.
+ */
+static inline Audio softClip3rdStereo(Audio x) {
+  return { softClip3rdMono(x.l), softClip3rdMono(x.r) };
+}
+
+/**
  * @brief Applied soft clipping using a fifth order polynomial.
  *
  * @tparam signal_t Audio datatype.
@@ -86,39 +122,17 @@ static inline Audio softClip5thStereo(Audio x) noexcept {
 }
 
 /**
- * @brief Applied soft clipping using a third order polynomial.
- *
- * @tparam signal_t Audio datatype.
- * @param x Input sample.
- * @return signal_t Output sample.
- */
-static inline signal_t softClip3rdMono(signal_t x) {
-  if (x > 1.0) { return signal_t(1.0); }
-  if (x < -1.0) { return signal_t(-1.0); }
-  auto x_ = x / _coeffsThird[0];
-  auto x3 = x_ * x_ * x_;
-  return x - _coeffsThird[1] * x3;
-}
-
-/**
- * @brief Applied soft clipping using a third order polynomial on a stereo
- * signal.
- *
- * @tparam signal_t Audio datatype.
- * @param x Input sample.
- * @return signal_t Output sample.
- */
-static inline Audio softClip3rdStereo(Audio x) {
-  return { softClip3rdMono(x.l), softClip3rdMono(x.r) };
-}
-
-/**
  * @brief Third order soft clipper wrapped in a Component.
  *
  * @tparam signal_t Audio datatype.
  */
-class SoftClip3 : public ComponentBase<Audio> {
-  Audio process(Audio x) noexcept override { return softClip3rdStereo(x); }
+struct SoftClip3 final : public ComponentBase<Audio> {
+  signal_t gain_db { 0 };
+  signal_t gain_lin { 1 };
+  Audio process(Audio x) noexcept override {
+    return softClip3rdStereo(x * gain_lin) / gain_lin;
+  }
+  void update() noexcept override { this->gain_lin = invDb(this->gain_db); }
 };
 
 /**
@@ -126,7 +140,21 @@ class SoftClip3 : public ComponentBase<Audio> {
  *
  * @tparam signal_t Audio datatype.
  */
-class SoftClip5 : public ComponentBase<Audio> {
-  Audio process(Audio x) noexcept override { return softClip5thStereo(x); }
+struct SoftClip5 final : public ComponentBase<Audio> {
+  signal_t gain_db { 0 };
+  signal_t gain_lin { 1 };
+  Audio process(Audio x) noexcept override {
+    return softClip5thStereo(x * gain_lin) / gain_lin;
+  }
+  void update() noexcept override { this->gain_lin = invDb(this->gain_db); }
+};
+
+struct HardClip final : public ComponentBase<Audio> {
+  signal_t gain_db { 0 };
+  signal_t gain_lin { 1 };
+  Audio process(Audio x) noexcept override {
+    return hardClipStereo(x * gain_lin) / gain_lin;
+  }
+  void update() noexcept override { this->gain_lin = invDb(this->gain_db); }
 };
 } // namespace NtFx
