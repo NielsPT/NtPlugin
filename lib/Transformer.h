@@ -25,14 +25,15 @@
 namespace NtFx {
 
 struct Transformer final : public ComponentBase<Audio> {
+  NtFx::Clip::SoftAntialias5 clip;
+  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> lpf;
+  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> hpf;
   signal_t fc_hz       = 250;
   signal_t lfCutoff_hz = 20;
   signal_t gain_lin { 0 };
-  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> lpf;
-  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> hpf;
   Audio process(Audio x) noexcept override {
     auto yShelf = x + this->lpf.process(x) * this->gain_lin;
-    auto yClip  = NtFx::softClip5thStereo(yShelf);
+    auto yClip  = clip.process(yShelf);
     auto yHpf   = this->hpf.process(yClip);
     return yHpf;
   }
@@ -42,12 +43,14 @@ struct Transformer final : public ComponentBase<Audio> {
     this->hpf.fc_hz = fc_hz;
     this->lpf.update();
     this->hpf.update();
+    this->clip.update();
   }
   void reset(signal_t fs) noexcept override {
     this->_fs       = fs;
     this->lpf.fc_hz = this->lfCutoff_hz;
     this->lpf.reset(fs);
     this->hpf.reset(fs);
+    this->clip.reset(fs);
     this->update();
   }
 };

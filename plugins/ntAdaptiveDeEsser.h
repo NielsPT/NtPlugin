@@ -25,6 +25,7 @@
 #include "lib/Delay.h"
 #include "lib/DynamicFilter.h"
 #include "lib/Plugin.h"
+#include "lib/gcem.h"
 #include "lib/utils.h"
 #include <cstddef>
 
@@ -52,7 +53,7 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
           .p_val  = &this->sc.offset_db,
           .name   = "Threshold",
           .suffix = " dB",
-          .minVal = 0,
+          .minVal = -24,
           .maxVal = 24,
       },
       {
@@ -85,7 +86,7 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
           .name     = "LF release",
           .suffix   = " ms",
           .minVal   = 0,
-          .maxVal   = 100,
+          .maxVal   = 1000,
           .midPoint = 10,
       },
       {
@@ -117,7 +118,7 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
           .name     = "Release",
           .suffix   = " ms",
           .minVal   = 1.0,
-          .maxVal   = 100.0,
+          .maxVal   = 250.0,
           .midPoint = 10.0,
       },
     };
@@ -156,9 +157,9 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
 
   void update() noexcept override {
     this->range_lin   = NtFx::invDb(-this->range_db);
-    this->red_lin     = this->red_p / signal_t(100.0);
+    this->red_lin     = gcem::sqrt(this->red_p / signal_t(100.0));
     this->shelf.fc_hz = this->sc.fc_hz;
-    this->latency     = size_t(this->dl.t_ms * this->_fs);
+    this->latency     = size_t(this->dl.t_ms / 1000 * this->_fs);
     this->dl.update();
     this->sc.update();
     this->shelf.update();

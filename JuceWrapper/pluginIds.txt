@@ -16,3 +16,4 @@ ntDeEsser2:Aagq
 ntAdaptiveDeEsser:Lihv:Dynamics:Dynamics
 ntTilt:Ohmy
 ntGenerator:Gnlv
+ntSoftClip:Xcxh

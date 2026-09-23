@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * @file FirstOrder.h
  * @author Niels Thøgersen (niels.thoegersen@gmail.com)
@@ -22,7 +24,6 @@
 
 #include "lib/Audio.h"
 #include "lib/Component.h"
-#include "lib/gcem.h"
 
 namespace NtFx {
 namespace FirstOrder {
@@ -31,12 +32,7 @@ namespace FirstOrder {
    * 'lpfZero' has a zero added at Nyquist.
    *
    */
-  enum class Shape {
-    none,
-    lpf,
-    lpfZero,
-    hpf,
-  };
+  enum class Shape { none, lpf, lpfZero, hpf };
 
   /**
    * @brief A single channel first order filter.
@@ -52,7 +48,7 @@ namespace FirstOrder {
     signal_t _xn1 { 0 };
 
     signal_t process(signal_t x) noexcept override {
-      signal_t y;
+      signal_t y { 0 };
       if constexpr (shape == Shape::none) {
         return x;
       } else if constexpr (shape == Shape::lpf) {
