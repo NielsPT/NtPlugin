@@ -229,7 +229,7 @@ struct ntCompressor final : public NtFx::Plugin {
     this->fbState = x * gr;
     auto xClip    = yComp * this->makeup_lin;
     auto xMix     = xClip;
-    if (this->clip) { xMix = NtFx::softClip5thStereo(xClip); }
+    if (this->clip) { xMix = NtFx::Clip::soft5thStereo(xClip); }
     auto y = this->mix_lin * xMix + (1 - this->mix_lin) * xComp;
     this->updatePeakLevel(1, y);
     if (this->scListenEnable) { return xSc; }

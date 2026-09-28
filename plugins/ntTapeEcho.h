@@ -151,13 +151,13 @@ struct ntTapeEcho final : public NtFx::Plugin {
     if (this->modEnable) { yMod = this->mod.process(xMod); }
     Audio yDelay = { this->dlL.process(yMod.l), this->dlR.process(yMod.r) };
     auto yFbClip =
-        NtFx::softClip3rdStereo(yDelay * this->aClip_lin) / aClip_lin;
+        NtFx::Clip::soft3rdStereo(yDelay * this->aClip_lin) / aClip_lin;
     NtFx::ensureFinite(yFbClip);
     auto yHp      = hpf.process(yFbClip);
     auto yLp      = lpf.process(yHp);
     this->fbState = yLp;
     auto yOutClip = yLp;
-    if (this->clipEnable) { yOutClip = NtFx::softClip5thStereo(yLp); }
+    if (this->clipEnable) { yOutClip = NtFx::Clip::soft5thStereo(yLp); }
     auto y = this->dryMix.process(yOutClip, x);
     this->updatePeakLevel(0, x);
     if (this->bypassEnable) {

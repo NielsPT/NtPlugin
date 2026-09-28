@@ -38,6 +38,22 @@ namespace Clip {
     return { hardMono(x.l), hardMono(x.r) };
   }
 
+  static inline signal_t alt1(signal_t x) {
+    auto x_ = x * 0.5;
+    if (x_ > 1.0) { return signal_t(1.0); }
+    if (x_ < 0.0) { return x; }
+    return x - x_ * x_;
+  }
+
+  static inline Audio alt1Stereo(Audio x) { return { alt1(x.l), alt1(x.r) }; }
+
+  static inline signal_t secondMono(signal_t x, signal_t a) {
+    auto x_ = x / 1.5;
+    return x_ + a * (x_ * x_ - 0.5);
+  }
+  static inline Audio secondStereo(Audio x, signal_t a) {
+    return { secondMono(x.l, a), secondMono(x.r, a) };
+  }
   /**
    * @brief Calculates coefficients for symmetrical soft clipper
    * at compile time.
@@ -73,9 +89,9 @@ namespace Clip {
    * @return signal_t Output sample.
    */
   static inline signal_t soft3rdMono(signal_t x) {
-    if (x > 1.0) { return signal_t(1.0); }
-    if (x < -1.0) { return signal_t(-1.0); }
     auto x_ = x / _coeffsThird[0];
+    if (x_ > 1.0) { return signal_t(1.0); }
+    if (x_ < -1.0) { return signal_t(-1.0); }
     auto x3 = x_ * x_ * x_;
     return x + _coeffsThird[1] * x3;
   }
@@ -118,46 +134,103 @@ namespace Clip {
   }
 
   /**
+   * @brief Fifth order soft clipper wrapped in a Component.
+   *
+   */
+  struct SoftBase : public ComponentBase<Audio> {
+    signal_t gain_db { 0 };
+    signal_t gainIn_lin { 1 };
+    signal_t gainOut_lin { 1 };
+    SoftBase()                           = default;
+    SoftBase(const SoftBase&)            = default;
+    SoftBase(SoftBase&&)                 = default;
+    virtual ~SoftBase()                  = default;
+    SoftBase& operator=(const SoftBase&) = default;
+    SoftBase& operator=(SoftBase&&)      = default;
+    void update() noexcept override {
+      this->gainIn_lin  = invDb(this->gain_db);
+      this->gainOut_lin = 1 / invDb(this->gain_db);
+      if (this->gain_db > 0) {
+        this->gainOut_lin = 1 / invDb(this->gain_db * 0.5);
+      }
+    }
+  };
+
+  struct Hard final : public SoftBase {
+    Audio process(Audio x) noexcept override {
+      return hardStereo(x * this->gainIn_lin) * this->gainOut_lin;
+    }
+  };
+
+  struct Alt1 final : public SoftBase {
+    Audio process(Audio x) noexcept override {
+      return alt1Stereo(x * this->gainIn_lin) * this->gainOut_lin;
+    }
+  };
+
+  struct Second final : public SoftBase {
+    FirstOrder::StereoFilter<FirstOrder::Shape::hpf> hpf;
+    Audio process(Audio x) noexcept override {
+      return hpf.process(secondStereo(x, this->gainIn_lin / 16));
+    }
+    void update() noexcept override { this->hpf.update(); }
+    void reset(signal_t fs) noexcept override {
+      this->_fs       = fs;
+      this->hpf.fc_hz = 20;
+      this->hpf.reset(fs);
+      this->update();
+    }
+  };
+
+  /**
    * @brief Third order soft clipper wrapped in a Component.
    *
    */
-  struct Soft3 final : public ComponentBase<Audio> {
-    signal_t gain_db { 0 };
-    signal_t gain_lin { 1 };
+  struct Soft3 final : public SoftBase {
     Audio process(Audio x) noexcept override {
-      return soft3rdStereo(x * gain_lin) / gain_lin;
+      return soft3rdStereo(x * this->gainIn_lin) * this->gainOut_lin;
     }
-    void update() noexcept override { this->gain_lin = invDb(this->gain_db); }
+  };
+
+  /**
+   * @brief Fifth order soft clipper wrapped in a Component.
+   *
+   */
+  struct Soft5 final : public SoftBase {
+    Audio process(Audio x) noexcept override {
+      return soft5thStereo(x * gainIn_lin) * gainOut_lin;
+    }
   };
 
   /**
    * @brief Base class for soft clipper with rudimental antialiasing filter.
    *
    */
-  struct SoftAntialiasBase : public ComponentBase<Audio> {
+  struct SoftAntialiasBase : public SoftBase {
     FirstOrder::StereoFilter<FirstOrder::Shape::lpfZero> lpf;
     FirstOrder::StereoFilter<FirstOrder::Shape::hpf> hpf;
     FirstOrder::StereoFilter<FirstOrder::Shape::hpf> hpf2;
-    signal_t gain_db { 0 };
-    signal_t gain_lin { 1 };
+
     bool bypass1Enable { true };
     bool bypass2Enable { true };
     SoftAntialiasBase()                                    = default;
     SoftAntialiasBase(const SoftAntialiasBase&)            = default;
     SoftAntialiasBase(SoftAntialiasBase&&)                 = default;
-    virtual ~SoftAntialiasBase()                           = default;
+    ~SoftAntialiasBase() override                          = default;
     SoftAntialiasBase& operator=(const SoftAntialiasBase&) = default;
     SoftAntialiasBase& operator=(SoftAntialiasBase&&)      = default;
     void update() noexcept override {
-      this->gain_lin = invDb(this->gain_db);
+      this->gainIn_lin  = invDb(this->gain_db);
+      this->gainOut_lin = 1 / invDb(this->gain_db);
+      if (this->gainOut_lin < 0.5) { this->gainOut_lin = 0.5; }
       this->lpf.update();
       this->hpf.update();
       this->hpf2.update();
     }
     void reset(signal_t fs) noexcept override {
       this->_fs        = fs;
-      this->lpf.fc_hz  = fs / 4;
-      this->hpf.fc_hz  = fs / 4;
+      this->lpf.fc_hz  = fs / 8;
+      this->hpf.fc_hz  = fs / 8;
       this->hpf2.fc_hz = fs / 2;
       this->lpf.reset(fs);
       this->hpf.reset(fs);
@@ -172,7 +245,7 @@ namespace Clip {
    */
   struct SoftAntialias3 final : public SoftAntialiasBase {
     Audio process(Audio x) noexcept override {
-      return soft3rdStereo(this->lpf.process(x) * gain_lin) / gain_lin
+      return soft3rdStereo(this->lpf.process(x) * gainIn_lin) * gainOut_lin
           + this->hpf.process(x) * this->bypass1Enable
           + this->hpf2.process(x) * this->bypass2Enable;
     }
@@ -184,32 +257,11 @@ namespace Clip {
    */
   struct SoftAntialias5 final : public SoftAntialiasBase {
     Audio process(Audio x) noexcept override {
-      return soft5thStereo(this->lpf.process(x) * gain_lin) / gain_lin
+      return soft5thStereo(this->lpf.process(x) * gainIn_lin) * gainOut_lin
           + this->hpf.process(x) * this->bypass1Enable
           + this->hpf2.process(x) * this->bypass2Enable;
     }
   };
 
-  /**
-   * @brief Fifth order soft clipper wrapped in a Component.
-   *
-   */
-  struct Soft5 final : public ComponentBase<Audio> {
-    signal_t gain_db { 0 };
-    signal_t gain_lin { 1 };
-    Audio process(Audio x) noexcept override {
-      return soft5thStereo(x * gain_lin) / gain_lin;
-    }
-    void update() noexcept override { this->gain_lin = invDb(this->gain_db); }
-  };
-
-  struct Hard final : public ComponentBase<Audio> {
-    signal_t gain_db { 0 };
-    signal_t gain_lin { 1 };
-    Audio process(Audio x) noexcept override {
-      return hardStereo(x * gain_lin) / gain_lin;
-    }
-    void update() noexcept override { this->gain_lin = invDb(this->gain_db); }
-  };
 } // namespace Clip
 } // namespace NtFx

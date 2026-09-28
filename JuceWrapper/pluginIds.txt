@@ -11,9 +11,7 @@ ntGateMono:Jlkd:Dynamics:Dynamics
 ntChorus:Yheu:Modulation:Modulation
 ntDynamicEq:Dukg:Dynamics:Dynamics
 ntEqualizer:Fqwo:EQ:EQ
-linkTest:Qlcn:Fx:Effect
-ntDeEsser2:Aagq
 ntAdaptiveDeEsser:Lihv:Dynamics:Dynamics
-ntTilt:Ohmy
+ntTilt:Ohmy:EQ:EQ
 ntGenerator:Gnlv
-ntSoftClip:Xcxh
+ntSoftClip:Xcxh:Distortion:Harmonic

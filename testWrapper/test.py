@@ -467,11 +467,12 @@ def plotSpectrum(
 
     fig = p.figure()
     with np.errstate(divide="ignore", invalid="ignore"):
-        pxx, freq, t, cax = p.specgram(_x, Fs=fs)
+        pxx, freq, t, cax = p.specgram(_x, Fs=fs, NFFT=int(2**8 * fs / 48e3))
     fig.colorbar(cax).set_label('Intensity [dB]')
     p.grid(True)
     p.xlabel("Time / s")
     p.ylabel("Frequency / Hz")
+    p.ylim([0, 24e3])
     p.title(
         os.path.basename(filename).replace(".png", "").replace(SEPARATOR, " ")
         + " spectrum"

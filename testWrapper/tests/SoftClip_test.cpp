@@ -34,5 +34,9 @@ int main() {
   thirdAntialiasNoBypass.bypass1Enable = false;
   thirdAntialiasNoBypass.bypass2Enable = false;
   NTFX_ADD_TEST(set, thirdAntialiasNoBypass, "impulse");
+  auto secondDefaultStorage = std::make_unique<NtFx::Clip::Second>();
+  auto secondDefault        = *secondDefaultStorage;
+  NTFX_ADD_TEST(set, secondDefault, "linearSweep");
+  NTFX_ADD_TEST(set, secondDefault, "impulse");
   return set.runAllTests();
 }

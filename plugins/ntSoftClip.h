@@ -4,20 +4,57 @@
 #include "lib/Plugin.h"
 #include "lib/SoftClip.h"
 
+enum Mode {
+  e_thirdAntialias,
+  e_fifthAntialias,
+  e_second,
+  e_third,
+  e_fifth,
+  e_hard,
+  e_alt1,
+};
+
 struct ntSoftClip final : public NtFx::Plugin {
-  NtFx::SoftClipAntiAlias3 clip3;
+  NtFx::Clip::SoftAntialias3 clipA3;
+  NtFx::Clip::SoftAntialias5 clipA5;
+  NtFx::Clip::Second second;
+  NtFx::Clip::Soft3 clip3;
+  NtFx::Clip::Soft5 clip5;
+  NtFx::Clip::Hard hard;
+  NtFx::Clip::Alt1 alt1;
+  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpfZero> lpf;
+  Mode mode { e_thirdAntialias };
+  signal_t gain_db;
+  bool lpfEnable { true };
   bool bypassEnable { false };
 
   ntSoftClip() {
     this->primaryKnobs = {
-      { &this->clip3.gain_db, "Drive", " dB", -24, 24 },
-      // { &this->clip3.fXOver_hz, "xOver", " Hz", 20, 20e3, 2e3 },
+      { &this->gain_db, "Drive", " dB", -24, 24 },
+      { &this->lpf.fc_hz, "LPF", " Hz", 20, 22e3, 2e3 },
     };
     this->toggles = {
-      { &this->clip3.bypass1Enable, "HF bypass" },
-      { &this->clip3.bypass2Enable, "HHF bypass" },
+      { &this->lpfEnable, "LPF enable" },
+      // { &this->clip3.bypass1Enable, "HF bypass" },
+      // { &this->clip3.bypass2Enable, "HHF bypass" },
       { &this->bypassEnable, "Bypass" },
     };
+    this->radioButtons = {
+      {
+          (int*)&this->mode,
+          "Mode",
+          {
+              "Third antialias",
+              "Fifth antialias",
+              "Second",
+              "Third",
+              "Fifth",
+              "Hard",
+              "Alt1",
+          },
+      },
+    };
+    this->lpf.fc_hz = 22e3;
     this->updateDefaults();
   }
 
@@ -27,16 +64,64 @@ struct ntSoftClip final : public NtFx::Plugin {
       this->updatePeakLevel(1, x);
       return x;
     }
-    Audio y = clip3.process(x);
+    Audio yClip { 0 };
+    switch (this->mode) {
+    case e_thirdAntialias:
+      yClip = this->clipA3.process(x);
+      break;
+    case e_fifthAntialias:
+      yClip = this->clipA5.process(x);
+      break;
+    case e_second:
+      yClip = this->second.process(x);
+      break;
+    case e_third:
+      yClip = this->clip3.process(x);
+      break;
+    case e_fifth:
+      yClip = this->clip5.process(x);
+      break;
+    case e_hard:
+      yClip = this->hard.process(x);
+      break;
+    case e_alt1:
+      yClip = this->alt1.process(x);
+      break;
+    }
+    Audio y = yClip;
+    if (this->lpfEnable) { y = this->lpf.process(yClip); }
     this->updatePeakLevel(1, y);
     return y;
   }
 
-  void update() noexcept override { this->clip3.update(); }
+  void update() noexcept override {
+    this->clipA3.gain_db = this->gain_db;
+    this->clipA5.gain_db = this->gain_db;
+    this->second.gain_db = this->gain_db;
+    this->clip3.gain_db  = this->gain_db;
+    this->clip5.gain_db  = this->gain_db;
+    this->hard.gain_db   = this->gain_db;
+    this->alt1.gain_db   = this->gain_db;
+    this->clipA3.update();
+    this->clipA5.update();
+    this->second.update();
+    this->clip3.update();
+    this->clip5.update();
+    this->hard.update();
+    this->alt1.update();
+    this->lpf.update();
+  }
 
   void reset(signal_t fs) noexcept override {
     this->_fs = fs;
+    this->clipA3.reset(fs);
+    this->clipA5.reset(fs);
+    this->second.reset(fs);
     this->clip3.reset(fs);
+    this->clip5.reset(fs);
+    this->hard.reset(fs);
+    this->alt1.reset(fs);
+    this->lpf.reset(fs);
     this->update();
   }
 };

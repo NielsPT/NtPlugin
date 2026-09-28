@@ -25,7 +25,6 @@
 #include "lib/Component.h"
 #include "lib/SoftClip.h"
 #include "lib/Tilt.h"
-#include "lib/Transformer.h"
 #include <cstddef>
 
 namespace NtFx {
@@ -138,7 +137,7 @@ namespace Generator {
   };
   struct PinkNoise final : public ComponentBase<Audio> {
     Tilt<> tilt;
-    HardClip clip;
+    Clip::Hard clip;
     PinkNoise() { this->tilt.tilt_db = -10; }
     Audio process(Audio) noexcept override {
       return clip.process(tilt.process({ rand<signal_t>(), rand<signal_t>() }));
@@ -194,15 +193,12 @@ namespace Generator {
     signal_t f_hz { 1e3 };
     signal_t ph_rad { 0 };
     size_t _i { 0 };
-    size_t _n { 1 };
     signal_t _w { 0 };
     Audio process(Audio) noexcept override {
-      auto w = this->_w * signal_t(this->_i) + this->ph_rad;
-      if (++this->_i >= _n) { _i = 0; }
+      auto w = this->_w * signal_t(this->_i++) + this->ph_rad;
       return saw(w);
     }
     void update() noexcept override {
-      this->_n = size_t(this->_fs / this->f_hz);
       this->_w = 2 * NTFX_PI * this->f_hz / this->_fs;
     }
     void reset(signal_t fs) noexcept override {
@@ -214,15 +210,12 @@ namespace Generator {
     signal_t f_hz { 1e3 };
     signal_t ph_rad { 0 };
     size_t _i { 0 };
-    size_t _n { 1 };
     signal_t _w { 0 };
     Audio process(Audio) noexcept override {
-      auto w = this->_w * signal_t(this->_i) + this->ph_rad;
-      if (++this->_i >= _n) { _i = 0; }
+      auto w = this->_w * signal_t(this->_i++) + this->ph_rad;
       return square(w);
     }
     void update() noexcept override {
-      this->_n = size_t(this->_fs / this->f_hz);
       this->_w = 2 * NTFX_PI * this->f_hz / this->_fs;
     }
     void reset(signal_t fs) noexcept override {
