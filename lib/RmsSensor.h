@@ -27,15 +27,16 @@
 #include "lib/Component.h"
 #include <algorithm>
 #include <array>
+#include <cassert>
+#include <cmath>
 #include <cstddef>
-#include <vector>
 
 namespace NtFx {
 
 template <double tRmsMax_ms>
 struct ShortRmsSensorMono final : public ComponentBase<signal_t> {
   constexpr static const int nDlMax = int(tRmsMax_ms * 192.0 * 8.0);
-  std::array<signal_t, nDlMax> _dl; ///< Sample delay line.
+  std::array<signal_t, nDlMax> _dl;
   signal_t tRms_ms { 0 };
   signal_t _acc { 0 };
   int _i { 0 };
@@ -46,20 +47,24 @@ struct ShortRmsSensorMono final : public ComponentBase<signal_t> {
   }
   void processDelayLine(signal_t x) noexcept {
     auto x2 = x * x;
-    if (x2 != x2) { x2 = signal_t(0.0); }
     this->_acc += x2 - this->_dl[size_t(this->_i)];
+    assert(std::isfinite(_acc > 0));
     this->_dl[size_t(this->_i++)] = x2;
     if (this->_i >= this->_n) { this->_i = 0; }
   }
   signal_t getRms() const noexcept {
-    signal_t y = gcem::sqrt(signal_t(2.0) * this->_acc / signal_t(this->_n));
-    if (y != y) { y = signal_t(0.0); }
-    return y;
+    if (this->_acc <= 0) { return 0; }
+    assert(std::isfinite(_acc));
+    assert(this->_n);
+    auto tmp = gcem::sqrt(signal_t(2.0) * this->_acc / signal_t(this->_n));
+    assert(std::isfinite(tmp));
+    return tmp;
   }
   void update() noexcept override {
     auto n = int(gcem::floor(this->tRms_ms * 0.001 * this->_fs));
     if (n == this->_n) { return; }
-    this->_n   = n;
+    this->_n = n;
+    if (n == 0) { this->_n = 1; }
     this->_i   = 0;
     this->_acc = 0;
     std::fill(this->_dl.begin(), this->_dl.end(), 0);
@@ -69,17 +74,20 @@ struct ShortRmsSensorMono final : public ComponentBase<signal_t> {
 template <double tRmsMax_ms>
 struct ShortRmsSensorStereo
     : public AudioComponent<signal_t, ShortRmsSensorMono<tRmsMax_ms>> {
-  void setT_ms(signal_t t) {
-    this->l.tRms_ms = t;
-    this->r.tRms_ms = t;
-    this->update();
+  signal_t t_ms { 0 };
+  void update() noexcept override {
+    this->l.tRms_ms = this->t_ms;
+    this->r.tRms_ms = this->t_ms;
+    this->l.update();
+    this->r.update();
   }
   Audio getRms() const noexcept {
     return { this->l.getRms(), this->r.getRms() };
   }
 };
 
-using ShortRmsSensor = ShortRmsSensorStereo<40.0>;
+template <double t_ms = 40.0>
+using ShortRmsSensor = ShortRmsSensorStereo<t_ms>;
 
 /**
  * @brief RMS (Root Mean Square) sensor component for audio signal processing

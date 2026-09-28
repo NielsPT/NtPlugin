@@ -29,10 +29,15 @@
 #include "lib/Comp.h"
 #include "lib/Component.h"
 #include "lib/PeakSensor.h"
+#include "lib/RmsSensor.h"
 #include "lib/utils.h"
+#include <cassert>
+#include <cmath>
 
 namespace NtFx {
 struct AdaptiveDeEssSc : public ComponentBase<Audio> {
+  ShortRmsSensor<> rmsLo;
+  ShortRmsSensor<> rmsHi;
   Biquad::EqBand xOverLpf;
   Biquad::EqBand xOverHpf;
   Biquad::EqBand scHpf;
@@ -42,6 +47,7 @@ struct AdaptiveDeEssSc : public ComponentBase<Audio> {
   signal_t offset_db { 0 };
   signal_t offset_lin { 1 };
   bool scListen { false };
+  bool rmsEnable { false };
 
   AdaptiveDeEssSc() {
     this->xOverLpf.settings.shape  = NtFx::Biquad::Shape::lpf;
@@ -57,16 +63,27 @@ struct AdaptiveDeEssSc : public ComponentBase<Audio> {
     this->scHpf.settings.shape     = NtFx::Biquad::Shape::hpf;
     this->peakLo.tHold_ms          = 10;
     this->peakLo.tRel_ms           = 20;
+    this->rmsLo.t_ms               = 20;
+    this->rmsHi.t_ms               = 20;
   }
 
   Audio process(Audio x) noexcept override {
     auto yHpfMain = this->scHpf.process(x);
     auto yLpf     = this->xOverLpf.process(yHpfMain);
     auto yHpf     = this->xOverHpf.process(yHpfMain);
-    auto yPeakLo  = this->peakLo.process(yLpf);
-    auto yPeakHi  = this->sc.sensor.process(yHpf);
+    Audio ySenLo { 0 };
+    Audio ySensHi { 0 };
+    if (this->rmsEnable) {
+      ySenLo  = this->rmsLo.process(yLpf);
+      ySensHi = this->rmsHi.process(yHpf);
+    } else {
+      ySenLo  = this->peakLo.process(yLpf);
+      ySensHi = this->sc.sensor.process(yHpf);
+    }
+    assert(std::isfinite(ySenLo.l) && std::isfinite(ySenLo.r)
+        && std::isfinite(ySensHi.l) && std::isfinite(ySensHi.r));
     Audio ySc;
-    auto xGc = yPeakHi / (yPeakLo + signal_t(1e-8)) * this->offset_lin;
+    auto xGc = ySensHi / (ySenLo + signal_t(1e-8)) * this->offset_lin;
     ySc.l    = this->sc._gainComputer_lin(xGc.l, this->sc.stateFilter.l);
     ySc.r    = this->sc._gainComputer_lin(xGc.r, this->sc.stateFilter.r);
     if (this->sc.settings.linkEnable) { ySc = ySc.absMin(); }
@@ -83,6 +100,8 @@ struct AdaptiveDeEssSc : public ComponentBase<Audio> {
     this->scHpf.update();
     this->peakLo.update();
     this->sc.update();
+    this->rmsLo.update();
+    this->rmsHi.update();
   }
 
   void reset(signal_t fs) noexcept override {
@@ -92,6 +111,8 @@ struct AdaptiveDeEssSc : public ComponentBase<Audio> {
     this->scHpf.reset(fs);
     this->peakLo.reset(fs);
     this->sc.reset(fs);
+    this->rmsLo.reset(fs);
+    this->rmsHi.reset(fs);
     this->update();
   }
 };

@@ -79,7 +79,7 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
       {
           .p_val  = &this->scTilt.tilt_db,
           .name   = "SC Tilt",
-          .suffix = " dB/decade",
+          .suffix = " dB/d",
           .minVal = -10,
           .maxVal = 10,
       },
@@ -131,8 +131,23 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
           .maxVal   = 250.0,
           .midPoint = 10.0,
       },
+      {
+          .p_val  = &this->sc.rmsLo.t_ms,
+          .name   = "LF RMS",
+          .suffix = " ms",
+          .minVal = 1.0,
+          .maxVal = 40.0,
+      },
+      {
+          .p_val  = &this->sc.rmsHi.t_ms,
+          .name   = "HF RMS",
+          .suffix = " ms",
+          .minVal = 1.0,
+          .maxVal = 40.0,
+      },
     };
     this->toggles = {
+      { .p_val = &this->sc.rmsEnable, .name = "RMS mode" },
       { .p_val = &this->extScEnable, .name = "Ext SC" },
       { .p_val = &this->sc.scListen, .name = "SC Listen" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
@@ -178,6 +193,10 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
     this->sc.update();
     this->shelf.update();
     this->scTilt.update();
+    if (this->sc.rmsEnable) {
+
+    } else {
+    }
   }
 
   void reset(signal_t fs) noexcept override {

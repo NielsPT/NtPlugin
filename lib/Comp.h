@@ -112,7 +112,7 @@ namespace Comp {
           - (this->settings.ratio - signal_t(3.0)) / signal_t(18.0);
       this->ratio_lin = (signal_t(1.0) - signal_t(1.0) / this->settings.ratio)
           * (oneOverSqrt2 - tmp * tmp * tmp * tmp * tmp);
-      if constexpr (std::is_same_v<t_sensorType, ShortRmsSensor>) {
+      if constexpr (std::is_same_v<t_sensorType, ShortRmsSensor<>>) {
         this->sensor.setT_ms(this->settings.tRms_ms);
         this->sensor.update();
       } else {
@@ -200,7 +200,7 @@ namespace Comp {
       SideChain<PeakHoldSensor<size_t(20 * 192 * 8)>, false>;
   using PeakSideChainLin =
       SideChain<PeakHoldSensor<size_t(20 * 192 * 8)>, true>;
-  using RmsSideChainDb  = SideChain<ShortRmsSensor, false>;
-  using RmsSideChainLin = SideChain<ShortRmsSensor, true>;
+  using RmsSideChainDb  = SideChain<ShortRmsSensor<>, false>;
+  using RmsSideChainLin = SideChain<ShortRmsSensor<>, true>;
 } // namespace Comp
 } // namespace NtFx
