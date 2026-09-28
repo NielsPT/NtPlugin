@@ -25,6 +25,7 @@
 #include "lib/Delay.h"
 #include "lib/DynamicFilter.h"
 #include "lib/Plugin.h"
+#include "lib/Tilt.h"
 #include "lib/gcem.h"
 #include "lib/utils.h"
 #include <cstddef>
@@ -33,10 +34,12 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
   NtFx::Delay::Short<10.0> dl;
   NtFx::AdaptiveDeEssSc sc;
   NtFx::DynamicFilter::ShelfFixedPoles shelf;
+  NtFx::Tilt<> scTilt;
   signal_t red_p { 100 };
   signal_t red_lin { 100 };
   signal_t range_db { 24 };
   signal_t range_lin { 0.125 };
+  bool extScEnable { false };
   bool bypassEnable { false };
 
   ntAdaptiveDeEsser() {
@@ -72,6 +75,13 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
           .minVal   = 20,
           .maxVal   = 2000,
           .midPoint = 200,
+      },
+      {
+          .p_val  = &this->scTilt.tilt_db,
+          .name   = "SC Tilt",
+          .suffix = " dB/decade",
+          .minVal = -10,
+          .maxVal = 10,
       },
       {
           .p_val    = &this->sc.peakLo.tHold_ms,
@@ -123,8 +133,9 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
       },
     };
     this->toggles = {
-      { .p_val = &this->bypassEnable, .name = "Bypass" },
+      { .p_val = &this->extScEnable, .name = "Ext SC" },
       { .p_val = &this->sc.scListen, .name = "SC Listen" },
+      { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
     this->meters.push_back({ .name = "GR", .invert = true });
     this->dl.t_ms                = 1.25;
@@ -141,7 +152,10 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
       this->updatePeakLevel(1, x);
       return x;
     }
-    auto ySc = this->sc.process(x);
+    auto xSc = x;
+    if (this->extScEnable) { xSc = this->xSc; }
+    auto yTilt = this->scTilt.process(xSc);
+    auto ySc   = this->sc.process(yTilt);
     if (this->sc.scListen) {
       this->updatePeakLevel(1, ySc);
       return ySc;
@@ -163,6 +177,7 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
     this->dl.update();
     this->sc.update();
     this->shelf.update();
+    this->scTilt.update();
   }
 
   void reset(signal_t fs) noexcept override {
@@ -170,6 +185,7 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
     this->dl.reset(fs);
     this->sc.reset(fs);
     this->shelf.reset(fs);
+    this->scTilt.reset(fs);
     this->update();
   }
 };

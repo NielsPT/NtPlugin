@@ -173,7 +173,10 @@ namespace Clip {
     Audio process(Audio x) noexcept override {
       return hpf.process(secondStereo(x, this->gainIn_lin / 16));
     }
-    void update() noexcept override { this->hpf.update(); }
+    void update() noexcept override {
+      this->SoftBase::update();
+      this->hpf.update();
+    }
     void reset(signal_t fs) noexcept override {
       this->_fs       = fs;
       this->hpf.fc_hz = 20;
