@@ -57,7 +57,7 @@ struct ntRmsMeter final : public NtFx::Plugin {
   void update() noexcept override {
     for (auto& m : this->meters) { m.decay_s = this->decay_s; }
     for (auto& m : this->meters) { m.hold_s = this->hold_s; }
-    this->msSensor.setT_ms(this->tRms_ms);
+    this->msSensor.t_ms = this->tRms_ms;
     this->uiNeedsUpdate = true;
   }
 

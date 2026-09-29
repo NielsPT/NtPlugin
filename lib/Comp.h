@@ -113,7 +113,7 @@ namespace Comp {
       this->ratio_lin = (signal_t(1.0) - signal_t(1.0) / this->settings.ratio)
           * (oneOverSqrt2 - tmp * tmp * tmp * tmp * tmp);
       if constexpr (std::is_same_v<t_sensorType, ShortRmsSensor<>>) {
-        this->sensor.setT_ms(this->settings.tRms_ms);
+        this->sensor.t_ms = this->settings.tRms_ms;
         this->sensor.update();
       } else {
         this->sensor.tRel_ms  = this->settings.tPeak_ms;

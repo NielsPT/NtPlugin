@@ -30,6 +30,7 @@
 #include "lib/Component.h"
 #include "lib/PeakSensor.h"
 #include "lib/RmsSensor.h"
+#include "lib/gcem.h"
 #include "lib/utils.h"
 #include <cassert>
 
@@ -37,39 +38,31 @@ namespace NtFx {
 struct AdaptiveDeEssSc : public ComponentBase<Audio> {
   ShortRmsSensor<> rmsLo;
   ShortRmsSensor<> rmsHi;
-  Biquad::EqBand xOverLpf;
-  Biquad::EqBand xOverHpf;
-  Biquad::EqBand scHpf;
+  Biquad::LinkwitzLpfFourth xOverLpf;
+  Biquad::LinkwitzHpfFourth xOverHpf;
   PeakHoldSensor<> peakLo;
   Comp::PeakSideChainLin sc;
-  signal_t fc_hz { 2000 };
+  signal_t fc_hz { 4000 };
   signal_t offset_db { 0 };
   signal_t offset_lin { 1 };
   bool scListen { false };
   bool rmsEnable { false };
 
   AdaptiveDeEssSc() {
-    this->xOverLpf.settings.shape  = NtFx::Biquad::Shape::lpf;
-    this->xOverHpf.settings.shape  = NtFx::Biquad::Shape::hpf;
-    this->sc.settings.tPeakHold_ms = 2.5;
+    this->sc.settings.tPeakHold_ms = 5;
     this->sc.settings.ratio        = 20;
     this->sc.settings.knee_db      = 3;
     this->sc.settings.linkEnable   = true;
-    this->sc.settings.tRel_ms      = 30;
-    this->xOverLpf.settings.q      = 0.508;
-    this->xOverHpf.settings.q      = 0.508;
-    this->scHpf.settings.fc_hz     = 50;
-    this->scHpf.settings.shape     = NtFx::Biquad::Shape::hpf;
-    this->peakLo.tHold_ms          = 10;
+    this->sc.settings.tRel_ms      = 50;
+    this->peakLo.tHold_ms          = 5;
     this->peakLo.tRel_ms           = 20;
-    this->rmsLo.t_ms               = 20;
-    this->rmsHi.t_ms               = 20;
+    this->rmsLo.t_ms               = 10;
+    this->rmsHi.t_ms               = 10;
   }
 
   Audio process(Audio x) noexcept override {
-    auto yHpfMain = this->scHpf.process(x);
-    auto yLpf     = this->xOverLpf.process(yHpfMain);
-    auto yHpf     = this->xOverHpf.process(yHpfMain);
+    auto yLpf = this->xOverLpf.process(x);
+    auto yHpf = this->xOverHpf.process(x);
     Audio ySenLo { 0 };
     Audio ySensHi { 0 };
     if (this->rmsEnable) {
@@ -89,12 +82,11 @@ struct AdaptiveDeEssSc : public ComponentBase<Audio> {
   }
 
   void update() noexcept override {
-    this->offset_lin              = NtFx::invDb(-this->offset_db);
-    this->xOverHpf.settings.fc_hz = this->fc_hz;
-    this->xOverLpf.settings.fc_hz = this->fc_hz;
+    this->offset_lin     = gcem::pow(NtFx::invDb(-this->offset_db), 2);
+    this->xOverHpf.fc_hz = this->fc_hz;
+    this->xOverLpf.fc_hz = this->fc_hz;
     this->xOverLpf.update();
     this->xOverHpf.update();
-    this->scHpf.update();
     this->peakLo.update();
     this->sc.update();
     this->rmsLo.update();
@@ -105,7 +97,6 @@ struct AdaptiveDeEssSc : public ComponentBase<Audio> {
     this->_fs = fs;
     this->xOverLpf.reset(fs);
     this->xOverHpf.reset(fs);
-    this->scHpf.reset(fs);
     this->peakLo.reset(fs);
     this->sc.reset(fs);
     this->rmsLo.reset(fs);

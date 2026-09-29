@@ -105,6 +105,7 @@ struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
   std::array<signal_t, maxT_ms> msDLine; ///< Millisecond delay line.
   signal_t sampleAccum { 0 }; ///< Accumulator for current sample values.
   signal_t msAccum { 0 };     ///< Accumulator for millisecond-level values.
+  signal_t t_ms { 0 };
   int sampleIdx { 0 };        ///< Current index in the sample delay line.
   int msIdx { 0 };            ///< Current index in the millisecond delay line.
   int msDLineLen { maxT_ms }; ///< Current time window in milliseconds.
@@ -152,15 +153,14 @@ struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
    * flag is set.
    */
   void update() noexcept override {
-    if (this->resetAccums) {
-      this->sampleIdx   = 0;
-      this->msIdx       = 0;
-      this->sampleAccum = 0;
-      this->msAccum     = 0;
-      std::fill(this->sampleDLine.begin(), this->sampleDLine.end(), 0);
-      std::fill(this->msDLine.begin(), this->msDLine.end(), 0);
-      this->resetAccums = false;
-    }
+    if (this->t_ms == this->msDLineLen) { return; }
+    this->msDLineLen  = this->t_ms;
+    this->sampleIdx   = 0;
+    this->msIdx       = 0;
+    this->sampleAccum = 0;
+    this->msAccum     = 0;
+    std::fill(this->sampleDLine.begin(), this->sampleDLine.end(), 0);
+    std::fill(this->msDLine.begin(), this->msDLine.end(), 0);
   }
 
   /**
@@ -174,7 +174,6 @@ struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
   void reset(signal_t fs) noexcept override {
     this->_fs            = fs;
     this->sampleDLineLen = int(fs / 1000.0);
-    this->resetAccums    = true;
     this->update();
   }
 
@@ -191,21 +190,6 @@ struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
         / signal_t(this->sampleDLineLen * this->msDLineLen));
     if (y != y) { y = signal_t(0.0); }
     return y;
-  }
-
-  /**
-   * @brief Set the time window for RMS calculation
-   *
-   * This method updates the time window in milliseconds and resets the
-   * accumulators.
-   *
-   * @param t_ms The new time window in milliseconds
-   */
-  void setT_ms(int t_ms) {
-    if (t_ms == this->msDLineLen) { return; }
-    this->msDLineLen  = t_ms;
-    this->resetAccums = true;
-    this->update();
   }
 };
 
@@ -225,18 +209,7 @@ template <int maxT_ms = 1000, int maxSampleDLineLen = 192 * 8>
 struct LongRmsSensorStereo
     : public AudioComponent<signal_t,
           LongRmsSensorMono<maxT_ms, maxSampleDLineLen>> {
-  /**
-   * @brief Set the time window for RMS calculation
-   *
-   * This method updates the time window for both left and right channels.
-   *
-   * @param t_ms The new time window in milliseconds
-   */
-  void setT_ms(int t_ms) {
-    this->l.setT_ms(t_ms);
-    this->r.setT_ms(t_ms);
-  }
-
+  signal_t t_ms { 0 };
   /**
    * @brief Get the current RMS values for both channels
    *
@@ -247,6 +220,12 @@ struct LongRmsSensorStereo
    */
   Audio getRms() const noexcept {
     return { this->l.getRms(), this->r.getRms() };
+  }
+  void update() noexcept override {
+    this->l.t_ms = this->t_ms;
+    this->r.t_ms = this->t_ms;
+    this->l.update();
+    this->r.update();
   }
 };
 template <int maxT_ms = 1000, int maxSampleDLineLen = 192 * 8>

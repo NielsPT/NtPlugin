@@ -25,7 +25,6 @@
 #include "lib/Delay.h"
 #include "lib/DynamicFilter.h"
 #include "lib/Plugin.h"
-#include "lib/Tilt.h"
 #include "lib/gcem.h"
 #include "lib/utils.h"
 #include <cstddef>
@@ -34,11 +33,8 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
   NtFx::Delay::Short<10.0> dl;
   NtFx::AdaptiveDeEssSc sc;
   NtFx::DynamicFilter::ShelfFixedPoles shelf;
-  NtFx::Tilt<> scTilt;
   signal_t red_p { 100 };
-  signal_t red_lin { 100 };
-  signal_t range_db { 24 };
-  signal_t range_lin { 0.125 };
+  signal_t red_lin { 1 };
   bool extScEnable { false };
   bool bypassEnable { false };
 
@@ -69,19 +65,28 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
     };
     this->secondaryKnobs = {
       {
-          .p_val    = &this->sc.scHpf.settings.fc_hz,
-          .name     = "SC HPF",
-          .suffix   = " Hz",
-          .minVal   = 20,
-          .maxVal   = 2000,
-          .midPoint = 200,
+          .p_val    = &this->dl.t_ms,
+          .name     = "Lookahead",
+          .suffix   = " ms",
+          .minVal   = 0,
+          .maxVal   = 10,
+          .midPoint = 1,
       },
       {
-          .p_val  = &this->scTilt.tilt_db,
-          .name   = "SC Tilt",
-          .suffix = " dB/d",
-          .minVal = -10,
-          .maxVal = 10,
+          .p_val    = &this->sc.sc.settings.tAtt_ms,
+          .name     = "Attack",
+          .suffix   = " ms",
+          .minVal   = 0,
+          .maxVal   = 10,
+          .midPoint = 1,
+      },
+      {
+          .p_val    = &this->sc.sc.settings.tRel_ms,
+          .name     = "Release",
+          .suffix   = " ms",
+          .minVal   = 1.0,
+          .maxVal   = 250.0,
+          .midPoint = 10.0,
       },
       {
           .p_val    = &this->sc.peakLo.tHold_ms,
@@ -100,36 +105,12 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
           .midPoint = 10,
       },
       {
-          .p_val    = &this->dl.t_ms,
-          .name     = "Lookahead",
-          .suffix   = " ms",
-          .minVal   = 0,
-          .maxVal   = 10,
-          .midPoint = 1,
-      },
-      {
-          .p_val    = &this->sc.sc.settings.tAtt_ms,
-          .name     = "Attack",
-          .suffix   = " ms",
-          .minVal   = 0,
-          .maxVal   = 10,
-          .midPoint = 1,
-      },
-      {
           .p_val    = &this->sc.sc.settings.tPeakHold_ms,
-          .name     = "Peak Hold ",
+          .name     = "Peak Hold",
           .suffix   = " ms",
           .minVal   = 0,
           .maxVal   = 10,
           .midPoint = 1,
-      },
-      {
-          .p_val    = &this->sc.sc.settings.tRel_ms,
-          .name     = "Release",
-          .suffix   = " ms",
-          .minVal   = 1.0,
-          .maxVal   = 250.0,
-          .midPoint = 10.0,
       },
       {
           .p_val  = &this->sc.rmsLo.t_ms,
@@ -153,10 +134,9 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
     this->meters.push_back({ .name = "GR", .invert = true });
-    this->dl.t_ms                = 1.25;
-    this->sc.sc.settings.tAtt_ms = 1;
-    this->shelf.q1               = 0.508;
-    this->shelf.q2               = 0.508;
+    this->dl.t_ms  = 5;
+    this->shelf.q1 = 0.508;
+    this->shelf.q2 = 0.508;
     this->updateDefaults();
   }
 
@@ -167,16 +147,14 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
       this->updatePeakLevel(1, x);
       return x;
     }
-    auto xSc = x;
+    auto xSc = yDl;
     if (this->extScEnable) { xSc = this->xSc; }
-    auto yTilt = this->scTilt.process(xSc);
-    auto ySc   = this->sc.process(yTilt);
+    auto ySc = this->sc.process(xSc);
     if (this->sc.scListen) {
       this->updatePeakLevel(1, ySc);
       return ySc;
     }
-    auto yScReduced = (ySc * this->red_lin - this->red_lin + 1).absMin();
-    if (yScReduced < this->range_lin) { yScReduced = this->range_lin; }
+    auto yScReduced      = (ySc * this->red_lin - this->red_lin + 1).absMin();
     this->shelf.gain_lin = yScReduced;
     auto y               = this->shelf.process(yDl);
     this->updatePeakLevel(1, y);
@@ -185,17 +163,24 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
   }
 
   void update() noexcept override {
-    this->range_lin   = NtFx::invDb(-this->range_db);
     this->red_lin     = gcem::sqrt(this->red_p / signal_t(100.0));
     this->shelf.fc_hz = this->sc.fc_hz;
     this->latency     = size_t(this->dl.t_ms / 1000 * this->_fs);
     this->dl.update();
     this->sc.update();
     this->shelf.update();
-    this->scTilt.update();
     if (this->sc.rmsEnable) {
-
+      this->deactivateParameter("LF peak hold");
+      this->deactivateParameter("LF release");
+      this->deactivateParameter("Peak Hold");
+      this->activateParameter("LF RMS");
+      this->activateParameter("HF RMS");
     } else {
+      this->activateParameter("LF peak hold");
+      this->activateParameter("LF release");
+      this->activateParameter("Peak Hold");
+      this->deactivateParameter("LF RMS");
+      this->deactivateParameter("HF RMS");
     }
   }
 
@@ -204,7 +189,6 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
     this->dl.reset(fs);
     this->sc.reset(fs);
     this->shelf.reset(fs);
-    this->scTilt.reset(fs);
     this->update();
   }
 };
