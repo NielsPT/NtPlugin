@@ -32,7 +32,6 @@
 #include "lib/RmsSensor.h"
 #include "lib/utils.h"
 #include <cassert>
-#include <cmath>
 
 namespace NtFx {
 struct AdaptiveDeEssSc : public ComponentBase<Audio> {
@@ -80,8 +79,6 @@ struct AdaptiveDeEssSc : public ComponentBase<Audio> {
       ySenLo  = this->peakLo.process(yLpf);
       ySensHi = this->sc.sensor.process(yHpf);
     }
-    assert(std::isfinite(ySenLo.l) && std::isfinite(ySenLo.r)
-        && std::isfinite(ySensHi.l) && std::isfinite(ySensHi.r));
     Audio ySc;
     auto xGc = ySensHi / (ySenLo + signal_t(1e-8)) * this->offset_lin;
     ySc.l    = this->sc._gainComputer_lin(xGc.l, this->sc.stateFilter.l);

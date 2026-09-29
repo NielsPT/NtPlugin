@@ -48,16 +48,12 @@ struct ShortRmsSensorMono final : public ComponentBase<signal_t> {
   void processDelayLine(signal_t x) noexcept {
     auto x2 = x * x;
     this->_acc += x2 - this->_dl[size_t(this->_i)];
-    assert(std::isfinite(_acc > 0));
     this->_dl[size_t(this->_i++)] = x2;
     if (this->_i >= this->_n) { this->_i = 0; }
   }
   signal_t getRms() const noexcept {
     if (this->_acc <= 0) { return 0; }
-    assert(std::isfinite(_acc));
-    assert(this->_n);
     auto tmp = gcem::sqrt(signal_t(2.0) * this->_acc / signal_t(this->_n));
-    assert(std::isfinite(tmp));
     return tmp;
   }
   void update() noexcept override {

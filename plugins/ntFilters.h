@@ -33,9 +33,6 @@ enum Order : int {
   fourth,
 };
 
-constexpr signal_t butterworthFourthOrderQ0 = 0.5411961f;
-constexpr signal_t butterworthFourthOrderQ1 = 1.3065630f;
-
 enum CascadeIdx { bqHpf0, bqHpf1, bqLpf0, bqLpf1 };
 
 struct ntFilters final : public NtFx::Plugin {
@@ -140,9 +137,11 @@ struct ntFilters final : public NtFx::Plugin {
     this->activateParameter("Q LPF");
     this->firstOrderHpf.fc_hz = fHpf;
     if (this->orderHpf == Order::fourth) {
-      auto qScale                          = this->qHpf / signal_t(0.707);
-      this->cascade.settings[bqHpf0].q     = butterworthFourthOrderQ0 * qScale;
-      this->cascade.settings[bqHpf1].q     = butterworthFourthOrderQ1 * qScale;
+      auto qScale = this->qHpf / signal_t(0.707);
+      this->cascade.settings[bqHpf0].q =
+          NtFx::Biquad::ButterworthTable::Fourth::q0 * qScale;
+      this->cascade.settings[bqHpf1].q =
+          NtFx::Biquad::ButterworthTable::Fourth::q1 * qScale;
       this->cascade.settings[bqHpf0].shape = NtFx::Biquad::Shape::hpf;
       this->cascade.settings[bqHpf1].shape = NtFx::Biquad::Shape::hpf;
     } else if (this->orderHpf == Order::first || !this->enableHpf) {
@@ -158,9 +157,11 @@ struct ntFilters final : public NtFx::Plugin {
     this->cascade.settings[bqHpf1].fc_hz = fHpf;
     this->firstOrderLpf.fc_hz            = fLpf;
     if (this->orderLpf == Order::fourth) {
-      auto qScale                          = this->qLpf / signal_t(0.707);
-      this->cascade.settings[bqLpf0].q     = butterworthFourthOrderQ0 * qScale;
-      this->cascade.settings[bqLpf1].q     = butterworthFourthOrderQ1 * qScale;
+      auto qScale = this->qLpf / signal_t(0.707);
+      this->cascade.settings[bqLpf0].q =
+          NtFx::Biquad::ButterworthTable::Fourth::q0 * qScale;
+      this->cascade.settings[bqLpf1].q =
+          NtFx::Biquad::ButterworthTable::Fourth::q1 * qScale;
       this->cascade.settings[bqLpf0].shape = NtFx::Biquad::Shape::lpf;
       this->cascade.settings[bqLpf1].shape = NtFx::Biquad::Shape::lpf;
     } else if (this->orderLpf == Order::first || !this->enableLpf) {

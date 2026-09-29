@@ -24,11 +24,80 @@
 #include "lib/Audio.h"
 #include "lib/Component.h"
 
+#include "lib/FirstOrder.h"
 #include "lib/gcem.h"
 #include <array>
+#include <cstddef>
+#include <type_traits>
 
 namespace NtFx {
 namespace Biquad {
+  struct ButterworthTable {
+    struct Second {
+      static const constexpr signal_t q0 = 0.7071;
+    };
+    struct Third {
+      static const constexpr signal_t q0 = 1.0000;
+    };
+    struct Fourth {
+      static const constexpr signal_t q0 = 0.5412;
+      static const constexpr signal_t q1 = 1.3065;
+    };
+    struct Fifth {
+      static const constexpr signal_t q0 = 0.6180;
+      static const constexpr signal_t q1 = 1.6182;
+    };
+    struct Sixth {
+      static const constexpr signal_t q0 = 0.5176;
+      static const constexpr signal_t q1 = 0.7071;
+      static const constexpr signal_t q2 = 1.9319;
+    };
+    struct Seventh {
+      static const constexpr signal_t q0 = 0.5550;
+      static const constexpr signal_t q1 = 0.8019;
+      static const constexpr signal_t q2 = 2.2471;
+    };
+    struct Eighth {
+      static const constexpr signal_t q0 = 0.5098;
+      static const constexpr signal_t q1 = 0.6013;
+      static const constexpr signal_t q2 = 0.9000;
+      static const constexpr signal_t q3 = 2.5628;
+    };
+  };
+
+  struct LinkwitzTable {
+    struct Second {
+      static const constexpr signal_t q0 = 0.5;
+    };
+    struct Third {
+      static const constexpr signal_t q0 = 0.5;
+    };
+    struct Fourth {
+      static const constexpr signal_t q0 = 0.7071;
+      static const constexpr signal_t q1 = 0.7071;
+    };
+    struct Fifth {
+      static const constexpr signal_t q0 = 0.7071;
+      static const constexpr signal_t q1 = 0.7071;
+    };
+    struct Sixth {
+      static const constexpr signal_t q0 = 0.5;
+      static const constexpr signal_t q1 = 1.0;
+      static const constexpr signal_t q2 = 1.0;
+    };
+    struct Seventh {
+      static const constexpr signal_t q0 = 0.5;
+      static const constexpr signal_t q1 = 1.0;
+      static const constexpr signal_t q2 = 1.0;
+    };
+    struct Eighth {
+      static const constexpr signal_t q0 = 0.54;
+      static const constexpr signal_t q1 = 1.35;
+      static const constexpr signal_t q2 = 0.54;
+      static const constexpr signal_t q3 = 1.35;
+    };
+  };
+
   enum class Shape : int {
     bell,
     hiShelf,
@@ -438,6 +507,96 @@ namespace Biquad {
       this->coeffs = calcCascadeCoeffs<nStages>(this->settings, this->_fs);
     }
   };
+
+  template <int order, Shape shape, class qTable>
+  struct FilterBase : public ComponentBase<Audio> {
+    constexpr static const int nStages = order / 2;
+    Cascade<nStages> cascade;
+    FirstOrder::StereoFilter<(
+        shape == Shape::lpf ? FirstOrder::Shape::lpf : FirstOrder::Shape::hpf)>
+        firstOrder;
+    signal_t fc_hz { 20 };
+    FilterBase() {
+      if constexpr (std::is_same_v<qTable, LinkwitzTable>) {
+        static_assert(order % 2 == 0, "LR filters only exist in even orders.");
+      }
+      static_assert(order >= 2, "Min order is 2.");
+      static_assert(order <= 8, "Max order is 8.");
+      static_assert(shape == Shape::lpf || shape == Shape::hpf,
+          "Shape must be HPF or LPF.");
+      for (size_t i = 0; i < nStages; i++) {
+        this->cascade.settings[i].shape = shape;
+      }
+      if (order == 2) {
+        this->cascade.settings[0].q = qTable::Second::q0;
+      } else if (order == 3) {
+        this->cascade.settings[0].q = qTable::Third::q0;
+      } else if (order == 4) {
+        this->cascade.settings[0].q = qTable::Fourth::q0;
+        this->cascade.settings[1].q = qTable::Fourth::q1;
+      } else if (order == 5) {
+        this->cascade.settings[0].q = qTable::Fifth::q0;
+        this->cascade.settings[1].q = qTable::Fifth::q1;
+      } else if (order == 6) {
+        this->cascade.settings[0].q = qTable::Sixth::q0;
+        this->cascade.settings[1].q = qTable::Sixth::q1;
+        this->cascade.settings[2].q = qTable::Sixth::q2;
+      } else if (order == 7) {
+        this->cascade.settings[0].q = qTable::Seventh::q0;
+        this->cascade.settings[1].q = qTable::Seventh::q1;
+        this->cascade.settings[2].q = qTable::Seventh::q2;
+      } else if (order == 8) {
+        this->cascade.settings[0].q = qTable::Eighth::q0;
+        this->cascade.settings[1].q = qTable::Eighth::q1;
+        this->cascade.settings[2].q = qTable::Eighth::q2;
+        this->cascade.settings[3].q = qTable::Eighth::q3;
+      }
+    }
+    Audio process(Audio x) noexcept override {
+      if constexpr (order % 2) {
+        return this->firstOrder.process(this->cascade.process(x));
+      }
+      return this->cascade.process(x);
+    }
+    void update() noexcept override {
+      for (size_t i = 0; i < nStages; i++) {
+        this->cascade.settings[i].fc_hz = fc_hz;
+      }
+      this->cascade.update();
+      if constexpr (order % 2) {
+        this->firstOrder.fc_hz = this->fc_hz;
+        this->firstOrder.update();
+      }
+    }
+    void reset(signal_t fs) noexcept override {
+      this->cascade.reset(fs);
+      if constexpr (order % 2) { this->firstOrder.reset(fs); }
+      this->update();
+    }
+  };
+
+  using ButterLpfSecond   = FilterBase<2, Shape::lpf, ButterworthTable>;
+  using ButterLpfThird    = FilterBase<3, Shape::lpf, ButterworthTable>;
+  using ButterLpfFourth   = FilterBase<4, Shape::lpf, ButterworthTable>;
+  using ButterLpfFifth    = FilterBase<5, Shape::lpf, ButterworthTable>;
+  using ButterLpfSixth    = FilterBase<6, Shape::lpf, ButterworthTable>;
+  using ButterLpfSeventh  = FilterBase<7, Shape::lpf, ButterworthTable>;
+  using ButterLpfEighth   = FilterBase<8, Shape::lpf, ButterworthTable>;
+  using ButterHpfSecond   = FilterBase<2, Shape::hpf, ButterworthTable>;
+  using ButterHpfThird    = FilterBase<3, Shape::hpf, ButterworthTable>;
+  using ButterHpfFourth   = FilterBase<4, Shape::hpf, ButterworthTable>;
+  using ButterHpfFifth    = FilterBase<5, Shape::hpf, ButterworthTable>;
+  using ButterHpfSixth    = FilterBase<6, Shape::hpf, ButterworthTable>;
+  using ButterHpfSeventh  = FilterBase<7, Shape::hpf, ButterworthTable>;
+  using ButterHpfEighth   = FilterBase<8, Shape::hpf, ButterworthTable>;
+  using LinkwitzLpfSecond = FilterBase<2, Shape::lpf, LinkwitzTable>;
+  using LinkwitzLpfFourth = FilterBase<4, Shape::lpf, LinkwitzTable>;
+  using LinkwitzLpfSixth  = FilterBase<6, Shape::lpf, LinkwitzTable>;
+  using LinkwitzLpfEighth = FilterBase<8, Shape::lpf, LinkwitzTable>;
+  using LinkwitzHpfSecond = FilterBase<2, Shape::hpf, LinkwitzTable>;
+  using LinkwitzHpfFourth = FilterBase<4, Shape::hpf, LinkwitzTable>;
+  using LinkwitzHpfSixth  = FilterBase<6, Shape::hpf, LinkwitzTable>;
+  using LinkwitzHpfEighth = FilterBase<8, Shape::hpf, LinkwitzTable>;
 
   using EqBand6 = EqBand6Stereo;
   using EqBand  = EqBandStereo;
