@@ -26,7 +26,6 @@
 #include "lib/DynamicFilter.h"
 #include "lib/Plugin.h"
 #include "lib/gcem.h"
-#include "lib/utils.h"
 #include <cstddef>
 
 struct ntAdaptiveDeEsser final : public NtFx::Plugin {
@@ -147,18 +146,17 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
       this->updatePeakLevel(1, x);
       return x;
     }
-    auto xSc = yDl;
+    auto xSc = x;
     if (this->extScEnable) { xSc = this->xSc; }
     auto ySc = this->sc.process(xSc);
     if (this->sc.scListen) {
       this->updatePeakLevel(1, ySc);
       return ySc;
     }
-    auto yScReduced      = (ySc * this->red_lin - this->red_lin + 1).absMin();
-    this->shelf.gain_lin = yScReduced;
+    this->shelf.gain_lin = (ySc * this->red_lin - this->red_lin + 1).absMin();
     auto y               = this->shelf.process(yDl);
     this->updatePeakLevel(1, y);
-    this->updatePeakLevel(2, yScReduced);
+    this->updatePeakLevel(2, this->shelf.gain_lin);
     return y;
   }
 
