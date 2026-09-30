@@ -28,13 +28,11 @@
 #include <string>
 #include <vector>
 
-constexpr int nHpf = 2;
-constexpr int nLpf = 2;
+constexpr int nHpf   = 2;
+constexpr int nLpf   = 2;
+constexpr int nBands = 4;
 
-enum Order : int { none, first, second, third, fourth };
-enum Bands : int { lo, loMid, hiMid, hi, n };
-enum Filters : int { fLo, fLoMid, fHiMid, fHi, fHpf1, fHpf2, fLpf1, fLpf2, fN };
-const std::array<std::string, Bands::n> names = {
+constexpr std::array<std::string, nBands> names = {
   "Low", "Low Mid", "High Mid", "High"
 };
 const std::vector<std::string> hpfLpfOptions {
@@ -53,6 +51,19 @@ const std::vector<std::string> bandOptions {
 };
 
 struct ntEqualizer final : public NtFx::Plugin {
+  enum Order : int { none, first, second, third, fourth };
+  enum Bands : int { lo, loMid, hiMid, hi };
+  enum Filters : int {
+    fLo,
+    fLoMid,
+    fHiMid,
+    fHi,
+    fHpf1,
+    fHpf2,
+    fLpf1,
+    fLpf2,
+    fN
+  };
   NtFx::Biquad::Cascade<fN> cascade;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> firstOrderHpf;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> firstOrderLpf;
@@ -72,7 +83,7 @@ struct ntEqualizer final : public NtFx::Plugin {
             { &this->qHpf, "Q", "", 0.5, 10 },
         },
     });
-    for (size_t i = 0; i < Bands::n; i++) {
+    for (size_t i = 0; i < nBands; i++) {
       this->knobGroups.push_back({
           names[i],
           {
@@ -96,7 +107,7 @@ struct ntEqualizer final : public NtFx::Plugin {
     });
     this->dropdowns.push_back(
         { (int*)&this->orderHpf, "HPF Order", hpfLpfOptions, true });
-    for (size_t i = 0; i < Bands::n; i++) {
+    for (size_t i = 0; i < nBands; i++) {
       this->dropdowns.push_back({
           (int*)&this->cascade.settings[i].shape,
           names[i],

@@ -28,9 +28,8 @@
 #include "lib/Plugin.h"
 #include <cstddef>
 
-enum Mode { wide, shelf, bell };
-
 struct ntDeEsser final : public NtFx::Plugin {
+  enum class Mode { wide, shelf, bell };
   NtFx::Delay::Short<10.0> dl;
   NtFx::Comp::PeakSideChainLin sc;
   NtFx::Biquad::EqBand scBpf;

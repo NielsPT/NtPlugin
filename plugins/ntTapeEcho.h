@@ -31,15 +31,6 @@
 #include "lib/gcem.h"
 #include "lib/utils.h"
 
-enum SubDev : int {
-  half,
-  fourth,
-  eighth_dot,
-  eighth,
-  sixteenth_dot,
-  sixteenth,
-};
-
 const std::vector<std::string> subDevOptions {
   "half",
   "fourth",
@@ -50,6 +41,14 @@ const std::vector<std::string> subDevOptions {
 };
 
 struct ntTapeEcho final : public NtFx::Plugin {
+  enum SubDev : int {
+    half,
+    fourth,
+    eighth_dot,
+    eighth,
+    sixteenth_dot,
+    sixteenth,
+  };
   NtFx::Delay::LongGlided<2e3, signal_t> dlL;
   NtFx::Delay::LongGlided<2e3, signal_t> dlR;
   NtFx::Delay::Mod mod;

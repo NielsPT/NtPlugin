@@ -23,7 +23,8 @@
 #define Q(x) #x
 #define QUOTE(x) Q(x)
 
-#include NTFX_PLUGIN_FILE
+// #include NTFX_PLUGIN_FILE
+#include "Plugins.h"
 
 #include "lib/SampleRateConverter.h"
 #include "lib/UiSpec.h"

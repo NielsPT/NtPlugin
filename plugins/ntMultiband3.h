@@ -34,12 +34,11 @@
 #include <array>
 #include <string>
 
-enum Bands { hi, mid, lo, n };
-constexpr std::array<std::string, Bands::n> bandNames = {
-  "High", "Mid", "Low"
-};
-
 struct ntMultiband3 final : public NtFx::Plugin {
+  enum Bands { hi, mid, lo, n };
+  static constexpr std::array<std::string, Bands::n> bandNames = {
+    "High", "Mid", "Low"
+  };
   signal_t xOverLo_hz { 200 };
   signal_t xOverHi_hz { 4000 };
   signal_t ouputGain_db { 0 };

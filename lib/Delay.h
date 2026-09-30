@@ -1,4 +1,4 @@
-
+#pragma once
 /**
  * @file DelayLine.h
  * @author Niels Thøgersen (niels.thoegersen@gmail.com)

@@ -26,16 +26,15 @@
 #include "lib/FirstOrder.h"
 #include "lib/Plugin.h"
 
-enum Order : int {
-  first,
-  second,
-  third,
-  fourth,
-};
-
-enum CascadeIdx { bqHpf0, bqHpf1, bqLpf0, bqLpf1 };
-
 struct ntFilters final : public NtFx::Plugin {
+  enum CascadeIdx { bqHpf0, bqHpf1, bqLpf0, bqLpf1 };
+  enum Order : int {
+    first,
+    second,
+    third,
+    fourth,
+  };
+
   signal_t fHpf = 20;
   signal_t fLpf = 20000;
   signal_t qHpf = 0.707;

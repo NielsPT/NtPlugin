@@ -29,9 +29,8 @@
 #include "lib/utils.h"
 #include <cstddef>
 
-enum scMode { feedForward = 0, feedback, external };
-
 struct ntCompressor final : public NtFx::Plugin {
+  enum scMode { feedForward = 0, feedback, external };
   NtFx::Delay::Long<10.0> dl;
   NtFx::Comp::ScSettings scSettings;
   NtFx::Comp::PeakSideChainDb peakScDb;

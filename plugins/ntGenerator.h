@@ -7,18 +7,16 @@
 #include <cassert>
 #include <vector>
 
-enum Mode : int {
-  e_sin,
-  e_saw,
-  e_square,
-  e_white,
-  e_pink,
-  e_filteredWhite,
-  e_filteredPink,
-  e_n
-};
-
 struct ntGenerator final : public NtFx::Plugin {
+  enum class Mode : int {
+    sin,
+    saw,
+    square,
+    white,
+    pink,
+    filteredWhite,
+    filteredPink,
+  };
   NtFx::Generator::Sin sin;
   NtFx::Generator::Saw saw;
   NtFx::Generator::Square square;
@@ -33,7 +31,7 @@ struct ntGenerator final : public NtFx::Plugin {
   signal_t dry_lin { 1 };
   signal_t fHpf { 20 };
   signal_t fLpf { 20e3 };
-  Mode mode { Mode::e_sin };
+  Mode mode { Mode::sin };
 
   ntGenerator() {
     this->primaryKnobs = {
@@ -67,30 +65,29 @@ struct ntGenerator final : public NtFx::Plugin {
     this->updatePeakLevel(0, x);
     Audio yGen = { 0, 0 };
     switch (this->mode) {
-    case Mode::e_sin:
+    case Mode::sin:
       yGen = this->sin.process(x);
       break;
-    case Mode::e_saw:
+    case Mode::saw:
       yGen = this->saw.process(x);
       break;
-    case Mode::e_square:
+    case Mode::square:
       yGen = this->square.process(x);
       break;
-    case Mode::e_white:
+    case Mode::white:
       yGen = this->white.process(x);
       break;
-    case Mode::e_pink:
+    case Mode::pink:
       yGen = this->pink.process(x);
       break;
-    case Mode::e_filteredWhite:
+    case Mode::filteredWhite:
       yGen = this->filteredWhite.process(x);
       break;
-    case Mode::e_filteredPink:
+    case Mode::filteredPink:
       yGen = this->filteredPink.process(x);
       break;
-    case Mode::e_n:
     default:
-      assert(false);
+      break;
     }
     auto y = yGen * wet_lin + x * dry_lin;
     this->updatePeakLevel(1, y);
@@ -114,12 +111,12 @@ struct ntGenerator final : public NtFx::Plugin {
     pink.update();
     filteredWhite.update();
     filteredPink.update();
-    if (this->mode <= Mode::e_square) {
+    if (this->mode <= Mode::square) {
       this->activateParameter("Frequency");
     } else {
       this->deactivateParameter("Frequency");
     }
-    if (this->mode >= Mode::e_filteredWhite) {
+    if (this->mode >= Mode::filteredWhite) {
       this->activateParameter("LPF");
       this->activateParameter("HPF");
     } else {

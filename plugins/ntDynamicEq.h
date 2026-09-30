@@ -28,13 +28,13 @@
 #include <array>
 #include <cstddef>
 
-enum Bands { lf, loMid, hiMid, hf, n };
-enum AttRelMode { relative, user };
-constexpr std::array<std::string, Bands::n> bandNames {
-  "Low", "Low Mid", "High Mid", "High"
-};
-
 struct ntDynamicEq final : public NtFx::Plugin {
+  enum Bands { lf, loMid, hiMid, hf, n };
+  enum AttRelMode { relative, user };
+  static constexpr std::array<std::string, Bands::n> bandNames {
+    "Low", "Low Mid", "High Mid", "High"
+  };
+
   std::array<NtFx::Biquad::EqBand, Bands::n> bands;
   std::array<NtFx::Comp::PeakSideChainLin, Bands::n> scs;
   std::array<signal_t, Bands::n> gain_lin;

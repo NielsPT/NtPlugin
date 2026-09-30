@@ -4,27 +4,26 @@
 #include "lib/Plugin.h"
 #include "lib/SoftClip.h"
 
-enum Mode {
-  e_thirdAntialias,
-  e_fifthAntialias,
-  e_second,
-  e_third,
-  e_fifth,
-  e_hard,
-  e_alt1,
-};
-
 struct ntSoftClip final : public NtFx::Plugin {
+  enum class Mode {
+    thirdAntialias,
+    fifthAntialias,
+    // second,
+    third,
+    fifth,
+    hard,
+    alt1,
+  };
   NtFx::Clip::SoftAntialias3 clipA3;
   NtFx::Clip::SoftAntialias5 clipA5;
-  NtFx::Clip::Second second;
+  // NtFx::Clip::Second second;
   NtFx::Clip::Soft3 clip3;
   NtFx::Clip::Soft5 clip5;
   NtFx::Clip::Hard hard;
   NtFx::Clip::Alt1 alt1;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpfZero> lpf;
-  Mode mode { e_thirdAntialias };
-  signal_t gain_db;
+  Mode mode { Mode::thirdAntialias };
+  signal_t gain_db { 0 };
   bool lpfEnable { true };
   bool bypassEnable { false };
 
@@ -46,7 +45,7 @@ struct ntSoftClip final : public NtFx::Plugin {
           {
               "Third antialias",
               "Fifth antialias",
-              "Second",
+              // "Second",
               "Third",
               "Fifth",
               "Hard",
@@ -66,25 +65,25 @@ struct ntSoftClip final : public NtFx::Plugin {
     }
     Audio yClip { 0 };
     switch (this->mode) {
-    case e_thirdAntialias:
+    case Mode::thirdAntialias:
       yClip = this->clipA3.process(x);
       break;
-    case e_fifthAntialias:
+    case Mode::fifthAntialias:
       yClip = this->clipA5.process(x);
       break;
-    case e_second:
-      yClip = this->second.process(x);
-      break;
-    case e_third:
+    // case Mode::second:
+    //   yClip = this->second.process(x);
+    //   break;
+    case Mode::third:
       yClip = this->clip3.process(x);
       break;
-    case e_fifth:
+    case Mode::fifth:
       yClip = this->clip5.process(x);
       break;
-    case e_hard:
+    case Mode::hard:
       yClip = this->hard.process(x);
       break;
-    case e_alt1:
+    case Mode::alt1:
       yClip = this->alt1.process(x);
       break;
     }
@@ -97,14 +96,14 @@ struct ntSoftClip final : public NtFx::Plugin {
   void update() noexcept override {
     this->clipA3.gain_db = this->gain_db;
     this->clipA5.gain_db = this->gain_db;
-    this->second.gain_db = this->gain_db;
-    this->clip3.gain_db  = this->gain_db;
-    this->clip5.gain_db  = this->gain_db;
-    this->hard.gain_db   = this->gain_db;
-    this->alt1.gain_db   = this->gain_db;
+    // this->second.gain_db = this->gain_db;
+    this->clip3.gain_db = this->gain_db;
+    this->clip5.gain_db = this->gain_db;
+    this->hard.gain_db  = this->gain_db;
+    this->alt1.gain_db  = this->gain_db;
     this->clipA3.update();
     this->clipA5.update();
-    this->second.update();
+    // this->second.update();
     this->clip3.update();
     this->clip5.update();
     this->hard.update();
@@ -116,7 +115,7 @@ struct ntSoftClip final : public NtFx::Plugin {
     this->_fs = fs;
     this->clipA3.reset(fs);
     this->clipA5.reset(fs);
-    this->second.reset(fs);
+    // this->second.reset(fs);
     this->clip3.reset(fs);
     this->clip5.reset(fs);
     this->hard.reset(fs);

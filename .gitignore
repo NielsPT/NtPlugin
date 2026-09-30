@@ -277,3 +277,4 @@ JuceWrapper/aax-sdk-*
 JuceWrapper/external/*
 .secrets.txt
 compile_commands.json
+JuceWrapper/Plugins.h

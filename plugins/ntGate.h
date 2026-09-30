@@ -27,9 +27,8 @@
 #include "lib/GateSc.h"
 #include "lib/Plugin.h"
 
-enum ScMode { internal, external, ignore };
-
 struct ntGate final : public NtFx::Plugin {
+  enum ScMode { internal, external, ignore };
   NtFx::Gate::Sc sc;
   NtFx::Gate::Sc scHf;
   NtFx::Comp::PeakSideChainLin ignoreSc;
