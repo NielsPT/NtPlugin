@@ -860,11 +860,11 @@ def run(args: dict):
         ),
     )
     success = True
-    for i, file in enumerate(returncodes):
-        if returncodes[i] < 0:
+    for c in returncodes:
+        if c < 0:
             print(f"{RED}ABORT{BLACK}")
             return False
-        success &= returncodes[i] == 0
+        success &= c == 0
     results = _readAggregateResults()
     if not results:
         return True

@@ -355,17 +355,20 @@ def storeArtifacts(plugin: str) -> bool:
         if e.is_dir():
             targets += [e.path.replace(art, "")]
     for target in targets:
-        outDir = f"{ARTIFACTS_DIR}{os.sep}{target}"
-        os.makedirs(outDir, exist_ok=True)
-        subprocess.run(
-            ["xattr", "-r", "-d", "*", f"{outDir}{os.sep}{plugin}"],
-            check=False,
-        )
-        shutil.copytree(f"{art}{target}", outDir, dirs_exist_ok=True)
+        dstDir = f"{ARTIFACTS_DIR}{os.sep}{target}"
+        dst = f"{dstDir}{os.sep}{plugin}"
+        src = f"{art}{target}"
+        os.makedirs(dstDir, exist_ok=True)
+        subprocess.run(["xattr", "-cr", dst], check=False)
+        try:
+            os.rmdir(dst)
+        except FileNotFoundError:
+            pass
+        shutil.copytree(src, dstDir, dirs_exist_ok=True)
         print(f"{GREEN}Storing target {target} for plugin {plugin}.{BLACK}")
         if sys.platform == "win32" and target == "VST3":
             print(
-                f"{BLUE}Add '{os.path.abspath(outDir)}' to you host/DAW plugin "
+                f"{BLUE}Add '{os.path.abspath(dstDir)}' to you host/DAW plugin "
                 "path or copy content to your plugin folder in order to use "
                 f"plugins.{BLACK}"
             )
