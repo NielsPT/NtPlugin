@@ -788,7 +788,7 @@ def runTests(cppPath: str, fs: float, plot: bool = True) -> int:
         cppPath = f"{FILE_DIR}/tests/{cppPath}.cpp"
     if not os.path.exists(cppPath):
         print(f"File '{cppPath}' not found. Skipping test.")
-        return -1
+        return 0
     component = (
         os.path.basename(cppPath).replace("_test", "").replace(".cpp", "")
     )

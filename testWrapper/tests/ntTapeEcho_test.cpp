@@ -21,8 +21,8 @@ int main() {
   auto* tapeEchoLong       = tapeEchoLongStorage.get();
   tapeEchoLong->syncEnable = true;
   tapeEchoLong->tempo      = 120;
-  tapeEchoLong->subDevL    = SubDev::fourth;
-  tapeEchoLong->subDevR    = SubDev::fourth;
+  tapeEchoLong->subDevL    = ntTapeEcho::SubDev::fourth;
+  tapeEchoLong->subDevR    = ntTapeEcho::SubDev::fourth;
   tapeEchoLong->fb_lin     = 0.4f;
   NTFX_ADD_TEST_PTR(set, tapeEchoLong, "linearSweep");
 
@@ -31,8 +31,8 @@ int main() {
   auto* tapeEchoHighFb       = tapeEchoHighFbStorage.get();
   tapeEchoHighFb->tempo      = 120;
   tapeEchoHighFb->syncEnable = true;
-  tapeEchoHighFb->subDevL    = SubDev::eighth;
-  tapeEchoHighFb->subDevR    = SubDev::eighth;
+  tapeEchoHighFb->subDevL    = ntTapeEcho::SubDev::eighth;
+  tapeEchoHighFb->subDevR    = ntTapeEcho::SubDev::eighth;
   tapeEchoHighFb->fb_lin     = 0.8f;
   NTFX_ADD_TEST_PTR(set, tapeEchoHighFb, "linearSweep");
 
@@ -41,8 +41,8 @@ int main() {
   auto* tapeEchoDotted       = tapeEchoDottedStorage.get();
   tapeEchoDotted->tempo      = 120;
   tapeEchoDotted->syncEnable = true;
-  tapeEchoDotted->subDevL    = SubDev::eighth_dot;
-  tapeEchoDotted->subDevR    = SubDev::eighth_dot;
+  tapeEchoDotted->subDevL    = ntTapeEcho::SubDev::eighth_dot;
+  tapeEchoDotted->subDevR    = ntTapeEcho::SubDev::eighth_dot;
   tapeEchoDotted->fb_lin     = 0.5f;
   NTFX_ADD_TEST_PTR(set, tapeEchoDotted, "linearSweep");
 

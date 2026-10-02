@@ -20,10 +20,7 @@
 
 #include "lib/Audio.h"
 #include <cstddef>
-#define Q(x) #x
-#define QUOTE(x) Q(x)
 
-// #include NTFX_PLUGIN_FILE
 #include "Plugins.h"
 
 #include "lib/SampleRateConverter.h"
@@ -107,6 +104,3 @@ struct NtPluginAudioProcessor : public juce::AudioProcessor {
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtPluginAudioProcessor)
 };
-
-#undef Q
-#undef QUOTE

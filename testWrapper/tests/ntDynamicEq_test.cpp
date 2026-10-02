@@ -14,7 +14,7 @@ int main() {
   NTFX_ADD_TEST(set, defaults, "impulse");
   auto staticReductionStorage = std::make_unique<ntDynamicEq>();
   auto& staticReduction       = *staticReductionStorage;
-  for (size_t i = 0; i < Bands::n; i++) {
+  for (size_t i = 0; i < ntDynamicEq::Bands::n; i++) {
     staticReduction.bands[i].settings.shape   = NtFx::Biquad::Shape::bell;
     staticReduction.bands[i].settings.gain_db = -12;
     staticReduction.bands[i].settings.q       = 2;
@@ -22,7 +22,7 @@ int main() {
   NTFX_ADD_TEST(set, staticReduction, "impulse");
   auto staticBoostStorage = std::make_unique<ntDynamicEq>();
   auto& staticBoost       = *staticBoostStorage;
-  for (size_t i = 0; i < Bands::n; i++) {
+  for (size_t i = 0; i < ntDynamicEq::Bands::n; i++) {
     staticBoost.bands[i].settings.gain_db = 12;
     staticBoost.bands[i].settings.q       = 1;
   }

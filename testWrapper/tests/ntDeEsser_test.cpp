@@ -18,7 +18,7 @@ int main() {
 
   auto shelfStorage           = std::make_unique<ntDeEsser>();
   auto& shelf                 = *shelfStorage;
-  shelf.mode                  = Mode::shelf;
+  shelf.mode                  = ntDeEsser::Mode::shelf;
   shelf.fc_hz                 = 10e3;
   shelf.sc.settings.thresh_db = -6;
   shelf.sc.settings.tRel_ms   = 10;
@@ -27,7 +27,7 @@ int main() {
   NTFX_ADD_TEST(set, shelf, "impulse");
   auto bellStorage           = std::make_unique<ntDeEsser>();
   auto& bell                 = *bellStorage;
-  bell.mode                  = Mode::bell;
+  bell.mode                  = ntDeEsser::Mode::bell;
   bell.fc_hz                 = 10e3;
   bell.sc.settings.thresh_db = -6;
   bell.sc.settings.tRel_ms   = 10;
@@ -36,7 +36,7 @@ int main() {
   NTFX_ADD_TEST(set, bell, "impulse");
   auto bell1Storage           = std::make_unique<ntDeEsser>();
   auto& bell1                 = *bell1Storage;
-  bell1.mode                  = Mode::bell;
+  bell1.mode                  = ntDeEsser::Mode::bell;
   bell1.fc_hz                 = 10e3;
   bell1.sc.settings.thresh_db = -6;
   bell1.sc.settings.tRel_ms   = 10;
@@ -44,12 +44,12 @@ int main() {
   NTFX_ADD_TEST(set, bell1, "dynamic_matched");
   auto scHpfStorage    = std::make_unique<ntDeEsser>();
   auto& scHpf          = *scHpfStorage;
-  scHpf.mode           = Mode::shelf;
+  scHpf.mode           = ntDeEsser::Mode::shelf;
   scHpf.scListenEnable = true;
   NTFX_ADD_TEST(set, scHpf, "impulse");
   auto scBpfStorage    = std::make_unique<ntDeEsser>();
   auto& scBpf          = *scBpfStorage;
-  scBpf.mode           = Mode::bell;
+  scBpf.mode           = ntDeEsser::Mode::bell;
   scBpf.scListenEnable = true;
   NTFX_ADD_TEST(set, scBpf, "impulse");
   return set.runAllTests();

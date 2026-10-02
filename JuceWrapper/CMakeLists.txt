@@ -12,7 +12,7 @@ if(NOT DEFINED NTFX_COMPANY)
   message(STATUS "NTFX_COMPANY not defined. Please define using '-DNTFX_COMPANY=[company]'. Setting to 'NTfx'.")
   set(NTFX_COMPANY "NTfx")
 endif()
-# set(NTFX_PLUGIN_FILE "\"plugins/${NTFX_PLUGIN}.h\"")
+set(NTFX_PLUGIN_FILE "\"plugins/${NTFX_PLUGIN}.h\"")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -185,8 +185,8 @@ target_compile_definitions(${NTFX_PLUGIN}
   JUCE_VST3_CAN_REPLACE_VST2=0
   DONT_SET_USING_JUCE_NAMESPACE=1
   JUCE_DONT_DECLARE_PROJECTINFO=1
-  NTFX_PLUGIN=${NTFX_PLUGIN})
-# NTFX_PLUGIN_FILE=${NTFX_PLUGIN_FILE})
+  NTFX_PLUGIN=${NTFX_PLUGIN}
+  NTFX_PLUGIN_FILE=${NTFX_PLUGIN_FILE})
 
 # If your target needs extra binary assets, you can add them here. The first argument is the name of
 # a new static library target that will include all the binary resources. There is an optional
