@@ -400,7 +400,16 @@ def buildPlugins(
     return True
 
 
-def run(plugins: list[str], args: dict) -> bool:
+def main(args: dict) -> bool:
+    plugins = args["plugins"]
+    allPlugins = package.readPlugins()
+    if not plugins or plugins == ["all"]:
+        plugins = allPlugins
+    else:
+        for plugin in plugins:
+            if plugin not in allPlugins:
+                print(f"{RED}Plugin '{plugin}' does not exist.{BLACK}")
+                return False
     version = args["version"]
     secrets = package.loadSecrets()
     for secret in package.SECRETS:
@@ -477,3 +486,7 @@ def createParser():
         default="NTfx",
     )
     return parser
+
+
+if __name__ == "__main__":
+    sys.exit(not main(createParser().parse_args().__dict__))

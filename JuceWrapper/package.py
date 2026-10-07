@@ -38,6 +38,12 @@ TEST_SCRIPT_DIR = os.path.realpath(f"{REPO_BASE_DIR}/testWrapper")
 SECRETS_FILE = os.path.realpath(f"{JUCE_WRAPPER_DIR}/.secrets.txt")
 PACKAGING_DIR = os.path.realpath(f"{BUILD_DIR}/packaging")
 PACKAGE_ARTIFACT = "ntPlugin"
+WRAPTOOL = "/Applications/PACEAntiPiracy/Eden/Fusion/Versions/6/bin/wraptool"
+if sys.platform == "win32":
+    WRAPTOOL = (
+        f"C:{os.sep}Program Files{os.sep}PACEAntiPiracy{os.sep}Eden{os.sep}"
+        f"Fusion{os.sep}Versions{os.sep}6{os.sep}bin{os.sep}wraptool"
+    )
 
 SECRETS = [
     "devId",
@@ -47,6 +53,7 @@ SECRETS = [
     "installerId",
     "company",
     "version",
+    "aaxCustomerNumber",
 ]
 
 """
@@ -78,6 +85,16 @@ def readPlugins() -> list[str]:
 
 
 def storeSecrets(secrets: dict[str, str]) -> bool:
+    """
+    Stores credentials are other info given as args as key value pairs in a txt
+    file.
+
+    Args:
+        secrets (dict[str, str]): Data to be stored.
+
+    Returns:
+        bool: True on success.
+    """
     for secret in secrets:
         if not secrets[secret] or secret not in SECRETS:
             return False
@@ -89,6 +106,12 @@ def storeSecrets(secrets: dict[str, str]) -> bool:
 
 
 def loadSecrets() -> dict[str, str]:
+    """
+    Loads secrets file.
+
+    Returns:
+        dict[str, str]: Data loaded from secrets file if any.
+    """
     if not os.path.exists(SECRETS_FILE):
         print(f"{YELLOW}Secrets file not found.{BLACK}")
         return {}
@@ -103,7 +126,13 @@ def loadSecrets() -> dict[str, str]:
     return secrets
 
 
-def sign(plugins: list[str], targets: list[str], devId: str) -> bool:
+def sign(
+    plugins: list[str],
+    targets: list[str],
+    devId: str,
+    company: str,
+    aaxCustomerNumber: str,
+) -> bool:
     """
     Applies code signing on Mac.
 
@@ -117,32 +146,127 @@ def sign(plugins: list[str], targets: list[str], devId: str) -> bool:
         bool: True on success.
     """
     for target in targets:
-        extension = TARGET_EXT_MAP[target]
-        for plugin in plugins:
-            file = f"{ARTIFACTS_DIR}/{target}/{plugin}.{extension}"
-            print(f"{BLUE}Running codesign for '{file}'.{BLACK}")
-            if not os.path.exists(file):
-                print(f"{YELLOW}Artifact '{file}' not found. Skipping.{BLACK}")
-                continue
-            res = subprocess.run(
-                [
-                    "codesign",
-                    "--force",
-                    "-s",
-                    f"{devId}",
-                    file,
-                    "-v",
-                    "--deep",
-                    "--strict",
-                    "--options=runtime",
-                    "--timestamp",
-                ],
-                check=False,
-            )
-            if res.returncode:
-                print(f"{RED}Codesign failed for '{plugin}'.{BLACK}")
-                return False
-            print(f"{GREEN}'{plugin}' signed succesfully.{BLACK}")
+        if target == "AAX":
+            for plugin in plugins:
+                if not signAaxPlugin(plugin, devId, company, aaxCustomerNumber):
+                    print(f"{RED}Failed to sign AAX plugin '{plugin}'{BLACK}.")
+                    return False
+        else:
+            for plugin in plugins:
+                if not signNonAxxPlugin(plugin, target, devId):
+                    return False
+    return True
+
+
+def signNonAxxPlugin(plugin: str, target: str, devId: str) -> bool:
+    """
+    Signs a plugin with codesign.
+
+    Args:
+        plugin (str): plugin to sign.
+        target (str): target plugin type, e.g. AAX, VST3.
+        devId (str): Apple developer ID.
+
+    Returns:
+        bool: True on success.
+    """
+    file = f"{ARTIFACTS_DIR}/{target}/{plugin}.{TARGET_EXT_MAP[target]}"
+    print(f"{BLUE}Running codesign for '{file}'.{BLACK}")
+    if not os.path.exists(file):
+        print(f"{YELLOW}Artifact '{file}' not found. Skipping.{BLACK}")
+        return False
+    res = subprocess.run(
+        [
+            "codesign",
+            "--force",
+            "-s",
+            f"{devId}",
+            file,
+            "-v",
+            "--deep",
+            "--strict",
+            "--options=runtime",
+            "--timestamp",
+        ],
+        check=False,
+    )
+    if res.returncode:
+        print(f"{RED}Codesign failed for '{plugin}'.{BLACK}")
+        return False
+    print(f"{GREEN}'{plugin}' signed succesfully.{BLACK}")
+    return True
+
+
+def verifyAaxPlugin(plugin: str) -> bool:
+    """
+    Returns true if plugin is signed succesfully.
+
+    Args:
+        plugin (str): Plugin to check.
+
+    Returns:
+        bool: True is signed.
+    """
+    path = f"{ARTIFACTS_DIR}/AAX/{plugin}.aaxplugin"
+    res = subprocess.run(
+        [WRAPTOOL, "verify", "--in", path],
+        check=False,
+        capture_output=True,
+    )
+    print(res.stdout.decode())
+    if not res.returncode:
+        print(f"{BLUE}'{plugin}' already signed.{BLACK}")
+        return True
+    return False
+
+
+def signAaxPlugin(
+    plugin: str,
+    devId: str,
+    company: str,
+    aaxCustomerNumber: str,
+) -> bool:
+    """
+    Signs AAX plugin with wraptool.
+
+    Args:
+        plugin (str): Plugin to sign.
+        devId (str): Apple developer ID.
+        company (str): Company/Vendor.
+        aaxCustomerNumber (str): PACE customer number.
+
+    Returns:
+        bool: True on success.
+    """
+    path = f"{ARTIFACTS_DIR}/AAX/{plugin}.aaxplugin"
+    if verifyAaxPlugin(plugin):
+        return True
+    res = subprocess.run(
+        [
+            WRAPTOOL,
+            "sign",
+            "--dsigharden",
+            "--dsig1-compat",
+            "off",
+            "--customernumber",
+            aaxCustomerNumber,
+            "--customername",
+            company,
+            "--signid",
+            devId,
+            "--in",
+            path,
+            "--out",
+            path,
+        ],
+        check=False,
+    )
+    if "LICENSE ERROR" in res.stdout.decode():
+        return False
+    if res.returncode:
+        return False
+    if not verifyAaxPlugin(plugin):
+        return False
     return True
 
 
@@ -167,32 +291,62 @@ def notarizePlugins(
         bool: True on success.
     """
     for target in targets:
-        extension = TARGET_EXT_MAP[target]
         for plugin in plugins:
-            file = f"{ARTIFACTS_DIR}/{target}/{plugin}.{extension}"
-            print(f"{BLUE}Running codesign for '{file}'.{BLACK}")
-            if not os.path.exists(file):
-                print(f"{RED}Artifact '{file}' not found.{BLACK}")
-                continue
-            tmpZipFile = f"{BUILD_DIR}/{plugin}_{target}_unnotarized.zip"
-            os.chdir(f"{ARTIFACTS_DIR}/{target}")
-            res = subprocess.run(
-                [
-                    "zip",
-                    f"../../{tmpZipFile}",
-                    f"{plugin}.{extension}",
-                    "-r",
-                ],
-                check=False,
-            )
-            os.chdir(REPO_BASE_DIR)
-            if res.returncode:
-                print(f"{RED}Failed to compress '{file}'.{BLACK}")
+            if not notarizePlugin(
+                plugin,
+                target,
+                email,
+                password,
+                teamId,
+            ):
                 return False
-            if not notarize(tmpZipFile, email, password, teamId):
-                print(f"{RED}Failed to notarize '{plugin}'.{BLACK}")
-                return False
-            print(f"{GREEN}'{plugin}' notarized succesfully.{BLACK}")
+    return True
+
+
+def notarizePlugin(
+    plugin: str,
+    target: str,
+    email: str,
+    password: str,
+    teamId: str,
+) -> bool:
+    """
+    Notarizes a single plugin.
+
+    Args:
+        plugin (str): Plugin
+        target (str): Target plugin format.
+        email (str): Email address of Apple ID.
+        password (str): Password for Apple developer account
+        teamId (str): Apple developer team ID.
+
+    Returns:
+        bool: True on success.
+    """
+    file = f"{ARTIFACTS_DIR}/{target}/{plugin}.{TARGET_EXT_MAP[target]}"
+    print(f"{BLUE}Running codesign for '{file}'.{BLACK}")
+    if not os.path.exists(file):
+        print(f"{RED}Artifact '{file}' not found.{BLACK}")
+        return False
+    tmpZipFile = f"{BUILD_DIR}/{plugin}_{target}_unnotarized.zip"
+    os.chdir(f"{ARTIFACTS_DIR}/{target}")
+    res = subprocess.run(
+        [
+            "zip",
+            f"../../{tmpZipFile}",
+            f"{plugin}.{TARGET_EXT_MAP[target]}",
+            "-r",
+        ],
+        check=False,
+    )
+    os.chdir(REPO_BASE_DIR)
+    if res.returncode:
+        print(f"{RED}Failed to compress '{file}'.{BLACK}")
+        return False
+    if not notarize(tmpZipFile, email, password, teamId):
+        print(f"{RED}Failed to notarize '{plugin}'.{BLACK}")
+        return False
+    print(f"{GREEN}'{plugin}' notarized succesfully.{BLACK}")
     return True
 
 
@@ -496,6 +650,15 @@ def makePluginPkg(plugin: str, target: str, company: str) -> bool:
 
 
 def secretsAreValid(secrets: dict) -> bool:
+    """
+    Returns True if secrets obj contains the keys in SECRETS.
+
+    Args:
+        secrets (dict): Dict to verify.
+
+    Returns:
+        bool: True if valid
+    """
     valid = True
     for s in SECRETS:
         if s not in secrets.keys():
@@ -505,6 +668,16 @@ def secretsAreValid(secrets: dict) -> bool:
 
 
 def verisonIsNewer(new: str, old: str) -> bool:
+    """
+    Returns True if new version is valid and newer that old version.
+
+    Args:
+        new (str): New version to verify.
+        old (str): Old version to check against.
+
+    Returns:
+        bool: True in valid.
+    """
     try:
         newInts = [int(v) for v in new.split(".")]
         oldInts = [int(v) for v in old.split(".")]
@@ -523,7 +696,16 @@ def verisonIsNewer(new: str, old: str) -> bool:
     return False
 
 
-def incrementMinorMonirVersion(old: str) -> str:
+def incrementMinorMinorVersion(old: str) -> str:
+    """
+    Increments minor minor version of version string.
+
+    Args:
+        old (str): Version string to update.
+
+    Returns:
+        str: Updated string.
+    """
     ints = [int(v) for v in old.split(".")]
     version = f"{ints[0]}.{ints[1]}.{ints[2] + 1}"
     print(f"{BLUE}Incremented version: {version}{BLACK}")
@@ -531,19 +713,27 @@ def incrementMinorMonirVersion(old: str) -> str:
 
 
 def findVersion(args: dict, secrets: dict) -> str:
+    """
+    Finds the version string between args and secrets and increments if needed.
+
+    Args:
+        args (dict): Args
+        secrets (dict): Secrets
+
+    Returns:
+        str: version
+    """
     version = ""
     if args["version"]:
         if "version" in secrets and secrets["version"]:
-            if not verisonIsNewer(args["version"], secrets["version"]):
-                if args["version"] == secrets["version"]:
-                    version = incrementMinorMonirVersion(args["version"])
-                else:
+            if args["version"] != secrets["version"]:
+                if not verisonIsNewer(args["version"], secrets["version"]):
                     print(f"{RED}New version is lower than last build.{BLACK}")
                     return ""
         version = args["version"]
         secrets["version"] = version
     elif "version" in secrets and secrets["version"]:
-        version = incrementMinorMonirVersion(secrets["version"])
+        version = incrementMinorMinorVersion(secrets["version"])
     return version
 
 
@@ -561,6 +751,8 @@ def main(args: dict) -> bool:
     os.makedirs(PACKAGING_DIR, exist_ok=True)
     plugins = args["plugins"]
     targets = list(TARGET_EXT_MAP.keys())
+    if sys.platform != "darwin":
+        targets = ["VST3", "AAX"]
     if "targets" in args and args["targets"]:
         targets = args["targets"]
     if not plugins or plugins == ["all"]:
@@ -569,20 +761,37 @@ def main(args: dict) -> bool:
     for secret in SECRETS:
         if secret in args and args[secret]:
             secrets[secret] = args[secret].replace("/n", "")
-    if sys.platform == "darwin" and not secretsAreValid(secrets):
-        print(f"{RED}Faild to get credentials.{BLACK}")
-        return False
     version = findVersion(args, secrets)
     if not version:
         print(f"{RED}Version is not provided. Aborting.{BLACK}")
         return False
+    if sys.platform == "win32":
+        if "AAX" in targets:
+            if not sign(
+                plugins,
+                ["AAX"],
+                secrets["devId"],
+                secrets["company"],
+                secrets["aaxCustomerNumber"],
+            ):
+                return False
+        return zipPackage(plugins, targets, version)
     if sys.platform != "darwin":
         return zipPackage(plugins, ["VST3"], version)
+    if not secretsAreValid(secrets):
+        print(f"{RED}Faild to get credentials.{BLACK}")
+        return False
     secrets["version"] = version
     if not storeSecrets(secrets):
         return False
     if "no_sign" not in args or not args["no_sign"]:
-        if not sign(plugins, targets, secrets["devId"]):
+        if not sign(
+            plugins,
+            targets,
+            secrets["devId"],
+            secrets["company"],
+            secrets["aaxCustomerNumber"],
+        ):
             return False
     if "zip" in args and args["zip"]:
         if not args["no_notarize"]:
@@ -695,6 +904,10 @@ def createParser() -> argparse.ArgumentParser:
         "--company",
         help="Company/vendor of plugins.",
         default="NTfx",
+    )
+    parser.add_argument(
+        "--aaxCustomerNumber",
+        help="Customer number as found on PACE central. For signing AAX plugins.",
     )
     parser.add_argument(
         "--version",

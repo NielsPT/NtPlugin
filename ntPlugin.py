@@ -27,7 +27,7 @@ import json
 from testWrapper import test
 from JuceWrapper import package
 from JuceWrapper.package import RED, YELLOW, BLACK, PLUGINS_DIR
-import JuceWrapper.build as build
+from JuceWrapper import build
 
 TEST_SCRIPT_DIR = os.path.realpath(f"{build.REPO_BASE_DIR}/testWrapper")
 
@@ -209,20 +209,12 @@ def process(args: dict) -> bool:
         bool: True on success.
     """
     t = time.time()
-    plugins = args["plugins"] if "plugins" in args else []
-    allPlugins = package.readPlugins()
-    if not plugins or plugins == ["all"]:
-        plugins = allPlugins
-    else:
-        for plugin in plugins:
-            if plugin not in allPlugins:
-                print(f"{RED}Plugin '{plugin}' does not exist.{BLACK}")
-                return False
-    doTest = args["test"] if "test" in args else False
-    if doTest:
-        if not test.run({"files": plugins, "fs": 48e3, "no_plot": True}):
+    if args["test"]:
+        if not test.run(
+            {"files": args["plugins"], "fs": 48e3, "no_plot": True}
+        ):
             return False
-    if not build.run(plugins, args):
+    if not build.main(args):
         return False
     print(f"Time elapsed: {time.time() - t:.2f} seconds.")
     return True

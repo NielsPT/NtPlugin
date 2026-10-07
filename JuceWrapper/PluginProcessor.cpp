@@ -94,8 +94,8 @@ bool NtPluginAudioProcessor::isBusesLayoutSupported(
 void NtPluginAudioProcessor::processBlock(
     juce::AudioBuffer<float>& buffer, juce::MidiBuffer&) {
   juce::ScopedNoDenormals noDenormals;
-  auto totalNumInputChannels  = getTotalNumInputChannels();
-  auto totalNumOutputChannels = getTotalNumOutputChannels();
+  auto totalNumInputChannels  = this->getTotalNumInputChannels();
+  auto totalNumOutputChannels = this->getTotalNumOutputChannels();
   for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i) {
     buffer.clear(i, 0, buffer.getNumSamples());
   }
