@@ -211,9 +211,7 @@ def verifyAaxPlugin(plugin: str) -> bool:
     res = subprocess.run(
         [WRAPTOOL, "verify", "--in", path],
         check=False,
-        capture_output=True,
     )
-    print(res.stdout.decode())
     if not res.returncode:
         print(f"{BLUE}'{plugin}' already signed.{BLACK}")
         return True
@@ -260,7 +258,9 @@ def signAaxPlugin(
             path,
         ],
         check=False,
+        capture_output=True,
     )
+    print(res.stdout.decode())
     if "LICENSE ERROR" in res.stdout.decode():
         return False
     if res.returncode:

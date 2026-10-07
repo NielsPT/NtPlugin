@@ -26,6 +26,7 @@
 #include "lib/Delay.h"
 #include "lib/Plugin.h"
 #include "lib/SoftClip.h"
+#include "lib/Tilt.h"
 #include "lib/utils.h"
 #include <cstddef>
 
@@ -38,7 +39,8 @@ struct ntCompressor final : public NtFx::Plugin {
   NtFx::Comp::RmsSideChainDb rmsScDb;
   NtFx::Comp::RmsSideChainLin rmsScLin;
   NtFx::Biquad::EqBand hpf;
-  NtFx::Biquad::EqBand boost;
+  // NtFx::Biquad::EqBand boost;
+  NtFx::Tilt<> scTilt;
 
   signal_t makeup_db { signal_t(0.0) };
   signal_t mix_percent { signal_t(100.0) };
@@ -132,19 +134,11 @@ struct ntCompressor final : public NtFx::Plugin {
           .midPoint = 200.0,
       },
       {
-          .p_val  = &this->boost.settings.gain_db,
-          .name   = "SC_Boost_Gain",
+          .p_val  = &this->scTilt.tilt_db,
+          .name   = "SC Tilt",
           .suffix = " dB",
-          .minVal = 0.0,
-          .maxVal = 24.0,
-      },
-      {
-          .p_val    = &this->boost.settings.fc_hz,
-          .name     = "SC_Boost_Freq",
-          .suffix   = " Hz",
-          .minVal   = 20,
-          .maxVal   = 20e3,
-          .midPoint = 2e3,
+          .minVal = -10,
+          .maxVal = 10,
       },
       {
           .p_val  = &this->mix_percent,
@@ -183,10 +177,8 @@ struct ntCompressor final : public NtFx::Plugin {
       { .name = "OUT", .hasScale = true, .addRms = true },
       { .name = "GR", .invert = true, .hasScale = true },
     };
-    this->hpf.settings.fc_hz   = 20;
-    this->boost.settings.fc_hz = 3000.0;
-    this->hpf.settings.shape   = NtFx::Biquad::Shape::hpf;
-    this->boost.settings.shape = NtFx::Biquad::Shape::bell;
+    this->hpf.settings.fc_hz = 20;
+    this->hpf.settings.shape = NtFx::Biquad::Shape::hpf;
     this->updateDefaults();
   }
 
@@ -205,20 +197,20 @@ struct ntCompressor final : public NtFx::Plugin {
     } else if (this->scMode == scMode::external) {
       xHpf = this->xSc;
     }
-    auto xBoost = hpf.process(xHpf);
-    auto xSc    = boost.process(xBoost);
+    auto xBoost = this->hpf.process(xHpf);
+    auto xSc    = this->scTilt.process(xBoost);
     Audio gr;
     if (this->linEnable) {
       if (this->rmsEnable) {
-        gr = rmsScLin.process(xSc);
+        gr = this->rmsScLin.process(xSc);
       } else {
-        gr = peakScLin.process(xSc);
+        gr = this->peakScLin.process(xSc);
       }
     } else {
       if (this->rmsEnable) {
-        gr = rmsScDb.process(xSc);
+        gr = this->rmsScDb.process(xSc);
       } else {
-        gr = peakScDb.process(xSc);
+        gr = this->peakScDb.process(xSc);
       }
     }
     this->updatePeakLevel(2, gr);
@@ -248,7 +240,7 @@ struct ntCompressor final : public NtFx::Plugin {
       this->activateParameter("Peak Hold");
     }
     this->hpf.update();
-    this->boost.update();
+    this->scTilt.update();
     this->peakScDb.update();
     this->peakScLin.update();
     this->rmsScDb.update();
@@ -267,7 +259,7 @@ struct ntCompressor final : public NtFx::Plugin {
     this->rmsScDb.reset(this->_fs);
     this->rmsScLin.reset(this->_fs);
     this->hpf.reset(this->_fs);
-    this->boost.reset(this->_fs);
+    this->scTilt.reset(this->_fs);
     this->dl.reset(this->_fs);
     this->update();
   }
