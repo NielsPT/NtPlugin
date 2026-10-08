@@ -48,11 +48,6 @@ struct gainExample final : public NtFx::Plugin {
     this->uiSpec.backgroundColour = 0xFFFFFFFF;
     this->uiSpec.foregroundColour = 0xFF000000;
 
-    // We don't need that big a window for just one knob.
-
-    // Let's make the meter smaller.
-    this->uiSpec.meterHeight_dots = 8;
-
     // Add two meters.
     this->meters.push_back({ .name = "IN" });
     this->meters.push_back({ .name = "OUT", .hasScale = true });

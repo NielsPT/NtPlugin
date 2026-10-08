@@ -335,10 +335,6 @@ void NtPluginAudioProcessorEditor::_initWindowHeight(int nRows) {
     groupsHeight += this->proc.plug.uiSpec.groupPad * 2;
     if (groupsHeight > primHeight) { height += groupsHeight - primHeight; }
   }
-  if (this->proc.plug.uiSpec.includeMeters) {
-    auto minHeight = this->meters.getMinimalHeight();
-    if (height < minHeight) { height = minHeight; }
-  }
   this->unscaledWindowHeight = int(height);
 }
 

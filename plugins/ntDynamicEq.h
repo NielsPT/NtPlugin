@@ -149,10 +149,12 @@ struct ntDynamicEq final : public NtFx::Plugin {
     };
     for (size_t i = 0; i < Bands::n; i++) {
       this->meters.push_back({
-          .name   = bandNames[i],
-          .invert = true,
+          .name    = bandNames[i],
+          .dbPrDot = 1,
+          .invert  = true,
       });
     }
+    this->meters[meters.size() - 1].hasScale = true;
     this->uiSpec.maxColumns                  = Bands::n;
     this->uiSpec.maxRows                     = 8;
     this->uiSpec.knobHeight                  = 140;
@@ -161,7 +163,6 @@ struct ntDynamicEq final : public NtFx::Plugin {
     this->bands[Bands::hiMid].settings.fc_hz = 2e3;
     this->bands[Bands::hf].settings.fc_hz    = 10e3;
     this->uiSpec.defaultFontSize             = 14;
-    this->uiSpec.meterHeight_dots            = 24;
     this->updateDefaults();
   }
 
@@ -188,11 +189,11 @@ struct ntDynamicEq final : public NtFx::Plugin {
         }
       }
     }
+    this->updatePeakLevel(1, acc);
     this->updatePeakLevel(2, gr[0]);
     this->updatePeakLevel(3, gr[1]);
     this->updatePeakLevel(4, gr[2]);
     this->updatePeakLevel(5, gr[3]);
-    this->updatePeakLevel(1, acc);
     return acc;
   }
 

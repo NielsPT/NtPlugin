@@ -32,6 +32,7 @@
 #include "lib/Plugin.h"
 #include "lib/utils.h"
 #include <array>
+#include <cstddef>
 #include <string>
 
 struct ntMultiband3 final : public NtFx::Plugin {
@@ -159,11 +160,13 @@ struct ntMultiband3 final : public NtFx::Plugin {
       { .name = "OUT", .hasScale = true, .decay_s = 0.75, .addRms = true },
     };
     for (int i = Bands::n - 1; i >= 0; i--) {
-      this->meters.push_back({ .name = bandNames[i], .invert = true });
+      this->meters.push_back({
+          .name    = bandNames[i],
+          .dbPrDot = 1,
+          .invert  = true,
+      });
     }
     this->meters[Bands::n - 1 + 2].hasScale = true;
-    this->uiSpec.meterHeight_dots           = 25;
-    for (auto& m : this->meters) { m.minVal_db = -50; }
     this->updateDefaults();
   }
 

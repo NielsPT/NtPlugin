@@ -47,12 +47,12 @@ struct MeterBase : public juce::Component {
   float dotDiameter { 0 };
   float dotDist { 0 };
   int nDots { 14 };
+  float minVal_db { 0 };
   int nActiveDotsPeak { 0 };
   float fractPeak { 0 };
   int nActiveDotsRms { 0 };
   float peakVal_lin { 0 };
   float rmsVal_lin { 0 };
-  float dbPrDot { 0 };
   float opacity { 0.7f };
   float fontSize { 20 };
   int nHold_frames { 0 };
@@ -62,8 +62,7 @@ struct MeterBase : public juce::Component {
   bool hasScale { false };
 
   MeterBase(MeterSpec& _meterSpec, UiSpec& _uiSpec)
-      : meterSpec(_meterSpec), uiSpec(_uiSpec),
-        nDots(_uiSpec.meterHeight_dots) {
+      : meterSpec(_meterSpec), uiSpec(_uiSpec) {
     this->updateRelease(48000);
     this->refresh();
   }
@@ -125,15 +124,18 @@ struct MeterBase : public juce::Component {
         this->getWidth(),
         int(this->fontSize),
         juce::Justification::centred);
+    auto fillPad      = float(this->getWidth()) * 4.0f / 35.0f;
+    auto fillDiameter = this->dotDiameter - fillPad;
+    if (fillDiameter < 0) { return; }
+    auto fillX      = this->pad + fillPad / 2;
+    this->nDots     = int((float(this->getHeight()) - 3.0f * this->pad)
+        / (this->dotDiameter + this->pad));
+    this->minVal_db = -float(this->nDots) * this->meterSpec.dbPrDot;
     for (int i = 0; i < this->nDots; i++) {
-      auto y = float(this->pad + (float(i) + 1.0f) * this->dotDist);
+      auto y     = float(this->pad + (float(i) + 1.0f) * this->dotDist);
+      auto fillY = y + fillPad / 2;
       g.setColour(juce::Colour(this->uiSpec.foregroundColour));
       g.drawEllipse(this->pad, y, this->dotDiameter, this->dotDiameter, 1);
-      auto fillPad      = float(this->getWidth()) * 4.0f / 35.0f;
-      auto fillDiameter = this->dotDiameter - fillPad;
-      if (fillDiameter < 0) { return; }
-      auto fillX = this->pad + fillPad / 2;
-      auto fillY = y + fillPad / 2;
       this->fillDots(g, i, fillX, fillY, fillDiameter);
       this->fillFract(g, i, fillX, fillY, fillDiameter);
       this->fillRms(g, i, fillX, fillY, fillDiameter);
@@ -155,15 +157,11 @@ struct MeterBase : public juce::Component {
     float peak_db = NtFx::db(ySens);
     float rms_db  = NtFx::db(this->rmsVal_lin);
 
-    if (peak_db < this->meterSpec.minVal_db) {
-      peak_db = this->meterSpec.minVal_db;
-    }
+    if (peak_db < this->minVal_db) { peak_db = this->minVal_db; }
     if (peak_db > this->meterSpec.maxVal_db) {
       peak_db = this->meterSpec.maxVal_db;
     }
-    if (rms_db < this->meterSpec.minVal_db) {
-      rms_db = this->meterSpec.minVal_db;
-    }
+    if (rms_db < this->minVal_db) { rms_db = this->minVal_db; }
     if (rms_db > this->meterSpec.maxVal_db) {
       rms_db = this->meterSpec.maxVal_db;
     }
@@ -171,8 +169,9 @@ struct MeterBase : public juce::Component {
     this->nActiveDotsRms  = this->calcActiveDots(rms_db);
     this->refreshPeakHold(peak_db);
     this->fractPeak =
-        gcem::abs(peak_db + float(this->nActiveDotsPeak) * this->dbPrDot)
-        / this->dbPrDot;
+        gcem::abs(
+            peak_db + float(this->nActiveDotsPeak) * this->meterSpec.dbPrDot)
+        / this->meterSpec.dbPrDot;
     if (!(this->fractPeak <= 1 && this->fractPeak >= 0)) {
       this->fractPeak = 0;
     }
@@ -190,14 +189,12 @@ struct MeterBase : public juce::Component {
     this->peakSensor.reset(fs);
     this->nHold_frames =
         int(this->meterSpec.hold_s * this->uiSpec.meterRefreshRate_hz);
-    this->dbPrDot = (this->meterSpec.maxVal_db - this->meterSpec.minVal_db)
-        / float(this->nDots);
   }
 
   virtual int calcActiveDots(float peak_db) {
     int nActiveDots =
-        int((peak_db + this->meterSpec.maxVal_db - this->meterSpec.minVal_db)
-            / this->dbPrDot);
+        int((peak_db + this->meterSpec.maxVal_db - this->minVal_db)
+            / this->meterSpec.dbPrDot);
     return this->nDots - nActiveDots;
   }
 
@@ -211,7 +208,7 @@ struct MeterBase : public juce::Component {
     this->holdCounter_frames++;
     if (this->holdCounter_frames > this->nHold_frames) {
       this->holdCounter_frames = 0;
-      this->holdVal_db         = this->meterSpec.minVal_db;
+      this->holdVal_db         = this->minVal_db;
       this->iHoldDot           = this->nActiveDotsPeak - 1;
     }
   }
@@ -271,8 +268,8 @@ struct GrMeter : public MeterBase {
 
   int calcActiveDots(float peak_db) override {
     int nActiveDots =
-        int((peak_db + this->meterSpec.maxVal_db - this->meterSpec.minVal_db)
-            / this->dbPrDot);
+        int((peak_db + this->meterSpec.maxVal_db - this->minVal_db)
+            / this->meterSpec.dbPrDot);
     return this->nDots - nActiveDots - 1;
   }
 
@@ -302,7 +299,8 @@ struct MeterScale : public juce::Component {
     for (size_t i = 0; i < size_t(this->meter.nDots); i++) {
       auto y = float(i) * this->meter.dotDist + offset;
       auto t = "- "
-          + std::to_string(static_cast<int>(this->meter.dbPrDot * float(i)));
+          + std::to_string(static_cast<int>(this->meter.meterSpec.dbPrDot
+              * float(i + this->meter.meterSpec.invert)));
       g.drawText(t, 0, int(y), 1000, 10, juce::Justification::left, false);
     }
   }
@@ -445,14 +443,6 @@ struct MeterGroup : public juce::Component {
     return this->meters[0]->leftMeter().uiSpec.meterWidth
         * (float(this->meters.size()) * float(this->nChs)
             + float(this->scales.size()));
-  }
-  float getMinimalHeight() const noexcept {
-    if (!this->meters.size()) { return 0; }
-    auto& m = this->meters[0]->leftMeter();
-    m.refresh(false);
-    return (m.uiSpec.labelHeight) * float(this->nChs)
-        + float(m.nDots + 2) * float(m.dotDist) + float(m.pad);
-    // TODO: Or make these float as well like uiSpec.
   }
 };
 } // namespace NtFx

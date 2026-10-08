@@ -110,6 +110,7 @@ namespace Generator {
       return { rand<signal_t>(), rand<signal_t>() };
     }
   };
+
   struct FilteredWhiteNoise : public ComponentBase<Audio> {
     FirstOrder::StereoFilter<FirstOrder::Shape::lpfZero> lpf;
     FirstOrder::StereoFilter<FirstOrder::Shape::hpf> hpf;
@@ -135,6 +136,7 @@ namespace Generator {
       this->hpf.reset(fs);
     }
   };
+
   struct PinkNoise final : public ComponentBase<Audio> {
     Tilt<> tilt;
     Clip::Hard clip;
@@ -145,6 +147,7 @@ namespace Generator {
     void update() noexcept override { this->tilt.update(); }
     void reset(signal_t fs) noexcept override { this->tilt.reset(fs); }
   };
+
   struct FilteredPinkNoise final : public ComponentBase<Audio> {
     Tilt<> tilt;
     FirstOrder::StereoFilter<FirstOrder::Shape::lpfZero> lpf;
@@ -169,6 +172,7 @@ namespace Generator {
       this->tilt.reset(fs);
     }
   };
+
   struct Sin final : public ComponentBase<Audio> {
     signal_t f_hz { 1e3 };
     signal_t ph_rad { 0 };
@@ -177,7 +181,6 @@ namespace Generator {
     signal_t _w { 0 };
     Audio process(Audio) noexcept override {
       auto w = this->_w * signal_t(this->_i) + this->ph_rad;
-      if (++this->_i >= _n) { _i = 0; }
       return gcem::sin(w);
     }
     void update() noexcept override {
@@ -189,6 +192,7 @@ namespace Generator {
       this->update();
     }
   };
+
   struct Saw final : public ComponentBase<Audio> {
     signal_t f_hz { 1e3 };
     signal_t ph_rad { 0 };
@@ -206,6 +210,7 @@ namespace Generator {
       this->update();
     }
   };
+
   struct Square final : public ComponentBase<Audio> {
     signal_t f_hz { 1e3 };
     signal_t ph_rad { 0 };

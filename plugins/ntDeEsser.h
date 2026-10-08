@@ -103,7 +103,12 @@ struct ntDeEsser final : public NtFx::Plugin {
       { .p_val = &this->sc.settings.linkEnable, .name = "Link" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
-    this->meters.push_back({ .name = "GR", .invert = true });
+    this->meters.push_back({
+        .name     = "GR",
+        .dbPrDot  = 1,
+        .invert   = true,
+        .hasScale = true,
+    });
     this->sc.settings.knee_db    = 3;
     this->sc.settings.linkEnable = true;
     this->sc.settings.tRel_ms    = 30;

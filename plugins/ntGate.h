@@ -161,8 +161,8 @@ struct ntGate final : public NtFx::Plugin {
     this->meters = {
       { .name = "IN", .addRms = true },
       { .name = "OUT", .hasScale = true, .addRms = true },
-      { .name = "GR", .invert = true },
-      { .name = "HF GR", .invert = true, .hasScale = true },
+      { .name = "GR", .dbPrDot = 1, .invert = true },
+      { .name = "HF GR", .dbPrDot = 1, .invert = true, .hasScale = true },
     };
     this->sc.settings.tAtt_ms            = 0.1;
     this->ignoreSc.settings.knee_db      = 3;

@@ -132,7 +132,12 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
       { .p_val = &this->sc.scListen, .name = "SC Listen" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
-    this->meters.push_back({ .name = "GR", .invert = true });
+    this->meters.push_back({
+        .name     = "GR",
+        .dbPrDot  = 1,
+        .invert   = true,
+        .hasScale = true,
+    });
     this->dl.t_ms  = 5;
     this->shelf.q1 = 0.508;
     this->shelf.q2 = 0.508;

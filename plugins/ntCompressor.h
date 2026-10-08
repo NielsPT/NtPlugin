@@ -173,9 +173,9 @@ struct ntCompressor final : public NtFx::Plugin {
     });
 
     this->meters = {
-      { .name = "IN", .addRms = true },
-      { .name = "OUT", .hasScale = true, .addRms = true },
-      { .name = "GR", .invert = true, .hasScale = true },
+      { .name = "IN", .dbPrDot = 4, .addRms = true },
+      { .name = "OUT", .dbPrDot = 4, .hasScale = true, .addRms = true },
+      { .name = "GR", .dbPrDot = 2, .invert = true, .hasScale = true },
     };
     this->hpf.settings.fc_hz = 20;
     this->hpf.settings.shape = NtFx::Biquad::Shape::hpf;

@@ -34,15 +34,14 @@ struct ntRmsMeter final : public NtFx::Plugin {
 
   ntRmsMeter() {
     this->meters = {
-      { .name = "Peak", .minVal_db = -50, .addRms = true },
-      { .name = "RMS", .minVal_db = -50, .hasScale = true },
+      { .name = "Peak", .addRms = true },
+      { .name = "RMS", .hasScale = true },
     };
     this->primaryKnobs = {
       { &this->decay_s, "Decay", " s", 0, 1 },
       { &this->hold_s, "Hold", " s", 0, 10 },
       { &this->tRms_ms, "RMS Time", " ms", 1, 1000 },
     };
-    this->uiSpec.meterHeight_dots = 25;
 
     this->uiSpec.maxColumns = 1;
     this->updateDefaults();

@@ -28,6 +28,7 @@
 #include "lib/Glider.h"
 #include "lib/gcem.h"
 #include <array>
+#include <cstddef>
 #include <vector>
 
 namespace NtFx {
@@ -394,8 +395,7 @@ namespace Delay {
     }; /**< Smoothed LFO frequency in Hz (default 0.25 Hz) */
     signal_t depth_p { 25 };      /**< Modulation depth as percentage (0-100) */
     signal_t phaseMod_deg { 90 }; /**< Phase offset between L/R in degrees */
-    signal_t _tSample { 1 };      /**< Sample period for LFO calculation */
-    signal_t _t { 0 }; /**< Current LFO phase accumulator (0 to 1/fMod_hz) */
+    size_t _i { 0 };
 
     /**
      * @brief Process stereo audio with modulated delay.
@@ -411,9 +411,8 @@ namespace Delay {
       this->_tDelayMod_s.process();
       this->_phaseMod_rad.process();
       this->fMod_hz.process();
-      signal_t omegaT_rad = 2 * NTFX_PI * this->fMod_hz.pr * this->_t;
-      this->_t += this->_tSample;
-      if (this->_t >= 1 / this->fMod_hz.pr) { this->_t = 0; }
+      signal_t omegaT_rad =
+          2 * NTFX_PI * this->fMod_hz.pr * signal_t(this->_i++) / this->_fs;
       // Left channel: modulate delay with unshifted sine
       auto tmp     = gcem::sin(omegaT_rad);
       this->l.t_ms = (tmp + 1) * this->_tDelayMod_s.pr * 1000;
@@ -437,7 +436,6 @@ namespace Delay {
       this->_tDelayMod_s.ui = this->depth_p * tModDlMax_ms / 2000000;
       this->_tDelayMod_s.ui /= this->fMod_hz.ui;
       this->_phaseMod_rad.ui = this->phaseMod_deg * NTFX_PI / 180;
-      this->_tSample         = 1 / this->_fs;
       if (this->fMod_hz.ui < 0.1) { this->fMod_hz.ui = 0.1; }
       this->fMod_hz.update(this->_fs);
       this->_phaseMod_rad.update(this->_fs);

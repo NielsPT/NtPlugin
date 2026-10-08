@@ -88,13 +88,13 @@ constexpr int nMetersMax = 8; ///< Size of meter peak level array and thus max
  *
  */
 struct MeterSpec {
-  std::string name { "" };   ///< Name of meter, used for label and id.
-  float maxVal_db { 0.0 };   ///< Top value of meter.
-  float minVal_db { -36.0 }; ///< Bottom value of meter.
-  bool invert { false };     ///< When true, the meter lights up top down.
-  bool hasScale { false };   ///< Adds a text scale to the right of the meter.
-  float decay_s { 0.25 };    ///< Decay of meter fall off in seconds.
-  float hold_s { 2 };        ///< Meter Hold time in seconds.
+  std::string name { "" }; ///< Name of meter, used for label and id.
+  float maxVal_db { 0.0 }; ///< Top value of meter.
+  float dbPrDot { 3.0 };   ///< dB per dot in meter.
+  bool invert { false };   ///< When true, the meter lights up top down.
+  bool hasScale { false }; ///< Adds a text scale to the right of the meter.
+  float decay_s { 0.25 };  ///< Decay of meter fall off in seconds.
+  float hold_s { 2 };      ///< Meter Hold time in seconds.
   /** Adds RMS to meter. Currently works for the first two meters. RMS of input
    * will be added to meter 0 and RMS of output will be added to meter 1.*/
   bool addRms = false;
@@ -164,7 +164,6 @@ struct UiSpec {
   float secondaryKnobWidth { 75 };    ///< Width of secondary knobs in UI.
   float secondaryKnobHeight { 115 };  ///< Height of secondary knobs in UI.
   float titleBarHeight { 22 };        ///< Height of title bar in pixels.
-  int meterHeight_dots { 12 };        ///< Number of dots in the meteres.
   float meterWidth { 35 };            ///< Width of each meter in pixels.
   float meterRefreshRate_hz { 50 };   ///< Refresh rate of meters in the UI.
   float groupWidth { 200 };
