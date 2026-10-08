@@ -853,6 +853,7 @@ def createParser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--targets",
+        "--target",
         help="Plugin formats to target. Defaults to all available targets.",
         nargs="*",
         choices=TARGET_EXT_MAP.keys(),

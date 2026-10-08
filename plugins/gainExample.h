@@ -49,6 +49,7 @@ struct gainExample final : public NtFx::Plugin {
     this->uiSpec.foregroundColour = 0xFF000000;
 
     // Add two meters.
+    this->meters.clear();
     this->meters.push_back({ .name = "IN" });
     this->meters.push_back({ .name = "OUT", .hasScale = true });
 

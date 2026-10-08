@@ -129,7 +129,7 @@ struct TitleBarSpec {
         false,
         2,
     },
-    { nullptr, "Theme", { "Light", "Dark" }, 1 },
+    { nullptr, "Theme", { "Light", "Dark" }, false, 1 },
     {
         nullptr,
         "Oversampling",

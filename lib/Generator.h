@@ -180,7 +180,7 @@ namespace Generator {
     size_t _n { 1 };
     signal_t _w { 0 };
     Audio process(Audio) noexcept override {
-      auto w = this->_w * signal_t(this->_i) + this->ph_rad;
+      auto w = this->_w * signal_t(this->_i++) + this->ph_rad;
       return gcem::sin(w);
     }
     void update() noexcept override {
