@@ -39,7 +39,6 @@ struct ntCompressor final : public NtFx::Plugin {
   NtFx::Comp::RmsSideChainDb rmsScDb;
   NtFx::Comp::RmsSideChainLin rmsScLin;
   NtFx::Biquad::EqBand hpf;
-  // NtFx::Biquad::EqBand boost;
   NtFx::Tilt<> scTilt;
 
   signal_t makeup_db { signal_t(0.0) };
@@ -152,7 +151,7 @@ struct ntCompressor final : public NtFx::Plugin {
     this->toggles = {
       { .p_val = &this->scSettings.linkEnable, .name = "Link" },
       { .p_val = &this->scListenEnable, .name = "SC Listen" },
-      { .p_val = &this->clip, .name = "Softclip" },
+      { .p_val = &this->clip, .name = "Soft Clip" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
 
@@ -179,6 +178,7 @@ struct ntCompressor final : public NtFx::Plugin {
     };
     this->hpf.settings.fc_hz = 20;
     this->hpf.settings.shape = NtFx::Biquad::Shape::hpf;
+    this->manualUrl = "https://ntlyd.dk/ntfx/manuals/ntCompressor.html";
     this->updateDefaults();
   }
 

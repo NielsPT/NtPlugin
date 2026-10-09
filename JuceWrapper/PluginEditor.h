@@ -54,7 +54,7 @@
 struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
                                       private juce::Timer,
                                       private juce::Slider::Listener,
-                                      private juce::ToggleButton::Listener,
+                                      private juce::Button::Listener,
                                       private juce::ComboBox::Listener,
                                       private juce::ChangeListener {
   NtPluginAudioProcessor& proc;
@@ -89,6 +89,8 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
 
   std::vector<juce::Rectangle<int>> borderedAreas;
   std::vector<juce::Rectangle<int>> grayAreas;
+  juce::Label pluginNameLabel;
+  juce::TextButton helpButton;
 
   int unscaledWindowHeight { 0 };
   int unscaledWindowWidth { 0 };
@@ -96,8 +98,6 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   float titleBarScale { 0.7f };
   float _pad { 10 };
   bool isInitialized { false };
-
-  juce::Label pluginNameLabel;
 
   NtPluginAudioProcessorEditor(NtPluginAudioProcessor&);
   NtPluginAudioProcessorEditor(NtPluginAudioProcessorEditor&&) = delete;
@@ -176,5 +176,6 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
       float pad);
   std::unique_ptr<juce::Label> _makeLabel(const std::string name);
   void _conformUiSilderValues();
+  void _openManualInBrowser();
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtPluginAudioProcessorEditor)
 };

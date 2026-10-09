@@ -23,7 +23,6 @@
 
 #include "lib/Audio.h"
 #include "lib/Component.h"
-#include "lib/RmsSensor.h"
 #include "lib/UiSpec.h"
 #include "lib/utils.h"
 
@@ -54,6 +53,8 @@ struct Plugin : public ComponentBase<Audio> {
   //  *
   //  */
   // std::array<LongRmsSensor<1000, 192>, 2> xRms;
+
+  std::string manualUrl { "https://ntlyd.dk/ntfx/manuals/index.html" };
 
   /**
    * @brief Peak level to be displayed in the meters.

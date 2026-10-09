@@ -30,8 +30,8 @@
 namespace NtFx {
 class Toggle : public juce::TextButton {
 public:
-  Toggle(const juce::String& buttonName = { }, int _id = 0)
-      : juce::TextButton(buttonName), _id(_id) { }
+  Toggle(const juce::String& buttonName = { }, int id = 0)
+      : juce::TextButton(buttonName), _id(id) { }
   int _id { 0 };
   float fontSize { 10 };
   uint32_t colour { 0xFFFFFFFF };
@@ -40,7 +40,6 @@ public:
       const bool isMouseOver,
       const bool isMouseDown) override {
     auto h            = this->getHeight();
-    auto w            = this->getWidth();
     float outPadScale = 0.95;
     float dRing       = h * outPadScale;
     auto x            = (h - dRing) / 2;

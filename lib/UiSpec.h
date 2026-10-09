@@ -98,7 +98,7 @@ struct MeterSpec {
   // /** Adds RMS to meter. Currently works for the first two meters. RMS of
   // input
   //  * will be added to meter 0 and RMS of output will be added to meter 1.*/
-  // bool Á = false;
+  // bool addRms = false;
 };
 
 /**
@@ -167,12 +167,16 @@ struct UiSpec {
   float titleBarHeight { 22 };        ///< Height of title bar in pixels.
   float meterWidth { 35 };            ///< Width of each meter in pixels.
   float meterRefreshRate_hz { 50 };   ///< Refresh rate of meters in the UI.
-  float groupWidth { 200 };
-  float groupEvenColOffset { 40 };
-  float groupKnobWidth { groupWidth / 2 };
-  float groupKnobHeight { 130 };
-  float groupPad { 10 };
-  int groupSingleColumnLimit { 4 };
+  float groupWidth { 200 };           ///< Width of each knob group, if in use.
+  float groupEvenColOffset {
+    40
+  }; ///< How many pixels the right column is moved down in relation to the left
+     ///< column in knob groups.
+  float groupKnobHeight { 130 }; ///< Hight of knobs in knob groups
+  float groupPad { 10 };         ///< Padding for knob groups.
+  int groupSingleColumnLimit {
+    4
+  }; ///< Amount of knobs where groups get two columns.
   bool includeMeters { true };         ///< Add meters to the UI.
   bool includeTitleBar { true };       ///< Add title bar to UI.
   bool includeSecondaryKnobs { true }; ///< Enable row below the main grid.

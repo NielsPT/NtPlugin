@@ -24,6 +24,7 @@
 #include "Meter.h"
 #include "RadioButtons.h"
 #include "Toggle.h"
+#include "juce_core/juce_core.h"
 #include "lib/UiSpec.h"
 
 #include "juce_audio_processors/juce_audio_processors.h"
@@ -54,7 +55,7 @@ int NtFx::RadioButtonSet::_s_id { 0 };
 NtPluginAudioProcessorEditor::NtPluginAudioProcessorEditor(
     NtPluginAudioProcessor& p)
     : AudioProcessorEditor(&p), proc(p),
-      meters(proc.plug.uiSpec, proc.plug.meters) {
+      meters(proc.plug.uiSpec, proc.plug.meters), helpButton("?") {
   this->_updateColours();
   for (auto& k : this->proc.plug.primaryKnobs) { this->_initPrimaryKnob(k); }
   for (auto& k : this->proc.plug.secondaryKnobs) {
@@ -82,6 +83,8 @@ NtPluginAudioProcessorEditor::NtPluginAudioProcessorEditor(
   this->_updateOversampling();
   this->_updateTheme();
 
+  this->helpButton.addListener(this);
+  this->addAndMakeVisible(this->helpButton);
   this->addAndMakeVisible(this->meters);
   this->startTimerHz(int(this->proc.plug.uiSpec.meterRefreshRate_hz));
   this->isInitialized = true;
@@ -448,6 +451,9 @@ void NtPluginAudioProcessorEditor::_placeTitleBar(juce::Rectangle<int>& area) {
     this->titleBarDropDowns[i]->setBounds(
         titleBarArea.removeFromLeft(int(dropDownWidth)));
   }
+  this->helpButton.setBounds(titleBarArea.removeFromRight(
+      int(this->proc.plug.uiSpec.titleBarHeight * this->uiScale) - 2 * pad));
+  titleBarArea.removeFromRight(pad);
   this->pluginNameLabel.setFont(
       juce::FontOptions(this->proc.plug.uiSpec.defaultFontSize * this->uiScale,
           juce::Font::FontStyleFlags::italic));
@@ -601,7 +607,7 @@ void NtPluginAudioProcessorEditor::_placeKnobGroups(
           groupArea, g.primaryKnobs.size(), i, 1, false);
     } else {
       auto lArea = groupArea.removeFromLeft(
-          int(float(this->proc.plug.uiSpec.groupKnobWidth
+          int(float(this->proc.plug.uiSpec.groupWidth / 2.0f
                   - this->proc.plug.uiSpec.groupPad)
               * this->uiScale));
       auto pad = int(this->proc.plug.uiSpec.groupPad / 2.0f * this->uiScale);
@@ -779,8 +785,20 @@ void NtPluginAudioProcessorEditor::_conformUiSilderValues() {
   if (updateNeeded) { this->proc.plug.update(); }
 }
 
+void NtPluginAudioProcessorEditor::_openManualInBrowser() {
+  juce::String cmd = "xdg-open ";
+#ifdef __MACH__
+  cmd = "open ";
+#elif defined(_WIN32)
+  cmd = "start msedge "
+#endif
+  auto st = cmd + this->proc.plug.manualUrl;
+  system(st.toRawUTF8());
+}
+
 void NtPluginAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
-  auto name   = p_button->getName().toStdString();
+  auto name = p_button->getName().toStdString();
+  if (name == "?") { this->_openManualInBrowser(); }
   auto* p_val = this->proc.plug.getToggleValuePtr(name);
   if (!p_val) {
     DBG(NTFX_PLUGIN_NAME + ": Toggle name in UI not found in plugin toggles: '"
