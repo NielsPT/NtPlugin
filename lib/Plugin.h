@@ -49,11 +49,11 @@ struct Plugin : public ComponentBase<Audio> {
   Plugin& operator=(Plugin&)  = delete;
   Plugin& operator=(Plugin&&) = delete;
 
-  /**
-   * @brief Array of rms sensors for RMS meter.
-   *
-   */
-  std::array<LongRmsSensor<250, 192>, 2> xRms;
+  // /**
+  //  * @brief Array of rms sensors for RMS meter.
+  //  *
+  //  */
+  // std::array<LongRmsSensor<1000, 192>, 2> xRms;
 
   /**
    * @brief Peak level to be displayed in the meters.
@@ -107,8 +107,8 @@ struct Plugin : public ComponentBase<Audio> {
    * @brief List of all meters to be displayed in the UI.
    */
   std::vector<MeterSpec> meters = {
-    { .name = "IN", .addRms = true },
-    { .name = "OUT", .hasScale = true, .addRms = true },
+    { .name = "IN" /*, .addRms = true */ },
+    { .name = "OUT", .hasScale = true /*, .addRms = true */ },
   };
 
   /**
@@ -151,17 +151,17 @@ struct Plugin : public ComponentBase<Audio> {
    */
   signal_t* getKnobValuePtr(std::string name) const noexcept {
     for (auto param : this->primaryKnobs) {
-      if (NtFx::spacesToUnderscores(param.name) == name) { return param.p_val; }
+      if (spacesToUnderscores(param.name) == name) { return param.p_val; }
     }
     for (auto param : this->secondaryKnobs) {
-      if (NtFx::spacesToUnderscores(param.name) == name) { return param.p_val; }
+      if (spacesToUnderscores(param.name) == name) { return param.p_val; }
     }
     for (auto& g : this->knobGroups) {
       for (auto p : g.primaryKnobs) {
-        if (name == NtFx::mangleName("kg", g.name, p.name)) { return p.p_val; }
+        if (name == mangleName("kg", g.name, p.name)) { return p.p_val; }
       }
       // for (auto p : g.secondaryKnobs) {
-      //   if (name == NtFx::mangleName("kg", g.name, p.name)) {
+      //   if (name == mangleName("kg", g.name, p.name)) {
       //     return p.p_val;
       //   }
       // }
@@ -329,16 +329,17 @@ struct Plugin : public ComponentBase<Audio> {
     return tmp;
   }
 
-  /**
-   * @brief Get the RMS level of meter with index idx. RMS level is calculated
-   * from the peak level.
-   *
-   * @param idx Index of meter to get RMS level for.
-   * @return Audio<signal_t> RMS level.
-   */
-  Audio getRms(size_t idx) noexcept {
-    if (idx >= 2) { return signal_t(0); }
-    return this->xRms[idx].getRms();
-  }
+  // /**
+  //  * @brief Get the RMS level of meter with index idx. RMS level is
+  //  calculated
+  //  * from the peak level.
+  //  *
+  //  * @param idx Index of meter to get RMS level for.
+  //  * @return Audio<signal_t> RMS level.
+  //  */
+  // Audio getRms(size_t idx) noexcept {
+  //   if (idx >= 2) { return signal_t(0); }
+  //   return this->xRms[idx].getRms();
+  // }
 };
 }

@@ -73,8 +73,8 @@ void NtPluginAudioProcessor::prepareToPlay(double sampleRate, int) {
   if (sampleRate == this->_fsBase) { return; }
   this->_fsBase = signal_t(sampleRate);
   this->updateOversampling();
-  this->plug.xRms[0].reset(this->_fsBase);
-  this->plug.xRms[1].reset(this->_fsBase);
+  // this->plug.xRms[0].reset(this->_fsBase);
+  // this->plug.xRms[1].reset(this->_fsBase);
 }
 
 void NtPluginAudioProcessor::releaseResources() { }
@@ -139,10 +139,10 @@ void NtPluginAudioProcessor::processBlock(
     if (p_r) { r = p_r[i]; }
     NtFx::Stereo<float> x { l, r };
     auto y = this->src.process(x);
-    if (this->plug.meters.size() >= 2) {
-      if (this->plug.meters[0].addRms) { this->plug.xRms[0].process(x); }
-      if (this->plug.meters[1].addRms) { this->plug.xRms[1].process(y); }
-    }
+    // if (this->plug.meters.size() >= 2) {
+    //   if (this->plug.meters[0].addRms) { this->plug.xRms[0].process(x); }
+    //   if (this->plug.meters[1].addRms) { this->plug.xRms[1].process(y); }
+    // }
     p_l[i] = y.l;
     if (p_r) { p_r[i] = y.r; }
   }

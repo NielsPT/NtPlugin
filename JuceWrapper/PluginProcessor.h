@@ -94,11 +94,11 @@ struct NtPluginAudioProcessor : public juce::AudioProcessor {
   void updateOversampling(int mode = 0);
   juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
-  NtFx::TitleBarSpec titleBarSpec;
-  signal_t _fsBase = 1;
   NTFX_PLUGIN plug;
+  NtFx::TitleBarSpec titleBarSpec;
   NtFx::Src::SampleRateConverter src;
   juce::AudioProcessorValueTreeState _paramLayout;
+  signal_t _fsBase = 1;
   bool monoMode { false };
   bool paramsAreLoaded { false };
 

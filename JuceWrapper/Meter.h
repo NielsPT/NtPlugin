@@ -50,9 +50,9 @@ struct MeterBase : public juce::Component {
   float minVal_db { 0 };
   int nActiveDotsPeak { 0 };
   float fractPeak { 0 };
-  int nActiveDotsRms { 0 };
+  // int nActiveDotsRms { 0 };
   float peakVal_lin { 0 };
-  float rmsVal_lin { 0 };
+  // float rmsVal_lin { 0 };
   float opacity { 0.7f };
   float fontSize { 20 };
   int nHold_frames { 0 };
@@ -92,16 +92,18 @@ struct MeterBase : public juce::Component {
     }
   }
 
-  virtual void fillRms(
-      juce::Graphics& g, int i, float fillX, float fillY, float fillDiameter) {
-    if (i >= this->nActiveDotsRms) {
-      // auto _opacity = uint8_t(255.0f * this->opacity);
-      // g.setColour(juce::Colour((this->uiSpec.foregroundColour & 0x00FFFFFF)
-      //     | uint32_t(_opacity << 24)));
-      g.setColour(juce::Colour(0x000000FF));
-      g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
-    }
-  }
+  // virtual void fillRms(
+  //     juce::Graphics& g, int i, float fillX, float fillY, float fillDiameter)
+  //     {
+  //   if (i >= this->nActiveDotsRms) {
+  //     // auto _opacity = uint8_t(255.0f * this->opacity);
+  //     // g.setColour(juce::Colour((this->uiSpec.foregroundColour &
+  //     0x00FFFFFF)
+  //     //     | uint32_t(_opacity << 24)));
+  //     g.setColour(juce::Colour(0xFFFF0000));
+  //     g.fillEllipse(fillX, fillY, fillDiameter, fillDiameter);
+  //   }
+  // }
 
   virtual void drawPeakRing(
       juce::Graphics& g, int i, float fillX, float fillY, float fillDiameter) {
@@ -138,16 +140,16 @@ struct MeterBase : public juce::Component {
       g.drawEllipse(this->pad, y, this->dotDiameter, this->dotDiameter, 1);
       this->fillDots(g, i, fillX, fillY, fillDiameter);
       this->fillFract(g, i, fillX, fillY, fillDiameter);
-      this->fillRms(g, i, fillX, fillY, fillDiameter);
+      // this->fillRms(g, i, fillX, fillY, fillDiameter);
       this->drawPeakRing(g, i, fillX, fillY, fillDiameter);
     }
   }
 
   void resized() override { this->repaint(); }
 
-  void refresh(float xPeak, float xRms) {
+  void refresh(float xPeak /**, float xRms*/) {
     this->peakVal_lin = xPeak;
-    this->rmsVal_lin  = xRms;
+    // this->rmsVal_lin  = xRms;
     this->refresh();
   }
 
@@ -155,18 +157,18 @@ struct MeterBase : public juce::Component {
     ensureFinite(this->peakVal_lin);
     float ySens   = this->sensor();
     float peak_db = NtFx::db(ySens);
-    float rms_db  = NtFx::db(this->rmsVal_lin);
+    // float rms_db  = NtFx::db(this->rmsVal_lin);
 
     if (peak_db < this->minVal_db) { peak_db = this->minVal_db; }
     if (peak_db > this->meterSpec.maxVal_db) {
       peak_db = this->meterSpec.maxVal_db;
     }
-    if (rms_db < this->minVal_db) { rms_db = this->minVal_db; }
-    if (rms_db > this->meterSpec.maxVal_db) {
-      rms_db = this->meterSpec.maxVal_db;
-    }
+    // if (rms_db < this->minVal_db) { rms_db = this->minVal_db; }
+    // if (rms_db > this->meterSpec.maxVal_db) {
+    //   rms_db = this->meterSpec.maxVal_db;
+    // }
     this->nActiveDotsPeak = this->calcActiveDots(peak_db);
-    this->nActiveDotsRms  = this->calcActiveDots(rms_db);
+    // this->nActiveDotsRms  = this->calcActiveDots(rms_db);
     this->refreshPeakHold(peak_db);
     this->fractPeak =
         gcem::abs(
@@ -248,7 +250,7 @@ struct GrMeter : public MeterBase {
     }
   }
 
-  void fillRms(juce::Graphics&, int, float, float, float) override { }
+  // void fillRms(juce::Graphics&, int, float, float, float) override { }
 
   float sensor() override {
     return 1.0f - peakSensor.process(1.0f - this->peakVal_lin);
@@ -324,7 +326,7 @@ struct StereoMeterBase : public juce::Component {
   StereoMeterBase& operator=(StereoMeterBase&&)      = delete;
   virtual MeterBase& leftMeter() noexcept            = 0;
   virtual MeterBase& rightMeter() noexcept           = 0;
-  virtual void refresh(Audio xPeak, Audio xRms)      = 0;
+  virtual void refresh(Audio xPeak /*, Audio xRms*/) = 0;
   virtual void updateRelease(signal_t fs)            = 0;
   virtual int labelHeight() const noexcept           = 0;
 };
@@ -367,9 +369,9 @@ struct StereoMeter : public StereoMeterBase {
     this->l.setBounds(lArea);
     this->r.setBounds(area);
   }
-  void refresh(Audio xPeak, Audio xRms) override {
-    this->l.refresh(xPeak.l, xRms.l);
-    this->r.refresh(xPeak.r, xRms.r);
+  void refresh(Audio xPeak /*, Audio xRms*/) override {
+    this->l.refresh(xPeak.l /*, xRms.l*/);
+    this->r.refresh(xPeak.r /*, xRms.r*/);
   }
   MeterBase& leftMeter() noexcept override { return this->l; }
   MeterBase& rightMeter() noexcept override { return this->r; }
@@ -409,8 +411,8 @@ struct MeterGroup : public juce::Component {
   virtual void setFontSize(float size) {
     for (auto& m : this->meters) { m->fontSize = size; }
   }
-  void refresh(size_t idx, Audio xPeak, Audio xRms) {
-    this->meters[idx]->refresh(xPeak, xRms);
+  void refresh(size_t idx, Audio xPeak /*, Audio xRms*/) {
+    this->meters[idx]->refresh(xPeak /*, xRms*/);
   }
   void updateUi() noexcept {
     auto area       = this->getLocalBounds();

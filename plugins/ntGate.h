@@ -159,8 +159,8 @@ struct ntGate final : public NtFx::Plugin {
       },
     };
     this->meters = {
-      { .name = "IN", .addRms = true },
-      { .name = "OUT", .hasScale = true, .addRms = true },
+      { .name = "IN" /*, .addRms = true */ },
+      { .name = "OUT", .hasScale = true /*, .addRms = true */ },
       { .name = "GR", .dbPrDot = 1, .invert = true },
       { .name = "HF GR", .dbPrDot = 1, .invert = true, .hasScale = true },
     };

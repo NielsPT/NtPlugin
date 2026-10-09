@@ -95,9 +95,10 @@ struct MeterSpec {
   bool hasScale { false }; ///< Adds a text scale to the right of the meter.
   float decay_s { 0.25 };  ///< Decay of meter fall off in seconds.
   float hold_s { 2 };      ///< Meter Hold time in seconds.
-  /** Adds RMS to meter. Currently works for the first two meters. RMS of input
-   * will be added to meter 0 and RMS of output will be added to meter 1.*/
-  bool addRms = false;
+  // /** Adds RMS to meter. Currently works for the first two meters. RMS of
+  // input
+  //  * will be added to meter 0 and RMS of output will be added to meter 1.*/
+  // bool Á = false;
 };
 
 /**

@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (C) 2026 Niels Thøgersen, NTlyd
  *
@@ -23,8 +25,6 @@
  * linear domain, peak sensing sidechain for each band.
  *
  **/
-
-#pragma once
 
 #include "lib/Audio.h"
 #include "lib/Comp.h"
@@ -156,8 +156,10 @@ struct ntMultiband3 final : public NtFx::Plugin {
       });
     }
     this->meters = {
-      { .name = "IN", .decay_s = 0.75, .addRms = true },
-      { .name = "OUT", .hasScale = true, .decay_s = 0.75, .addRms = true },
+      { .name = "IN", .decay_s = 0.75 /*, .addRms = true */ },
+      { .name       = "OUT",
+          .hasScale = true,
+          .decay_s  = 0.75 /*, .addRms = true */ },
     };
     for (int i = Bands::n - 1; i >= 0; i--) {
       this->meters.push_back({

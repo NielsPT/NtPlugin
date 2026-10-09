@@ -25,10 +25,10 @@
 
 #include "lib/Audio.h"
 #include "lib/Component.h"
+#include "lib/gcem.h"
 #include <algorithm>
 #include <array>
 #include <cassert>
-#include <cmath>
 #include <cstddef>
 
 namespace NtFx {
@@ -48,11 +48,11 @@ struct ShortRmsSensorMono final : public ComponentBase<signal_t> {
   void processDelayLine(signal_t x) noexcept {
     auto x2 = x * x;
     this->_acc += x2 - this->_dl[size_t(this->_i)];
+    if (this->_acc <= 0) { this->_acc = 0; }
     this->_dl[size_t(this->_i++)] = x2;
     if (this->_i >= this->_n) { this->_i = 0; }
   }
   signal_t getRms() const noexcept {
-    if (this->_acc <= 0) { return 0; }
     auto tmp = gcem::sqrt(signal_t(2.0) * this->_acc / signal_t(this->_n));
     return tmp;
   }
@@ -85,149 +85,155 @@ struct ShortRmsSensorStereo
 template <double t_ms = 40.0>
 using ShortRmsSensor = ShortRmsSensorStereo<t_ms>;
 
-/**
- * @brief RMS (Root Mean Square) sensor component for audio signal processing
- *
- * This component calculates the RMS value of an audio signal over a specified
- * time period. It maintains two delay lines: one for sample-level
- * accumulation and one for millisecond-level accumulation, allowing for
- * efficient RMS calculation.
- *
- * @tparam signal_t The type of the audio signal (e.g., float, double)
- * @tparam maxT_ms Maximum time window in milliseconds for RMS calculation
- * (default: 1000)
- * @tparam maxSampleDLineLen Maximum length of the sample delay line (default:
- * 192 * 8)
- */
-template <int maxT_ms = 1000, int maxSampleDLineLen = 192 * 8>
-struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
-  std::array<signal_t, maxSampleDLineLen> sampleDLine; ///< Sample delay line.
-  std::array<signal_t, maxT_ms> msDLine; ///< Millisecond delay line.
-  signal_t sampleAccum { 0 }; ///< Accumulator for current sample values.
-  signal_t msAccum { 0 };     ///< Accumulator for millisecond-level values.
-  signal_t t_ms { 0 };
-  int sampleIdx { 0 };        ///< Current index in the sample delay line.
-  int msIdx { 0 };            ///< Current index in the millisecond delay line.
-  int msDLineLen { maxT_ms }; ///< Current time window in milliseconds.
-  int sampleDLineLen { 48 };  ///< Length of sample delay line.
-  bool resetAccums { false }; ///< Flag to reset accumulators.
+// /**
+//  * @brief RMS (Root Mean Square) sensor component for audio signal processing
+//  *
+//  * This component calculates the RMS value of an audio signal over a
+//  specified
+//  * time period. It maintains two delay lines: one for sample-level
+//  * accumulation and one for millisecond-level accumulation, allowing for
+//  * efficient RMS calculation.
+//  *
+//  * @tparam signal_t The type of the audio signal (e.g., float, double)
+//  * @tparam maxT_ms Maximum time window in milliseconds for RMS calculation
+//  * (default: 1000)
+//  * @tparam maxSampleDLineLen Maximum length of the sample delay line
+//  (default:
+//  * 192 * 8)
+//  */
+// template <int maxT_ms = 1000, int maxSampleDLineLen = 192 * 8>
+// struct LongRmsSensorMono : public ComponentBase<Mono<signal_t>> {
+//   std::array<signal_t, maxSampleDLineLen> sampleDLine; ///< Sample delay
+//   line. std::array<signal_t, maxT_ms> msDLine; ///< Millisecond delay line.
+//   signal_t sampleAccum { 0 }; ///< Accumulator for current sample values.
+//   signal_t msAccum { 0 };     ///< Accumulator for millisecond-level values.
+//   signal_t t_ms { maxT_ms };  ///< Time to average over in ms.
+//   int sampleIdx { 0 };        ///< Current index in the sample delay line.
+//   int msIdx { 0 };            ///< Current index in the millisecond delay
+//   line. int msDLineLen { maxT_ms }; ///< Current time window in milliseconds.
+//   int sampleDLineLen { 48 };  ///< Length of sample delay line.
 
-  /**
-   * @brief Process the input signal and update RMS calculation
-   *
-   * This method processes the input signal, calculates its square value,
-   * and updates the RMS calculation using a delay line approach.
-   *
-   * @param x The input signal value
-   * @return The current RMS value
-   */
-  Mono<signal_t> process(Mono<signal_t> x) noexcept override {
-    this->processDelayLine(x.l);
-    return this->getRms();
-  }
+//   /**
+//    * @brief Process the input signal and update RMS calculation
+//    *
+//    * This method processes the input signal, calculates its square value,
+//    * and updates the RMS calculation using a delay line approach.
+//    *
+//    * @param x The input signal value
+//    * @return The current RMS value
+//    */
+//   Mono<signal_t> process(Mono<signal_t> x) noexcept override {
+//     this->processDelayLine(x.l);
+//     return this->getRms();
+//   }
 
-  /**
-   * @brief Processes accumulators and update delay lines without calculating
-   * result. To be called each sample if 'process' is not used. This way, you
-   * can update accumulators in the processing thread while calculating rms
-   * values somewhere else.
-   *
-   * @param x Inout signal to calculate RMS level for.
-   */
-  void processDelayLine(signal_t x) noexcept {
-    auto x2 = x * x;
-    if (x2 != x2) { x2 = signal_t(0.0); }
-    this->sampleAccum += x2 - this->sampleDLine[size_t(this->sampleIdx)];
-    this->sampleDLine[size_t(this->sampleIdx)] = x2;
-    if (++this->sampleIdx < this->sampleDLineLen) { return; }
-    this->sampleIdx = 0;
-    this->msAccum += sampleAccum - this->msDLine[size_t(this->msIdx)];
-    this->msDLine[size_t(this->msIdx)] = sampleAccum;
-    if (++this->msIdx >= this->msDLineLen) { this->msIdx = 0; }
-  }
+//   /**
+//    * @brief Processes accumulators and update delay lines without calculating
+//    * result. To be called each sample if 'process' is not used. This way, you
+//    * can update accumulators in the processing thread while calculating rms
+//    * values somewhere else.
+//    *
+//    * @param x Inout signal to calculate RMS level for.
+//    */
+//   void processDelayLine(signal_t x) noexcept {
+//     auto x2 = x * x;
+//     this->sampleAccum += x2 - this->sampleDLine[size_t(this->sampleIdx)];
+//     if (this->sampleAccum < 1e-6) { this->sampleAccum = 0; }
+//     this->sampleDLine[size_t(this->sampleIdx)] = x2;
+//     if (++this->sampleIdx < this->sampleDLineLen) { return; }
+//     this->sampleIdx = 0;
+//     this->msAccum += sampleAccum - this->msDLine[size_t(this->msIdx)];
+//     if (this->msAccum < 1e-6) { this->msAccum = 0; }
+//     this->msDLine[size_t(this->msIdx)] = sampleAccum;
+//     if (++this->msIdx >= this->msDLineLen) { this->msIdx = 0; }
+//   }
 
-  /**
-   * @brief Update the component state
-   *
-   * This method resets the accumulators and delay lines if the resetAccums
-   * flag is set.
-   */
-  void update() noexcept override {
-    if (this->t_ms == this->msDLineLen) { return; }
-    this->msDLineLen  = this->t_ms;
-    this->sampleIdx   = 0;
-    this->msIdx       = 0;
-    this->sampleAccum = 0;
-    this->msAccum     = 0;
-    std::fill(this->sampleDLine.begin(), this->sampleDLine.end(), 0);
-    std::fill(this->msDLine.begin(), this->msDLine.end(), 0);
-  }
+//   /**
+//    * @brief Update the component state
+//    *
+//    * This method resets the accumulators and delay lines if the resetAccums
+//    * flag is set.
+//    */
+//   void update() noexcept override {
+//     if (this->t_ms == this->msDLineLen) { return; }
+//     this->resetAccums();
+//   }
 
-  /**
-   * @brief Reset the component with a new sample rate
-   *
-   * This method updates the sample rate and recalculates the sample delay
-   * line length based on the new rate.
-   *
-   * @param fs The new sample rate in Hz
-   */
-  void reset(signal_t fs) noexcept override {
-    this->_fs            = fs;
-    this->sampleDLineLen = int(fs / 1000.0);
-    this->update();
-  }
+//   void resetAccums() noexcept {
+//     this->msDLineLen  = this->t_ms;
+//     this->sampleIdx   = 0;
+//     this->msIdx       = 0;
+//     this->sampleAccum = 0;
+//     this->msAccum     = 0;
+//     std::fill(this->sampleDLine.begin(), this->sampleDLine.end(), 0);
+//     std::fill(this->msDLine.begin(), this->msDLine.end(), 0);
+//   }
 
-  /**
-   * @brief Get the current RMS value
-   *
-   * This method calculates and returns the current RMS value based on the
-   * accumulated signal values.
-   *
-   * @return The current RMS value
-   */
-  signal_t getRms() const noexcept {
-    signal_t y = gcem::sqrt(signal_t(2.0) * this->msAccum
-        / signal_t(this->sampleDLineLen * this->msDLineLen));
-    if (y != y) { y = signal_t(0.0); }
-    return y;
-  }
-};
+//   /**
+//    * @brief Reset the component with a new sample rate
+//    *
+//    * This method updates the sample rate and recalculates the sample delay
+//    * line length based on the new rate.
+//    *
+//    * @param fs The new sample rate in Hz
+//    */
+//   void reset(signal_t fs) noexcept override {
+//     this->_fs            = fs;
+//     this->sampleDLineLen = int(fs / 1000.0);
+//     this->resetAccums();
+//   }
 
-/**
- * @brief Stereo RMS sensor component
- *
- * This component provides RMS calculation for stereo audio signals by
- * maintaining two RmsSensor instances (one for each channel).
- *
- * @tparam signal_t The type of the audio signal (e.g., float, double)
- * @tparam maxT_ms Maximum time window in milliseconds for RMS calculation
- * (default: 1000)
- * @tparam maxSampleDLineLen Maximum length of the sample delay line (default:
- * 192 * 8)
- */
-template <int maxT_ms = 1000, int maxSampleDLineLen = 192 * 8>
-struct LongRmsSensorStereo
-    : public AudioComponent<signal_t,
-          LongRmsSensorMono<maxT_ms, maxSampleDLineLen>> {
-  signal_t t_ms { 0 };
-  /**
-   * @brief Get the current RMS values for both channels
-   *
-   * This method returns the RMS values for both left and right channels
-   * as a Stereo structure.
-   *
-   * @return The current RMS values for both channels
-   */
-  Audio getRms() const noexcept {
-    return { this->l.getRms(), this->r.getRms() };
-  }
-  void update() noexcept override {
-    this->l.t_ms = this->t_ms;
-    this->r.t_ms = this->t_ms;
-    this->l.update();
-    this->r.update();
-  }
-};
-template <int maxT_ms = 1000, int maxSampleDLineLen = 192 * 8>
-using LongRmsSensor = LongRmsSensorStereo<maxT_ms, maxSampleDLineLen>;
+//   /**
+//    * @brief Get the current RMS value
+//    *
+//    * This method calculates and returns the current RMS value based on the
+//    * accumulated signal values.
+//    *
+//    * @return The current RMS value
+//    */
+//   signal_t getRms() const noexcept {
+//     signal_t y = gcem::sqrt(signal_t(2.0) * gcem::abs(this->msAccum)
+//         / signal_t(this->sampleDLineLen * this->msDLineLen));
+//     return y;
+//   }
+// };
+
+// /**
+//  * @brief Stereo RMS sensor component
+//  *
+//  * This component provides RMS calculation for stereo audio signals by
+//  * maintaining two RmsSensor instances (one for each channel).
+//  *
+//  * @tparam signal_t The type of the audio signal (e.g., float, double)
+//  * @tparam maxT_ms Maximum time window in milliseconds for RMS calculation
+//  * (default: 1000)
+//  * @tparam maxSampleDLineLen Maximum length of the sample delay line
+//  (default:
+//  * 192 * 8)
+//  */
+// template <int maxT_ms = 1000, int maxSampleDLineLen = 192 * 8>
+// struct LongRmsSensorStereo
+//     : public AudioComponent<signal_t,
+//           LongRmsSensorMono<maxT_ms, maxSampleDLineLen>> {
+//   signal_t t_ms { maxT_ms };
+//   /**
+//    * @brief Get the current RMS values for both channels
+//    *
+//    * This method returns the RMS values for both left and right channels
+//    * as a Stereo structure.
+//    *
+//    * @return The current RMS values for both channels
+//    */
+//   Audio getRms() const noexcept {
+//     return { this->l.getRms(), this->r.getRms() };
+//   }
+//   void update() noexcept override {
+//     this->l.t_ms = this->t_ms;
+//     this->r.t_ms = this->t_ms;
+//     this->l.update();
+//     this->r.update();
+//   }
+// };
+// template <int maxT_ms = 1000, int maxSampleDLineLen = 192 * 8>
+// using LongRmsSensor = LongRmsSensorStereo<maxT_ms, maxSampleDLineLen>;
 }
