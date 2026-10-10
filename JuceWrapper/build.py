@@ -26,7 +26,7 @@ import shutil
 import argparse
 from multiprocessing import cpu_count
 from . import package
-from .package import RED, GREEN, BLUE, BLACK
+from .package import RED, GREEN, BLUE, BLACK, TARGET_EXT_MAP
 
 REPO_BASE_DIR = os.path.realpath(os.path.dirname(__file__) + "/..")
 BUILD_DIR = os.path.realpath(f"{REPO_BASE_DIR}/build")
@@ -336,6 +336,43 @@ def _artefactExists(plugin: str, target: str) -> bool:
     return False
 
 
+def convertAndStoreManual(plugin: str, bundleDir: str) -> bool:
+    manualsDir = f"{REPO_BASE_DIR}/docs/manuals/"
+    if not os.path.exists(manualsDir):
+        print(f"{RED}Dir '{manualsDir}' does not exist.{BLACK}")
+        return False
+    manPath = f"{manualsDir}/{plugin}.md"
+    if not os.path.exists(manPath):
+        print(f"{RED}File '{manPath}' does not exist.{BLACK}")
+        return False
+    dst = f"{bundleDir}/Contents/Resources/manual.html"
+    orgDir = os.getcwd()
+    os.chdir(manualsDir)
+    res = subprocess.run(
+        [
+            "pandoc",
+            "-f",
+            "markdown",
+            "-t",
+            "html",
+            "--standalone",
+            "--css=style.css",
+            "--embed-resources",
+            "-i",
+            manPath,
+            "-o",
+            dst,
+        ],
+        check=False,
+    )
+    os.chdir(orgDir)
+    if res.returncode:
+        print(f"{RED}Failed to convert manual to html.")
+        return False
+    print(f"{GREEN}Stored manual for plugin '{plugin}' at '{dst}'.{BLACK}")
+    return True
+
+
 def storeArtifacts(plugin: str) -> bool:
     """
     Stores output from build to 'artifacts' folder. Sorts according to plugin
@@ -356,16 +393,18 @@ def storeArtifacts(plugin: str) -> bool:
             targets += [e.path.replace(art, "")]
     for target in targets:
         dstDir = f"{ARTIFACTS_DIR}{os.sep}{target}"
-        dst = f"{dstDir}{os.sep}{plugin}"
-        src = f"{art}{target}"
+        dst = f"{dstDir}{os.sep}{plugin}.{TARGET_EXT_MAP[target]}"
         os.makedirs(dstDir, exist_ok=True)
-        subprocess.run(["xattr", "-cr", dst], check=False)
+        print(f"{BLUE}Removing old artifact '{dst}'.{BLACK}")
+        subprocess.run(["/usr/bin/xattr", "-cr", dst], check=False)
         try:
-            os.rmdir(dst)
+            shutil.rmtree(dst)
         except FileNotFoundError:
             pass
+        src = f"{art}{target}"
         shutil.copytree(src, dstDir, dirs_exist_ok=True)
-        print(f"{GREEN}Storing target {target} for plugin {plugin}.{BLACK}")
+        print(f"{GREEN}Stored target {target} for plugin {plugin}.{BLACK}")
+        convertAndStoreManual(plugin, dst)
         if sys.platform == "win32" and target == "VST3":
             print(
                 f"{BLUE}Add '{os.path.abspath(dstDir)}' to you host/DAW plugin "
@@ -381,11 +420,12 @@ def buildPlugins(
     category: str,
     version: str,
     company: str,
+    debug: bool = False,
 ):
     pluginIds = readPluginIds()
     updatePluginHeader(plugins)
     for plugin in plugins:
-        if not configure(plugin, pluginIds, category, version, company):
+        if not configure(plugin, pluginIds, category, version, company, debug):
             return False
         if not build():
             return False
@@ -425,7 +465,12 @@ def main(args: dict) -> bool:
         return False
     secrets["version"] = version
     if not buildPlugins(
-        plugins, args["test"], args["category"], version, args["company"]
+        plugins,
+        args["test"],
+        args["category"],
+        version,
+        args["company"],
+        args["debug"],
     ):
         return False
     if args["package"]:
@@ -484,6 +529,11 @@ def createParser():
         "--company",
         help="Company/vendor of plugins.",
         default="NTfx",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Build in debug mode.",
     )
     return parser
 

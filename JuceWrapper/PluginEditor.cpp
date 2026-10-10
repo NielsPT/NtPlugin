@@ -35,6 +35,7 @@
 #include "utils.h"
 
 #include <cstddef>
+#include <dlfcn.h>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -785,20 +786,40 @@ void NtPluginAudioProcessorEditor::_conformUiSilderValues() {
   if (updateNeeded) { this->proc.plug.update(); }
 }
 
-void NtPluginAudioProcessorEditor::_openManualInBrowser() {
+static std::string _getAbsolutePathOfPlugin() {
+  Dl_info info;
+  // On macOS, dladdr works well for getting the path of the current binary
+  if (dladdr((void*)&_getAbsolutePathOfPlugin, &info)) {
+    std::string path = info.dli_fname;
+    // info.dli_fname might be a relative path or just the binary name
+    // On macOS, it usually returns the full path to the binary
+    return path;
+  }
+  return "";
+}
+
+static void _openManualInBrowser() {
+  auto binPath     = _getAbsolutePathOfPlugin();
   juce::String cmd = "xdg-open ";
+  size_t pos       = binPath.find("/Contents/");
+  auto bundlePath  = binPath.substr(0, pos);
+  auto manPath     = bundlePath + "/Contents/Resources/manual.html";
+  DBG(NTFX_PLUGIN_NAME + ": Absolute path to manual: " + manPath);
 #ifdef __MACH__
   cmd = "open ";
 #elif defined(_WIN32)
   cmd = "start msedge "
 #endif
-  auto st = cmd + this->proc.plug.manualUrl;
+  auto st = cmd + manPath;
   system(st.toRawUTF8());
 }
 
 void NtPluginAudioProcessorEditor::buttonClicked(juce::Button* p_button) {
   auto name = p_button->getName().toStdString();
-  if (name == "?") { this->_openManualInBrowser(); }
+  if (name == "?") {
+    _openManualInBrowser();
+    return;
+  }
   auto* p_val = this->proc.plug.getToggleValuePtr(name);
   if (!p_val) {
     DBG(NTFX_PLUGIN_NAME + ": Toggle name in UI not found in plugin toggles: '"

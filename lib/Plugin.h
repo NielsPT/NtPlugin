@@ -54,8 +54,6 @@ struct Plugin : public ComponentBase<Audio> {
   //  */
   // std::array<LongRmsSensor<1000, 192>, 2> xRms;
 
-  std::string manualUrl { "https://ntlyd.dk/ntfx/manuals/index.html" };
-
   /**
    * @brief Peak level to be displayed in the meters.
    */

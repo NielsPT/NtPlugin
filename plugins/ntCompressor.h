@@ -178,7 +178,6 @@ struct ntCompressor final : public NtFx::Plugin {
     };
     this->hpf.settings.fc_hz = 20;
     this->hpf.settings.shape = NtFx::Biquad::Shape::hpf;
-    this->manualUrl = "https://ntlyd.dk/ntfx/manuals/ntCompressor.html";
     this->updateDefaults();
   }
 
