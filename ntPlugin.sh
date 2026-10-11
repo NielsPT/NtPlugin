@@ -22,6 +22,10 @@
 # in release mode and install them on the system if possible. Add "-t" as arg to
 # run tests on lib and all plugins.
 
+
+CALLER_DIR="$(pwd)"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$SCRIPT_DIR" || exit 1
 if [ ! -d .venv ]; then
   python3 -m venv .venv;
   . ./.venv/bin/activate;
@@ -30,3 +34,4 @@ else
   . ./.venv/bin/activate;
 fi
 python ./ntPlugin.py $* || exit 1
+cd "$CALLER_DIR"

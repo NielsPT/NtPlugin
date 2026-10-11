@@ -181,8 +181,6 @@ def updatePluginHeader(plugins: list[str]) -> bool:
         p = l.replace("#include \"plugins/", "").replace(".h\"", "").strip()
         if p not in ps:
             ps += [p]
-    print(ps)
-    print("")
     with open(PLUGIN_H_FILE, "a", encoding="utf-8") as f:
         for plugin in plugins:
             if plugin not in ps:
@@ -337,7 +335,7 @@ def _artefactExists(plugin: str, target: str) -> bool:
 
 
 def convertAndStoreManual(plugin: str, bundleDir: str) -> bool:
-    manualsDir = f"{REPO_BASE_DIR}/docs/manuals/"
+    manualsDir = f"{REPO_BASE_DIR}/manuals/"
     if not os.path.exists(manualsDir):
         print(f"{RED}Dir '{manualsDir}' does not exist.{BLACK}")
         return False

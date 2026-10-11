@@ -35,6 +35,7 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
   signal_t red_p { 100 };
   signal_t red_lin { 1 };
   bool extScEnable { false };
+  bool linkParams { false };
   bool bypassEnable { false };
 
   ntAdaptiveDeEsser() {
@@ -80,6 +81,14 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
           .midPoint = 1,
       },
       {
+          .p_val    = &this->sc.sc.settings.tPeakHold_ms,
+          .name     = "Peak Hold",
+          .suffix   = " ms",
+          .minVal   = 0,
+          .maxVal   = 10,
+          .midPoint = 1,
+      },
+      {
           .p_val    = &this->sc.sc.settings.tRel_ms,
           .name     = "Release",
           .suffix   = " ms",
@@ -95,22 +104,14 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
           .maxVal   = 10,
           .midPoint = 1,
       },
-      {
-          .p_val    = &this->sc.peakLo.tRel_ms,
-          .name     = "LF release",
-          .suffix   = " ms",
-          .minVal   = 0,
-          .maxVal   = 1000,
-          .midPoint = 10,
-      },
-      {
-          .p_val    = &this->sc.sc.settings.tPeakHold_ms,
-          .name     = "Peak Hold",
-          .suffix   = " ms",
-          .minVal   = 0,
-          .maxVal   = 10,
-          .midPoint = 1,
-      },
+      // {
+      //     .p_val    = &this->sc.peakLo.tRel_ms,
+      //     .name     = "LF release",
+      //     .suffix   = " ms",
+      //     .minVal   = 0,
+      //     .maxVal   = 1000,
+      //     .midPoint = 10,
+      // },
       {
           .p_val  = &this->sc.rmsLo.t_ms,
           .name   = "LF RMS",
@@ -130,11 +131,12 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
       { .p_val = &this->sc.rmsEnable, .name = "RMS mode" },
       { .p_val = &this->extScEnable, .name = "Ext SC" },
       { .p_val = &this->sc.scListen, .name = "SC Listen" },
+      { .p_val = &this->linkParams, .name = "Auto" },
       { .p_val = &this->bypassEnable, .name = "Bypass" },
     };
     this->meters.push_back({
         .name     = "GR",
-        .dbPrDot  = 1,
+        .dbPrDot  = 2,
         .invert   = true,
         .hasScale = true,
     });
@@ -166,25 +168,47 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
   }
 
   void update() noexcept override {
+
+    if (this->linkParams) {
+      this->deactivateParameter("Attack");
+      this->deactivateParameter("LF peak hold");
+      // this->deactivateParameter("LF release");
+      this->deactivateParameter("Peak Hold");
+      this->deactivateParameter("LF RMS");
+      this->deactivateParameter("HF RMS");
+      this->sc.rmsHi.t_ms               = this->dl.t_ms * 2;
+      this->sc.rmsLo.t_ms               = this->dl.t_ms * 2;
+      this->sc.sc.settings.tPeakHold_ms = this->dl.t_ms;
+      this->sc.sc.settings.tAtt_ms      = this->dl.t_ms;
+      this->sc.peakLo.tHold_ms          = this->dl.t_ms;
+      if (this->sc.rmsEnable) { this->sc.sc.settings.tAtt_ms = 0.1; }
+      if (this->sc.sc.settings.tPeakHold_ms < 0.25) {
+        this->sc.sc.settings.tPeakHold_ms = 0.25;
+      }
+      if (this->sc.peakLo.tHold_ms < 0.25) { this->sc.peakLo.tHold_ms = 0.25; }
+    } else {
+      this->activateParameter("Attack");
+      this->activateParameter("Peak Hold");
+      if (this->sc.rmsEnable) {
+        this->deactivateParameter("LF peak hold");
+        // this->deactivateParameter("LF release");
+        this->deactivateParameter("Peak Hold");
+        this->activateParameter("LF RMS");
+        this->activateParameter("HF RMS");
+      } else {
+        this->activateParameter("LF peak hold");
+        // this->activateParameter("LF release");
+        this->activateParameter("Peak Hold");
+        this->deactivateParameter("LF RMS");
+        this->deactivateParameter("HF RMS");
+      }
+    }
     this->red_lin     = gcem::sqrt(this->red_p / signal_t(100.0));
     this->shelf.fc_hz = this->sc.fc_hz;
     this->latency     = size_t(this->dl.t_ms / 1000 * this->_fs);
-    this->dl.update();
     this->sc.update();
     this->shelf.update();
-    if (this->sc.rmsEnable) {
-      this->deactivateParameter("LF peak hold");
-      this->deactivateParameter("LF release");
-      this->deactivateParameter("Peak Hold");
-      this->activateParameter("LF RMS");
-      this->activateParameter("HF RMS");
-    } else {
-      this->activateParameter("LF peak hold");
-      this->activateParameter("LF release");
-      this->activateParameter("Peak Hold");
-      this->deactivateParameter("LF RMS");
-      this->deactivateParameter("HF RMS");
-    }
+    this->dl.update();
   }
 
   void reset(signal_t fs) noexcept override {

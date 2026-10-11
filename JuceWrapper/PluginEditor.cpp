@@ -804,7 +804,7 @@ static void _openManualInBrowser() {
   size_t pos       = binPath.find("/Contents/");
   auto bundlePath  = binPath.substr(0, pos);
   auto manPath     = bundlePath + "/Contents/Resources/manual.html";
-  DBG(NTFX_PLUGIN_NAME + ": Absolute path to manual: " + manPath);
+  DBG(NTFX_PLUGIN_NAME + ": Opening manual at '" + manPath + "'.");
 #ifdef __MACH__
   cmd = "open ";
 #elif defined(_WIN32)
