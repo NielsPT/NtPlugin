@@ -25,7 +25,7 @@
 
 #include "lib/Audio.h"
 #include "lib/Component.h"
-#include "lib/Transformer.h"
+#include "lib/FirstOrder.h"
 #include "lib/gcem.h"
 #include "lib/utils.h"
 #include <array>
@@ -40,10 +40,27 @@ struct Tilt : public ComponentBase<Audio> {
   signal_t a_lin { 0 };
   signal_t tilt_db { 0 }; /** @brief Tilt in dB / decade. */
   signal_t gain_lin { 1 };
-  Tilt() {
-    auto freqs =
-        logspace<signal_t>(gcem::log10(20), gcem::log10(20e3), nStages);
-    for (size_t i = 0; i < nStages; i++) { filters[i].fc_hz = freqs[i]; }
+  signal_t calcCorr() {
+    auto tiltAbs = gcem::abs(this->tilt_db);
+    signal_t corr_db { 0 };
+    signal_t corr_lin { 1 };
+    if (tiltAbs < 1) {
+      corr_db = 0;
+    } else if (tiltAbs < 10) {
+      corr_db = 0.06 * this->tilt_db;
+    } else {
+      if (this->tilt_db > 0) {
+        corr_db = 0.58 * this->tilt_db - 5;
+      } else {
+        corr_db = 0.58 * this->tilt_db + 5;
+      }
+    }
+    if (this->tilt_db > 0) {
+      corr_lin = NtFx::invDb(-corr_db / 2);
+    } else {
+      corr_lin = NtFx::invDb(corr_db / 2);
+    }
+    return corr_lin;
   }
   Audio process(Audio x) noexcept override {
     auto tmp = x;
@@ -55,11 +72,16 @@ struct Tilt : public ComponentBase<Audio> {
   }
   void update() noexcept override {
     this->a_lin    = invDb(-this->tilt_db * 3 / nStages) - 1;
-    this->gain_lin = invDb(this->tilt_db * 3 / 2);
+    this->gain_lin = invDb(this->tilt_db * 3 / 2) * calcCorr();
     for (size_t i = 0; i < nStages; i++) { filters[i].update(); }
   }
   void reset(signal_t fs) noexcept override {
-    this->_fs = fs;
+    this->_fs    = fs;
+    signal_t fLo = 20;   // this->_fs / 8000;
+    signal_t fHi = 20e3; // this->_fs / 2;
+    auto freqs =
+        logspace<signal_t>(gcem::log10(fLo), gcem::log10(fHi), nStages);
+    for (size_t i = 0; i < nStages; i++) { filters[i].fc_hz = freqs[i]; }
     for (size_t i = 0; i < nStages; i++) { filters[i].reset(fs); }
     this->update();
   }

@@ -21,7 +21,8 @@
 #include "lib/Audio.h"
 #include <cstddef>
 
-#include "Plugins.h"
+// #include "Plugins.h"
+#include NTFX_PLUGIN_FILE
 
 #include "lib/SampleRateConverter.h"
 #include "lib/UiSpec.h"

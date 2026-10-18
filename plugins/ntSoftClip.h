@@ -3,6 +3,7 @@
 #include "lib/Audio.h"
 #include "lib/Plugin.h"
 #include "lib/SoftClip.h"
+#include "lib/Tilt.h"
 
 struct ntSoftClip final : public NtFx::Plugin {
   enum class Mode {
@@ -22,6 +23,9 @@ struct ntSoftClip final : public NtFx::Plugin {
   NtFx::Clip::Hard hard;
   NtFx::Clip::Alt1 alt1;
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpfZero> lpf;
+  NtFx::Tilt<> preTilt;
+  NtFx::Tilt<> postTilt;
+  signal_t corr_lin { 1 };
   Mode mode { Mode::thirdAntialias };
   signal_t gain_db { 0 };
   bool lpfEnable { true };
@@ -29,6 +33,7 @@ struct ntSoftClip final : public NtFx::Plugin {
 
   ntSoftClip() {
     this->primaryKnobs = {
+      { &this->preTilt.tilt_db, "Tilt", " dB/decade", -20, 20 },
       { &this->gain_db, "Drive", " dB", -24, 24 },
       { &this->lpf.fc_hz, "LPF", " Hz", 20, 22e3, 2e3 },
     };
@@ -53,7 +58,8 @@ struct ntSoftClip final : public NtFx::Plugin {
           },
       },
     };
-    this->lpf.fc_hz = 22e3;
+    this->lpf.fc_hz         = 22e3;
+    this->uiSpec.meterWidth = 25;
     this->updateDefaults();
   }
 
@@ -63,32 +69,33 @@ struct ntSoftClip final : public NtFx::Plugin {
       this->updatePeakLevel(1, x);
       return x;
     }
+    auto yTilt = this->preTilt.process(x);
     Audio yClip { 0 };
     switch (this->mode) {
     case Mode::thirdAntialias:
-      yClip = this->clipA3.process(x);
+      yClip = this->clipA3.process(yTilt);
       break;
     case Mode::fifthAntialias:
-      yClip = this->clipA5.process(x);
+      yClip = this->clipA5.process(yTilt);
       break;
     // case Mode::second:
     //   yClip = this->second.process(x);
     //   break;
     case Mode::third:
-      yClip = this->clip3.process(x);
+      yClip = this->clip3.process(yTilt);
       break;
     case Mode::fifth:
-      yClip = this->clip5.process(x);
+      yClip = this->clip5.process(yTilt);
       break;
     case Mode::hard:
-      yClip = this->hard.process(x);
+      yClip = this->hard.process(yTilt);
       break;
     case Mode::alt1:
-      yClip = this->alt1.process(x);
+      yClip = this->alt1.process(yTilt);
       break;
     }
-    Audio y = yClip;
-    if (this->lpfEnable) { y = this->lpf.process(yClip); }
+    Audio y = this->postTilt.process(yClip) * this->corr_lin;
+    if (this->lpfEnable) { y = this->lpf.process(y); }
     this->updatePeakLevel(1, y);
     return y;
   }
@@ -109,6 +116,10 @@ struct ntSoftClip final : public NtFx::Plugin {
     this->hard.update();
     this->alt1.update();
     this->lpf.update();
+    this->corr_lin         = this->preTilt.calcCorr();
+    this->postTilt.tilt_db = -this->preTilt.tilt_db;
+    this->preTilt.update();
+    this->postTilt.update();
   }
 
   void reset(signal_t fs) noexcept override {
@@ -121,6 +132,8 @@ struct ntSoftClip final : public NtFx::Plugin {
     this->hard.reset(fs);
     this->alt1.reset(fs);
     this->lpf.reset(fs);
+    this->preTilt.reset(fs);
+    this->postTilt.reset(fs);
     this->update();
   }
 };

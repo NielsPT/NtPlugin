@@ -173,17 +173,19 @@ def updatePluginHeader(plugins: list[str]) -> bool:
         with open(PLUGIN_H_FILE, "w", encoding="utf-8") as f:
             f.write(tmp)
     with open(PLUGIN_H_FILE, "r", encoding="utf-8") as f:
-        ls = f.readlines()
-    ps = []
-    for l in ls:
-        if not l.startswith("#include") and ".h" in l:
+        lines = f.readlines()
+    pluginsInFile = []
+    for line in lines:
+        if not line.startswith("#include") and ".h" in line:
             continue
-        p = l.replace("#include \"plugins/", "").replace(".h\"", "").strip()
-        if p not in ps:
-            ps += [p]
+        plugin = (
+            line.replace("#include \"plugins/", "").replace(".h\"", "").strip()
+        )
+        if plugin not in pluginsInFile:
+            pluginsInFile += [plugin]
     with open(PLUGIN_H_FILE, "a", encoding="utf-8") as f:
         for plugin in plugins:
-            if plugin not in ps:
+            if plugin not in pluginsInFile:
                 f.write(f"#include \"plugins/{plugin}.h\"\n")
     return True
 

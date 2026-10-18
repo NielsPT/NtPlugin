@@ -183,7 +183,7 @@ struct MeterBase : public juce::Component {
     if (!repaint || w == 0.0f) { w = this->uiSpec.meterWidth; }
     this->pad         = w * 2.0f / 7.0f;
     this->dotDiameter = w * 3.0f / 7.0f;
-    this->dotPad      = w * 1.0f / 7.0f;
+    this->dotPad      = w * 2.0f / 7.0f;
     this->dotDist     = this->dotDiameter + this->dotPad;
     if (repaint) { this->repaint(); }
   }

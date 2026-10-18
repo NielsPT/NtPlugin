@@ -43,7 +43,6 @@
 
 #include <cstddef>
 #include <memory>
-#include <string>
 #include <vector>
 
 #ifndef NTFX_PLUGIN

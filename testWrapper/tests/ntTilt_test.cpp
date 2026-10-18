@@ -1,15 +1,36 @@
 
+#include "lib/Audio.h"
+#include "lib/Component.h"
 #include "lib/ComponentTest.h"
-#include "lib/utils.h"
+#include "lib/Tilt.h"
 #include "plugins/ntTilt.h"
-#include <format>
 #include <memory>
 #include <string>
-#include <vector>
+
+struct EmphDeemph final : public NtFx::ComponentBase<Audio> {
+  NtFx::Tilt<> emph;
+  NtFx::Tilt<> deemph;
+  signal_t corr_lin { 1 };
+  Audio process(Audio x) noexcept override {
+    return this->deemph.process(this->emph.process(x)) * this->corr_lin;
+  }
+
+  void update() noexcept override {
+    // this->corr_lin       = this->emph.calcCorr();
+    this->deemph.tilt_db = -this->emph.tilt_db;
+    this->emph.update();
+    this->deemph.update();
+  }
+  void reset(signal_t fs) noexcept override {
+    this->_fs = fs;
+    this->emph.reset(fs);
+    this->deemph.reset(fs);
+    this->update();
+  }
+};
 
 int main() {
   auto set = NtFx::ComponentTestSet(std::string(testFileBaseName(__FILE__)));
-#if 1
   auto bypass_        = std::make_unique<ntTilt>();
   auto& bypass        = *bypass_;
   bypass.bypassEnable = true;
@@ -41,23 +62,39 @@ int main() {
   auto& minus20          = *minus20_;
   minus20.filter.tilt_db = -20;
   NTFX_ADD_TEST(set, minus20, "impulse");
-#endif
-#if 0
-  ntTilt t;
-  std::vector<std::unique_ptr<
-      NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf>>>
-      v;
-  for (size_t i = 0; i < nStages; i++) {
-    auto p = std::make_unique<
-        NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf>>();
-    p->fc_hz = t.filter.filters[i].fc_hz;
-    std::cout << t.filter.filters[i].fc_hz << "\n";
-    v.push_back(std::move(p));
-  }
-  for (size_t i = 0; i < nStages; i++) {
-    auto p = v[i].get();
-    set.addTest(p, std::format("Hpf{}_{}", i, int(p->fc_hz)), { "impulse" });
-  }
-#endif
+  auto emphDeemph20_        = std::make_unique<EmphDeemph>();
+  auto& emphDeemph20        = *emphDeemph20_;
+  emphDeemph20.emph.tilt_db = 20;
+  NTFX_ADD_TEST(set, emphDeemph20, "impulse");
+  auto emphDeemph15_        = std::make_unique<EmphDeemph>();
+  auto& emphDeemph15        = *emphDeemph15_;
+  emphDeemph15.emph.tilt_db = 15;
+  NTFX_ADD_TEST(set, emphDeemph15, "impulse");
+  auto emphDeemph10_        = std::make_unique<EmphDeemph>();
+  auto& emphDeemph10        = *emphDeemph10_;
+  emphDeemph10.emph.tilt_db = 10;
+  NTFX_ADD_TEST(set, emphDeemph10, "impulse");
+  auto emphDeemph5_        = std::make_unique<EmphDeemph>();
+  auto& emphDeemph5        = *emphDeemph5_;
+  emphDeemph5.emph.tilt_db = 5;
+  NTFX_ADD_TEST(set, emphDeemph5, "impulse");
+
+  auto emphDeemphMinus20_        = std::make_unique<EmphDeemph>();
+  auto& emphDeemphMinus20        = *emphDeemphMinus20_;
+  emphDeemphMinus20.emph.tilt_db = -20;
+  NTFX_ADD_TEST(set, emphDeemphMinus20, "impulse");
+  auto emphDeemphMinus15_        = std::make_unique<EmphDeemph>();
+  auto& emphDeemphMinus15        = *emphDeemphMinus15_;
+  emphDeemphMinus15.emph.tilt_db = -15;
+  NTFX_ADD_TEST(set, emphDeemphMinus15, "impulse");
+  auto emphDeemphMinus10_        = std::make_unique<EmphDeemph>();
+  auto& emphDeemphMinus10        = *emphDeemphMinus10_;
+  emphDeemphMinus10.emph.tilt_db = -10;
+  NTFX_ADD_TEST(set, emphDeemphMinus10, "impulse");
+  auto emphDeemphMinus5_        = std::make_unique<EmphDeemph>();
+  auto& emphDeemphMinus5        = *emphDeemphMinus5_;
+  emphDeemphMinus5.emph.tilt_db = -5;
+  NTFX_ADD_TEST(set, emphDeemphMinus5, "impulse");
+
   return set.runAllTests();
 }
