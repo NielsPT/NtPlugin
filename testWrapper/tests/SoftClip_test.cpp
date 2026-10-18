@@ -6,16 +6,22 @@
 
 int main() {
   auto set = NtFx::ComponentTestSet(std::string(testFileBaseName(__FILE__)));
-  auto hardStorage = std::make_unique<NtFx::Clip::Hard>();
-  auto& hard       = *hardStorage;
-  NTFX_ADD_TEST(set, hard, "linearSweep");
+  auto hardDefaultStorage = std::make_unique<NtFx::Clip::Hard>();
+  auto& hardDefault       = *hardDefaultStorage;
+  NTFX_ADD_TEST(set, hardDefault, "linearSweep");
+  NTFX_ADD_TEST(set, hardDefault, "sin100Hz");
+  NTFX_ADD_TEST(set, hardDefault, "sin1kHz");
+  NTFX_ADD_TEST(set, hardDefault, "sin10kHz");
+  NTFX_ADD_TEST(set, hardDefault, "dualSin100Hz10kHz");
   auto hardPlus6Storage = std::make_unique<NtFx::Clip::Hard>();
   auto& hardPlus6       = *hardPlus6Storage;
   hardPlus6.gain_db     = 6;
   NTFX_ADD_TEST(set, hardPlus6, "linearSweep");
+  NTFX_ADD_TEST(set, hardPlus6, "sin1kHz");
   auto thirdStorage = std::make_unique<NtFx::Clip::Soft3>();
   auto& third       = *thirdStorage;
   NTFX_ADD_TEST(set, third, "linearSweep");
+  NTFX_ADD_TEST(set, third, "sin1kHz");
   auto fifthStorage = std::make_unique<NtFx::Clip::Soft5>();
   auto& fifth       = *fifthStorage;
   NTFX_ADD_TEST(set, fifth, "linearSweep");

@@ -80,7 +80,7 @@ struct ntEqualizer final : public NtFx::Plugin {
         "HPF",
         {
             { &this->fHpf_hz, "Freq", " Hz", 20, 20e3, 2e3 },
-            { &this->qHpf, "Q", "", 0.5, 10 },
+            { &this->qHpf, "Q", "", 0.5, 5, 0.707 },
         },
     });
     for (size_t i = 0; i < nBands; i++) {
@@ -102,7 +102,7 @@ struct ntEqualizer final : public NtFx::Plugin {
         "LPF",
         {
             { &this->fLpf_hz, "Freq", " Hz", 20, 20e3, 2e3 },
-            { &this->qLpf, "Q", "", 0.5, 10 },
+            { &this->qLpf, "Q", "", 0.5, 5, 0.707 },
         },
     });
     this->dropdowns.push_back(
@@ -139,6 +139,16 @@ struct ntEqualizer final : public NtFx::Plugin {
   }
 
   void update() noexcept override {
+    if (this->orderHpf == Order::first) {
+      deactivateParameter(NtFx::mangleName("kg", "HPF", "Q"));
+    } else {
+      activateParameter(NtFx::mangleName("kg", "HPF", "Q"));
+    }
+    if (this->orderLpf == Order::first) {
+      deactivateParameter(NtFx::mangleName("kg", "LPF", "Q"));
+    } else {
+      activateParameter(NtFx::mangleName("kg", "LPF", "Q"));
+    }
     this->_updateHpfLpf();
     this->firstOrderHpf.update();
     this->firstOrderLpf.update();

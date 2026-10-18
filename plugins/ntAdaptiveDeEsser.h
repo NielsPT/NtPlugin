@@ -24,16 +24,20 @@
 #include "lib/Audio.h"
 #include "lib/Delay.h"
 #include "lib/DynamicFilter.h"
+#include "lib/FirstOrder.h"
 #include "lib/Plugin.h"
 #include "lib/gcem.h"
 #include <cstddef>
 
 struct ntAdaptiveDeEsser final : public NtFx::Plugin {
+  enum Order { e_first, e_second };
   NtFx::Delay::Short<10.0> dl;
   NtFx::AdaptiveDeEssSc sc;
-  NtFx::DynamicFilter::ShelfFixedPoles shelf;
+  NtFx::DynamicFilter::ShelfFixedPoles shelf2nd;
+  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> hpf1st;
   signal_t red_p { 100 };
   signal_t red_lin { 1 };
+  Order order { e_second };
   bool extScEnable { false };
   bool linkParams { false };
   bool bypassEnable { false };
@@ -140,9 +144,16 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
         .invert   = true,
         .hasScale = true,
     });
-    this->dl.t_ms  = 5;
-    this->shelf.q1 = 0.508;
-    this->shelf.q2 = 0.508;
+    this->radioButtons = {
+      {
+          .p_val   = (int*)&this->order,
+          .name    = "Filter type",
+          .options = { "1st Order", "2nd Order" },
+      },
+    };
+    this->dl.t_ms     = 5;
+    this->shelf2nd.q1 = 0.508;
+    this->shelf2nd.q2 = 0.508;
     this->updateDefaults();
   }
 
@@ -160,10 +171,16 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
       this->updatePeakLevel(1, ySc);
       return ySc;
     }
-    this->shelf.gain_lin = (ySc * this->red_lin - this->red_lin + 1).absMin();
-    auto y               = this->shelf.process(yDl);
+    Audio y;
+    auto gain = (ySc * this->red_lin - this->red_lin + 1).absMin();
+    if (this->order == Order::e_second) {
+      this->shelf2nd.gain_lin = gain;
+      y                       = this->shelf2nd.process(yDl);
+    } else {
+      y = yDl + this->hpf1st.process(yDl) * (gain - 1);
+    }
     this->updatePeakLevel(1, y);
-    this->updatePeakLevel(2, this->shelf.gain_lin);
+    this->updatePeakLevel(2, gain);
     return y;
   }
 
@@ -203,11 +220,13 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
         this->deactivateParameter("HF RMS");
       }
     }
-    this->red_lin     = gcem::sqrt(this->red_p / signal_t(100.0));
-    this->shelf.fc_hz = this->sc.fc_hz;
-    this->latency     = size_t(this->dl.t_ms / 1000 * this->_fs);
+    this->red_lin        = gcem::sqrt(this->red_p / signal_t(100.0));
+    this->shelf2nd.fc_hz = this->sc.fc_hz;
+    this->latency        = size_t(this->dl.t_ms / 1000 * this->_fs);
+    this->hpf1st.fc_hz   = this->sc.fc_hz;
+    this->hpf1st.update();
     this->sc.update();
-    this->shelf.update();
+    this->shelf2nd.update();
     this->dl.update();
   }
 
@@ -215,7 +234,8 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
     this->_fs = fs;
     this->dl.reset(fs);
     this->sc.reset(fs);
-    this->shelf.reset(fs);
+    this->hpf1st.reset(fs);
+    this->shelf2nd.reset(fs);
     this->update();
   }
 };

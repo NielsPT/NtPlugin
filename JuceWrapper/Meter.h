@@ -44,6 +44,7 @@ struct MeterBase : public juce::Component {
   UiSpec& uiSpec;
   std::string label { "" };
   float pad { 10 };
+  float dotPad { 5 };
   float dotDiameter { 0 };
   float dotDist { 0 };
   int nDots { 14 };
@@ -130,13 +131,14 @@ struct MeterBase : public juce::Component {
     auto fillDiameter = this->dotDiameter - fillPad;
     if (fillDiameter < 0) { return; }
     auto fillX      = this->pad + fillPad / 2;
-    this->nDots     = int((float(this->getHeight()) - 3.0f * this->pad)
-        / (this->dotDiameter + this->pad));
+    this->nDots     = int((float(this->getHeight()) - 3.0f * this->dotPad)
+        / (this->dotDiameter + this->dotPad));
     this->minVal_db = -float(this->nDots) * this->meterSpec.dbPrDot;
     for (int i = 0; i < this->nDots; i++) {
       auto y     = float(this->pad + (float(i) + 1.0f) * this->dotDist);
       auto fillY = y + fillPad / 2;
       g.setColour(juce::Colour(this->uiSpec.foregroundColour));
+      // TODO: Calculate the width of the line.
       g.drawEllipse(this->pad, y, this->dotDiameter, this->dotDiameter, 1);
       this->fillDots(g, i, fillX, fillY, fillDiameter);
       this->fillFract(g, i, fillX, fillY, fillDiameter);
@@ -179,9 +181,10 @@ struct MeterBase : public juce::Component {
     }
     auto w = float(this->getWidth());
     if (!repaint || w == 0.0f) { w = this->uiSpec.meterWidth; }
-    this->pad         = w * 7.0f / this->uiSpec.meterWidth;
-    this->dotDiameter = w * 13.0f / this->uiSpec.meterWidth;
-    this->dotDist     = this->pad + this->dotDiameter;
+    this->pad         = w * 2.0f / 7.0f;
+    this->dotDiameter = w * 3.0f / 7.0f;
+    this->dotPad      = w * 1.0f / 7.0f;
+    this->dotDist     = this->dotDiameter + this->dotPad;
     if (repaint) { this->repaint(); }
   }
 
@@ -295,7 +298,8 @@ struct MeterScale : public juce::Component {
   MeterBase& meter;
   MeterScale(MeterBase& m) : meter(m) { }
   void paint(juce::Graphics& g) override {
-    auto offset = this->meter.pad + this->meter.dotDist;
+    auto offset =
+        this->meter.pad + this->meter.dotPad / 2 + this->meter.dotDist;
     g.setColour(juce::Colour(meter.uiSpec.foregroundColour));
     g.setFont(this->meter.fontSize);
     for (size_t i = 0; i < size_t(this->meter.nDots); i++) {

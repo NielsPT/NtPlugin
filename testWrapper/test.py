@@ -25,11 +25,13 @@ import shutil
 import platform
 import json
 import time
+from copy import deepcopy
 import multiprocessing as mp
 from itertools import repeat
 import numpy as np
 from matplotlib import pyplot as p
 from scipy import signal as s
+import colorednoise as cn
 
 SEPARATOR = "."
 EXPECTED_DIR = "in"
@@ -40,6 +42,12 @@ STIMULI = [
     "syncSweep",
     "dynamic_alternating",
     "dynamic_matched",
+    "whiteNoise",
+    "pinkNoise",
+    "sin1kHz",
+    "sin10kHz",
+    "sin100Hz",
+    "dualSin100Hz10kHz",
 ]
 FILE_DIR = os.path.dirname(__file__)
 
@@ -160,9 +168,7 @@ def _storeStereoTestVector(x: np.ndarray, filename: str):
             f.write(f"{xL[i]:.16f} {xR[i]:.16f}\n")
 
 
-def generateTestVectors(
-    t: float, fs: float
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def generateTestVectors(t: float, fs: float) -> bool:
     """
     Generates and stores all the test vectors.
 
@@ -195,7 +201,28 @@ def generateTestVectors(
     plotSpectrum(_linearSweep, fs, f"{FILE_DIR}/img/linearSweep.png")
     linearSweep = np.array([_linearSweep, _linearSweep])
     _storeStereoTestVector(linearSweep, outputPath + "linearSweep.txt")
-    return (impulse, linearSweep, syncSweep, dynamic_alternating)
+    _white = np.random.random(n) * 2 - 1
+    white = np.array([_white, _white])
+    _storeStereoTestVector(white, outputPath + "whiteNoise.txt")
+    _pink = cn.powerlaw_psd_gaussian(2, n)
+    pink = np.array([_pink, _pink])
+    _storeStereoTestVector(pink, outputPath + "pinkNoise.txt")
+    wAx = np.linspace(0, n, n) * 2 * np.pi / fs
+    _sin1kHz = np.sin(1e3 * wAx)
+    sin1kHz = np.array([_sin1kHz, _sin1kHz])
+    _storeStereoTestVector(sin1kHz, outputPath + "sin1kHz.txt")
+    _sin10kHz = np.sin(1e4 * wAx)
+    sin10kHz = np.array([_sin10kHz, _sin10kHz])
+    _storeStereoTestVector(sin10kHz, outputPath + "sin10kHz.txt")
+    _sin100Hz = np.sin(100 * wAx)
+    sin100Hz = np.array([_sin100Hz, _sin100Hz])
+    _storeStereoTestVector(sin100Hz, outputPath + "sin100Hz.txt")
+    _dualSin100Hz10kHz = (np.sin(100 * wAx) + np.sin(1e4 * wAx)) / 2
+    dualSin100Hz10kHz = np.array([_dualSin100Hz10kHz, _dualSin100Hz10kHz])
+    _storeStereoTestVector(
+        dualSin100Hz10kHz, outputPath + "dualSin100Hz10kHz.txt"
+    )
+    return True
 
 
 def _buildTestProg(cppPath: str, component: str, fs: float) -> bool:
@@ -309,17 +336,22 @@ def plotImpulse(
         filename (str): Name of output file.
         legends (list | None, optional): Legends of plots. Defaults to None.
     """
-    xFft = np.fft.fft(x, 2**15)
+    # xFft = np.fft.fft(x, 2**15)
+    xFft = np.fft.fft(x)
     xAbs = np.abs(xFft)
     xPhase = np.angle(xFft)
     xDb = 20 * np.log10(xAbs + 1e-8)
     plotFrequencyDomain(
-        xDb, fs, filename, legends, expectedExists=expectedExists
+        xDb,
+        fs,
+        f"{filename}{SEPARATOR}magnitude.png",
+        legends,
+        expectedExists=expectedExists,
     )
     plotFrequencyDomain(
         xPhase,
         fs,
-        filename.replace(f"{SEPARATOR}magnitude.png", f"{SEPARATOR}phase.png"),
+        f"{filename}{SEPARATOR}phase.png",
         legends,
         [-np.pi, np.pi],
         "Phase / radians",
@@ -328,7 +360,7 @@ def plotImpulse(
     plotTimeDomain(
         x,
         fs,
-        filename.replace(f"{SEPARATOR}magnitude.png", f"{SEPARATOR}time.png"),
+        f"{filename}{SEPARATOR}time.png",
         legends,
         expectedExists=expectedExists,
     )
@@ -560,20 +592,10 @@ def plotSweeps(
 
 
 def _parseFiles(files: list[str], exceptedFiles: list[str]):
-    results_dict = {
-        "impulse": [],
-        "linearSweep": [],
-        "syncSweep": [],
-        "dynamic_alternating": [],
-        "dynamic_matched": [],
-    }
-    legends_dict = {
-        "impulse": [],
-        "linearSweep": [],
-        "syncSweep": [],
-        "dynamic_alternating": [],
-        "dynamic_matched": [],
-    }
+    results_dict = {}
+    for key in STIMULI:
+        results_dict[key] = []
+    legends_dict = deepcopy(results_dict)
     legends = ["result left", "result right"]
     for file in files:
         info = file.split(SEPARATOR)
@@ -631,35 +653,116 @@ def _plotResults(
     expectedExists: bool = True,
 ):
     os.makedirs(f"{FILE_DIR}/img", exist_ok=True)
-    if "impulse" in results and results["impulse"]:
-        plotImpulse(
-            np.concatenate(results["impulse"]),
+    # if "impulse" in results and results["impulse"]:
+    #     plotImpulse(
+    #         np.concatenate(results["impulse"]),
+    #         fs,
+    #         f"{FILE_DIR}/img/{testFileName}",
+    #         legends["impulse"],
+    #         expectedExists=expectedExists,
+    #     )
+
+    # if "whiteNoise" in results and results["whiteNoise"]:
+    #     r = results["whiteNoise"]
+    #     d = np.concatenate(r) / len(r[0][0]) ** 0.5
+    #     plotImpulse(
+    #         d,
+    #         fs,
+    #         f"{FILE_DIR}/img/{testFileName}{SEPARATOR}whiteNoise",
+    #         legends["whiteNoise"],
+    #         expectedExists=expectedExists,
+    #     )
+    # if "pinkNoise" in results and results["pinkNoise"]:
+    #     r = results["pinkNoise"]
+    #     d = np.concatenate(r) / len(r[0][0]) ** 0.5
+    #     plotImpulse(
+    #         d,
+    #         fs,
+    #         f"{FILE_DIR}/img/{testFileName}{SEPARATOR}pinkNoise",
+    #         legends["pinkNoise"],
+    #         expectedExists=expectedExists,
+    #     )
+    stimuli = [
+        "impulse",
+        "whiteNoise",
+        "pinkNoise",
+        "sin1kHz",
+        "sin10kHz",
+        "sin100Hz",
+        "dualSin100Hz10kHz",
+    ]
+    for stimulus in stimuli:
+        _plotSignal(
+            results,
+            legends,
+            stimulus,
+            testFileName,
             fs,
-            f"{FILE_DIR}/img/{testFileName}{SEPARATOR}magnitude.png",
-            legends["impulse"],
-            expectedExists=expectedExists,
+            expectedExists,
         )
+    _plotDynamic(results, "dynamic_alternating", testFileName, legends, fs)
+    _plotDynamic(results, "dynamic_matched", testFileName, legends, fs)
     if "linearSweep" in results and results["linearSweep"]:
         plotSweeps(
             results["linearSweep"], legends, testFileName, fs, "linearSweep"
         )
     if "syncSweep" in results and results["syncSweep"]:
         plotSweeps(results["syncSweep"], legends, testFileName, fs, "syncSweep")
-    _plotDynamic(results, "dynamic_alternating", testFileName, legends, fs)
-    _plotDynamic(results, "dynamic_matched", testFileName, legends, fs)
+
+
+def _plotSignal(
+    results: dict[str, list[np.ndarray]],
+    legends: dict[str, list[str]],
+    stimulus: str,
+    testFileName: str,
+    fs: float,
+    expectedExists: bool,
+) -> bool:
+    if stimulus not in results or not results[stimulus]:
+        return False
+    r = results[stimulus]
+    rCopy = []
+    maxSize = 0
+    for _r in r:
+        n = _r.size
+        if n > maxSize:
+            maxSize = n
+    for _r in r:
+        n = _r.size
+        if n == maxSize:
+            rCopy += [_r]
+        else:
+            expectedExists = False
+    d = np.concatenate(rCopy)
+    n = len(r[0][0])
+    if stimulus in ["whiteNoise", "pinkNoise"]:
+        d /= n**0.5
+    if "sin" in stimulus or "dualSin" in stimulus:
+        d /= n
+    print(
+        f"{BLUE}Plotting '{stimulus}' for file '{testFileName}'. {n=}, {np.shape(d)=}.{BLACK}"
+    )
+    plotImpulse(
+        d,
+        fs,
+        f"{FILE_DIR}/img/{testFileName}{SEPARATOR}{stimulus}",
+        legends[stimulus],
+        expectedExists=expectedExists,
+    )
+    return True
 
 
 def _plotDynamic(
     results: dict[str, list[np.ndarray]],
-    name: str,
+    stimulus: str,
     testFileName: str,
     legends: dict[str, list[str]],
     fs: float,
 ) -> bool:
-    if not (name in results and results[name]):
+    if not (stimulus in results and results[stimulus]):
         return False
     try:
-        data = np.concatenate(results[name])
+        data = np.concatenate(results[stimulus])
     except ValueError as e:
         print(
             f"{RED}Failed to read test result data for '{testFileName}': {e}{BLACK}"
@@ -669,8 +772,8 @@ def _plotDynamic(
         plotDynamic(
             data,
             fs,
-            f"{FILE_DIR}/img/{testFileName}{SEPARATOR}{name}{SEPARATOR}{i}.png",
-            legends[name],
+            f"{FILE_DIR}/img/{testFileName}{SEPARATOR}{stimulus}{SEPARATOR}{i}.png",
+            legends[stimulus],
             i,
         )
     return True
@@ -698,12 +801,15 @@ def _readAndPlotTestResults(testFileName: str, fs: float):
             continue
         expectedFiles += [info[0] + SEPARATOR + info[1] + SEPARATOR + info[2]]
     results, legends = _parseFiles(resultFiles, expectedFiles)
-    if (
-        "impulse" in results
-        and results["impulse"]
-        and np.any(np.isnan(np.concatenate(results["impulse"])))
-    ):
-        print(f"{RED}NaN is impulse.{BLACK}")
+    try:
+        if (
+            "impulse" in results
+            and results["impulse"]
+            and np.any(np.isnan(np.concatenate(results["impulse"])))
+        ):
+            print(f"{RED}NaN is impulse.{BLACK}")
+    except ValueError:
+        pass
     _plotResults(results, legends, testFileName, fs, bool(expectedFiles))
 
 

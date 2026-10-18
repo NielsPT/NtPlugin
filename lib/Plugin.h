@@ -215,6 +215,15 @@ struct Plugin : public ComponentBase<Audio> {
         return;
       }
     }
+    for (auto& group : this->knobGroups) {
+      for (auto& param : group.primaryKnobs) {
+        if (mangleName("kg", group.name, param.name) == name) {
+          param.isActive      = val;
+          this->uiNeedsUpdate = true;
+          return;
+        }
+      }
+    }
     // for (auto& param : this->toggles) {
     //   if (param.name == name) {
     //     param.isActive      = false;

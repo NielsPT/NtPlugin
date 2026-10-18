@@ -88,11 +88,19 @@ consteval auto testFileBaseName(std::string_view fileName) {
   NTFX_ADD_TEST_PTR_IMPL(set, object, stimuli)
 
 namespace NtFx {
-static const std::vector<std::string> STIMULI_NAMES { "impulse",
+static const std::vector<std::string> STIMULI_NAMES {
+  "impulse",
   "syncSweep",
   "linearSweep",
   "dynamic_alternating",
-  "dynamic_matched" };
+  "dynamic_matched",
+  "whiteNoise",
+  "pinkNoise",
+  "sin1kHz",
+  "sin10kHz",
+  "sin100Hz",
+  "dualSin100Hz10kHz",
+};
 
 constexpr char SEPARATOR = '.';
 
