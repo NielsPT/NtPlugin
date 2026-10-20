@@ -75,7 +75,7 @@ def _switchVsCodeSettings(plugin: str) -> bool:
     cat = ""
     if plugin not in pluginIds:
         print(f"{YELLOW}'{plugin}' not found in plugin ID file.")
-    else:
+    elif len(pluginIds[plugin]) == 3:
         cat = pluginIds[plugin][build.AAX_CAT]
     newConfigArgs = [f"-DNTFX_PLUGIN={plugin}"]
     if cat:

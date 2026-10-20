@@ -4,6 +4,7 @@
 #include "lib/Plugin.h"
 #include "lib/SoftClip.h"
 #include "lib/Tilt.h"
+#include "lib/utils.h"
 
 struct ntSoftClip final : public NtFx::Plugin {
   enum class Mode {
@@ -26,9 +27,10 @@ struct ntSoftClip final : public NtFx::Plugin {
   NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpfZero> lpf;
   NtFx::Tilt<> preTilt;
   NtFx::Tilt<> postTilt;
-  signal_t corr_lin { 1 };
   Mode mode { Mode::third };
   signal_t gain_db { 0 };
+  signal_t trim_db { 0 };
+  signal_t trim_lin { 1 };
   bool lpfEnable { false };
   bool bypassEnable { false };
 
@@ -95,13 +97,14 @@ struct ntSoftClip final : public NtFx::Plugin {
       yClip = this->alt1.process(yTilt);
       break;
     }
-    Audio y = this->postTilt.process(yClip) * this->corr_lin;
+    Audio y = this->postTilt.process(yClip) * this->trim_lin;
     if (this->lpfEnable) { y = this->lpf.process(y); }
     this->updatePeakLevel(1, y);
     return y;
   }
 
   void update() noexcept override {
+    this->trim_lin       = NtFx::invDb(this->trim_db);
     this->clipA3.gain_db = this->gain_db;
     this->clipA5.gain_db = this->gain_db;
     // this->second.gain_db = this->gain_db;
@@ -117,7 +120,6 @@ struct ntSoftClip final : public NtFx::Plugin {
     this->hard.update();
     this->alt1.update();
     this->lpf.update();
-    this->corr_lin         = this->preTilt.calcCorr();
     this->postTilt.tilt_db = -this->preTilt.tilt_db;
     this->preTilt.update();
     this->postTilt.update();

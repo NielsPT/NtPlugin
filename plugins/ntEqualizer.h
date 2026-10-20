@@ -79,7 +79,7 @@ struct ntEqualizer final : public NtFx::Plugin {
     this->knobGroups.push_back({
         "HPF",
         {
-            { &this->fHpf_hz, "Freq", " Hz", 20, 20e3, 2e3 },
+            { &this->fHpf_hz, "Freq", " Hz", 20, 20e3, 100 },
             { &this->qHpf, "Q", "", 0.5, 5, 0.707 },
         },
     });

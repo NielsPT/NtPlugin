@@ -16,3 +16,4 @@ ntTilt:Ohmy:EQ:EQ
 ntGenerator:Gnlv
 ntSoftClip:Xcxh:Distortion:Harmonic
 passThrough:Notn
+ntExciter:Omof
