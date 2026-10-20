@@ -152,7 +152,8 @@ struct TitleBarSpec {
 struct UiSpec {
   uint32_t foregroundColour { 0xFFFFFFFF }; ///< UI foreground colour in HEX.
   uint32_t backgroundColour { 0xFF000000 }; ///< UI background colour in HEX.
-  float pad = { 10 };
+  float minWindowHeight { 400 };
+  float pad { 10 };
   int maxRows { 3 };    ///< The maximum number of rows in main knob grid.
   int maxColumns { 6 }; ///< The maximum number of columns in main knob grid.
   float defaultFontSize { 16 }; ///< Font size before scaling.

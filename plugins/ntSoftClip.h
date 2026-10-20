@@ -7,13 +7,14 @@
 
 struct ntSoftClip final : public NtFx::Plugin {
   enum class Mode {
-    thirdAntialias,
-    fifthAntialias,
+
     // second,
     third,
     fifth,
     hard,
     alt1,
+    thirdAntialias,
+    fifthAntialias,
   };
   NtFx::Clip::SoftAntialias3 clipA3;
   NtFx::Clip::SoftAntialias5 clipA5;
@@ -26,9 +27,9 @@ struct ntSoftClip final : public NtFx::Plugin {
   NtFx::Tilt<> preTilt;
   NtFx::Tilt<> postTilt;
   signal_t corr_lin { 1 };
-  Mode mode { Mode::thirdAntialias };
+  Mode mode { Mode::third };
   signal_t gain_db { 0 };
-  bool lpfEnable { true };
+  bool lpfEnable { false };
   bool bypassEnable { false };
 
   ntSoftClip() {
@@ -48,18 +49,18 @@ struct ntSoftClip final : public NtFx::Plugin {
           (int*)&this->mode,
           "Mode",
           {
-              "Third antialias",
-              "Fifth antialias",
+
               // "Second",
               "Third",
               "Fifth",
               "Hard",
               "Alt1",
+              "Third x-over",
+              "Fifth x-over",
           },
       },
     };
-    this->lpf.fc_hz         = 22e3;
-    this->uiSpec.meterWidth = 25;
+    this->lpf.fc_hz = 22e3;
     this->updateDefaults();
   }
 

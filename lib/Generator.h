@@ -106,7 +106,7 @@ namespace Generator {
   }
 
   struct WhiteNoise final : public ComponentBase<Audio> {
-    Audio process(Audio) noexcept override {
+    Audio process(Audio x = 0) noexcept override {
       return { rand<signal_t>(), rand<signal_t>() };
     }
   };
@@ -123,7 +123,7 @@ namespace Generator {
     virtual ~FilteredWhiteNoise()                            = default;
     FilteredWhiteNoise& operator=(FilteredWhiteNoise const&) = default;
     FilteredWhiteNoise& operator=(FilteredWhiteNoise&&)      = default;
-    Audio process(Audio) noexcept override {
+    Audio process(Audio x = 0) noexcept override {
       return this->lpf.process(
           this->hpf.process({ rand<signal_t>(), rand<signal_t>() }));
     }
@@ -141,7 +141,7 @@ namespace Generator {
     Tilt<> tilt;
     Clip::Hard clip;
     PinkNoise() { this->tilt.tilt_db = -10; }
-    Audio process(Audio) noexcept override {
+    Audio process(Audio x = 0) noexcept override {
       return clip.process(tilt.process({ rand<signal_t>(), rand<signal_t>() }));
     }
     void update() noexcept override { this->tilt.update(); }
@@ -157,7 +157,7 @@ namespace Generator {
       this->hpf.fc_hz    = 20;
       this->tilt.tilt_db = -10;
     }
-    Audio process(Audio) noexcept override {
+    Audio process(Audio x = 0) noexcept override {
       return this->lpf.process(this->hpf.process(
           this->tilt.process({ rand<signal_t>(), rand<signal_t>() })));
     }
@@ -179,7 +179,7 @@ namespace Generator {
     size_t _i { 0 };
     size_t _n { 1 };
     signal_t _w { 0 };
-    Audio process(Audio) noexcept override {
+    Audio process(Audio x = 0) noexcept override {
       auto w = this->_w * signal_t(this->_i++) + this->ph_rad;
       return gcem::sin(w);
     }

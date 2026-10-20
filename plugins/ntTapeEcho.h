@@ -41,6 +41,7 @@ const std::vector<std::string> subDevOptions {
 };
 
 struct ntTapeEcho final : public NtFx::Plugin {
+  enum Mode : int { dual, link, sync };
   enum SubDev : int {
     half,
     fourth,
@@ -54,6 +55,7 @@ struct ntTapeEcho final : public NtFx::Plugin {
   NtFx::Delay::Mod mod;
   NtFx::Biquad::EqBand hpf;
   NtFx::Biquad::EqBand lpf;
+  NtFx::Generator::FilteredPinkNoise noise;
   NtFx::DryMix dryMix;
   Audio fbState;
   Audio fb_lin { 0.2 };
@@ -63,16 +65,14 @@ struct ntTapeEcho final : public NtFx::Plugin {
   signal_t clipG_db { 0.0 };
   signal_t tOffset { 0.0 };
   signal_t noise_db { -100 };
-  signal_t tempoScaleL { 1 };
-  signal_t tempoScaleR { 1 };
   signal_t noise_lin { 0 };
   size_t iStore { 0 };
   signal_t aClip_lin { 1 };
   SubDev subDevL { SubDev::fourth };
   SubDev subDevR { SubDev::fourth };
-  // Mode mode { Mode::indvidual };
-  bool linkEnable { true };
-  bool syncEnable { false };
+  Mode mode { Mode::dual };
+  // bool linkEnable { true };
+  // bool syncEnable { false };
   bool modEnable { true };
   bool clipEnable { true };
   bool bypassEnable { false };
@@ -98,16 +98,14 @@ struct ntTapeEcho final : public NtFx::Plugin {
       { &this->dryMix.mix_p, "Mix", " %", 0, 100 },
     };
 
+    this->radioButtons = {
+      {
+          .p_val   = (int*)&this->mode,
+          .name    = "Mode",
+          .options = { "Dual", "Link", "Sync" },
+      },
+    };
     this->dropdowns = {
-      // {
-      //     .p_val    = (int*)&this->mode,
-      //     .name     = "Mode",
-      //     .options  = { "Dual", "Link",
-      //       // "Sync",
-      //       // "Ping Pong",
-      //     },
-      //     .hideName = true,
-      // },
       {
           .p_val    = (int*)&this->subDevL,
           .name     = "Subdev L",
@@ -122,8 +120,8 @@ struct ntTapeEcho final : public NtFx::Plugin {
       },
     };
     this->toggles = {
-      { &this->linkEnable, "Link" },
-      { &this->syncEnable, "Sync" },
+      // { &this->linkEnable, "Link" },
+      // { &this->syncEnable, "Sync" },
       { &this->modEnable, "Mod" },
       { &this->clipEnable, "Softclip" },
       { &this->swapEnable, "Swap FB" },
@@ -136,13 +134,15 @@ struct ntTapeEcho final : public NtFx::Plugin {
     this->hpf.settings.fc_hz = 300;
     this->lpf.settings.q     = 0.6;
     this->hpf.settings.q     = 0.6;
+    this->noise.hpf.fc_hz    = 100;
+    this->noise.lpf.fc_hz    = 4000;
     this->updateDefaults();
   }
 
   Audio process(Audio x) noexcept override {
-    auto xNoisy = x + NtFx::Generator::rand<signal_t>() * this->noise_lin;
-    NtFx::ensureFinite(xNoisy);
-    NtFx::ensureFinite(this->fbState);
+    auto xNoisy = x + this->noise.process() * this->noise_lin;
+    // NtFx::ensureFinite(xNoisy);
+    // NtFx::ensureFinite(this->fbState);
     auto xMod = xNoisy
         + this->fb_lin
             * (this->swapEnable ? this->fbState.swap() : this->fbState);
@@ -179,37 +179,41 @@ struct ntTapeEcho final : public NtFx::Plugin {
       this->deactivateParameter("Mod Depth");
       this->deactivateParameter("Mod Phase");
     }
-    if (this->linkEnable) {
-      this->tR_ms    = this->tL_ms + this->tOffset;
-      this->fb_lin.r = this->fb_lin.l;
-      this->deactivateParameter("Time Right");
-      this->activateParameter("Offset");
-    } else {
+    switch (this->mode) {
+    case Mode::dual:
+      this->activateParameter("Time Left");
       this->activateParameter("Time Right");
       this->deactivateParameter("Offset");
-    }
-    if (this->syncEnable) {
-      this->tempoScaleL = _tempoScale(this->subDevL);
-      this->tL_ms       = 60 / this->tempo * this->tempoScaleL * 1000;
-      if (!this->linkEnable) {
-        this->tempoScaleR = _tempoScale(this->subDevR);
-        this->tR_ms       = 60 / this->tempo * this->tempoScaleR * 1000;
-      }
+      break;
+    case Mode::link:
+      this->tR_ms = this->tL_ms
+              * (this->_tempoScale(this->subDevR)
+                  / this->_tempoScale(this->subDevL))
+          + this->tOffset;
+      this->fb_lin.r = this->fb_lin.l;
+      this->activateParameter("Time Left");
+      this->deactivateParameter("Time Right");
+      this->activateParameter("Offset");
+      break;
+    case Mode::sync:
+      this->tL_ms = 60 / this->tempo * this->_tempoScale(this->subDevL) * 1000;
+      this->tR_ms = 60 / this->tempo * this->_tempoScale(this->subDevR) * 1000;
       this->deactivateParameter("Time Left");
       this->deactivateParameter("Time Right");
-    } else {
-      this->activateParameter("Time Left");
-      if (!this->linkEnable) { this->activateParameter("Time Right"); }
+      this->activateParameter("Offset");
+      break;
     }
     this->fb_lin = this->fb_percent / 100;
-    if (this->tL_ms > this->tR_ms) {
-      auto t60 = -3 * this->tL_ms / gcem::log10(this->fb_lin.l);
-      this->fb_lin.r =
-          gcem::pow(signal_t(10), signal_t(-3) * this->tR_ms / t60);
-    } else {
-      auto t60 = -3 * this->tR_ms / gcem::log10(this->fb_lin.r);
-      this->fb_lin.l =
-          gcem::pow(signal_t(10), signal_t(-3) * this->tL_ms / t60);
+    if (this->fb_percent < 99) {
+      if (this->tL_ms < this->tR_ms) {
+        auto t60 = -3 * this->tL_ms / gcem::log10(this->fb_lin.l);
+        this->fb_lin.r =
+            gcem::pow(signal_t(10), signal_t(-3) * this->tR_ms / t60);
+      } else {
+        auto t60 = -3 * this->tR_ms / gcem::log10(this->fb_lin.r);
+        this->fb_lin.l =
+            gcem::pow(signal_t(10), signal_t(-3) * this->tL_ms / t60);
+      }
     }
     this->dlL.t_ms.ui = this->tL_ms;
     this->dlR.t_ms.ui = this->tR_ms;
@@ -219,6 +223,7 @@ struct ntTapeEcho final : public NtFx::Plugin {
     this->hpf.update();
     this->lpf.update();
     this->dryMix.update();
+    this->noise.update();
   }
 
   void reset(signal_t fs) noexcept override {
@@ -228,11 +233,12 @@ struct ntTapeEcho final : public NtFx::Plugin {
     this->mod.reset(fs);
     this->hpf.reset(fs);
     this->lpf.reset(fs);
+    this->noise.reset(fs);
     this->update();
   }
 
   void onTempoChanged() noexcept override {
-    if (this->syncEnable && (this->tempo != 0.0)) { this->update(); }
+    if (this->mode == Mode::sync && (this->tempo != 0.0)) { this->update(); }
   }
 
   signal_t _tempoScale(SubDev subDev) {

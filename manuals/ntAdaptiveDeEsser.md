@@ -1,8 +1,9 @@
 # ntAdaptiveDeEsser manual
 
-A deesser with automatic threshold. This manual describes the "white version" of
-the plugin with all the underlying paramters available. Ideally, some of these
-should be locked down or linked to others for simplified operation.
+ntAdaptiveDeEsser is a deesser with automatic threshold. This manual describes
+the "white version" of the plugin with all the underlying paramters available.
+Some of these will be locked down or linked to others for simplified operation
+at a later time.
 
 ## Overview
 
