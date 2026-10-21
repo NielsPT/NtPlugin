@@ -84,9 +84,22 @@ struct ntGate final : public NtFx::Plugin {
           .midPoint = 100,
       },
     };
-    this->hpf.settings.fc_hz = 20;
-    this->lpf.settings.fc_hz = 20e3;
-    this->secondaryKnobs     = {
+    this->secondaryKnobs = {
+      {
+          .p_val  = &this->dl.t_ms,
+          .name   = "Lookahead",
+          .suffix = " ms",
+          .minVal = 0,
+          .maxVal = 10,
+      },
+      {
+          .p_val    = &this->ignoreSc.settings.thresh_db,
+          .name     = "Ignore Sens",
+          .suffix   = " dB",
+          .minVal   = -80,
+          .maxVal   = 0,
+          .isActive = false,
+      },
       {
           .p_val    = &this->hpf.settings.fc_hz,
           .name     = "SC HPF",
@@ -130,21 +143,6 @@ struct ntGate final : public NtFx::Plugin {
           .midPoint = 100,
           .isActive = false,
       },
-      {
-          .p_val    = &this->ignoreSc.settings.thresh_db,
-          .name     = "Ignore Sens",
-          .suffix   = " dB",
-          .minVal   = -80,
-          .maxVal   = 0,
-          .isActive = false,
-      },
-      {
-          .p_val  = &this->dl.t_ms,
-          .name   = "Lookahead",
-          .suffix = " ms",
-          .minVal = 0,
-          .maxVal = 10,
-      },
     };
     this->toggles = {
       { .p_val = &this->scListenEnable, .name = "SC Listen" },
@@ -164,12 +162,16 @@ struct ntGate final : public NtFx::Plugin {
       { .name = "GR", .dbPrDot = 1, .invert = true },
       { .name = "HF GR", .dbPrDot = 1, .invert = true, .hasScale = true },
     };
-    this->sc.settings.tAtt_ms            = 0.1;
+    this->sc.settings.tAtt_ms            = 1;
     this->ignoreSc.settings.knee_db      = 3;
     this->ignoreSc.settings.ratio        = 20;
     this->ignoreSc.settings.tAtt_ms      = 0.1;
     this->ignoreSc.settings.tRel_ms      = 20;
     this->ignoreSc.settings.tPeakHold_ms = 10;
+    this->ignoreSc.settings.thresh_db    = -20;
+    this->hpf.settings.fc_hz             = 200;
+    this->lpf.settings.fc_hz             = 2000;
+    this->dl.t_ms                        = 1;
     this->updateDefaults();
   }
 

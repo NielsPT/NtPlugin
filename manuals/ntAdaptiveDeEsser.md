@@ -5,8 +5,6 @@ the "white version" of the plugin with all the underlying paramters available.
 Some of these will be locked down or linked to others for simplified operation
 at a later time.
 
-## Overview
-
 ![ntAdaptiveDeEsser](img/ntAdaptiveDeEsser.png)
 
 This plugin uses a fourth order crossover to split the signal in a high and low

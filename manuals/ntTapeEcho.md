@@ -4,8 +4,6 @@ ntTapeEcho is a modulating delay effect with 2nd order high and low pass filters
 and 3rd order soft clipping in the feed forward path. Modulation is sinusoid and
 uses an intersample delay line for smooth operation.
 
-## Overview
-
 ![ntCompressor](img/ntTapeEcho.png)
 
 ## Controls

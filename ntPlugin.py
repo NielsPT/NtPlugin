@@ -50,10 +50,12 @@ def _switchVsCodeSettings(plugin: str) -> bool:
 
     with open(settingsFilePath, "r", encoding="utf-8") as f:
         settings = json.loads(f.read())
+
     cmakeConfArgsKey = "cmake.configureArgs"
     if cmakeConfArgsKey not in settings:
         print(f"{RED}No Cmake config setting in Vscode settings.{BLACK}")
         return False
+
     configArgs: list[str] = settings[cmakeConfArgsKey]
     if not isinstance(configArgs, list):
         print(f"{RED}No Cmake config settings bad datatype.{BLACK}")
@@ -64,7 +66,7 @@ def _switchVsCodeSettings(plugin: str) -> bool:
             continue
         selectedPlugin = line.replace("-DNTFX_PLUGIN=", "")
         print(f"Currently selected plugin: {selectedPlugin}")
-        if selectedPlugin == plugin or plugin == "":
+        if plugin == "":
             return True
 
     pluginPath = f"{PLUGINS_DIR}/{plugin}.h"

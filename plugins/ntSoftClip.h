@@ -40,7 +40,8 @@ struct ntSoftClip final : public NtFx::Plugin {
       { &this->gain_db, "Drive", " dB", -24, 24 },
       { &this->lpf.fc_hz, "LPF", " Hz", 20, 22e3, 2e3 },
     };
-    this->toggles = {
+    this->secondaryKnobs = { { &this->trim_db, "Trim", " dB", -24, 24 } };
+    this->toggles        = {
       { &this->lpfEnable, "LPF enable" },
       // { &this->clip3.bypass1Enable, "HF bypass" },
       // { &this->clip3.bypass2Enable, "HHF bypass" },

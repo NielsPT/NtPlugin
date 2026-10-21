@@ -4,8 +4,6 @@ This document describes the use of the ntCompressor plugin. The plugin is a
 standand audio compressor with some extra features, including variable lookahead
 with peak hold, selectable processing domain and sensor type.
 
-## Overview
-
 ![ntCompressor](img/ntCompressor.png)
 
 ## Primary controls
