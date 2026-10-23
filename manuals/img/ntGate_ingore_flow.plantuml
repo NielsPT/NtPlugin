@@ -1,0 +1,30 @@
+@startuml
+skinparam Monochrome true
+skinparam Dpi 300
+skinparam rectangle {
+   RoundCorner 25
+}
+skinparam Linetype ortho
+frame "Ignore mode signal flow" {
+rectangle "Comp SC" as cSc
+rectangle "Gate SC" as gSc
+rectangle "Filters" as flt
+() "Key in" as key
+() "Main in" as in
+() "Main out" as out
+() " " as p1
+(x) as mult1
+(x) as mult2
+}
+
+in -> p1
+p1 --> mult1
+mult1 -> flt
+flt -> gSc
+key -> cSc
+cSc .> mult1
+p1 --> mult2
+gSc .> mult2
+mult2 -> out
+
+@enduml
