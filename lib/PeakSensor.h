@@ -157,7 +157,7 @@ struct PeakHoldSensorMono : public PeakSensorMono {
     } else {
       auto readIdx = this->_idx - _nHold - 1;
       if (readIdx < 0) { readIdx += delayLineLength; }
-      this->_xMax = this->_dl[readIdx];
+      this->_xMax = this->_dl[size_t(readIdx)];
     }
     return this->_xMax;
   }
@@ -167,7 +167,7 @@ struct PeakHoldSensorMono : public PeakSensorMono {
    *
    */
   void update() noexcept override {
-    this->_nHold = this->tHold_ms * this->_fs / 1000.0;
+    this->_nHold = int(this->tHold_ms * this->_fs / signal_t(1000.0));
     this->_nHold =
         (this->_nHold >= delayLineLength ? delayLineLength - 1 : this->_nHold);
     this->PeakSensorMono::update();

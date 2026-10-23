@@ -32,6 +32,7 @@
 #include "juce_events/juce_events.h"
 #include "juce_graphics/juce_graphics.h"
 #include "juce_gui_basics/juce_gui_basics.h"
+#include "juce_gui_extra/juce_gui_extra.h"
 #include "utils.h"
 
 #include <cstddef>
@@ -43,12 +44,18 @@
 #include <vector>
 
 // TODO: Major refactor. There are SO many repitions in this file.
-
-constexpr auto NAME         = std::string_view(JucePlugin_Name);
-constexpr auto SPACE        = std::string_view(" ");
-constexpr auto VERSION      = std::string_view(JucePlugin_VersionString);
-constexpr auto ZERO         = std::string_view("\0");
-static constexpr auto TITLE = join_v<NAME, SPACE, VERSION, ZERO>;
+namespace {
+constexpr auto NAME    = std::string_view(JucePlugin_Name);
+constexpr auto SPACE   = std::string_view(" ");
+constexpr auto VERSION = std::string_view(JucePlugin_VersionString);
+constexpr auto ZERO    = std::string_view("\0");
+#ifdef DEBUG
+constexpr auto DEBUG_STR = std::string_view(" DEBUG");
+#else
+constexpr auto DEBUG_STR = std::string_view("");
+#endif
+static constexpr auto TITLE = join_v<NAME, SPACE, VERSION, DEBUG_STR, ZERO>;
+}
 
 enum TitleBarDropDowns { e_uiScale, e_theme, e_oversampling };
 int NtFx::RadioButtonSet::_s_id { 0 };
@@ -791,30 +798,38 @@ void NtPluginAudioProcessorEditor::_conformUiSilderValues() {
 
 static std::string _getAbsolutePathOfPlugin() {
   Dl_info info;
-  // On macOS, dladdr works well for getting the path of the current binary
   if (dladdr((void*)&_getAbsolutePathOfPlugin, &info)) {
     std::string path = info.dli_fname;
-    // info.dli_fname might be a relative path or just the binary name
-    // On macOS, it usually returns the full path to the binary
     return path;
   }
   return "";
 }
 
+struct ManualWindow : public juce::DocumentWindow {
+  juce::WebBrowserComponent* _browser;
+  ManualWindow(const juce::String& url)
+      : juce::DocumentWindow(
+            "Manual", juce::Colours::black, juce::DocumentWindow::allButtons),
+        _browser(new juce::WebBrowserComponent()) {
+    this->setContentOwned(_browser, true);
+    this->_browser->goToURL(url);
+    this->setResizable(true, true);
+    this->setVisible(true);
+    this->centreWithSize(900, 600);
+  }
+  void closeButtonPressed() override {
+    delete this->_browser;
+    delete this;
+  }
+};
+
 static void _openManualInBrowser() {
-  auto binPath     = _getAbsolutePathOfPlugin();
-  juce::String cmd = "xdg-open ";
-  size_t pos       = binPath.find("/Contents/");
-  auto bundlePath  = binPath.substr(0, pos);
-  auto manPath     = bundlePath + "/Contents/Resources/manual.html";
+  auto binPath    = _getAbsolutePathOfPlugin();
+  size_t pos      = binPath.find("/Contents/");
+  auto bundlePath = binPath.substr(0, pos);
+  auto manPath    = bundlePath + "/Contents/Resources/manual.html";
   DBG(NTFX_PLUGIN_NAME + ": Opening manual at '" + manPath + "'.");
-#ifdef __MACH__
-  cmd = "open ";
-#elif defined(_WIN32)
-  cmd = "start msedge "
-#endif
-  auto st = cmd + manPath;
-  system(st.toRawUTF8());
+  new ManualWindow("file://" + manPath);
 }
 
 void NtPluginAudioProcessorEditor::buttonClicked(juce::Button* p_button) {

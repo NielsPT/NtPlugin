@@ -27,16 +27,18 @@ The side chain has three modes, which can be selected on the right of of UI.
 
 ### Ingore Mode
 
+![Signal flow for ignore mode](img/ntGate_ingore_flow.png)
+
 When the **Ingore** **Side Chain** mode is selected, the external key input is
-feeding a compressor side chain. The compressor controls level of the signal
-from the main input, feeding the gate side chain. Thus, the key input is used to
-duck the level that the gate hears, making the gate less prone to opening when
-signal on the key input is high. The compressor settings are tuned with drums in
-mind. Using a 10 ms peak hold, the gate side chain signal will remain at this
-level while the key signal event hits the main input because 10 ms is
-approximately 3 meters of distance and the microphones can be expected to be
-within that distance. **Ignore Sens** is threshold for the compressor and thus
-it controls the amount of gain reduction.
+feeding a compressor side chain, which controls level of the signal from the
+main input, feeding the gate side chain. Thus, the key input is used to duck the
+level that the gate hears, making the gate less prone to opening when signal on
+the key input is high. The compressor settings are tuned with drums in mind.
+Using a 10 ms peak hold, the gate side chain signal will remain at this level
+while the key signal event hits the main input because 10 ms is approximately 3
+meters of distance and the microphones can be expected to be within that
+distance. **Ignore Sens** is threshold for the compressor and thus it controls
+the amount of gain reduction.
 
 The use case for this is drums. Feeding the snare top mic to the tom mic key
 inputs and enabling **Ignore** will allow lower gate thresholds. Listening to

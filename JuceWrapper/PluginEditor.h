@@ -90,6 +90,7 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   std::vector<juce::Rectangle<int>> grayAreas;
   juce::Label pluginNameLabel;
   juce::TextButton helpButton;
+  juce::WebBrowserComponent browser;
 
   int unscaledWindowHeight { 0 };
   int unscaledWindowWidth { 0 };
