@@ -26,7 +26,7 @@ import shutil
 import argparse
 from multiprocessing import cpu_count
 from . import package
-from .package import RED, GREEN, BLUE, BLACK, TARGET_EXT_MAP
+from .package import RED, GREEN, BLUE, BLACK, TARGET_EXT_MAP, YELLOW
 
 REPO_BASE_DIR = os.path.realpath(os.path.dirname(__file__) + "/..")
 BUILD_DIR = os.path.realpath(f"{REPO_BASE_DIR}/build")
@@ -275,7 +275,7 @@ def configure(
     return True
 
 
-def build() -> bool:
+def build(debug: bool) -> bool:
     """
     Builds plugin.
 
@@ -283,13 +283,16 @@ def build() -> bool:
         bool: True on success.
     """
     print(f"{BLUE}Building.{BLACK}")
+    config = "Release"
+    if debug:
+        config = "Debug"
     args = [
         "cmake",
         "--build",
         BUILD_DIR,
         f"-j{cpu_count()}",
         "--config",
-        "Release",
+        config,
     ]
     res = subprocess.run(args, check=False)
     if res.returncode:
@@ -386,6 +389,7 @@ def storeArtifacts(plugin: str) -> bool:
     """
     art = f"{BUILD_DIR}{os.sep}{plugin}_artefacts{os.sep}{"Release"}{os.sep}"
     if not os.path.exists(art):
+        print(f"{YELLOW}Dir '{art}' not found.{BLACK}")
         return False
     targets = []
     for e in os.scandir(art):
@@ -404,12 +408,32 @@ def storeArtifacts(plugin: str) -> bool:
         src = f"{art}{target}"
         shutil.copytree(src, dstDir, dirs_exist_ok=True)
         print(f"{GREEN}Stored target {target} for plugin {plugin}.{BLACK}")
-        convertAndStoreManual(plugin, dst)
         if sys.platform == "win32" and target == "VST3":
             print(
                 f"{BLUE}Add '{os.path.abspath(dstDir)}' to you host/DAW plugin "
                 "path or copy content to your plugin folder in order to use "
                 f"plugins.{BLACK}"
+            )
+    return True
+
+
+def storeManual(plugin: str) -> bool:
+    print(f"{BLUE}Storing Manual for '{plugin}'.{BLACK}")
+    bTypes = ["Release", "Debug"]
+    for bType in bTypes:
+        art = f"{BUILD_DIR}{os.sep}{plugin}_artefacts{os.sep}{bType}{os.sep}"
+        if not os.path.exists(art):
+            print(f"{YELLOW}Dir '{art}' not found.{BLACK}")
+            continue
+        targets = []
+        for e in os.scandir(art):
+            if e.is_dir():
+                targets += [e.path.replace(art, "")]
+        for target in targets:
+            dst = f"{art}/{target}/{plugin}.{TARGET_EXT_MAP[target]}"
+            convertAndStoreManual(plugin, dst)
+            print(
+                f"{GREEN}Stored manual for {plugin} {bType}t {target}.{BLACK}"
             )
     return True
 
@@ -427,7 +451,7 @@ def buildPlugins(
     for plugin in plugins:
         if not configure(plugin, pluginIds, category, version, company, debug):
             return False
-        if not build():
+        if not build(debug):
             return False
         if doTest:
             if not runCtest():

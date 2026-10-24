@@ -55,6 +55,42 @@ constexpr auto DEBUG_STR = std::string_view(" DEBUG");
 constexpr auto DEBUG_STR = std::string_view("");
 #endif
 static constexpr auto TITLE = join_v<NAME, SPACE, VERSION, DEBUG_STR, ZERO>;
+
+std::string _getAbsolutePathOfPlugin() {
+  Dl_info info;
+  if (dladdr((void*)&_getAbsolutePathOfPlugin, &info)) {
+    std::string path = info.dli_fname;
+    return path;
+  }
+  return "";
+}
+
+struct ManualWindow : public juce::DocumentWindow {
+  juce::WebBrowserComponent* _browser;
+  ManualWindow(const juce::String& url)
+      : juce::DocumentWindow(
+            "Manual", juce::Colours::black, juce::DocumentWindow::allButtons),
+        _browser(new juce::WebBrowserComponent()) {
+    this->setContentOwned(_browser, true);
+    this->_browser->goToURL(url);
+    this->setResizable(true, true);
+    this->setVisible(true);
+    this->centreWithSize(900, 600);
+  }
+  void closeButtonPressed() override {
+    delete this->_browser;
+    delete this;
+  }
+};
+
+void _openManualInBrowser() {
+  auto binPath    = _getAbsolutePathOfPlugin();
+  size_t pos      = binPath.find("/Contents/");
+  auto bundlePath = binPath.substr(0, pos);
+  auto manPath    = bundlePath + "/Contents/Resources/manual.html";
+  DBG(NTFX_PLUGIN_NAME + ": Opening manual at '" + manPath + "'.");
+  new ManualWindow("file://" + manPath);
+}
 }
 
 enum TitleBarDropDowns { e_uiScale, e_theme, e_oversampling };
@@ -794,42 +830,6 @@ void NtPluginAudioProcessorEditor::_conformUiSilderValues() {
     }
   }
   if (updateNeeded) { this->proc.plug.update(); }
-}
-
-static std::string _getAbsolutePathOfPlugin() {
-  Dl_info info;
-  if (dladdr((void*)&_getAbsolutePathOfPlugin, &info)) {
-    std::string path = info.dli_fname;
-    return path;
-  }
-  return "";
-}
-
-struct ManualWindow : public juce::DocumentWindow {
-  juce::WebBrowserComponent* _browser;
-  ManualWindow(const juce::String& url)
-      : juce::DocumentWindow(
-            "Manual", juce::Colours::black, juce::DocumentWindow::allButtons),
-        _browser(new juce::WebBrowserComponent()) {
-    this->setContentOwned(_browser, true);
-    this->_browser->goToURL(url);
-    this->setResizable(true, true);
-    this->setVisible(true);
-    this->centreWithSize(900, 600);
-  }
-  void closeButtonPressed() override {
-    delete this->_browser;
-    delete this;
-  }
-};
-
-static void _openManualInBrowser() {
-  auto binPath    = _getAbsolutePathOfPlugin();
-  size_t pos      = binPath.find("/Contents/");
-  auto bundlePath = binPath.substr(0, pos);
-  auto manPath    = bundlePath + "/Contents/Resources/manual.html";
-  DBG(NTFX_PLUGIN_NAME + ": Opening manual at '" + manPath + "'.");
-  new ManualWindow("file://" + manPath);
 }
 
 void NtPluginAudioProcessorEditor::buttonClicked(juce::Button* p_button) {

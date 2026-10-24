@@ -222,6 +222,15 @@ if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
   add_subdirectory(tests)
 endif()
 
+set(VENV_PYTHON "${CMAKE_SOURCE_DIR}/../.venv/bin/python")
+
+add_custom_command(TARGET ${NTFX_PLUGIN} POST_BUILD
+  COMMAND echo "Hello from shell"
+  COMMAND ${VENV_PYTHON} -c
+  "from ntPlugin import build; build.storeManual('${NTFX_PLUGIN}')"
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/..
+  VERBATIM)
+
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
 # into your build tree. This should be included with `#include "JuceHeader.h"`. The include path for
 # this header will be automatically added to the target. The main function of the JuceHeader is to

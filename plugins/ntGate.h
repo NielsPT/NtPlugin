@@ -172,6 +172,7 @@ struct ntGate final : public NtFx::Plugin {
     this->hpf.settings.fc_hz             = 200;
     this->lpf.settings.fc_hz             = 2000;
     this->dl.t_ms                        = 1;
+    this->sc.settings.range_db           = -24;
     this->updateDefaults();
   }
 
