@@ -456,7 +456,7 @@ def buildPlugins(
         if doTest:
             if not runCtest():
                 return False
-        if not storeArtifacts(plugin):
+        if not debug and not storeArtifacts(plugin):
             return False
     if doTest and sys.platform == "darwin":
         if not runAuVal():

@@ -31,7 +31,7 @@
 #include <type_traits>
 #include <vector>
 
-NtPluginAudioProcessor::NtPluginAudioProcessor()
+Processor::Processor()
     : AudioProcessor(BusesProperties()
               .withInput("Input", juce::AudioChannelSet::stereo(), true)
               .withOutput("Output", juce::AudioChannelSet::stereo(), true)
@@ -41,25 +41,26 @@ NtPluginAudioProcessor::NtPluginAudioProcessor()
                      juce::Identifier(JucePlugin_Name),
                      createParameterLayout()) { }
 
-NtPluginAudioProcessor::~NtPluginAudioProcessor() { }
+Processor::~Processor() { }
 
-const juce::String NtPluginAudioProcessor::getName() const {
-  return JucePlugin_Name;
-}
+const juce::String Processor::getName() const { return JucePlugin_Name; }
 
-bool NtPluginAudioProcessor::acceptsMidi() const { return false; }
-bool NtPluginAudioProcessor::producesMidi() const { return false; }
-bool NtPluginAudioProcessor::isMidiEffect() const { return false; }
-double NtPluginAudioProcessor::getTailLengthSeconds() const { return 0.0; }
-int NtPluginAudioProcessor::getNumPrograms() { return 1; }
-int NtPluginAudioProcessor::getCurrentProgram() { return 0; }
-void NtPluginAudioProcessor::setCurrentProgram(int) { }
-const juce::String NtPluginAudioProcessor::getProgramName(int) {
-  return "Default";
-}
-void NtPluginAudioProcessor::changeProgramName(int, const juce::String&) { }
+bool Processor::acceptsMidi() const { return false; }
+bool Processor::producesMidi() const { return false; }
+bool Processor::isMidiEffect() const { return false; }
+double Processor::getTailLengthSeconds() const { return 0.0; }
+int Processor::getNumPrograms() { return 1; }
+int Processor::getCurrentProgram() { return 0; }
+void Processor::setCurrentProgram(int) { }
+const juce::String Processor::getProgramName(int) { return "Default"; }
+void Processor::changeProgramName(int, const juce::String&) { }
 
-void NtPluginAudioProcessor::prepareToPlay(double sampleRate, int) {
+void Processor::prepareToPlay(double sampleRate, int) {
+  if (this->getMainBusNumInputChannels() == 1) {
+    DBG(NTFX_PLUGIN_NAME + ": Running in mono mode.");
+    this->monoMode           = true;
+    this->plug.uiNeedsUpdate = true;
+  }
   if (sampleRate == 0.0) { return; }
   if (!this->plug.isInitialized) {
     DBG(NTFX_PLUGIN_NAME
@@ -77,11 +78,10 @@ void NtPluginAudioProcessor::prepareToPlay(double sampleRate, int) {
   // this->plug.xRms[1].reset(this->_fsBase);
 }
 
-void NtPluginAudioProcessor::releaseResources() { }
+void Processor::releaseResources() { }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool NtPluginAudioProcessor::isBusesLayoutSupported(
-    const BusesLayout& layouts) const {
+bool Processor::isBusesLayoutSupported(const BusesLayout& layouts) const {
   if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
       && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
     return false;
@@ -91,7 +91,7 @@ bool NtPluginAudioProcessor::isBusesLayoutSupported(
 }
 #endif
 
-void NtPluginAudioProcessor::processBlock(
+void Processor::processBlock(
     juce::AudioBuffer<float>& buffer, juce::MidiBuffer&) {
   juce::ScopedNoDenormals noDenormals;
   auto totalNumInputChannels  = this->getTotalNumInputChannels();
@@ -109,10 +109,15 @@ void NtPluginAudioProcessor::processBlock(
   }
 
   float* p_r = nullptr;
-  if (buffer.getNumChannels() >= 2) { p_r = buffer.getWritePointer(1); }
-  if (!p_r && !this->monoMode) {
-    this->monoMode           = true;
-    this->plug.uiNeedsUpdate = true;
+  if (!this->monoMode) {
+    if (buffer.getNumChannels() >= 2) { p_r = buffer.getWritePointer(1); }
+    if (!p_r) {
+      DBG(NTFX_PLUGIN_NAME
+          + ": ERROR: Late mono mode change. The number of input channels "
+            "changed while processing audio.");
+      this->monoMode           = true;
+      this->plug.uiNeedsUpdate = true;
+    }
   }
 
   const float* p_xSc = nullptr;
@@ -148,20 +153,19 @@ void NtPluginAudioProcessor::processBlock(
   }
 }
 
-bool NtPluginAudioProcessor::hasEditor() const { return true; }
+bool Processor::hasEditor() const { return true; }
 
-juce::AudioProcessorEditor* NtPluginAudioProcessor::createEditor() {
-  return new NtPluginAudioProcessorEditor(*this);
+juce::AudioProcessorEditor* Processor::createEditor() {
+  return new Editor(*this);
 }
 
-void NtPluginAudioProcessor::getStateInformation(juce::MemoryBlock& destData) {
+void Processor::getStateInformation(juce::MemoryBlock& destData) {
   auto state = this->_paramLayout.copyState();
   std::unique_ptr<juce::XmlElement> xml(state.createXml());
   copyXmlToBinary(*xml, destData);
 }
 
-void NtPluginAudioProcessor::setStateInformation(
-    const void* data, int sizeInBytes) {
+void Processor::setStateInformation(const void* data, int sizeInBytes) {
   std::unique_ptr<juce::XmlElement> xmlState(
       getXmlFromBinary(data, sizeInBytes));
   if (xmlState.get() == nullptr) { return; }
@@ -188,7 +192,7 @@ void NtPluginAudioProcessor::setStateInformation(
 }
 
 template <typename T>
-void NtPluginAudioProcessor::loadParameter(std::vector<T>& v) {
+void Processor::loadParameter(std::vector<T>& v) {
   for (auto& p : v) {
     if (!p.p_val) { continue; }
     auto par = this->_paramLayout.getParameterAsValue(
@@ -198,8 +202,7 @@ void NtPluginAudioProcessor::loadParameter(std::vector<T>& v) {
   }
 }
 
-void NtPluginAudioProcessor::loadRadioButtons(
-    std::vector<NtFx::RadioButtonSetSpec>& v) {
+void Processor::loadRadioButtons(std::vector<NtFx::RadioButtonSetSpec>& v) {
   for (auto& p : v) {
     int val { 0 };
     for (size_t i = 0; i < p.options.size(); i++) {
@@ -212,8 +215,7 @@ void NtPluginAudioProcessor::loadRadioButtons(
   }
 }
 
-void NtPluginAudioProcessor::loadToggleSets(
-    std::vector<NtFx::ToggleSetSpec>& v) {
+void Processor::loadToggleSets(std::vector<NtFx::ToggleSetSpec>& v) {
   for (auto& p : v) {
     for (size_t i = 0; i < p.toggles.size(); i++) {
       auto mangledName    = NtFx::mangleName("tg", p.name, p.toggles[i].name);
@@ -225,7 +227,7 @@ void NtPluginAudioProcessor::loadToggleSets(
   }
 }
 
-void NtPluginAudioProcessor::loadGroupKnobs(
+void Processor::loadGroupKnobs(
     std::vector<NtFx::KnobSpec>& v, std::string groupName) {
   for (auto& p : v) {
     auto mangledName = NtFx::mangleName("kg", groupName, p.name);
@@ -236,7 +238,7 @@ void NtPluginAudioProcessor::loadGroupKnobs(
   }
 }
 
-void NtPluginAudioProcessor::updateOversampling(int mode) {
+void Processor::updateOversampling(int mode) {
   if (mode) { this->src.mode = NtFx::Src::oversamplingMode(mode); }
   this->src.reset(this->_fsBase);
   this->plug.reset(this->src.coeffs.fsHi);
@@ -245,11 +247,11 @@ void NtPluginAudioProcessor::updateOversampling(int mode) {
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
   DBG(NTFX_PLUGIN_NAME + ": Creating new NtFx plugin editor for '"
       << JucePlugin_Name << "'.");
-  return new NtPluginAudioProcessor();
+  return new Processor();
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout
-NtPluginAudioProcessor::createParameterLayout() {
+Processor::createParameterLayout() {
   int i = 1;
   juce::AudioProcessorValueTreeState::ParameterLayout parameters;
   for (auto& g : this->plug.knobGroups) {
@@ -281,7 +283,7 @@ NtPluginAudioProcessor::createParameterLayout() {
 }
 
 template <typename T>
-void NtPluginAudioProcessor::createKnobGroupParameters(std::string groupName,
+void Processor::createKnobGroupParameters(std::string groupName,
     std::vector<T> groupParams,
     juce::AudioProcessorValueTreeState::ParameterLayout& parameters,
     int& i) {
@@ -295,7 +297,7 @@ void NtPluginAudioProcessor::createKnobGroupParameters(std::string groupName,
 }
 
 template <typename t_val, typename t_spec>
-void NtPluginAudioProcessor::createParameters(std::vector<t_spec>& vParams,
+void Processor::createParameters(std::vector<t_spec>& vParams,
     juce::AudioProcessorValueTreeState::ParameterLayout& paramLayout,
     int& i) {
   for (auto p : vParams) {

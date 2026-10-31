@@ -50,13 +50,13 @@
   name]' to cmake configure.
 #endif
 
-struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
-                                      private juce::Timer,
-                                      private juce::Slider::Listener,
-                                      private juce::Button::Listener,
-                                      private juce::ComboBox::Listener,
-                                      private juce::ChangeListener {
-  NtPluginAudioProcessor& proc;
+struct Editor : public juce::AudioProcessorEditor,
+                private juce::Timer,
+                private juce::Slider::Listener,
+                private juce::Button::Listener,
+                private juce::ComboBox::Listener,
+                private juce::ChangeListener {
+  Processor& proc;
   NtFx::MeterGroup meters;
   NtFx::KnobLookAndFeel knobLookAndFeel;
   NtFx::TitleBarLookAndFeel dropDownLookAndFeel;
@@ -99,11 +99,10 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   float _pad { 10 };
   bool isInitialized { false };
 
-  NtPluginAudioProcessorEditor(NtPluginAudioProcessor&);
-  NtPluginAudioProcessorEditor(NtPluginAudioProcessorEditor&&) = delete;
-  ~NtPluginAudioProcessorEditor() override;
-  NtPluginAudioProcessorEditor& operator=(
-      NtPluginAudioProcessorEditor&&) = delete;
+  Editor(Processor&);
+  Editor(Editor&&) = delete;
+  ~Editor() override;
+  Editor& operator=(Editor&&) = delete;
 
   // "Public".
   void paint(juce::Graphics&) override;
@@ -177,5 +176,5 @@ struct NtPluginAudioProcessorEditor : public juce::AudioProcessorEditor,
   std::unique_ptr<juce::Label> _makeLabel(const std::string name);
   void _conformUiSilderValues();
   // void _openManualInBrowser();
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtPluginAudioProcessorEditor)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Editor)
 };

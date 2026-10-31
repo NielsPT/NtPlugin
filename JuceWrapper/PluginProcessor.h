@@ -21,8 +21,8 @@
 #include "lib/Audio.h"
 #include <cstddef>
 
-// #include "Plugins.h"
-#include NTFX_PLUGIN_FILE
+#include "Plugins.h"
+// #include NTFX_PLUGIN_FILE
 
 #include "lib/SampleRateConverter.h"
 #include "lib/UiSpec.h"
@@ -44,9 +44,9 @@
 //==============================================================================
 /**
  */
-struct NtPluginAudioProcessor : public juce::AudioProcessor {
-  NtPluginAudioProcessor();
-  ~NtPluginAudioProcessor() override;
+struct Processor : public juce::AudioProcessor {
+  Processor();
+  ~Processor() override;
   void prepareToPlay(double sampleRate, int samplesPerBlock) override;
   void releaseResources() override;
 
@@ -103,5 +103,5 @@ struct NtPluginAudioProcessor : public juce::AudioProcessor {
   bool monoMode { false };
   bool paramsAreLoaded { false };
 
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NtPluginAudioProcessor)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Processor)
 };
