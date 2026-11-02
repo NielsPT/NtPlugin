@@ -156,7 +156,7 @@ namespace Src {
       ensureFinite(x);
       if (this->coeffs.disable) {
         auto y = this->plug.process(x);
-        ensureFinite(y);
+        // ensureFinite(y);
         return y;
       }
       this->state.dlInterpolation[this->state.iStoreIn]              = x;
@@ -184,7 +184,7 @@ namespace Src {
           i++) {
         accum += this->coeffs.b[i] * this->state.dlAntialiasing[iReadOut + i];
       }
-      ensureFinite(accum);
+      // ensureFinite(accum);
       return accum;
     }
 

@@ -331,7 +331,7 @@ struct Plugin : public ComponentBase<Audio> {
     signal_t def = signal_t(0);
     if (idx >= this->meters.size()) { return def; }
     if (this->meters[idx].invert) { def = signal_t(1); }
-    ensureFinite(this->peakLevels[idx]);
+    // ensureFinite(this->peakLevels[idx]);
     auto tmp              = this->peakLevels[idx];
     this->peakLevels[idx] = signal_t(def);
     return tmp;

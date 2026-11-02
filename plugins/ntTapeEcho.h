@@ -151,7 +151,7 @@ struct ntTapeEcho final : public NtFx::Plugin {
     Audio yDelay = { this->dlL.process(yMod.l), this->dlR.process(yMod.r) };
     auto yFbClip =
         NtFx::Clip::soft3rdStereo(yDelay * this->aClip_lin) / aClip_lin;
-    NtFx::ensureFinite(yFbClip);
+    // NtFx::ensureFinite(yFbClip);
     auto yHp      = hpf.process(yFbClip);
     auto yLp      = lpf.process(yHp);
     this->fbState = yLp;

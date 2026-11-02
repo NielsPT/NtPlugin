@@ -93,7 +93,7 @@ struct PeakSensorMono : public ComponentBase<signal_t> {
     auto xAbs            = gcem::abs(x);
     signal_t sensRelease = alpha * p_state + (1 - alpha) * xAbs;
     signal_t ySens       = gcem::max(xAbs, sensRelease);
-    ensureFinite(ySens);
+    // ensureFinite(ySens);
     p_state = ySens;
     return ySens;
   }

@@ -190,7 +190,7 @@ struct ntGate final : public NtFx::Plugin {
     } else if (this->scMode == ScMode::ignore) {
       xSc = this->ignoreSc.process(this->xSc) * x;
     }
-    NtFx::ensureFinite(xSc);
+    // NtFx::ensureFinite(xSc);
     auto yHpf = this->hpf.process(xSc);
     auto yLpf = this->lpf.process(yHpf);
     if (this->scListenEnable) {

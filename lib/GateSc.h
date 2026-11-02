@@ -95,7 +95,7 @@ namespace Gate {
         this->state     = State::closed;
         this->_stateRel = target_db;
       }
-      ensureFinite(this->_stateAtt);
+      // ensureFinite(this->_stateAtt);
       auto y_db = this->_alphaAtt * this->_stateAtt
           + (1 - this->_alphaAtt) * this->_stateRel;
       this->_stateAtt = y_db;

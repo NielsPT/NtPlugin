@@ -187,8 +187,8 @@ struct ntCompressor final : public NtFx::Plugin {
       this->updatePeakLevel(1, x);
       return x;
     }
-    NtFx::ensureFinite(x);
-    NtFx::ensureFinite(this->fbState);
+    // NtFx::ensureFinite(x);
+    // NtFx::ensureFinite(this->fbState);
     auto yDl   = this->dl.process(x);
     Audio xHpf = x;
     if (this->scMode == scMode::feedback) {
@@ -213,7 +213,7 @@ struct ntCompressor final : public NtFx::Plugin {
       }
     }
     this->updatePeakLevel(2, gr);
-    NtFx::ensureFinite(gr, signal_t(1.0));
+    // NtFx::ensureFinite(gr, signal_t(1.0));
     auto xComp    = yDl;
     auto yComp    = xComp * gr;
     this->fbState = x * gr;

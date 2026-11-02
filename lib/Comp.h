@@ -75,7 +75,7 @@ namespace Comp {
      */
     Audio process(Audio x) noexcept override {
       auto ySens = this->sensor.process(x);
-      ensureFinite(this->stateFilter);
+      // ensureFinite(this->stateFilter);
       Audio y;
       if constexpr (t_linDomain) {
         y = {

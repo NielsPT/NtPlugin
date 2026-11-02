@@ -156,7 +156,7 @@ struct MeterBase : public juce::Component {
   }
 
   void refresh(bool repaint = true) {
-    ensureFinite(this->peakVal_lin);
+    // ensureFinite(this->peakVal_lin);
     float ySens   = this->sensor();
     float peak_db = NtFx::db(ySens);
     // float rms_db  = NtFx::db(this->rmsVal_lin);
