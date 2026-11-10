@@ -432,7 +432,7 @@ namespace Biquad {
     }
   };
 
-  template <int nStages, class audio_t>
+  template <int nStages, class audio_t = Audio>
   struct Cascade final : public ComponentBase<audio_t> {
     std::array<Settings, nStages> settings;
     CascadeCoeffs<nStages> coeffs;

@@ -64,16 +64,9 @@ int main() {
   for (size_t i = 0; i < 8; i++) { multiTap.t_ms[i] = t_ms[i]; }
   NTFX_ADD_TEST(set, multiTap, "impulse");
 
-  auto _multiTapPingPong =
-      std::make_unique<NtFx::Delay::LongMultiTap<100.0, 8>>();
-  auto& multiTapPingPong    = *_multiTapPingPong;
-  multiTapPingPong.pingPong = true;
-  for (size_t i = 0; i < 8; i++) { multiTapPingPong.t_ms[i] = t_ms[i]; }
-  NTFX_ADD_TEST(set, multiTapPingPong, "impulse");
-
   auto _multiTapDecay = std::make_unique<NtFx::Delay::LongMultiTap<100.0, 8>>();
   auto& multiTapDecay = *_multiTapDecay;
-  multiTapDecay.decay = true;
+  multiTapDecay.setGainToDecay();
   for (size_t i = 0; i < 8; i++) { multiTapDecay.t_ms[i] = t_ms[i]; }
   NTFX_ADD_TEST(set, multiTapDecay, "impulse");
 

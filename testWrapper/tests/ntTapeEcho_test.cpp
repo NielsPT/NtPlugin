@@ -19,7 +19,7 @@ int main() {
   // Tape echo with longer delay
   auto tapeEchoLongStorage = std::make_unique<ntTapeEcho>();
   auto* tapeEchoLong       = tapeEchoLongStorage.get();
-  tapeEchoLong->syncEnable = true;
+  tapeEchoLong->mode       = ntTapeEcho::sync;
   tapeEchoLong->tempo      = 120;
   tapeEchoLong->subDevL    = ntTapeEcho::SubDev::fourth;
   tapeEchoLong->subDevR    = ntTapeEcho::SubDev::fourth;
@@ -30,7 +30,7 @@ int main() {
   auto tapeEchoHighFbStorage = std::make_unique<ntTapeEcho>();
   auto* tapeEchoHighFb       = tapeEchoHighFbStorage.get();
   tapeEchoHighFb->tempo      = 120;
-  tapeEchoHighFb->syncEnable = true;
+  tapeEchoLong->mode         = ntTapeEcho::sync;
   tapeEchoHighFb->subDevL    = ntTapeEcho::SubDev::eighth;
   tapeEchoHighFb->subDevR    = ntTapeEcho::SubDev::eighth;
   tapeEchoHighFb->fb_lin     = 0.8f;
@@ -40,7 +40,7 @@ int main() {
   auto tapeEchoDottedStorage = std::make_unique<ntTapeEcho>();
   auto* tapeEchoDotted       = tapeEchoDottedStorage.get();
   tapeEchoDotted->tempo      = 120;
-  tapeEchoDotted->syncEnable = true;
+  tapeEchoLong->mode         = ntTapeEcho::sync;
   tapeEchoDotted->subDevL    = ntTapeEcho::SubDev::eighth_dot;
   tapeEchoDotted->subDevR    = ntTapeEcho::SubDev::eighth_dot;
   tapeEchoDotted->fb_lin     = 0.5f;

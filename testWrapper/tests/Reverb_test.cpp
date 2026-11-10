@@ -18,11 +18,6 @@ static void printCoeffs(NtFx::Reverb::DelayNetwork<>& obj, std::string name) {
 int main() {
   auto set = NtFx::ComponentTestSet(std::string(testFileBaseName(__FILE__)));
 
-  auto _tail10s = std::make_unique<NtFx::Reverb::DelayNetwork<>>();
-  auto& tail10s = *_tail10s;
-  tail10s.t60_s = 10;
-  // NTFX_ADD_TEST(set, tail10s, "impulse");
-
   auto _tail1s = std::make_unique<NtFx::Reverb::DelayNetwork<>>();
   auto& tail1s = *_tail1s;
   tail1s.t60_s = 1;
