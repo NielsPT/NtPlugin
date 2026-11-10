@@ -382,7 +382,9 @@ void Editor::_initWindowHeight(int nRows) {
     } else {
       groupsHeight += (this->proc.plug.uiSpec.groupKnobHeight
                           + this->proc.plug.uiSpec.groupPad)
-          * float(nGroupKnobsMax % 2 + nGroupKnobsMax / 2);
+              * (float(nGroupKnobsMax % 2) + float(nGroupKnobsMax) * 0.5f)
+          + float(!(nGroupKnobsMax % 2))
+              * this->proc.plug.uiSpec.groupEvenColOffset;
       // groupsHeight -=
       //     this->proc.plug.uiSpec.groupEvenColOffset * float(nGroupKnobsMax %
       //     2);
@@ -636,7 +638,6 @@ void Editor::_placeSecondaryKnobs(juce::Rectangle<int>& area) {
 }
 
 void Editor::_placeKnobGroups(juce::Rectangle<int>& area) {
-  this->grayAreas.push_back(area);
   float nColsTotal = 0;
   for (auto& g : this->proc.plug.knobGroups) {
     if (g.primaryKnobs.size()
@@ -646,7 +647,6 @@ void Editor::_placeKnobGroups(juce::Rectangle<int>& area) {
       nColsTotal += 2;
     }
   }
-
   float colWidth = float(area.getWidth()) / nColsTotal;
   for (size_t i = 0; i < this->proc.plug.knobGroups.size(); i++) {
     auto& g         = this->proc.plug.knobGroups[i];
