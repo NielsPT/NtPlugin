@@ -40,15 +40,15 @@ namespace FirstOrder {
    * @tparam signal_t Audio datatype.
    * @tparam shape Type of filter.
    */
-  template <Shape shape>
-  struct MonoFilter : public ComponentBase<signal_t> {
+  template <Shape shape, class audio_t = Audio>
+  struct Filter : public ComponentBase<audio_t> {
     signal_t fc_hz { 1000 };
     signal_t _a { 0 };
-    signal_t _yn1 { 0 };
-    signal_t _xn1 { 0 };
+    audio_t _yn1 { 0 };
+    audio_t _xn1 { 0 };
 
-    signal_t process(signal_t x) noexcept override {
-      signal_t y { 0 };
+    audio_t process(audio_t x) noexcept override {
+      audio_t y { 0 };
       if constexpr (shape == Shape::none) {
         return x;
       } else if constexpr (shape == Shape::lpf) {
@@ -56,7 +56,7 @@ namespace FirstOrder {
       } else if constexpr (shape == Shape::hpf) {
         y = this->_a * (this->_yn1 + x - this->_xn1);
       } else {
-        y = signal_t(0.5) * this->_a * (x + _xn1) + (1 - this->_a) * _yn1;
+        y = audio_t(0.5) * this->_a * (x + _xn1) + (1 - this->_a) * _yn1;
       }
       this->_xn1 = x;
       this->_yn1 = y;
@@ -81,34 +81,7 @@ namespace FirstOrder {
     }
   };
 
-  /**
-   * @brief Stereo pair of first order filters.
-   *
-   * @tparam signal_t Audio datatype.
-   * @tparam shape Filter shape.
-   */
   template <Shape shape>
-  struct StereoFilter : public ComponentBase<Audio> {
-    MonoFilter<shape> l;
-    MonoFilter<shape> r;
-    signal_t fc_hz { 1000 };
-
-    Audio process(Audio x) noexcept override {
-      return { this->l.process(x.l), this->r.process(x.r) };
-    }
-
-    void update() noexcept override {
-      this->l.fc_hz = this->fc_hz;
-      this->r.fc_hz = this->fc_hz;
-      this->l.update();
-      this->r.update();
-    }
-
-    void reset(signal_t fs) noexcept override {
-      this->l.reset(fs);
-      this->r.reset(fs);
-      this->update();
-    }
-  };
+  using StereoFilter = Filter<shape, Stereo<signal_t>>;
 }
 }

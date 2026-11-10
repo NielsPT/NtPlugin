@@ -112,8 +112,8 @@ namespace Generator {
   };
 
   struct FilteredWhiteNoise : public ComponentBase<Audio> {
-    FirstOrder::StereoFilter<FirstOrder::Shape::lpfZero> lpf;
-    FirstOrder::StereoFilter<FirstOrder::Shape::hpf> hpf;
+    FirstOrder::Filter<FirstOrder::Shape::lpfZero> lpf;
+    FirstOrder::Filter<FirstOrder::Shape::hpf> hpf;
     FilteredWhiteNoise() {
       this->lpf.fc_hz = 20e3;
       this->hpf.fc_hz = 20;
@@ -150,8 +150,8 @@ namespace Generator {
 
   struct FilteredPinkNoise final : public ComponentBase<Audio> {
     Tilt<> tilt;
-    FirstOrder::StereoFilter<FirstOrder::Shape::lpfZero> lpf;
-    FirstOrder::StereoFilter<FirstOrder::Shape::hpf> hpf;
+    FirstOrder::Filter<FirstOrder::Shape::lpfZero> lpf;
+    FirstOrder::Filter<FirstOrder::Shape::hpf> hpf;
     FilteredPinkNoise() {
       this->lpf.fc_hz    = 20e3;
       this->hpf.fc_hz    = 20;

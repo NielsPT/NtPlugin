@@ -97,6 +97,7 @@ struct Editor : public juce::AudioProcessorEditor,
   float uiScale { 1 };
   float titleBarScale { 0.7f };
   float _pad { 10 };
+  float knobGroupWidth { 0 };
   bool isInitialized { false };
 
   Editor(Processor&);

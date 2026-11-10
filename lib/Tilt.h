@@ -34,7 +34,7 @@
 namespace NtFx {
 template <size_t nStages = 8>
 struct Tilt : public ComponentBase<Audio> {
-  std::array<NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpfZero>,
+  std::array<NtFx::FirstOrder::Filter<NtFx::FirstOrder::Shape::lpfZero>,
       nStages>
       filters;
   signal_t a_lin { 0 };

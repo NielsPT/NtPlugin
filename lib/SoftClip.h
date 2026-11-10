@@ -169,7 +169,7 @@ namespace Clip {
   };
 
   struct Second final : public SoftBase {
-    FirstOrder::StereoFilter<FirstOrder::Shape::hpf> hpf;
+    FirstOrder::Filter<FirstOrder::Shape::hpf> hpf;
     Audio process(Audio x) noexcept override {
       return hpf.process(secondStereo(x, this->gainIn_lin / 16));
     }
@@ -210,9 +210,9 @@ namespace Clip {
    *
    */
   struct SoftAntialiasBase : public SoftBase {
-    FirstOrder::StereoFilter<FirstOrder::Shape::lpfZero> lpf;
-    FirstOrder::StereoFilter<FirstOrder::Shape::hpf> hpf;
-    FirstOrder::StereoFilter<FirstOrder::Shape::hpf> hpf2;
+    FirstOrder::Filter<FirstOrder::Shape::lpfZero> lpf;
+    FirstOrder::Filter<FirstOrder::Shape::hpf> hpf;
+    FirstOrder::Filter<FirstOrder::Shape::hpf> hpf2;
 
     bool bypass1Enable { true };
     bool bypass2Enable { true };

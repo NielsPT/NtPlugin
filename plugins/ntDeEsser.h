@@ -33,7 +33,7 @@ struct ntDeEsser final : public NtFx::Plugin {
   NtFx::Delay::Short<10.0> dl;
   NtFx::Comp::PeakSideChainLin sc;
   NtFx::Biquad::EqBand scBpf;
-  NtFx::DynamicFilter::ShelfFixedZeros shelf;
+  NtFx::DynamicFilter::ShelfFixedZeros<> shelf;
   NtFx::Biquad::EqBand bpf;
   signal_t q { 1.0 };
   signal_t red_p { 100 };

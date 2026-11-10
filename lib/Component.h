@@ -117,6 +117,6 @@ struct MonoComponent : public ComponentBase<Mono<signal_t>> {
   void reset(signal_t fs) noexcept override { this->l.reset(fs); }
 };
 
-template <typename signal_t, typename component_t>
-using AudioComponent = StereoComponent<signal_t, component_t>;
+// template <typename signal_t, typename component_t>
+// using AudioComponent = StereoComponent<signal_t, component_t>;
 } // namespace NtFx

@@ -33,8 +33,8 @@ struct ntAdaptiveDeEsser final : public NtFx::Plugin {
   enum Order { e_first, e_second };
   NtFx::Delay::Short<10.0> dl;
   NtFx::AdaptiveDeEssSc sc;
-  NtFx::DynamicFilter::ShelfFixedPoles shelf2nd;
-  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> hpf1st;
+  NtFx::DynamicFilter::ShelfFixedPoles<> shelf2nd;
+  NtFx::FirstOrder::Filter<NtFx::FirstOrder::Shape::hpf> hpf1st;
   signal_t red_p { 100 };
   signal_t red_lin { 1 };
   Order order { e_second };

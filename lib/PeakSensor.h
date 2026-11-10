@@ -25,7 +25,6 @@
 #include "lib/Audio.h"
 #include "lib/Component.h"
 #include "lib/gcem.h"
-#include "lib/utils.h"
 #include <array>
 #include <cstddef>
 
@@ -66,7 +65,7 @@ struct PeakSensorMono : public ComponentBase<signal_t> {
    * time constant (tPeak_ms) and sample rate (fs).
    */
   void update() noexcept override {
-    this->_alpha = gcem::exp(-2200.0 / (this->tRel_ms * this->_fs));
+    this->_alpha = gcem::exp(signal_t(-2200.0) / (this->tRel_ms * this->_fs));
   }
 
   void reset(signal_t fs) noexcept override {
@@ -109,7 +108,7 @@ struct PeakSensorMono : public ComponentBase<signal_t> {
  *
  * @tparam signal_t The type of the audio signal (e.g., float, double).
  */
-struct PeakSensorStereo : public AudioComponent<signal_t, PeakSensorMono> {
+struct PeakSensorStereo : public StereoComponent<signal_t, PeakSensorMono> {
   signal_t tRel_ms { 0 };
   void update() noexcept override {
     this->l.tRel_ms = this->tRel_ms;
@@ -176,7 +175,7 @@ struct PeakHoldSensorMono : public PeakSensorMono {
 
 template <int delayLineLength = defaultPeakSensorDelayLineLength>
 struct PeakHoldSensorStereo
-    : public AudioComponent<signal_t, PeakHoldSensorMono<delayLineLength>> {
+    : public StereoComponent<signal_t, PeakHoldSensorMono<delayLineLength>> {
   signal_t tRel_ms { 0 };
   signal_t tHold_ms { 0 };
   void update() noexcept override {

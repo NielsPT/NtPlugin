@@ -57,10 +57,10 @@ struct ntMultiband3 final : public NtFx::Plugin {
   std::array<signal_t, Bands::n> makeup_db { 0, 0, 0 };
   std::array<signal_t, Bands::n> makeup_lin { 1, 1, 1 };
   std::array<Audio, Bands::n> fbState { 0, 0, 0 };
-  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> loFlt;
-  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> loMidFlt;
-  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> hiMidFlt;
-  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> hiFlt;
+  NtFx::FirstOrder::Filter<NtFx::FirstOrder::Shape::lpf> loFlt;
+  NtFx::FirstOrder::Filter<NtFx::FirstOrder::Shape::hpf> loMidFlt;
+  NtFx::FirstOrder::Filter<NtFx::FirstOrder::Shape::lpf> hiMidFlt;
+  NtFx::FirstOrder::Filter<NtFx::FirstOrder::Shape::hpf> hiFlt;
   ntMultiband3() {
     this->uiSpec.maxColumns = 5;
     this->uiSpec.maxRows    = Bands::n;

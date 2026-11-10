@@ -256,7 +256,6 @@ Processor::createParameterLayout() {
   juce::AudioProcessorValueTreeState::ParameterLayout parameters;
   for (auto& g : this->plug.knobGroups) {
     this->createKnobGroupParameters(g.name, g.primaryKnobs, parameters, i);
-    // this->createKnobGroupParameters(g.name, g.secondaryKnobs, parameters, i);
   }
   this->createParameters<float>(this->plug.primaryKnobs, parameters, i);
   this->createParameters<float>(this->plug.secondaryKnobs, parameters, i);

@@ -340,9 +340,9 @@ def plotImpulse(
     xFft = np.fft.fft(x)
     xAbs = np.abs(xFft)
     xPhase = np.angle(xFft)
-    xDb = 20 * np.log10(xAbs + 1e-8)
+    xFftDb = 20 * np.log10(xAbs + 1e-8)
     plotFrequencyDomain(
-        xDb,
+        xFftDb,
         fs,
         f"{filename}{SEPARATOR}magnitude.png",
         legends,
@@ -363,6 +363,16 @@ def plotImpulse(
         f"{filename}{SEPARATOR}time.png",
         legends,
         expectedExists=expectedExists,
+    )
+    xDb = 20 * np.log10(np.abs(x))
+    plotTimeDomain(
+        xDb,
+        fs,
+        f"{filename}{SEPARATOR}time{SEPARATOR}dB.png",
+        legends,
+        expectedExists=expectedExists,
+        ylabel="Amplitude / dB",
+        ylim=[np.max(xDb) - 60, np.max(xDb)],
     )
 
 
@@ -399,7 +409,7 @@ def plotTimeDomain(
         n = x.shape[0]
         t = 1000 * n / fs
         tAx = np.linspace(0, t, n)
-        p.semilogx(tAx, x)
+        p.plot(tAx, x)
     if ylim:
         p.ylim(ylim)
     p.grid(True)

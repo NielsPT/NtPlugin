@@ -26,8 +26,8 @@ namespace NtFx {
 
 struct Transformer final : public ComponentBase<Audio> {
   NtFx::Clip::Soft5 clip;
-  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> lpf;
-  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> hpf;
+  NtFx::FirstOrder::Filter<NtFx::FirstOrder::Shape::lpf> lpf;
+  NtFx::FirstOrder::Filter<NtFx::FirstOrder::Shape::hpf> hpf;
   signal_t fc_hz       = 250;
   signal_t lfCutoff_hz = 20;
   signal_t gain_lin { 0 };

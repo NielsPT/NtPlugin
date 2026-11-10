@@ -1,5 +1,7 @@
+#include "lib/Audio.h"
 #include "lib/ComponentTest.h"
 #include "lib/Delay.h"
+#include "lib/utils.h"
 #include <memory>
 
 int main() {
@@ -18,7 +20,8 @@ int main() {
   NTFX_ADD_TEST(set, longDelay, "impulse");
 
   // Short delay with glided time (max 50 ms). Reset first so the glider has a
-  // valid sample rate and then pre-ramp it to its target before the impulse.
+  // valid sample rate and then pre-ramp it to its target before the
+  // impulse.
   auto shortGlidedDelayStorage =
       std::make_unique<NtFx::Delay::ShortGlided<50.0>>();
   auto& shortGlidedDelay = *shortGlidedDelayStorage;
@@ -53,6 +56,26 @@ int main() {
   modDelay.depth_p      = 20;
   modDelay.phaseMod_deg = 90;
   NTFX_ADD_TEST(set, modDelay, "linearSweep");
+
+  auto t_ms = NtFx::primespace<signal_t>(5, 97, 8);
+
+  auto _multiTap = std::make_unique<NtFx::Delay::LongMultiTap<100.0, 8>>();
+  auto& multiTap = *_multiTap;
+  for (size_t i = 0; i < 8; i++) { multiTap.t_ms[i] = t_ms[i]; }
+  NTFX_ADD_TEST(set, multiTap, "impulse");
+
+  auto _multiTapPingPong =
+      std::make_unique<NtFx::Delay::LongMultiTap<100.0, 8>>();
+  auto& multiTapPingPong    = *_multiTapPingPong;
+  multiTapPingPong.pingPong = true;
+  for (size_t i = 0; i < 8; i++) { multiTapPingPong.t_ms[i] = t_ms[i]; }
+  NTFX_ADD_TEST(set, multiTapPingPong, "impulse");
+
+  auto _multiTapDecay = std::make_unique<NtFx::Delay::LongMultiTap<100.0, 8>>();
+  auto& multiTapDecay = *_multiTapDecay;
+  multiTapDecay.decay = true;
+  for (size_t i = 0; i < 8; i++) { multiTapDecay.t_ms[i] = t_ms[i]; }
+  NTFX_ADD_TEST(set, multiTapDecay, "impulse");
 
   return set.runAllTests();
 }

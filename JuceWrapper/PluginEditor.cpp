@@ -341,10 +341,20 @@ void Editor::_initWindowWidth(int nCols) {
   auto secKnobWidth   = float(this->proc.plug.secondaryKnobs.size())
           * this->proc.plug.uiSpec.secondaryKnobWidth
       + 4.0f * this->_pad;
-  auto knobGroupWidth = float(this->proc.plug.knobGroups.size())
-      * this->proc.plug.uiSpec.groupWidth;
-  knobGroupWidth += 2 * this->proc.plug.uiSpec.groupPad;
-  width += gcem::max(gcem::max(primKnobsWidth, secKnobWidth), knobGroupWidth);
+  this->knobGroupWidth = 0;
+  for (auto& g : this->proc.plug.knobGroups) {
+    float _w = 1;
+    if (g.primaryKnobs.size()
+        <= this->proc.plug.uiSpec.groupSingleColumnLimit) {
+      _w = 0.5;
+    }
+    this->knobGroupWidth += this->proc.plug.uiSpec.groupWidth * _w;
+  }
+  // this->knobGroupWidth = float(this->proc.plug.knobGroups.size())
+  //     * this->proc.plug.uiSpec.groupWidth;
+  this->knobGroupWidth += 2 * this->proc.plug.uiSpec.groupPad;
+  auto mainAreaWidth = primKnobsWidth + this->knobGroupWidth;
+  width += gcem::max(mainAreaWidth, secKnobWidth);
   this->unscaledWindowWidth = gcem::max(titleBarWidth, width);
 }
 
@@ -464,7 +474,11 @@ void Editor::_updateUi() {
       && this->proc.plug.secondaryKnobs.size()) {
     this->_placeSecondaryKnobs(area);
   }
-  if (this->proc.plug.knobGroups.size()) { this->_placeKnobGroups(area); }
+  if (this->proc.plug.knobGroups.size()) {
+    auto knobGroupArea =
+        area.removeFromRight(int(this->knobGroupWidth * this->uiScale));
+    this->_placeKnobGroups(knobGroupArea);
+  }
   if (this->proc.plug.primaryKnobs.size()) { this->_placePrimaryKnobs(area); }
   this->_conformUiSilderValues();
   this->repaint();
@@ -622,9 +636,24 @@ void Editor::_placeSecondaryKnobs(juce::Rectangle<int>& area) {
 }
 
 void Editor::_placeKnobGroups(juce::Rectangle<int>& area) {
-  float groupWidth =
-      float(area.getWidth()) / float(this->proc.plug.knobGroups.size());
+  this->grayAreas.push_back(area);
+  float nColsTotal = 0;
+  for (auto& g : this->proc.plug.knobGroups) {
+    if (g.primaryKnobs.size()
+        <= this->proc.plug.uiSpec.groupSingleColumnLimit) {
+      nColsTotal += 1;
+    } else {
+      nColsTotal += 2;
+    }
+  }
+
+  float colWidth = float(area.getWidth()) / nColsTotal;
   for (size_t i = 0; i < this->proc.plug.knobGroups.size(); i++) {
+    auto& g         = this->proc.plug.knobGroups[i];
+    auto groupWidth = colWidth;
+    if (g.primaryKnobs.size() > this->proc.plug.uiSpec.groupSingleColumnLimit) {
+      groupWidth *= 2;
+    }
     auto groupArea = area.removeFromLeft(int(groupWidth));
     this->borderedAreas.push_back(groupArea);
     groupArea.removeFromBottom(
@@ -638,10 +667,10 @@ void Editor::_placeKnobGroups(juce::Rectangle<int>& area) {
     auto groupLableArea =
         groupArea.removeFromTop(int(this->proc.plug.uiSpec.labelHeight));
     this->knobGroupLabels[i]->setBounds(groupLableArea);
-    auto& g   = this->proc.plug.knobGroups[i];
     auto nRhs = g.primaryKnobs.size() / 2;
     auto nLhs = nRhs + g.primaryKnobs.size() % 2;
-    if (this->_getNKnobsInLargestKnobGroup()
+    if (g.primaryKnobs.size()
+        // if (this->_getNKnobsInLargestKnobGroup()
         <= this->proc.plug.uiSpec.groupSingleColumnLimit) {
       this->_placeGruopKnobColumn(
           groupArea, g.primaryKnobs.size(), i, 1, false);

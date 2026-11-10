@@ -24,7 +24,7 @@ struct ntSoftClip final : public NtFx::Plugin {
   NtFx::Clip::Soft5 clip5;
   NtFx::Clip::Hard hard;
   NtFx::Clip::Alt1 alt1;
-  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpfZero> lpf;
+  NtFx::FirstOrder::Filter<NtFx::FirstOrder::Shape::lpfZero> lpf;
   NtFx::Tilt<> preTilt;
   NtFx::Tilt<> postTilt;
   Mode mode { Mode::third };

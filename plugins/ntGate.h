@@ -32,7 +32,7 @@ struct ntGate final : public NtFx::Plugin {
   NtFx::Gate::Sc sc;
   NtFx::Gate::Sc scHf;
   NtFx::Comp::PeakSideChainLin ignoreSc;
-  NtFx::DynamicFilter::ShelfFixedPoles flt;
+  NtFx::DynamicFilter::ShelfFixedPoles<> flt;
   NtFx::Biquad::EqBand hpf;
   NtFx::Biquad::EqBand lpf;
   NtFx::Delay::Long<10.0> dl;

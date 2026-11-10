@@ -64,9 +64,9 @@ struct ntEqualizer final : public NtFx::Plugin {
     fLpf2,
     fN
   };
-  NtFx::Biquad::Cascade<fN> cascade;
-  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> firstOrderHpf;
-  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> firstOrderLpf;
+  NtFx::Biquad::Cascade<fN, Audio> cascade;
+  NtFx::FirstOrder::Filter<NtFx::FirstOrder::Shape::hpf> firstOrderHpf;
+  NtFx::FirstOrder::Filter<NtFx::FirstOrder::Shape::lpf> firstOrderLpf;
   signal_t fHpf_hz { 20 };
   signal_t fLpf_hz { 20e3 };
   signal_t qHpf { 0.707 };

@@ -52,7 +52,7 @@ namespace Delay {
   template <double dlLen_ms, typename T = Audio>
   struct Short final : public ComponentBase<T> {
     constexpr const static int nDl = dlLen_ms * 192
-        * 8; /**< Total samples in delay line (48 kHz * 8x oversampling) */
+        * 8; /**< Total samples in delay line (192 kHz * 8x oversampling) */
     std::array<T, nDl> dl; /**< Fixed circular buffer for delay samples */
     signal_t t_ms { 0 };   /**< Desired delay time in milliseconds */
     int _n { 0 };          /**< Current delay in samples */
@@ -68,13 +68,25 @@ namespace Delay {
      * @return Delayed sample from the delay buffer
      */
     T process(T x) noexcept override {
-      this->dl[this->_i++] = x;
+      // store(x);
+      this->dl[this->_i] = x;
+      auto y             = load();
+      // if (this->_n == 0) { return x; }
+      this->_i++;
       if (this->_i >= nDl) { this->_i = 0; }
-      if (this->_n == 0) { return x; }
+      return y;
+    }
+
+    T load() {
       auto i = this->_i - this->_n;
       if (i < 0) { i += nDl; }
       return this->dl[i];
     }
+
+    // void store(T x) {
+    //   this->dl[this->_i++] = x;
+    //   if (this->_i >= nDl) { this->_i = 0; }
+    // }
 
     /**
      * @brief Update the internal delay time based on the t_ms parameter.
@@ -115,10 +127,10 @@ namespace Delay {
    */
   template <double dlLen_ms, typename T = Audio>
   struct Long final : public ComponentBase<T> {
-    int nDl {
+    int _nDl {
       1
     }; /**< Number of samples in delay buffer (runtime-determined) */
-    std::vector<T> dl;   /**< Dynamic circular buffer for delay samples */
+    std::vector<T> _dl;  /**< Dynamic circular buffer for delay samples */
     signal_t t_ms { 0 }; /**< Desired delay time in milliseconds */
     int _n { 0 };        /**< Current delay in samples */
     int _i { 0 };        /**< Write pointer in circular buffer */
@@ -127,12 +139,21 @@ namespace Delay {
      * @brief Process a single sample through the dynamic delay line.
      */
     T process(T x) noexcept override {
-      this->dl[this->_i++] = x;
-      if (this->_i >= this->nDl) { this->_i = 0; }
+      auto y = load();
+      store(x);
       if (this->_n == 0) { return x; }
+      return y;
+    }
+
+    T load() {
       auto i = this->_i - this->_n;
-      if (i < 0) { i += this->nDl; }
-      return this->dl[i];
+      if (i < 0) { i += this->_nDl; }
+      return this->_dl[i];
+    }
+
+    void store(T x) {
+      this->_dl[this->_i++] = x;
+      if (this->_i >= this->_nDl) { this->_i = 0; }
     }
 
     /**
@@ -140,7 +161,7 @@ namespace Delay {
      */
     void update() noexcept override {
       this->_n = int(gcem::floor(this->t_ms * 0.001 * this->_fs));
-      if (this->_n >= this->nDl) { this->_n = this->nDl; }
+      if (this->_n >= this->_nDl) { this->_n = this->_nDl; }
     }
 
     /**
@@ -150,11 +171,94 @@ namespace Delay {
      * @param fs Sample rate in Hz
      */
     void reset(signal_t fs) noexcept override {
-      this->_fs = fs;
-      this->nDl = int(gcem::ceil(dlLen_ms * 0.001 * this->_fs));
-      this->dl.resize(this->nDl);
-      std::fill(this->dl.begin(), this->dl.end(), 0);
+      this->_fs  = fs;
+      this->_nDl = int(gcem::ceil(dlLen_ms * 0.001 * this->_fs));
+      this->_dl.resize(this->_nDl);
+      std::fill(this->_dl.begin(), this->_dl.end(), 0);
       this->update();
+    }
+  };
+
+  /**
+   * @brief Dynamic delay line for longer delays with runtime-allocated buffer.
+   *
+   * Similar to Short but allocates memory dynamically via std::vector.
+   * Useful for delays longer than practical compile-time constants or when
+   * memory allocation is deferred to initialization.
+   *
+   * @tparam dlLen_ms Maximum delay length in milliseconds (compile-time
+   * constant).
+   * @tparam T Sample type (Audio for stereo, or scalar for mono).
+   */
+  template <double dlLen_ms, size_t nTaps, typename Audio_t = Audio>
+  struct LongMultiTap final : public ComponentBase<Audio_t> {
+    std::vector<Audio_t> _dl; /**< Dynamic circular buffer for delay samples */
+    std::array<signal_t, nTaps> t_ms; /**< Desired delay time in milliseconds */
+    std::array<signal_t, nTaps> g_lin; /**< Gain for taps in linear domain */
+    std::array<int, nTaps> _n;         /**< Current delay in samples */
+    int _nDl { 1 }; /**< Number of samples in delay buffer. */
+    int _i { 0 };   /**< Write pointer in circular buffer */
+
+    /**
+     * @brief Process a single sample through the dynamic delay line.
+     */
+    Audio_t process(Audio_t x) noexcept override {
+      this->_dl[this->_i++] = x;
+      if (this->_i >= this->_nDl) { this->_i = 0; }
+      Audio_t y = 0;
+      for (size_t i = 0; i < nTaps; i++) {
+        if (this->_n[i] == 0) { continue; }
+        auto idx = this->_i - this->_n[i];
+        if (idx < 0) { idx += this->_nDl; }
+        auto tmp = this->_dl[idx];
+        y += tmp * g_lin[i];
+      }
+      return y;
+    }
+
+    /**
+     * @brief Update the internal delay time in samples.
+     */
+    void update() noexcept override {
+      for (size_t i = 0; i < nTaps; i++) {
+        this->_n[i] = int(gcem::floor(this->t_ms[i] * 0.001 * this->_fs));
+        if (this->_n[i] >= this->_nDl) { this->_n[i] = this->_nDl; }
+      }
+    }
+
+    /**
+     * @brief Initialize the delay line, allocating the buffer based on sample
+     * rate.
+     *
+     * @param fs Sample rate in Hz
+     */
+    void reset(signal_t fs) noexcept override {
+      this->_fs  = fs;
+      this->_nDl = int(gcem::ceil(dlLen_ms * 0.001 * this->_fs));
+      this->_dl.resize(this->_nDl);
+      std::fill(this->_dl.begin(), this->_dl.end(), 0);
+      this->update();
+    }
+
+    void setGainToDecay(signal_t depth = 1) {
+      for (size_t i = 0; i < nTaps; i++) {
+        this->g_lin[i] = gcem::pow(this->t_ms[0] / this->t_ms[i], depth);
+      }
+      this->g_lin[0] *= 0.5;
+    }
+
+    void setGainToDecaySquared() {
+      for (size_t i = 0; i < nTaps; i++) {
+        this->g_lin[i] = gcem::sqrt(this->t_ms[0] / this->t_ms[i]);
+      }
+    }
+
+    void setGainFlat() {
+      for (size_t i = 0; i < nTaps; i++) { this->g_lin[i] = 1; }
+    }
+
+    void flipPhaseEvenTaps() {
+      for (size_t i = 0; i < nTaps / 2; i++) { this->g_lin[i * 2] *= -1; }
     }
   };
 
@@ -250,6 +354,7 @@ namespace Delay {
     void reset(signal_t fs) noexcept override {
       this->_fs = fs;
       this->update();
+      // TODO: get rid of dlLen and make it truly dynamic.
       this->_nDl = int(gcem::ceil(dlLen_ms * 0.001 * this->_fs));
       this->dl.resize(this->_nDl);
       std::fill(this->dl.begin(), this->dl.end(), 0);
@@ -363,6 +468,8 @@ namespace Delay {
       this->update();
     }
   };
+
+  // TODO: Mono mod?
 
   /**
    * @brief Stereo modulated delay line with LFO modulation.

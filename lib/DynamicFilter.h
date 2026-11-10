@@ -40,8 +40,11 @@ namespace DynamicFilter {
    *
    * @tparam signal_t
    */
-  struct ShelfBase : public ComponentBase<Audio> {
-    Biquad::EqBand6 _flt;
+  template <class audio_t = Audio>
+  struct ShelfBase : public ComponentBase<audio_t> {
+    // Biquad::EqBand6 _flt;
+    Biquad::Coeffs6 coeffs;
+    Biquad::State<audio_t> state;
     signal_t fc_hz { 2000 }; ///< Cutoff frequency.
     signal_t gain_lin { 1 }; ///< Gain in linear domain.
     signal_t q1 { 0.707 };   ///< Q at the cutoff frequency.
@@ -50,9 +53,9 @@ namespace DynamicFilter {
     signal_t _beta1 { 0 };
     signal_t _beta2 { 0 };
 
-    Audio process(Audio x) noexcept override {
+    audio_t process(audio_t x) noexcept override {
       this->calcCoeffsProcess();
-      return _flt.process(x);
+      return Biquad::processBiquad6<audio_t>(x, this->coeffs, this->state);
     }
 
     void update() noexcept override {
@@ -65,7 +68,6 @@ namespace DynamicFilter {
 
     void reset(signal_t fs) noexcept override {
       this->_fs = fs;
-      this->_flt.reset(fs);
       this->update();
     }
 
@@ -73,35 +75,37 @@ namespace DynamicFilter {
     virtual void calcCoeffsProcess() noexcept = 0;
   };
 
-  struct ShelfFixedPoles : public ShelfBase {
+  template <class audio_t = Audio>
+  struct ShelfFixedPoles : public ShelfBase<audio_t> {
     void calcCoeffsUpdate() noexcept override {
-      this->_flt.coeffs.a[0] = this->_alphaSquared + this->_beta1 + 4;
-      this->_flt.coeffs.a[1] = signal_t(2) * this->_alphaSquared - 8;
-      this->_flt.coeffs.a[2] = this->_alphaSquared - this->_beta1 + 4;
+      this->coeffs.a[0] = this->_alphaSquared + this->_beta1 + 4;
+      this->coeffs.a[1] = signal_t(2) * this->_alphaSquared - 8;
+      this->coeffs.a[2] = this->_alphaSquared - this->_beta1 + 4;
     }
 
     void calcCoeffsProcess() noexcept override {
-      auto A4                = signal_t(4) * this->gain_lin;
-      auto z                 = this->_beta2 * gcem::sqrt(this->gain_lin);
-      this->_flt.coeffs.b[0] = this->_alphaSquared + z + A4;
-      this->_flt.coeffs.b[1] = signal_t(2) * (this->_alphaSquared - A4);
-      this->_flt.coeffs.b[2] = this->_alphaSquared - z + A4;
+      auto A4           = signal_t(4) * this->gain_lin;
+      auto z            = this->_beta2 * gcem::sqrt(this->gain_lin);
+      this->coeffs.b[0] = this->_alphaSquared + z + A4;
+      this->coeffs.b[1] = signal_t(2) * (this->_alphaSquared - A4);
+      this->coeffs.b[2] = this->_alphaSquared - z + A4;
     }
   };
 
-  struct ShelfFixedZeros : public ShelfBase {
+  template <class audio_t = Audio>
+  struct ShelfFixedZeros : public ShelfBase<audio_t> {
     void calcCoeffsUpdate() noexcept override {
-      this->_flt.coeffs.b[0] = this->_alphaSquared + this->_beta2 + 4;
-      this->_flt.coeffs.b[1] = signal_t(2) * (this->_alphaSquared - 4);
-      this->_flt.coeffs.b[2] = this->_alphaSquared - this->_beta2 + 4;
+      this->coeffs.b[0] = this->_alphaSquared + this->_beta2 + 4;
+      this->coeffs.b[1] = signal_t(2) * (this->_alphaSquared - 4);
+      this->coeffs.b[2] = this->_alphaSquared - this->_beta2 + 4;
     }
 
     void calcCoeffsProcess() noexcept override {
-      auto A4                = signal_t(4) / this->gain_lin;
-      auto z                 = this->_beta1 * gcem::sqrt(1 / this->gain_lin);
-      this->_flt.coeffs.a[0] = this->_alphaSquared + z + A4;
-      this->_flt.coeffs.a[1] = signal_t(2) * (this->_alphaSquared - A4);
-      this->_flt.coeffs.a[2] = this->_alphaSquared - z + A4;
+      auto A4           = signal_t(4) / this->gain_lin;
+      auto z            = this->_beta1 * gcem::sqrt(1 / this->gain_lin);
+      this->coeffs.a[0] = this->_alphaSquared + z + A4;
+      this->coeffs.a[1] = signal_t(2) * (this->_alphaSquared - A4);
+      this->coeffs.a[2] = this->_alphaSquared - z + A4;
     }
   };
 }

@@ -69,7 +69,7 @@ struct ShortRmsSensorMono final : public ComponentBase<signal_t> {
 
 template <double tRmsMax_ms>
 struct ShortRmsSensorStereo
-    : public AudioComponent<signal_t, ShortRmsSensorMono<tRmsMax_ms>> {
+    : public StereoComponent<signal_t, ShortRmsSensorMono<tRmsMax_ms>> {
   signal_t t_ms { 0 };
   void update() noexcept override {
     this->l.tRms_ms = this->t_ms;

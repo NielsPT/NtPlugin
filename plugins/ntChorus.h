@@ -32,8 +32,8 @@ constexpr double tWetDlMax_ms = 100;
 struct ntChorus final : public NtFx::Plugin {
   NtFx::Delay::Mod dlMod;
   NtFx::Delay::ShortGlided<tWetDlMax_ms, Audio> dlWet;
-  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::hpf> hpf;
-  NtFx::FirstOrder::StereoFilter<NtFx::FirstOrder::Shape::lpf> lpf;
+  NtFx::FirstOrder::Filter<NtFx::FirstOrder::Shape::hpf> hpf;
+  NtFx::FirstOrder::Filter<NtFx::FirstOrder::Shape::lpf> lpf;
   NtFx::DryMix mix;
   bool bypassEnable { false };
 

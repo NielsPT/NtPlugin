@@ -138,27 +138,38 @@ namespace Biquad {
     signal_t b0 { 1 };
   };
 
+  template <class audio_t>
   struct State {
-    std::array<signal_t, 2> x { 0, 0 };
-    std::array<signal_t, 2> y { 0, 0 };
+    std::array<audio_t, 2> x { 0, 0 };
+    std::array<audio_t, 2> y { 0, 0 };
   };
 
-  struct StereoState {
-    State l;
-    State r;
-  };
-
-  template <size_t nStages = 1>
+  template <size_t nStages = 1, class audio_t = Audio>
   struct CascadeState {
-    std::array<signal_t, 2> _xn { 0, 0 };
-    std::array<signal_t, 2 * nStages> _yn { 0, 0 };
+    std::array<audio_t, 2> _xn { 0, 0 };
+    std::array<audio_t, 2 * nStages> _yn { 0, 0 };
   };
 
-  inline static signal_t processBiquad5(
-      signal_t x, Coeffs5& coeffs, State& state) noexcept {
-    signal_t y = coeffs.b[0] * x + coeffs.b[1] * state.x[0]
+  template <class audio_t>
+  inline static audio_t processBiquad5(
+      audio_t x, Coeffs5& coeffs, State<audio_t>& state) noexcept {
+    audio_t y = coeffs.b[0] * x + coeffs.b[1] * state.x[0]
         + coeffs.b[2] * state.x[1] - coeffs.a[0] * state.y[0]
         - coeffs.a[1] * state.y[1];
+    state.y[1] = state.y[0];
+    state.y[0] = y;
+    state.x[1] = state.x[0];
+    state.x[0] = x;
+    return y;
+  }
+
+  template <class audio_t>
+  inline static audio_t processBiquad6(
+      audio_t x, const Coeffs6& coeffs, State<audio_t>& state) {
+    audio_t y =
+        (coeffs.b[0] * x + coeffs.b[1] * state.x[0] + coeffs.b[2] * state.x[1]
+            - coeffs.a[1] * state.y[0] - coeffs.a[2] * state.y[1])
+        / coeffs.a[0];
     state.y[1] = state.y[0];
     state.y[0] = y;
     state.x[1] = state.x[0];
@@ -358,25 +369,6 @@ namespace Biquad {
         signal_t(gcem::pow(10.0, (settings.gain_db / 40.0))));
   }
 
-  struct Biquad6 {
-    const Coeffs6* _coeffs;
-    State _state;
-    Biquad6(const Coeffs6* coeffs) : _coeffs(coeffs) { }
-    inline signal_t process(signal_t x) {
-      signal_t y =
-          (this->_coeffs->b[0] * x + this->_coeffs->b[1] * this->_state.x[0]
-              + this->_coeffs->b[2] * this->_state.x[1]
-              - this->_coeffs->a[1] * this->_state.y[0]
-              - this->_coeffs->a[2] * this->_state.y[1])
-          / this->_coeffs->a[0];
-      this->_state.y[1] = this->_state.y[0];
-      this->_state.y[0] = y;
-      this->_state.x[1] = this->_state.x[0];
-      this->_state.x[0] = x;
-      return y;
-    }
-  };
-
   template <int nStages = 1>
   static inline CascadeCoeffs<nStages> calcCascadeCoeffs(
       const std::array<Settings, nStages>& ra_settings, signal_t fs) {
@@ -392,18 +384,18 @@ namespace Biquad {
     return coeffs;
   }
 
-  template <int nStages = 1>
-  static inline signal_t processCascade(signal_t x,
+  template <int nStages = 1, class audio_t = Audio>
+  static inline audio_t processCascade(audio_t x,
       CascadeState<nStages>& r_state,
       CascadeCoeffs<nStages>& r_coeffs) {
-    signal_t acc = x + r_coeffs.c[0].b[0] * r_state._xn[0]
+    audio_t acc = x + r_coeffs.c[0].b[0] * r_state._xn[0]
         + r_coeffs.c[0].b[1] * r_state._xn[1]
         + r_coeffs.c[0].a[0] * r_state._yn[0]
         + r_coeffs.c[0].a[1] * r_state._yn[1];
 
     r_state._xn[1] = r_state._xn[0];
     r_state._xn[0] = x;
-    signal_t xNext = acc;
+    audio_t xNext  = acc;
 
     for (size_t i = 1; i < nStages; i++) {
       acc = xNext + r_coeffs.c[i].b[0] * r_state._yn[(i - 1) * 2]
@@ -421,13 +413,14 @@ namespace Biquad {
     return acc * r_coeffs.b0;
   }
 
-  struct EqBandMono final : public ComponentBase<Audio> {
+  template <class audio_t>
+  struct Filter final : public ComponentBase<audio_t> {
     Settings settings;
     Coeffs5 coeffs;
-    State state;
+    State<audio_t> state;
 
-    Audio process(Audio x) noexcept override {
-      return processBiquad5(x.l, this->coeffs, this->state);
+    audio_t process(audio_t x) noexcept override {
+      return processBiquad5<audio_t>(x.l, this->coeffs, this->state);
     }
     void update() noexcept override {
       this->coeffs = calcCoeffs5(this->settings, this->_fs);
@@ -439,80 +432,24 @@ namespace Biquad {
     }
   };
 
-  struct EqBand6Stereo final : public ComponentBase<Audio> {
-    Biquad6 l;
-    Biquad6 r;
-    Settings settings;
-    Coeffs6 coeffs;
-    EqBand6Stereo() : l(&coeffs), r(&coeffs) { }
-    Audio process(Audio x) noexcept override {
-      return { this->l.process(x.l), this->r.process(x.r) };
-    }
-    void update() noexcept override {
-      this->coeffs = calcCoeffs6(settings, this->_fs);
-    }
-    void reset(signal_t fs) noexcept override {
-      this->_fs = fs;
-      this->update();
-    }
-  };
-
-  struct EqBand6Mono final : public ComponentBase<Audio> {
-    Biquad6 l;
-    Settings settings;
-    Coeffs6 coeffs;
-    EqBand6Mono() : l(&coeffs) { }
-    Audio process(Audio x) noexcept override { return this->l.process(x.l); }
-    void update() noexcept override {
-      this->coeffs = calcCoeffs6(settings, this->_fs);
-    }
-    void reset(signal_t fs) noexcept override {
-      this->_fs = fs;
-      this->update();
-    }
-  };
-
-  struct EqBandStereo final : public ComponentBase<Audio> {
-    Settings settings;
-    Coeffs5 coeffs;
-    State stateL;
-    State stateR;
-
-    Audio process(Audio x) noexcept override {
-      return { processBiquad5(x.l, this->coeffs, this->stateL),
-        processBiquad5(x.r, this->coeffs, this->stateR) };
-    }
-    void update() noexcept override {
-      this->coeffs = calcCoeffs5(this->settings, this->_fs);
-    }
-    void reset(signal_t fs) noexcept override {
-      this->_fs    = fs;
-      this->stateL = { { 0, 0 }, { 0, 0 } };
-      this->stateR = { { 0, 0 }, { 0, 0 } };
-      this->update();
-    }
-  };
-
-  template <int nStages>
-  struct Cascade final : public ComponentBase<Audio> {
+  template <int nStages, class audio_t>
+  struct Cascade final : public ComponentBase<audio_t> {
     std::array<Settings, nStages> settings;
     CascadeCoeffs<nStages> coeffs;
-    CascadeState<nStages> stateL;
-    CascadeState<nStages> stateR;
-    Audio process(Audio x) noexcept override {
-      return { processCascade<nStages>(x.l, stateL, coeffs),
-        processCascade<nStages>(x.r, stateR, coeffs) };
+    CascadeState<nStages, audio_t> state;
+    audio_t process(audio_t x) noexcept override {
+      return processCascade<nStages, audio_t>(x, state, coeffs);
     }
     void update() noexcept override {
       this->coeffs = calcCascadeCoeffs<nStages>(this->settings, this->_fs);
     }
   };
 
-  template <int order, Shape shape, class qTable>
-  struct FilterBase : public ComponentBase<Audio> {
+  template <int order, Shape shape, class qTable, class audio_t>
+  struct FilterBase : public ComponentBase<audio_t> {
     constexpr static const int nStages = order / 2;
-    Cascade<nStages> cascade;
-    FirstOrder::StereoFilter<(
+    Cascade<nStages, audio_t> cascade;
+    FirstOrder::Filter<(
         shape == Shape::lpf ? FirstOrder::Shape::lpf : FirstOrder::Shape::hpf)>
         firstOrder;
     signal_t fc_hz { 20 };
@@ -552,7 +489,7 @@ namespace Biquad {
         this->cascade.settings[3].q = qTable::Eighth::q3;
       }
     }
-    Audio process(Audio x) noexcept override {
+    audio_t process(audio_t x) noexcept override {
       if constexpr (order % 2) {
         return this->firstOrder.process(this->cascade.process(x));
       }
@@ -575,30 +512,30 @@ namespace Biquad {
     }
   };
 
-  using ButterLpfSecond   = FilterBase<2, Shape::lpf, ButterworthTable>;
-  using ButterLpfThird    = FilterBase<3, Shape::lpf, ButterworthTable>;
-  using ButterLpfFourth   = FilterBase<4, Shape::lpf, ButterworthTable>;
-  using ButterLpfFifth    = FilterBase<5, Shape::lpf, ButterworthTable>;
-  using ButterLpfSixth    = FilterBase<6, Shape::lpf, ButterworthTable>;
-  using ButterLpfSeventh  = FilterBase<7, Shape::lpf, ButterworthTable>;
-  using ButterLpfEighth   = FilterBase<8, Shape::lpf, ButterworthTable>;
-  using ButterHpfSecond   = FilterBase<2, Shape::hpf, ButterworthTable>;
-  using ButterHpfThird    = FilterBase<3, Shape::hpf, ButterworthTable>;
-  using ButterHpfFourth   = FilterBase<4, Shape::hpf, ButterworthTable>;
-  using ButterHpfFifth    = FilterBase<5, Shape::hpf, ButterworthTable>;
-  using ButterHpfSixth    = FilterBase<6, Shape::hpf, ButterworthTable>;
-  using ButterHpfSeventh  = FilterBase<7, Shape::hpf, ButterworthTable>;
-  using ButterHpfEighth   = FilterBase<8, Shape::hpf, ButterworthTable>;
-  using LinkwitzLpfSecond = FilterBase<2, Shape::lpf, LinkwitzTable>;
-  using LinkwitzLpfFourth = FilterBase<4, Shape::lpf, LinkwitzTable>;
-  using LinkwitzLpfSixth  = FilterBase<6, Shape::lpf, LinkwitzTable>;
-  using LinkwitzLpfEighth = FilterBase<8, Shape::lpf, LinkwitzTable>;
-  using LinkwitzHpfSecond = FilterBase<2, Shape::hpf, LinkwitzTable>;
-  using LinkwitzHpfFourth = FilterBase<4, Shape::hpf, LinkwitzTable>;
-  using LinkwitzHpfSixth  = FilterBase<6, Shape::hpf, LinkwitzTable>;
-  using LinkwitzHpfEighth = FilterBase<8, Shape::hpf, LinkwitzTable>;
+  using ButterLpfSecond   = FilterBase<2, Shape::lpf, ButterworthTable, Audio>;
+  using ButterLpfThird    = FilterBase<3, Shape::lpf, ButterworthTable, Audio>;
+  using ButterLpfFourth   = FilterBase<4, Shape::lpf, ButterworthTable, Audio>;
+  using ButterLpfFifth    = FilterBase<5, Shape::lpf, ButterworthTable, Audio>;
+  using ButterLpfSixth    = FilterBase<6, Shape::lpf, ButterworthTable, Audio>;
+  using ButterLpfSeventh  = FilterBase<7, Shape::lpf, ButterworthTable, Audio>;
+  using ButterLpfEighth   = FilterBase<8, Shape::lpf, ButterworthTable, Audio>;
+  using ButterHpfSecond   = FilterBase<2, Shape::hpf, ButterworthTable, Audio>;
+  using ButterHpfThird    = FilterBase<3, Shape::hpf, ButterworthTable, Audio>;
+  using ButterHpfFourth   = FilterBase<4, Shape::hpf, ButterworthTable, Audio>;
+  using ButterHpfFifth    = FilterBase<5, Shape::hpf, ButterworthTable, Audio>;
+  using ButterHpfSixth    = FilterBase<6, Shape::hpf, ButterworthTable, Audio>;
+  using ButterHpfSeventh  = FilterBase<7, Shape::hpf, ButterworthTable, Audio>;
+  using ButterHpfEighth   = FilterBase<8, Shape::hpf, ButterworthTable, Audio>;
+  using LinkwitzLpfSecond = FilterBase<2, Shape::lpf, LinkwitzTable, Audio>;
+  using LinkwitzLpfFourth = FilterBase<4, Shape::lpf, LinkwitzTable, Audio>;
+  using LinkwitzLpfSixth  = FilterBase<6, Shape::lpf, LinkwitzTable, Audio>;
+  using LinkwitzLpfEighth = FilterBase<8, Shape::lpf, LinkwitzTable, Audio>;
+  using LinkwitzHpfSecond = FilterBase<2, Shape::hpf, LinkwitzTable, Audio>;
+  using LinkwitzHpfFourth = FilterBase<4, Shape::hpf, LinkwitzTable, Audio>;
+  using LinkwitzHpfSixth  = FilterBase<6, Shape::hpf, LinkwitzTable, Audio>;
+  using LinkwitzHpfEighth = FilterBase<8, Shape::hpf, LinkwitzTable, Audio>;
 
-  using EqBand6 = EqBand6Stereo;
-  using EqBand  = EqBandStereo;
+  // using EqBand6 = Filter6<Stereo<signal_t>>;
+  using EqBand = Filter<Stereo<signal_t>>;
 }
 }

@@ -17,6 +17,7 @@
 
 #pragma once
 #include "lib/gcem.h"
+#include "lib/primes.h"
 #include <algorithm>
 #include <cstddef>
 #include <string>
@@ -82,11 +83,20 @@ static inline std::vector<signal_t> logspace(
 }
 
 template <typename signal_t>
-static inline std::vector<signal_t> linspace(
+constexpr static inline std::vector<signal_t> linspace(
     signal_t start, signal_t stop, size_t n) {
   std::vector<signal_t> y;
   auto step = (stop - start) / signal_t(n - 1);
   for (size_t i = 0; i < n; i++) { y.push_back(start + signal_t(i) * step); }
+  return y;
+}
+
+template <typename signal_t>
+constexpr static inline std::vector<signal_t> primespace(
+    signal_t start, signal_t stop, size_t n) {
+  std::vector<signal_t> y;
+  auto x = linspace(start, stop, n);
+  for (auto& v : x) { y.push_back(signal_t(nextPrime(size_t(v)))); }
   return y;
 }
 }
