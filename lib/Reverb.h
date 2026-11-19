@@ -109,8 +109,8 @@ namespace Reverb {
 
   template <size_t n, double tMax_ms = 100.0>
   struct EarlyReflections final : public ComponentBase<Audio> {
-    NtFx::Delay::LongMultiTap<1000.0, n, signal_t> dlL;
-    NtFx::Delay::LongMultiTap<1000.0, n, signal_t> dlR;
+    Delay::LongMultiTap<1000.0, n, signal_t> dlL;
+    Delay::LongMultiTap<1000.0, n, signal_t> dlR;
     signal_t decayDepth { 1 };
     signal_t tBegin_ms { 7 };
     signal_t tEnd_ms { tMax_ms };
@@ -119,11 +119,10 @@ namespace Reverb {
           / gcem::sqrt(signal_t(n));
     }
     void update() noexcept override {
-      auto t =
-          NtFx::primespace<signal_t>(this->tBegin_ms, this->tEnd_ms * 0.9, n);
+      auto t = primespace<signal_t>(this->tBegin_ms, this->tEnd_ms * 0.9, n);
       for (size_t i = 0; i < n; i++) {
         this->dlL.t_ms[i] = t[i];
-        this->dlR.t_ms[i] = signal_t(NtFx::nextPrime(size_t(t[i])));
+        this->dlR.t_ms[i] = signal_t(nextPrime(size_t(t[i])));
       }
       this->dlL.setGainToDecay(this->decayDepth);
       this->dlR.setGainToDecay(this->decayDepth);
@@ -138,32 +137,30 @@ namespace Reverb {
 
   template <size_t n = 16, double tMax_ms = 100.0>
   struct DelayNetwork final : public ComponentBase<Audio> {
-    // enum class FbMode { hadamard, diagonal, hadMinusDiag };
     std::array<Delay::Short<tMax_ms, signal_t>, n> _dls;
-    NtFx::Delay::Mod mod;
-    NtFx::FirstOrder::Filter<FirstOrder::Shape::hpf, Audio> dcBlock;
-    std::array<NtFx::FirstOrder::Filter<FirstOrder::Shape::hpf, signal_t>, n>
-        dampHpf;
+    Delay::Mod mod;
+    FirstOrder::Filter<FirstOrder::Shape::hpf, Audio> dcBlock;
+    std::array<FirstOrder::Filter<FirstOrder::Shape::hpf, signal_t>, n> dampHpf;
+    std::array<FirstOrder::Filter<FirstOrder::Shape::lpf, signal_t>, n> multLpf;
     std::array<signal_t, n> _state;
     std::array<signal_t, n> _a;
+    std::array<signal_t, n> _aLf;
     FeedbackMatrix<n>::Matrix_t fbMat;
-    // FbMode fbMode;
     signal_t t60_s { 2 };
     signal_t tEnd_ms { tMax_ms };
     signal_t tBegin_ms { 3 };
+    signal_t fDamp { 4e3 };
     signal_t gDamp_db { 0 };
     signal_t gDamp_lin { 0 };
+    signal_t loMult { 1 };
+    signal_t fLfMult { 200 };
+
     Audio process(Audio x) noexcept override {
       auto yDcBlock = this->dcBlock.process(x);
       auto yMod     = this->mod.process(yDcBlock);
       std::array<signal_t, n> yDls;
-      // if (this->fbMode == FbMode::diagonal) {
-      // for (size_t i = 0; i < n; i += 2) { this->_state[i] += yMod.r / 10; }
-      // for (size_t i = 1; i < n; i += 2) { this->_state[i] += yMod.l / 10; }
-      // } else {
       for (size_t i = 0; i < n; i += 4) { this->_state[i] += yMod.r; }
       for (size_t i = 1; i < n; i += 4) { this->_state[i] += yMod.l; }
-      // }
       for (size_t i = 0; i < n; i++) {
         yDls[i] = this->_dls[i].process(this->_state[i]);
       }
@@ -173,55 +170,48 @@ namespace Reverb {
           acc += yDls[j] * FeedbackMatrix<n>::hadamard[i][j];
         }
         auto yDamp      = this->dampHpf[i].process(acc) * this->gDamp_lin + acc;
-        this->_state[i] = yDamp * this->_a[i];
+        auto yMult      = this->multLpf[i].process(yDamp) * this->_aLf[i];
+        this->_state[i] = yDamp * this->_a[i] + yMult;
       }
       Audio y;
-      // if (this->fbMode == FbMode::diagonal) {
-      //   for (size_t i = 0; i < n; i += 2) { y.l += yDls[i]; }
-      //   for (size_t i = 1; i < n; i += 2) { y.r += yDls[i]; }
-      // } else {
       for (size_t i = 2; i < n; i += 4) { y.l += yDls[i]; }
       for (size_t i = 3; i < n; i += 4) { y.r += yDls[i]; }
-      // }
       return y;
     }
     void update() noexcept override {
-      // switch (fbMode) {
-      // case FbMode::hadamard:
-      //   this->fbMat = FeedbackMatrix<n>::hadamard;
-      //   break;
-      // case FbMode::diagonal:
-      //   this->fbMat = FeedbackMatrix<n>::diagonal;
-      //   break;
-      // case FbMode::hadMinusDiag:
-      //   this->fbMat = FeedbackMatrix<n>::hadMinusDiag;
-      //   break;
-      // }
       if (this->t60_s < 0.1) { this->t60_s = 0.1; }
-      auto t_ms =
-          NtFx::primespace<signal_t>(this->tBegin_ms, this->tEnd_ms * 0.9, n);
+      auto t_ms = primespace<signal_t>(this->tBegin_ms, this->tEnd_ms * 0.9, n);
       for (size_t i = 0; i < n; i++) {
         this->_dls[i].t_ms = t_ms[i];
         this->_dls[i].update();
         while (!isPrime(this->_dls[i]._n)) { this->_dls[i]._n++; }
-        this->_a[i] = gcem::pow(
-            signal_t(10), signal_t(-3) * t_ms[i] * 0.001 / (this->t60_s));
-        // if (this->fbMode != FbMode::diagonal) {
-        this->_a[i] /= gcem::sqrt(signal_t(n));
-        // }
+        this->_a[i] = gcem::pow(signal_t(10),
+                          signal_t(-3) * t_ms[i] * 0.001 / (this->t60_s))
+            / gcem::sqrt(signal_t(n));
+      }
+      for (size_t i = 0; i < n; i++) {
+        this->_aLf[i] =
+            gcem::pow(signal_t(10),
+                signal_t(-3) * t_ms[i] * 0.001 / (this->t60_s * this->loMult))
+                / gcem::sqrt(signal_t(n))
+            - this->_a[i];
       }
       this->gDamp_lin = invDb(-this->gDamp_db) - 1;
+      for (auto& d : this->dampHpf) { d.fc_hz = this->fDamp; }
+      for (auto& f : this->multLpf) { f.fc_hz = this->fLfMult; }
       this->mod.update();
       for (size_t i = 0; i < n; i++) { this->dampHpf[i].update(); }
+      for (size_t i = 0; i < n; i++) { this->multLpf[i].update(); }
       this->dcBlock.update();
     }
     void reset(signal_t fs) noexcept override {
-      this->_fs = fs;
+      this->_fs           = fs;
+      this->dcBlock.fc_hz = 10;
       std::fill(this->_state.begin(), this->_state.end(), 0);
       for (size_t i = 0; i < n; i++) { this->_dls[i].reset(fs); }
-      this->dcBlock.fc_hz = 10;
-      this->mod.reset(fs);
       for (size_t i = 0; i < n; i++) { this->dampHpf[i].reset(fs); }
+      for (size_t i = 0; i < n; i++) { this->multLpf[i].reset(fs); }
+      this->mod.reset(fs);
       this->dcBlock.reset(fs);
       this->update();
     }

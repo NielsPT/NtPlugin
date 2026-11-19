@@ -372,7 +372,7 @@ def plotImpulse(
         legends,
         expectedExists=expectedExists,
         ylabel="Amplitude / dB",
-        ylim=[np.max(xDb) - 60, np.max(xDb)],
+        ylim=(np.max(xDb) - 60, np.max(xDb)),
     )
 
 
@@ -381,7 +381,7 @@ def plotTimeDomain(
     fs: float,
     filename: str,
     legends: list | None = None,
-    ylim: list | None = None,
+    ylim: tuple | None = None,
     ylabel: str | None = None,
     expectedExists: bool = True,
 ) -> None:
@@ -459,7 +459,7 @@ def plotFrequencyDomain(
         n = x.shape[0]
         fAx = np.linspace(0, fs - fs / n, n)
         p.semilogx(fAx, x)
-    p.xlim([20, 20e3])
+    p.xlim((20, 20e3))
     _ylim = [-60, 10]
     if ylim:
         _ylim = ylim
@@ -514,7 +514,7 @@ def plotSpectrum(
     p.grid(True)
     p.xlabel("Time / s")
     p.ylabel("Frequency / Hz")
-    p.ylim([0, 24e3])
+    p.ylim((0.0, 24e3))
     p.title(
         os.path.basename(filename).replace(".png", "").replace(SEPARATOR, " ")
         + " spectrum"
@@ -554,11 +554,11 @@ def plotDynamic(
         tAx = np.array(range(nSamples)) / fs
         p.plot(tAx, xDb)
     if zoom == 1:
-        p.xlim([0.9 * nSamples / (fs * 5), 3 * nSamples / (fs * 5)])
-    p.ylim([minVal, 2])
+        p.xlim((0.9 * nSamples / (fs * 5), 3 * nSamples / (fs * 5)))
+    p.ylim((minVal, 2))
     if zoom == 2:
-        p.xlim([0.9 * 2 * nSamples / (fs * 5), 1.1 * 2 * nSamples / (fs * 5)])
-        p.ylim([-1, 1])
+        p.xlim((0.9 * 2 * nSamples / (fs * 5), 1.1 * 2 * nSamples / (fs * 5)))
+        p.ylim((-1, 1))
     if legends:
         p.legend(legends, loc=(1.04, 0))
     p.grid(True)
@@ -578,6 +578,7 @@ def plotSweeps(
     testFileName: str,
     fs: float,
     objectName: str,
+    show: bool,
 ):
     """
     Plots a spectrum for each sweep in 'results'. File name will be genarated
@@ -591,14 +592,19 @@ def plotSweeps(
         objectName (str): Name of the specific test.
     """
     for i, sweep in enumerate(results):
-        plotSpectrum(
-            sweep,
-            fs,
+        imgFile = (
             f"{FILE_DIR}/img/{testFileName}{SEPARATOR}"
             + f"{legends[objectName][i*2].split(" ")[0]}{SEPARATOR}"
             + objectName
-            + ".png",
+            + ".png"
         )
+        plotSpectrum(
+            sweep,
+            fs,
+            imgFile,
+        )
+        if show:
+            sp.run(["code", imgFile], check=False)
 
 
 def _parseFiles(files: list[str], exceptedFiles: list[str]):
@@ -660,7 +666,8 @@ def _plotResults(
     legends: dict[str, list[str]],
     testFileName: str,
     fs: float,
-    expectedExists: bool = True,
+    expectedExists: bool,
+    show: bool,
 ):
     os.makedirs(f"{FILE_DIR}/img", exist_ok=True)
     # if "impulse" in results and results["impulse"]:
@@ -709,15 +716,25 @@ def _plotResults(
             testFileName,
             fs,
             expectedExists,
+            show,
         )
-    _plotDynamic(results, "dynamic_alternating", testFileName, legends, fs)
-    _plotDynamic(results, "dynamic_matched", testFileName, legends, fs)
+    _plotDynamic(
+        results, "dynamic_alternating", testFileName, legends, fs, show
+    )
+    _plotDynamic(results, "dynamic_matched", testFileName, legends, fs, show)
     if "linearSweep" in results and results["linearSweep"]:
         plotSweeps(
-            results["linearSweep"], legends, testFileName, fs, "linearSweep"
+            results["linearSweep"],
+            legends,
+            testFileName,
+            fs,
+            "linearSweep",
+            show,
         )
     if "syncSweep" in results and results["syncSweep"]:
-        plotSweeps(results["syncSweep"], legends, testFileName, fs, "syncSweep")
+        plotSweeps(
+            results["syncSweep"], legends, testFileName, fs, "syncSweep", show
+        )
 
 
 def _plotSignal(
@@ -727,6 +744,7 @@ def _plotSignal(
     testFileName: str,
     fs: float,
     expectedExists: bool,
+    show: bool,
 ) -> bool:
     if stimulus not in results or not results[stimulus]:
         return False
@@ -752,13 +770,16 @@ def _plotSignal(
     print(
         f"{BLUE}Plotting '{stimulus}' for file '{testFileName}'. {n=}, {np.shape(d)=}.{BLACK}"
     )
+    imgFileName = f"{FILE_DIR}/img/{testFileName}{SEPARATOR}{stimulus}"
     plotImpulse(
         d,
         fs,
-        f"{FILE_DIR}/img/{testFileName}{SEPARATOR}{stimulus}",
+        imgFileName,
         legends[stimulus],
         expectedExists=expectedExists,
     )
+    if show:
+        res = sp.run(["code", imgFileName], check=False)
     return True
 
 
@@ -768,6 +789,7 @@ def _plotDynamic(
     testFileName: str,
     legends: dict[str, list[str]],
     fs: float,
+    show: bool,
 ) -> bool:
     if not (stimulus in results and results[stimulus]):
         return False
@@ -779,17 +801,37 @@ def _plotDynamic(
         )
         return False
     for i in range(3):
+        imgFile = f"{FILE_DIR}/img/{testFileName}{SEPARATOR}{stimulus}{SEPARATOR}{i}.png"
         plotDynamic(
             data,
             fs,
-            f"{FILE_DIR}/img/{testFileName}{SEPARATOR}{stimulus}{SEPARATOR}{i}.png",
+            imgFile,
             legends[stimulus],
             i,
         )
+        if show:
+            print("WOOP")
+            sp.run(["code", imgFile], check=False)
     return True
 
 
-def _readAndPlotTestResults(testFileName: str, fs: float):
+def _readAndPlotTestResults(testFileName: str, fs: float, show: bool):
+    resultFiles = _listResultFiles(testFileName)
+    expectedFiles = _listExpectedFiles(testFileName)
+    results, legends = _parseFiles(resultFiles, expectedFiles)
+    try:
+        if (
+            "impulse" in results
+            and results["impulse"]
+            and np.any(np.isnan(np.concatenate(results["impulse"])))
+        ):
+            print(f"{RED}NaN is impulse.{BLACK}")
+    except ValueError:
+        pass
+    _plotResults(results, legends, testFileName, fs, bool(expectedFiles), show)
+
+
+def _listResultFiles(testFileName: str) -> list[str]:
     resultFiles: list[str] = []
     outFiles = os.listdir(f"{FILE_DIR}/{OUT_DIR}")
     for file in outFiles:
@@ -798,6 +840,10 @@ def _readAndPlotTestResults(testFileName: str, fs: float):
         if not file.startswith(testFileName):
             continue
         resultFiles += [file]
+    return resultFiles
+
+
+def _listExpectedFiles(testFileName: str) -> list[str]:
     expectedFiles: list[str] = []
     inFiles = os.listdir(f"{FILE_DIR}/{EXPECTED_DIR}")
     for file in inFiles:
@@ -810,17 +856,7 @@ def _readAndPlotTestResults(testFileName: str, fs: float):
             print(f"Bad filename: {file}")
             continue
         expectedFiles += [info[0] + SEPARATOR + info[1] + SEPARATOR + info[2]]
-    results, legends = _parseFiles(resultFiles, expectedFiles)
-    try:
-        if (
-            "impulse" in results
-            and results["impulse"]
-            and np.any(np.isnan(np.concatenate(results["impulse"])))
-        ):
-            print(f"{RED}NaN is impulse.{BLACK}")
-    except ValueError:
-        pass
-    _plotResults(results, legends, testFileName, fs, bool(expectedFiles))
+    return expectedFiles
 
 
 def acceptLatestResult(files: list[str], objects: list[str]) -> bool:
@@ -886,7 +922,7 @@ def clean() -> bool:
     return True
 
 
-def runTests(cppPath: str, fs: float, plot: bool = True) -> int:
+def runTests(cppPath: str, fs: float, plot: bool, show: bool) -> int:
     """
     Runs tests for a specific test program. Build the program, runs it and
     collects results.
@@ -912,7 +948,7 @@ def runTests(cppPath: str, fs: float, plot: bool = True) -> int:
         return -1
     returncode = _runTestProg(component)
     if plot:
-        _readAndPlotTestResults(component, fs)
+        _readAndPlotTestResults(component, fs, show)
     return returncode
 
 
@@ -966,6 +1002,9 @@ def run(args: dict):
     if not files or files == ["all"]:
         files = _findAllTests()
     fs = args["fs"]
+    dur = args["duration"]
+    if not generateTestVectors(dur, fs):
+        return False
     pool = mp.Pool()
     returncodes = pool.starmap(
         runTests,
@@ -973,6 +1012,7 @@ def run(args: dict):
             files,
             repeat(fs, len(files)),
             repeat(not args["no_plot"], len(files)),
+            repeat("show" in args and args["show"], len(files)),
         ),
     )
     success = True
@@ -1013,6 +1053,26 @@ def createParser() -> argparse.ArgumentParser:
         description="Runs test on NTfx Components. Usage: 'test.py run "
         "[test file name(s)]'. '_test.cpp' can be omitted."
     )
+    parser.add_argument(
+        "--fs",
+        type=float,
+        default=48e3,
+        help="Sample rate to test at. Defaults to 48000 Hz.",
+    )
+    parser.add_argument(
+        "--duration",
+        "-t",
+        type=float,
+        default=0.1,
+        help="Duration of test in seconds. Defaults to 0.1",
+    )
+    parser.add_argument(
+        "--no-plot",
+        "--no_plot",
+        "-n",
+        help="Do not plot results.",
+        action="store_true",
+    )
     subparsers = parser.add_subparsers(dest="test_task")
     runParser = subparsers.add_parser(
         "run",
@@ -1027,16 +1087,12 @@ def createParser() -> argparse.ArgumentParser:
         " for files ending with '_test.cpp' and those will be used. Defaults to "
         "'all'",
     )
-    parser.add_argument(
-        "--no-plot",
-        "--no_plot",
-        "-n",
-        help="Do not plot results.",
-        action="store_true",
+    runParser.add_argument(
+        "--show", action="store_true", help="Show plots after test."
     )
-    generateParser = subparsers.add_parser(
-        "generate", help="Generate needed input files."
-    )
+    # generateParser = subparsers.add_parser(
+    #     "generate", help="Generate needed input files."
+    # )
     subparsers.add_parser(
         "clean", help="Cleans all outputs from previous tests."
     )
@@ -1061,19 +1117,6 @@ def createParser() -> argparse.ArgumentParser:
         default=48e3,
         help="Sample rate to test at.",
     )
-    parser.add_argument(
-        "--fs",
-        type=float,
-        default=48e3,
-        help="Sample rate to test at. Defaults to 48000 Hz.",
-    )
-    generateParser.add_argument(
-        "--duration",
-        "-t",
-        type=float,
-        default=0.1,
-        help="Duration of test in seconds. Defaults to 0.1",
-    )
     return parser
 
 
@@ -1087,10 +1130,10 @@ def main(args: dict) -> bool:
     Returns:
         bool: True on success.
     """
-    fs = args["fs"]
-    if args["test_task"] == "generate":
-        t = args["duration"]
-        return generateTestVectors(t, fs) is not None
+    # fs = args["fs"]
+    # if args["test_task"] == "generate":
+    #     t = args["duration"]
+    #     return generateTestVectors(t, fs) is not None
     if args["test_task"] == "run":
         return run(args)
     if args["test_task"] == "clean":

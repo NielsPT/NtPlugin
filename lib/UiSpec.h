@@ -175,9 +175,7 @@ struct UiSpec {
      ///< column in knob groups.
   float groupKnobHeight { 130 }; ///< Hight of knobs in knob groups
   float groupPad { 10 };         ///< Padding for knob groups.
-  int groupSingleColumnLimit {
-    4
-  }; ///< Amount of knobs where groups get two columns.
+  int nGroupRows { 4 }; ///< Amount of knobs where groups get two columns.
   bool includeMeters { true };         ///< Add meters to the UI.
   bool includeTitleBar { true };       ///< Add title bar to UI.
   bool includeSecondaryKnobs { true }; ///< Enable row below the main grid.

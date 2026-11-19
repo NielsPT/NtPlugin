@@ -344,8 +344,7 @@ void Editor::_initWindowWidth(int nCols) {
   this->knobGroupWidth = 0;
   for (auto& g : this->proc.plug.knobGroups) {
     float _w = 1;
-    if (g.primaryKnobs.size()
-        <= this->proc.plug.uiSpec.groupSingleColumnLimit) {
+    if (g.primaryKnobs.size() <= this->proc.plug.uiSpec.nGroupRows) {
       _w = 0.5;
     }
     this->knobGroupWidth += this->proc.plug.uiSpec.groupWidth * _w;
@@ -375,7 +374,7 @@ void Editor::_initWindowHeight(int nRows) {
     height += this->proc.plug.uiSpec.labelHeight;
     auto nGroupKnobsMax = this->_getNKnobsInLargestKnobGroup();
     float groupsHeight { 0 };
-    if (nGroupKnobsMax <= this->proc.plug.uiSpec.groupSingleColumnLimit) {
+    if (nGroupKnobsMax <= this->proc.plug.uiSpec.nGroupRows) {
       groupsHeight = (this->proc.plug.uiSpec.groupKnobHeight
                          + this->proc.plug.uiSpec.groupPad)
           * float(nGroupKnobsMax);
@@ -640,8 +639,7 @@ void Editor::_placeSecondaryKnobs(juce::Rectangle<int>& area) {
 void Editor::_placeKnobGroups(juce::Rectangle<int>& area) {
   float nColsTotal = 0;
   for (auto& g : this->proc.plug.knobGroups) {
-    if (g.primaryKnobs.size()
-        <= this->proc.plug.uiSpec.groupSingleColumnLimit) {
+    if (g.primaryKnobs.size() <= this->proc.plug.uiSpec.nGroupRows) {
       nColsTotal += 1;
     } else {
       nColsTotal += 2;
@@ -651,7 +649,7 @@ void Editor::_placeKnobGroups(juce::Rectangle<int>& area) {
   for (size_t i = 0; i < this->proc.plug.knobGroups.size(); i++) {
     auto& g         = this->proc.plug.knobGroups[i];
     auto groupWidth = colWidth;
-    if (g.primaryKnobs.size() > this->proc.plug.uiSpec.groupSingleColumnLimit) {
+    if (g.primaryKnobs.size() > this->proc.plug.uiSpec.nGroupRows) {
       groupWidth *= 2;
     }
     auto groupArea = area.removeFromLeft(int(groupWidth));
@@ -671,7 +669,7 @@ void Editor::_placeKnobGroups(juce::Rectangle<int>& area) {
     auto nLhs = nRhs + g.primaryKnobs.size() % 2;
     if (g.primaryKnobs.size()
         // if (this->_getNKnobsInLargestKnobGroup()
-        <= this->proc.plug.uiSpec.groupSingleColumnLimit) {
+        <= this->proc.plug.uiSpec.nGroupRows) {
       this->_placeGruopKnobColumn(
           groupArea, g.primaryKnobs.size(), i, 1, false);
     } else {
