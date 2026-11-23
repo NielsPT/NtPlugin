@@ -190,22 +190,23 @@ namespace Delay {
    * constant).
    * @tparam T Sample type (Audio for stereo, or scalar for mono).
    */
-  template <double dlLen_ms, size_t nTaps, typename Audio_t = Audio>
-  struct LongMultiTap final : public ComponentBase<Audio_t> {
-    std::vector<Audio_t> _dl; /**< Dynamic circular buffer for delay samples */
+  template <double dlLen_ms, size_t nTaps, typename audio_t = Audio>
+  struct LongMultiTap final : public ComponentBase<audio_t> {
+    std::vector<audio_t> _dl; /**< Dynamic circular buffer for delay samples */
     std::array<signal_t, nTaps> t_ms; /**< Desired delay time in milliseconds */
     std::array<signal_t, nTaps> g_lin; /**< Gain for taps in linear domain */
     std::array<int, nTaps> _n;         /**< Current delay in samples */
     int _nDl { 1 }; /**< Number of samples in delay buffer. */
     int _i { 0 };   /**< Write pointer in circular buffer */
 
+    LongMultiTap() { this->setGainFlat(); }
+
     /**
      * @brief Process a single sample through the dynamic delay line.
      */
-    Audio_t process(Audio_t x) noexcept override {
-      this->_dl[this->_i++] = x;
-      if (this->_i >= this->_nDl) { this->_i = 0; }
-      Audio_t y = 0;
+    audio_t process(audio_t x) noexcept override {
+      this->_dl[this->_i] = x;
+      audio_t y           = 0;
       for (size_t i = 0; i < nTaps; i++) {
         if (this->_n[i] == 0) { continue; }
         auto idx = this->_i - this->_n[i];
@@ -213,6 +214,7 @@ namespace Delay {
         auto tmp = this->_dl[idx];
         y += tmp * g_lin[i];
       }
+      if (++this->_i >= this->_nDl) { this->_i = 0; }
       return y;
     }
 
@@ -222,7 +224,7 @@ namespace Delay {
     void update() noexcept override {
       for (size_t i = 0; i < nTaps; i++) {
         this->_n[i] = int(gcem::floor(this->t_ms[i] * 0.001 * this->_fs));
-        if (this->_n[i] >= this->_nDl) { this->_n[i] = this->_nDl; }
+        if (this->_n[i] >= this->_nDl) { this->_n[i] = this->_nDl - 1; }
       }
     }
 

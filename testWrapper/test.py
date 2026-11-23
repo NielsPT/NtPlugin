@@ -325,7 +325,7 @@ def plotImpulse(
     filename: str,
     legends: list | None = None,
     expectedExists: bool = True,
-):
+) -> bool:
     """
     Plots the results of an impulse response an frequency amplitude and phase
     responses.
@@ -365,6 +365,9 @@ def plotImpulse(
         expectedExists=expectedExists,
     )
     xDb = 20 * np.log10(np.abs(x))
+    xDb = xDb[~np.isnan(xDb)]
+    if not xDb.size:
+        return False
     plotTimeDomain(
         xDb,
         fs,
@@ -374,6 +377,7 @@ def plotImpulse(
         ylabel="Amplitude / dB",
         ylim=(np.max(xDb) - 60, np.max(xDb)),
     )
+    return True
 
 
 def plotTimeDomain(
@@ -825,7 +829,7 @@ def _readAndPlotTestResults(testFileName: str, fs: float, show: bool):
             and results["impulse"]
             and np.any(np.isnan(np.concatenate(results["impulse"])))
         ):
-            print(f"{RED}NaN is impulse.{BLACK}")
+            print(f"{RED}{testFileName}: NaN in impulse.{BLACK}")
     except ValueError:
         pass
     _plotResults(results, legends, testFileName, fs, bool(expectedFiles), show)

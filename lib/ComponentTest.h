@@ -38,6 +38,7 @@
 #include "lib/utils.h"
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -308,6 +309,7 @@ struct ComponentTest {
       std::string stimulus, const std::vector<Stereo<signal_t>>& y) {
     auto e = this->_readExpected(stimulus);
     if (e.size() != y.size()) {
+      // TODO: Make it work with different size vectors.
       std::cout
           << this->p_owner->name
           << ": Expected result has different length that result. Aborting."
@@ -316,6 +318,12 @@ struct ComponentTest {
     }
     auto acceptedDiff = signal_t(0.0001);
     for (size_t i = 0; i < y.size(); i++) {
+      if (!std::isfinite(y[i].l) && !std::isfinite(y[i].r)) {
+        std::cout << this->p_owner->name << "." << this->objName << "."
+                  << stimulus << ":" << " NaN in output at index: " << i
+                  << ".\n";
+        return false;
+      }
       auto diff = gcem::abs(y[i] - e[i]);
       if (diff > acceptedDiff) {
         std::cout << this->p_owner->name << "." << this->objName << "."
