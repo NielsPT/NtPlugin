@@ -379,14 +379,20 @@ void Editor::_initWindowHeight(int nRows) {
                          + this->proc.plug.uiSpec.groupPad)
           * float(nGroupKnobsMax);
     } else {
-      groupsHeight += (this->proc.plug.uiSpec.groupKnobHeight
-                          + this->proc.plug.uiSpec.groupPad)
-              * (float(nGroupKnobsMax % 2) + float(nGroupKnobsMax) * 0.5f)
-          + float(!(nGroupKnobsMax % 2))
-              * this->proc.plug.uiSpec.groupEvenColOffset;
+      // groupsHeight += (this->proc.plug.uiSpec.groupKnobHeight
+      //                     + this->proc.plug.uiSpec.groupPad)
+      //     // * float(nGroupKnobsMax) * 0.5f;
+      //     * (float(nGroupKnobsMax % 2) + float(nGroupKnobsMax) * 0.5f);
+      // groupsHeight += float(!(nGroupKnobsMax % 2))
+      //     * this->proc.plug.uiSpec.groupEvenColOffset;
+      // groupsHeight -=
+      //     float(nGroupKnobsMax % 2) * this->proc.plug.uiSpec.groupKnobHeight;
       // groupsHeight -=
       //     this->proc.plug.uiSpec.groupEvenColOffset * float(nGroupKnobsMax %
       //     2);
+      groupsHeight += (this->proc.plug.uiSpec.groupKnobHeight
+                          + this->proc.plug.uiSpec.groupPad)
+          * float(int(nGroupKnobsMax / 2) + nGroupKnobsMax % 2);
     }
     groupsHeight += this->proc.plug.uiSpec.labelHeight;
     groupsHeight += this->proc.plug.uiSpec.groupPad * 2;

@@ -364,7 +364,7 @@ def plotImpulse(
         legends,
         expectedExists=expectedExists,
     )
-    xDb = 20 * np.log10(np.abs(x))
+    xDb = 20 * np.log10(np.abs(x) + 1e-8)
     xDb = xDb[~np.isnan(xDb)]
     if not xDb.size:
         return False

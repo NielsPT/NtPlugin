@@ -432,9 +432,7 @@ def storeManual(plugin: str) -> bool:
         for target in targets:
             dst = f"{art}/{target}/{plugin}.{TARGET_EXT_MAP[target]}"
             convertAndStoreManual(plugin, dst)
-            print(
-                f"{GREEN}Stored manual for {plugin} {bType}t {target}.{BLACK}"
-            )
+            print(f"{GREEN}Stored manual for {plugin} {bType} {target}.{BLACK}")
     return True
 
 
