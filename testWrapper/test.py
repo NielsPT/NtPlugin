@@ -832,7 +832,8 @@ def _readAndPlotTestResults(testFileName: str, fs: float, show: bool):
             print(f"{RED}{testFileName}: NaN in impulse.{BLACK}")
     except ValueError:
         pass
-    _plotResults(results, legends, testFileName, fs, bool(expectedFiles), show)
+    _plotResults(results, legends, testFileName, fs, True, show)
+    # _plotResults(results, legends, testFileName, fs, bool(expectedFiles), show)
 
 
 def _listResultFiles(testFileName: str) -> list[str]:
@@ -1007,8 +1008,8 @@ def run(args: dict):
         files = _findAllTests()
     fs = args["fs"]
     dur = args["duration"]
-    if not generateTestVectors(dur, fs):
-        return False
+    # if not generateTestVectors(dur, fs):
+    #     return False
     pool = mp.Pool()
     returncodes = pool.starmap(
         runTests,
@@ -1134,10 +1135,10 @@ def main(args: dict) -> bool:
     Returns:
         bool: True on success.
     """
-    # fs = args["fs"]
-    # if args["test_task"] == "generate":
-    #     t = args["duration"]
-    #     return generateTestVectors(t, fs) is not None
+    if args["test_task"] == "generate":
+        fs = args["fs"]
+        t = args["duration"]
+        return generateTestVectors(t, fs) is not None
     if args["test_task"] == "run":
         return run(args)
     if args["test_task"] == "clean":
