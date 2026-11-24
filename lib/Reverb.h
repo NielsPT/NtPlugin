@@ -216,5 +216,44 @@ namespace Reverb {
       this->update();
     }
   };
+
+  // https://www.youtube.com/watch?v=Nat7S3OKDV0
+  template <class audio_t = Audio>
+  struct GoldenRatioAllPass : public ComponentBase<audio_t> {
+    static constexpr double goldenRatio = 1.61803;
+    Delay::Short<100.0, audio_t> dl1;
+    Delay::Short<100.0, audio_t> dl2;
+    signal_t t60_ms { 1000 };
+    signal_t size_ms { 50 };
+    audio_t fb1 { 0 };
+    audio_t fb2 { 0 };
+    audio_t y1 { 0 };
+    audio_t y2 { 0 };
+    audio_t process(audio_t x) noexcept override {
+      auto yDl1 = this->dl1.process(x + (this->y2 - this->y1) * this->fb1);
+      auto yDl2 = this->dl2.process(x + (this->y1 + this->y2) * this->fb2);
+      this->y1  = yDl1;
+      this->y2  = yDl2;
+      return yDl2;
+    }
+    void update() noexcept override {
+      this->dl1.t_ms = this->size_ms;
+      this->dl2.t_ms = this->size_ms / goldenRatio;
+      this->fb1      = gcem::pow(signal_t(10),
+                           signal_t(-3) * this->dl1.t_ms / (this->t60_ms))
+          / gcem::sqrt(signal_t(2));
+      this->fb2 = gcem::pow(signal_t(10),
+                      signal_t(-3) * this->dl2.t_ms / (this->t60_ms))
+          / gcem::sqrt(signal_t(2));
+      this->dl1.update();
+      this->dl2.update();
+    }
+    void reset(signal_t fs) noexcept override {
+      this->_fs = fs;
+      this->dl1.reset(fs);
+      this->dl2.reset(fs);
+      this->update();
+    }
+  };
 }
 }

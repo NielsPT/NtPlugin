@@ -365,8 +365,10 @@ def plotImpulse(
         expectedExists=expectedExists,
     )
     xDb = 20 * np.log10(np.abs(x) + 1e-8)
-    xDb = xDb[~np.isnan(xDb)]
-    if not xDb.size:
+    # xDb = xDb[~np.isnan(xDb)]
+    # if not xDb.size:
+    #     return False
+    if np.any(np.isnan(xDb)):
         return False
     plotTimeDomain(
         xDb,
