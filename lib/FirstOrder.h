@@ -24,6 +24,7 @@
 
 #include "lib/Audio.h"
 #include "lib/Component.h"
+#include "lib/utils.h"
 
 namespace NtFx {
 namespace FirstOrder {
@@ -81,7 +82,38 @@ namespace FirstOrder {
     }
   };
 
-  template <Shape shape>
-  using StereoFilter = Filter<shape, Stereo<signal_t>>;
+  template <class audio_t>
+  struct ToneControl : public ComponentBase<audio_t> {
+    Filter<Shape::lpfZero, audio_t> _lpf;
+    Filter<Shape::hpf, audio_t> _hpf;
+    signal_t fc_hz { 632 };
+    signal_t gain_db { 0 };
+    signal_t _gainHf_lin { 1 };
+    signal_t _gainLf_lin { 1 };
+    ToneControl() { }
+    audio_t process(audio_t x) noexcept override {
+      return this->_lpf.process(x) * this->_gainLf_lin
+          + this->_hpf.process(x) * this->_gainHf_lin;
+    }
+    void update() noexcept override {
+      if (this->gain_db > 0) {
+        this->_gainHf_lin = 1;
+        this->_gainLf_lin = invDb(-gain_db);
+      } else {
+        this->_gainLf_lin = 1;
+        this->_gainHf_lin = invDb(gain_db);
+      }
+      this->_lpf.fc_hz = this->fc_hz;
+      this->_hpf.fc_hz = this->fc_hz;
+      this->_lpf.update();
+      this->_hpf.update();
+    }
+    void reset(signal_t fs) noexcept override {
+      this->_fs = fs;
+      this->_lpf.reset(fs);
+      this->_hpf.reset(fs);
+      this->update();
+    }
+  };
 }
 }

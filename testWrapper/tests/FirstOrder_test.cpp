@@ -1,5 +1,6 @@
 
 
+#include "lib/Audio.h"
 #include "lib/ComponentTest.h"
 #include "lib/FirstOrder.h"
 #include <memory>
@@ -21,5 +22,20 @@ int main() {
   auto& lpfWithZero = *lpfWithZeroStorage;
   lpfWithZero.fc_hz = 1e3;
   NTFX_ADD_TEST(set, lpfWithZero, "impulse");
+
+  auto _toneControlDefault =
+      std::make_unique<NtFx::FirstOrder::ToneControl<Audio>>();
+  auto& toneControlDefault = *_toneControlDefault;
+  NTFX_ADD_TEST(set, toneControlDefault, "impulse");
+  auto _toneControlPlus20 =
+      std::make_unique<NtFx::FirstOrder::ToneControl<Audio>>();
+  auto& toneControlPlus20   = *_toneControlPlus20;
+  toneControlPlus20.gain_db = 20;
+  NTFX_ADD_TEST(set, toneControlPlus20, "impulse");
+  auto _toneControlMinus20 =
+      std::make_unique<NtFx::FirstOrder::ToneControl<Audio>>();
+  auto& toneControlMinus20   = *_toneControlMinus20;
+  toneControlMinus20.gain_db = -20;
+  NTFX_ADD_TEST(set, toneControlMinus20, "impulse");
   return set.runAllTests();
 }

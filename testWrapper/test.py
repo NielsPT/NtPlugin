@@ -893,18 +893,22 @@ def acceptLatestResult(files: list[str], objects: list[str]) -> bool:
         return False
     resultFiles = os.listdir(f"{FILE_DIR}/{OUT_DIR}")
     filesToCopy: list[str] = []
+    badObj = False
     for file in resultFiles:
         if not file.endswith(f"{SEPARATOR}result.txt"):
             continue
         info = file.split(SEPARATOR)
         if len(info) != 5:
-            print(f"Bad filename: {file}")
+            print(f"{RED}Bad filename: {file}.{BLACK}")
             continue
         if files and files != ["all"] and info[0] not in _files:
             continue
         if objects and objects != ["all"] and info[1] not in objects:
+            badObj = True
             continue
         filesToCopy += [file]
+    if badObj:
+        print(f"{RED}Bad object name in {objects}.{BLACK}")
     if not filesToCopy:
         print(f"{RED}No result files found.{BLACK}")
         return False
