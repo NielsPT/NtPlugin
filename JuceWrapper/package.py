@@ -67,7 +67,7 @@ TARGET_EXT_MAP = {
     "Standalone": ".app",
 }
 
-if sys.platform == "Linux":
+if sys.platform == "linux":
     TARGET_EXT_MAP["Standalone"] = ""
 
 if sys.platform == "win32":
