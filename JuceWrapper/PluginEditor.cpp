@@ -36,12 +36,17 @@
 #include "utils.h"
 
 #include <cstddef>
-#include <dlfcn.h>
 #include <memory>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
+
+#if JUCE_WINDOWS
+  #include <windows.h>
+#elif JUCE_LINUX || JUCE_MAC
+  #include <dlfcn.h>
+#endif
 
 // TODO: Major refactor. There are SO many repitions in this file.
 namespace {
@@ -57,12 +62,29 @@ constexpr auto DEBUG_STR = std::string_view("");
 static constexpr auto TITLE = join_v<NAME, SPACE, VERSION, DEBUG_STR, ZERO>;
 
 std::string _getAbsolutePathOfPlugin() {
-  Dl_info info;
-  if (dladdr((void*)&_getAbsolutePathOfPlugin, &info)) {
-    std::string path = info.dli_fname;
-    return path;
+#if JUCE_WINDOWS
+  HMODULE hModule = nullptr;
+  // GetModuleHandleEx is safer than GetModuleHandle(NULL)
+  GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
+          | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+      reinterpret_cast<LPCSTR>(&_getAbsolutePathOfPlugin),
+      &hModule);
+
+  char path[MAX_PATH] = { 0 };
+  if (hModule && GetModuleFileNameA(hModule, path, MAX_PATH) > 0) {
+    return std::string(path);
   }
   return "";
+
+#elif JUCE_LINUX || JUCE_MAC
+  Dl_info info;
+  if (dladdr(reinterpret_cast<void*>(&_getAbsolutePathOfPlugin), &info) != 0) {
+    return std::string(info.dli_fname);
+  }
+  return "";
+#else
+  return "";
+#endif
 }
 
 struct ManualWindow : public juce::DocumentWindow {
