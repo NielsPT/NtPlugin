@@ -418,7 +418,6 @@ def storeArtifacts(plugin: str) -> bool:
 
 
 def storeManual(plugin: str) -> bool:
-    print(f"{BLUE}Storing Manual for '{plugin}'.{BLACK}")
     bTypes = ["Release", "Debug"]
     for bType in bTypes:
         art = f"{BUILD_DIR}{os.sep}{plugin}_artefacts{os.sep}{bType}{os.sep}"
@@ -430,6 +429,8 @@ def storeManual(plugin: str) -> bool:
             if e.is_dir():
                 targets += [e.path.replace(art, "")]
         for target in targets:
+            if sys.platform != "darwin" and target == "standalone":
+                continue
             dst = f"{art}/{target}/{plugin}{TARGET_EXT_MAP[target]}"
             if not convertAndStoreManual(plugin, dst):
                 return False
