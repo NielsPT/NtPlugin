@@ -224,12 +224,29 @@ endif()
 
 set(VENV_PYTHON "${CMAKE_SOURCE_DIR}/../.venv/bin/python")
 
-add_custom_command(TARGET ${NTFX_PLUGIN} POST_BUILD
-  COMMAND echo "Hello from shell"
+# Collect all possible plugin executable targets
+# CMake ignores non-existent targets in DEPENDS, so this is safe for all platforms
+set(ALL_FORMAT_TARGETS
+  ${NTFX_PLUGIN}_VST3
+  ${NTFX_PLUGIN}_Standalone
+  ${NTFX_PLUGIN}_AAX
+  ${NTFX_PLUGIN}_AU
+)
+
+add_custom_target(ntfx_store_manual ALL
   COMMAND ${VENV_PYTHON} -c
   "from ntPlugin import build; build.storeManual('${NTFX_PLUGIN}')"
+  DEPENDS ${ALL_FORMAT_TARGETS}
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/..
-  VERBATIM)
+  VERBATIM
+)
+
+# add_custom_command(TARGET ${NTFX_PLUGIN} POST_BUILD
+#   COMMAND echo "Hello from shell"
+#   COMMAND ${VENV_PYTHON} -c
+#   "from ntPlugin import build; build.storeManual('${NTFX_PLUGIN}')"
+#   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/..
+#   VERBATIM)
 
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
 # into your build tree. This should be included with `#include "JuceHeader.h"`. The include path for

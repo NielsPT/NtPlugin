@@ -63,14 +63,14 @@ Run the following command to install dependencies on Linux.
 
 ```sh
 sudo apt update
-sudo apt install -y git cmake libasound2-dev libjack-jackd2-dev ladspa-sdk libcurl4-openssl-dev  libfreetype-dev libfontconfig1-dev libx11-dev libxcomposite-dev libxcursor-dev libxinerama-dev libxext-dev libxrandr-dev libxrender-dev libwebkit2gtk-4.1-dev libglu1-mesa-dev mesa-common-dev python3.12-venv
+sudo apt install -y git cmake libasound2-dev libjack-jackd2-dev ladspa-sdk libcurl4-openssl-dev  libfreetype-dev libfontconfig1-dev libx11-dev libxcomposite-dev libxcursor-dev libxinerama-dev libxext-dev libxrandr-dev libxrender-dev libwebkit2gtk-4.1-dev libglu1-mesa-dev mesa-common-dev python3.12-venv pandoc
 ```
 
 ##### Fedora
 
 ```sh
 sudo dnf update
-sudo dnf install -y g++ git cmake alsa-lib-devel jack-audio-connection-kit-devel.aarch64 libcurl-devel freetype-devel libX11-devel libXcomposite-devel libXcursor-devel libXinerama-devel freeglut-devel gnutils-devel libstdc++-static ladspa-devel webkit2gtk4.1-devel.aarch64 gtk3-devel mesa-libGL-devel
+sudo dnf install -y g++ git cmake alsa-lib-devel jack-audio-connection-kit-devel.aarch64 libcurl-devel freetype-devel libX11-devel libXcomposite-devel libXcursor-devel libXinerama-devel freeglut-devel gnutils-devel libstdc++-static ladspa-devel webkit2gtk4.1-devel.aarch64 gtk3-devel mesa-libGL-devel pandoc
 ```
 
 ### Try it out
