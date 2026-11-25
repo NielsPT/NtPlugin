@@ -186,8 +186,8 @@ endif()
 target_compile_definitions(${NTFX_PLUGIN}
   PUBLIC
   # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
-  JUCE_WEB_BROWSER=1 # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call
-  # ${NTFX_WEB_BROWSER}
+  # JUCE_WEB_BROWSER=1 # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call
+  ${NTFX_WEB_BROWSER}
   JUCE_USE_WIN_WEBVIEW2_WITH_STATIC_LINKING=0
   JUCE_USE_CURL=0 # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_plugin` call
   JUCE_VST3_CAN_REPLACE_VST2=0
