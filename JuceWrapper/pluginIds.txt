@@ -17,5 +17,5 @@ ntGenerator:Gnlv
 ntSoftClip:Xcxh:Distortion:Harmonic
 passThrough:Notn
 ntExciter:Omof
-ntReverb:Jspt
-ntKleinReverb:Ukva
+ntReverb:Jspt:Reverb:Reverb
+ntKleinReverb:Ukva:Reverb:Reverb
