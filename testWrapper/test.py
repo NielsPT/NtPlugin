@@ -1014,7 +1014,7 @@ def run(args: dict):
     if not files or files == ["all"]:
         files = _findAllTests()
     fs = args["fs"]
-    dur = args["duration"]
+    # dur = args["duration"]
     # if not generateTestVectors(dur, fs):
     #     return False
     pool = mp.Pool()
