@@ -36,8 +36,8 @@ ARTIFACTS_DIR = os.path.realpath(f"{REPO_BASE_DIR}/artifacts")
 PLUGIN_H_FILE = f"{JUCE_WRAPPER_DIR}/Plugins.h"
 
 ID = 0
-VST3_CAT = 1
-AAX_CAT = 2
+AAX_CAT = 1
+VST3_CAT = 2
 
 """
 Maps from AAX format categories to VST3 format. AU doesn't make sense since 
@@ -245,14 +245,14 @@ def configure(
             f"{info[ID].strip()}.{BLACK}"
         )
         if not category and len(info) > 1:
-            args += [f"-DNTFX_VST3_CATEGORY={info[VST3_CAT].strip()}"]
-            print(
-                f"{BLUE}Reusing VST3 category: {info[VST3_CAT].strip()}.{BLACK}"
-            )
-        if not category and len(info) > 2:
             args += [f"-DNTFX_AAX_CATEGORY={info[AAX_CAT].strip()}"]
             print(
                 f"{BLUE}Reusing AAX category: {info[AAX_CAT].strip()}.{BLACK}"
+            )
+        if not category and len(info) > 2:
+            args += [f"-DNTFX_VST3_CATEGORY={info[VST3_CAT].strip()}"]
+            print(
+                f"{BLUE}Reusing VST3 category: {info[VST3_CAT].strip()}.{BLACK}"
             )
 
     print(f"{BLUE}Running cmake for plugin '{plugin}'.{BLACK}")

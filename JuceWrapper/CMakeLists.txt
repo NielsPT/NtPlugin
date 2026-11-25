@@ -177,11 +177,18 @@ target_sources(${NTFX_PLUGIN}
 # definitions will be visible both to your code, and also the JUCE module code, so for new
 # definitions, pick unique names that are unlikely to collide! This is a standard CMake command.
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  set(NTFX_WEB_BROWSER "JUCE_WEB_BROWSER=1")
+else()
+  set(NTFX_WEB_BROWSER "JUCE_WEB_BROWSER=0")
+endif()
+
 target_compile_definitions(${NTFX_PLUGIN}
   PUBLIC
   # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
   JUCE_WEB_BROWSER=1 # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call
-  JUCE_USE_WIN_WEBVIEW2_WITH_STATIC_LINKING=1
+  # ${NTFX_WEB_BROWSER}
+  JUCE_USE_WIN_WEBVIEW2_WITH_STATIC_LINKING=0
   JUCE_USE_CURL=0 # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_plugin` call
   JUCE_VST3_CAN_REPLACE_VST2=0
   DONT_SET_USING_JUCE_NAMESPACE=1
@@ -238,21 +245,21 @@ if(NOT EXISTING_FORMAT_TARGETS)
   message(FATAL_ERROR "No plugin format targets found for ${NTFX_PLUGIN}")
 endif()
 
-add_custom_target(ntfx_store_manual ALL
-  COMMAND ${VENV_PYTHON} -c
-  "from ntPlugin import build; build.storeManual('${NTFX_PLUGIN}')"
-  DEPENDS ${EXISTING_FORMAT_TARGETS}
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/..
-  VERBATIM
-)
-
-# add_custom_command(TARGET ${NTFX_PLUGIN} POST_BUILD
-#   COMMAND echo "Hello from shell"
-#   COMMAND ${VENV_PYTHON} -c
-#   "from ntPlugin import build; build.storeManual('${NTFX_PLUGIN}')"
-#   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/..
-#   VERBATIM)
-
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  add_custom_command(TARGET ${NTFX_PLUGIN} POST_BUILD
+    COMMAND ${VENV_PYTHON} -c
+    "from ntPlugin import build; build.storeManual('${NTFX_PLUGIN}')"
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/..
+    VERBATIM)
+else()
+  add_custom_target(ntfx_store_manual ALL
+    COMMAND ${VENV_PYTHON} -c
+    "from ntPlugin import build; build.storeManual('${NTFX_PLUGIN}')"
+    DEPENDS ${EXISTING_FORMAT_TARGETS}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/..
+    VERBATIM
+  )
+endif()
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
 # into your build tree. This should be included with `#include "JuceHeader.h"`. The include path for
 # this header will be automatically added to the target. The main function of the JuceHeader is to
@@ -284,10 +291,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     message(FATAL_ERROR "WebKit2GTK not found. Please install webkit2gtk-4.1-devel or webkit2gtk-4.0-devel")
   endif()
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-  # macOS: JUCE usually handles this, but we can ensure it's linked
-  target_link_libraries(${NTFX_PLUGIN} PRIVATE WebKit)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-  # Windows: Uses WebView2 or CEF. JUCE handles the find_package.
-  # No extra action needed if using JUCE's built-in web view.
 endif()
 # endif()

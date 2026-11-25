@@ -3,8 +3,8 @@ ntGate:Rkue:Dynamics:Dynamics
 ntFilters:Coja:EQ:EQ
 ntMultiband3:Elam:Dynamics:Dynamics
 ntTapeEcho:Zinm:Delay:Delay
-gainExample:Sdfh
-ntTransformer:Migc:Distortion:Harmonic
+gainExample:Sdfh:SoundField:Spatial
+ntTransformer:Migc:Harmonic:Distortion
 ntRmsMeter:Joxj
 ntDeEsser:Bagy:Dynamics:Dynamics
 ntGateMono:Jlkd:Dynamics:Dynamics
@@ -14,7 +14,7 @@ ntEqualizer:Fqwo:EQ:EQ
 ntAdaptiveDeEsser:Lihv:Dynamics:Dynamics
 ntTilt:Ohmy:EQ:EQ
 ntGenerator:Gnlv
-ntSoftClip:Xcxh:Distortion:Harmonic
+ntSoftClip:Xcxh:Harmonic:Distortion
 passThrough:Notn
 ntExciter:Omof
 ntReverb:Jspt:Reverb:Reverb
