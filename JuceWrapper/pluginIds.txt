@@ -18,3 +18,4 @@ ntSoftClip:Xcxh:Distortion:Harmonic
 passThrough:Notn
 ntExciter:Omof
 ntReverb:Jspt
+ntMoritzKleinReverb:Apot

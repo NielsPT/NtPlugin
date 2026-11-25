@@ -35,7 +35,7 @@ int main() {
 
   auto _goldenRatioAllPass =
       std::make_unique<NtFx::Reverb::GoldenRatioAllPass<Audio>>();
-  auto goldenRatioAllPass    = *_goldenRatioAllPass;
+  auto& goldenRatioAllPass   = *_goldenRatioAllPass;
   goldenRatioAllPass.t60_ms  = 100;
   goldenRatioAllPass.size_ms = 5;
   NTFX_ADD_TEST(set, goldenRatioAllPass, "impulse");
