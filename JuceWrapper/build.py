@@ -370,7 +370,7 @@ def convertAndStoreManual(plugin: str, bundleDir: str) -> bool:
     )
     os.chdir(orgDir)
     if res.returncode:
-        print(f"{RED}Failed to convert manual to html.")
+        print(f"{RED}Failed to convert manual to html.{BLACK}")
         return False
     print(f"{GREEN}Stored manual for plugin '{plugin}' at '{dst}'.{BLACK}")
     return True
@@ -397,7 +397,7 @@ def storeArtifacts(plugin: str) -> bool:
             targets += [e.path.replace(art, "")]
     for target in targets:
         dstDir = f"{ARTIFACTS_DIR}{os.sep}{target}"
-        dst = f"{dstDir}{os.sep}{plugin}.{TARGET_EXT_MAP[target]}"
+        dst = f"{dstDir}{os.sep}{plugin}{TARGET_EXT_MAP[target]}"
         os.makedirs(dstDir, exist_ok=True)
         print(f"{BLUE}Removing old artifact '{dst}'.{BLACK}")
         subprocess.run(["/usr/bin/xattr", "-cr", dst], check=False)
@@ -430,7 +430,7 @@ def storeManual(plugin: str) -> bool:
             if e.is_dir():
                 targets += [e.path.replace(art, "")]
         for target in targets:
-            dst = f"{art}/{target}/{plugin}.{TARGET_EXT_MAP[target]}"
+            dst = f"{art}/{target}/{plugin}{TARGET_EXT_MAP[target]}"
             if not convertAndStoreManual(plugin, dst):
                 return False
             print(f"{GREEN}Stored manual for {plugin} {bType} {target}.{BLACK}")

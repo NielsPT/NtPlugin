@@ -61,15 +61,21 @@ Maps from folders containing resulting artifacts to extensions of those
 artifacts.
 """
 TARGET_EXT_MAP = {
-    "VST3": "vst3",
-    "AU": "component",
-    "AAX": "aaxplugin",
-    "Standalone": "app",
+    "VST3": ".vst3",
+    "AU": ".component",
+    "AAX": ".aaxplugin",
+    "Standalone": ".app",
 }
+
+if sys.platform == "Linux":
+    TARGET_EXT_MAP["Standalone"] = ""
+
+if sys.platform == "win32":
+    TARGET_EXT_MAP["Standalone"] = ".exe"
 
 
 def _pluginPath(plugin: str, target: str):
-    return f"{ARTIFACTS_DIR}/{target}/{plugin}.{TARGET_EXT_MAP[target]}"
+    return f"{ARTIFACTS_DIR}/{target}/{plugin}{TARGET_EXT_MAP[target]}"
 
 
 def readPlugins() -> list[str]:
@@ -170,7 +176,7 @@ def signNonAxxPlugin(plugin: str, target: str, devId: str) -> bool:
     Returns:
         bool: True on success.
     """
-    file = f"{ARTIFACTS_DIR}/{target}/{plugin}.{TARGET_EXT_MAP[target]}"
+    file = f"{ARTIFACTS_DIR}/{target}/{plugin}{TARGET_EXT_MAP[target]}"
     print(f"{BLUE}Running codesign for '{file}'.{BLACK}")
     if not os.path.exists(file):
         print(f"{YELLOW}Artifact '{file}' not found. Skipping.{BLACK}")
@@ -323,7 +329,7 @@ def notarizePlugin(
     Returns:
         bool: True on success.
     """
-    file = f"{ARTIFACTS_DIR}/{target}/{plugin}.{TARGET_EXT_MAP[target]}"
+    file = f"{ARTIFACTS_DIR}/{target}/{plugin}{TARGET_EXT_MAP[target]}"
     print(f"{BLUE}Running codesign for '{file}'.{BLACK}")
     if not os.path.exists(file):
         print(f"{RED}Artifact '{file}' not found.{BLACK}")
@@ -334,7 +340,7 @@ def notarizePlugin(
         [
             "zip",
             f"../../{tmpZipFile}",
-            f"{plugin}.{TARGET_EXT_MAP[target]}",
+            f"{plugin}{TARGET_EXT_MAP[target]}",
             "-r",
         ],
         check=False,
@@ -430,9 +436,8 @@ def staplePlugins(plugins: list[str], targets: list[str]) -> bool:
     """
     print(f"{BLUE}Stapling plugins.{BLACK}")
     for target in targets:
-        extension = TARGET_EXT_MAP[target]
         for plugin in plugins:
-            path = f"{ARTIFACTS_DIR}/{target}/{plugin}.{extension}"
+            path = f"{ARTIFACTS_DIR}/{target}/{plugin}{TARGET_EXT_MAP[target]}"
             if not staple(path):
                 return False
     return True
