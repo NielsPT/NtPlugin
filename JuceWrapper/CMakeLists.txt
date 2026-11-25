@@ -252,18 +252,18 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   endif()
 
   if(WEBCORE_FOUND)
-    target_include_directories(${JUCE_PLUGIN_TARGETS} PRIVATE ${WEBCORE_INCLUDE_DIRS})
-    target_link_libraries(${JUCE_PLUGIN_TARGETS} PRIVATE ${WEBCORE_LIBRARIES})
+    target_include_directories(${NTFX_PLUGIN} PRIVATE ${WEBCORE_INCLUDE_DIRS})
+    target_link_libraries(${NTFX_PLUGIN} PRIVATE ${WEBCORE_LIBRARIES})
     # GTK is a dependency of WebKit, but sometimes needs explicit linking
     pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
-    target_include_directories(${JUCE_PLUGIN_TARGETS} PRIVATE ${GTK3_INCLUDE_DIRS})
-    target_link_libraries(${JUCE_PLUGIN_TARGETS} PRIVATE ${GTK3_LIBRARIES})
+    target_include_directories(${NTFX_PLUGIN} PRIVATE ${GTK3_INCLUDE_DIRS})
+    target_link_libraries(${NTFX_PLUGIN} PRIVATE ${GTK3_LIBRARIES})
   else()
     message(FATAL_ERROR "WebKit2GTK not found. Please install webkit2gtk-4.1-devel or webkit2gtk-4.0-devel")
   endif()
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   # macOS: JUCE usually handles this, but we can ensure it's linked
-  target_link_libraries(${JUCE_PLUGIN_TARGETS} PRIVATE WebKit)
+  target_link_libraries(${NTFX_PLUGIN} PRIVATE WebKit)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
   # Windows: Uses WebView2 or CEF. JUCE handles the find_package.
   # No extra action needed if using JUCE's built-in web view.
