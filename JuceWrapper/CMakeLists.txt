@@ -224,19 +224,24 @@ endif()
 
 set(VENV_PYTHON "${CMAKE_SOURCE_DIR}/../.venv/bin/python")
 
-# Collect all possible plugin executable targets
-# CMake ignores non-existent targets in DEPENDS, so this is safe for all platforms
-set(ALL_FORMAT_TARGETS
-  ${NTFX_PLUGIN}_VST3
-  ${NTFX_PLUGIN}_Standalone
-  ${NTFX_PLUGIN}_AAX
-  ${NTFX_PLUGIN}_AU
-)
+# Build a list of only the targets that actually exist
+set(EXISTING_FORMAT_TARGETS "")
+foreach(FMT VST3 Standalone AAX AU VST2)
+  # Check if the target was actually created by juce_add_plugin
+  if(TARGET ${NTFX_PLUGIN}_${FMT})
+    list(APPEND EXISTING_FORMAT_TARGETS ${NTFX_PLUGIN}_${FMT})
+  endif()
+endforeach()
+
+# Verify we found something, otherwise the script won't run
+if(NOT EXISTING_FORMAT_TARGETS)
+  message(FATAL_ERROR "No plugin format targets found for ${NTFX_PLUGIN}")
+endif()
 
 add_custom_target(ntfx_store_manual ALL
   COMMAND ${VENV_PYTHON} -c
   "from ntPlugin import build; build.storeManual('${NTFX_PLUGIN}')"
-  DEPENDS ${ALL_FORMAT_TARGETS}
+  DEPENDS ${EXISTING_FORMAT_TARGETS}
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/..
   VERBATIM
 )

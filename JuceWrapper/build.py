@@ -431,7 +431,8 @@ def storeManual(plugin: str) -> bool:
                 targets += [e.path.replace(art, "")]
         for target in targets:
             dst = f"{art}/{target}/{plugin}.{TARGET_EXT_MAP[target]}"
-            convertAndStoreManual(plugin, dst)
+            if not convertAndStoreManual(plugin, dst):
+                return False
             print(f"{GREEN}Stored manual for {plugin} {bType} {target}.{BLACK}")
     return True
 
