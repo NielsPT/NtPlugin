@@ -399,8 +399,9 @@ def storeArtifacts(plugin: str) -> bool:
         dstDir = f"{ARTIFACTS_DIR}{os.sep}{target}"
         dst = f"{dstDir}{os.sep}{plugin}{TARGET_EXT_MAP[target]}"
         os.makedirs(dstDir, exist_ok=True)
-        print(f"{BLUE}Removing old artifact '{dst}'.{BLACK}")
-        subprocess.run(["/usr/bin/xattr", "-cr", dst], check=False)
+        if sys.platform == "darwin":
+            print(f"{BLUE}Removing old artifact '{dst}'.{BLACK}")
+            subprocess.run(["/usr/bin/xattr", "-cr", dst], check=False)
         try:
             shutil.rmtree(dst)
         except FileNotFoundError:
@@ -429,7 +430,7 @@ def storeManual(plugin: str) -> bool:
             if e.is_dir():
                 targets += [e.path.replace(art, "")]
         for target in targets:
-            if sys.platform != "darwin" and target == "standalone":
+            if sys.platform != "darwin" and target == "Standalone":
                 continue
             dst = f"{art}/{target}/{plugin}{TARGET_EXT_MAP[target]}"
             if not convertAndStoreManual(plugin, dst):
