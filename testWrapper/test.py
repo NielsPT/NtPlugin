@@ -431,6 +431,7 @@ def plotTimeDomain(
     )
     p.savefig(filename, dpi=300, bbox_inches="tight")
     p.clf()
+    print(f"{BLUE}Plot stored at {filename}.{BLACK}")
 
 
 def plotFrequencyDomain(
@@ -490,6 +491,7 @@ def plotFrequencyDomain(
     )
     p.savefig(filename, dpi=300, bbox_inches="tight")
     p.clf()
+    print(f"{BLUE}Plot stored at {filename}.{BLACK}")
 
 
 def plotSpectrum(
@@ -527,6 +529,7 @@ def plotSpectrum(
     )
     p.savefig(filename, dpi=300, bbox_inches="tight")
     p.clf()
+    print(f"{BLUE}Plot stored at {filename}.{BLACK}")
 
 
 def plotDynamic(
@@ -576,6 +579,7 @@ def plotDynamic(
     )
     p.savefig(filename, dpi=300, bbox_inches="tight")
     p.clf()
+    print(f"{BLUE}Plot stored at {filename}.{BLACK}")
 
 
 def plotSweeps(
@@ -773,9 +777,6 @@ def _plotSignal(
         d /= n**0.5
     if "sin" in stimulus or "dualSin" in stimulus:
         d /= n
-    print(
-        f"{BLUE}Plotting '{stimulus}' for file '{testFileName}'. {n=}, {np.shape(d)=}.{BLACK}"
-    )
     imgFileName = f"{FILE_DIR}/img/{testFileName}{SEPARATOR}{stimulus}"
     plotImpulse(
         d,
