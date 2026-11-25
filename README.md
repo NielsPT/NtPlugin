@@ -70,7 +70,7 @@ sudo apt install -y git cmake libasound2-dev libjack-jackd2-dev ladspa-sdk libcu
 
 ```sh
 sudo dnf update
-sudo dnf install -y g++ git cmake alsa-lib-devel jack-audio-connection-kit-devel.aarch64 libcurl-devel freetype-devel libX11-devel libXcomposite-devel libXcursor-devel libXinerama-devel freeglut-devel gnutils-devel libstdc++-static ladspa-devel webkit2gtk4.0-devel.aarch64 gtk3-devel mesa-libGL-devel
+sudo dnf install -y g++ git cmake alsa-lib-devel jack-audio-connection-kit-devel.aarch64 libcurl-devel freetype-devel libX11-devel libXcomposite-devel libXcursor-devel libXinerama-devel freeglut-devel gnutils-devel libstdc++-static ladspa-devel webkit2gtk4.1-devel.aarch64 gtk3-devel mesa-libGL-devel
 ```
 
 ### Try it out

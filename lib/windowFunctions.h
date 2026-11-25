@@ -22,6 +22,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#define _USE_MATH_DEFINES
+
 #include <cassert>
 #include <cmath>
 #include <complex>
