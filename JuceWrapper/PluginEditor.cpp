@@ -120,7 +120,7 @@ void _openManualInBrowser() {
   #if JUCE_MAC
   cmd = "open ";
   #elif JUCE_WINDOWS
-  cmd = "start msedge "
+  cmd = "start msedge ";
   #endif
   auto st = cmd + manPath;
   system(st.toRawUTF8());
