@@ -40,15 +40,13 @@ add_subdirectory(JUCE) # If you've put JUCE in a subdirectory called JUCE
 # add_subdirectory(lib)
 # add_subdirectory(plugins)
 
+set(NTFX_FORMATS AU VST3 Standalone)
+
 # If you are building a VST2 or AAX plugin, CMake needs to be told where to find these SDKs on your
 # system. This setup should be done before calling `juce_add_plugin`.
 # juce_set_vst2_sdk_path(...)
 # If you want to build AAX plugins, you need to provide this directory.
 set(NTFX_AAX_SDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/aax-sdk-2-9-0")
-
-
-set(NTFX_FORMATS AU VST3 Standalone)
-
 if(EXISTS ${NTFX_AAX_SDK_DIR})
   juce_set_aax_sdk_path(${NTFX_AAX_SDK_DIR})
   list(APPEND NTFX_FORMATS AAX)
@@ -183,10 +181,10 @@ target_sources(${NTFX_PLUGIN}
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   set(NTFX_WEB_BROWSER "JUCE_WEB_BROWSER=1")
 else()
-  set(NTFX_WEBKIT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/aax-sdk-2-9-0")
+  set(NTFX_WEBKIT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/microsoft.web.webview2.1.0.4370.26")
   if(EXISTS ${NTFX_WEBKIT_DIR})
     set(NTFX_WEB_BROWSER "JUCE_WEB_BROWSER=1")
-
+    message(STATUS "Building with integrated web browser.")
   else()
     set(NTFX_WEB_BROWSER "JUCE_WEB_BROWSER=0")
     message(STATUS "Building without integrated web browser.")
