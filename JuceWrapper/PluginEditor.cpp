@@ -126,8 +126,8 @@ void _openManualInBrowser() {
 #else
   juce::NativeMessageBox::showMessageBoxAsync(
       juce::MessageBoxIconType::WarningIcon,
-      "Opening manual",
-      "Opening manual at " + manPath + ". binPath: " + binPath);
+      "No integrated browser",
+      "binPath: " + binPath);
   juce::String cmd = "xdg-open ";
   #if JUCE_MAC
   cmd = "open ";
