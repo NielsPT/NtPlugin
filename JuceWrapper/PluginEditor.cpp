@@ -130,7 +130,7 @@ void _openManualInBrowser() {
   #elif JUCE_WINDOWS
   juce::NativeMessageBox::showMessageBoxAsync(
       juce::MessageBoxIconType::WarningIcon,
-      "Opening manual at " + namPath + ". binPath: " + binPath);
+      "Opening manual at " + manPath + ". binPath: " + binPath);
   cmd = "start msedge ";
   #endif
   auto st = cmd + manPath;
