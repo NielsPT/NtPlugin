@@ -32,7 +32,6 @@
 #include "juce_events/juce_events.h"
 #include "juce_graphics/juce_graphics.h"
 #include "juce_gui_basics/juce_gui_basics.h"
-#include "juce_gui_extra/juce_gui_extra.h"
 #include "utils.h"
 
 #include <cstddef>
@@ -42,7 +41,14 @@
 #include <utility>
 #include <vector>
 
+#if JUCE_WEB_BROWSER
+  #include "juce_gui_extra/juce_gui_extra.h"
+#endif
+
 #if JUCE_WINDOWS
+  #ifndef NOMINMAX
+    #define NOMINMAX
+  #endif
   #include <windows.h>
 #elif JUCE_LINUX || JUCE_MAC
   #include <dlfcn.h>
@@ -389,7 +395,7 @@ void Editor::_initWindowWidth(int nCols) {
   this->knobGroupWidth += 2 * this->proc.plug.uiSpec.groupPad;
   auto mainAreaWidth = primKnobsWidth + this->knobGroupWidth;
   width += gcem::max(mainAreaWidth, secKnobWidth);
-  this->unscaledWindowWidth = gcem::max(titleBarWidth, width);
+  this->unscaledWindowWidth = int(gcem::max(titleBarWidth, width));
 }
 
 void Editor::_initWindowHeight(int nRows) {
