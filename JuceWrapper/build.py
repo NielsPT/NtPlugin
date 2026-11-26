@@ -404,7 +404,7 @@ def storeArtifacts(plugin: str) -> bool:
             subprocess.run(["/usr/bin/xattr", "-cr", dst], check=False)
         try:
             shutil.rmtree(dst)
-        except FileNotFoundError:
+        except FileNotFoundError, NotADirectoryError:
             pass
         src = f"{art}{target}"
         shutil.copytree(src, dstDir, dirs_exist_ok=True)
