@@ -1028,11 +1028,15 @@ def run(args: dict):
         ),
     )
     success = True
-    for c in returncodes:
+    failedFiles = []
+    for i, c in enumerate(returncodes):
         if c < 0:
             print(f"{RED}ABORT{BLACK}")
             return False
-        success &= c == 0
+        if c != 0:
+            success = False
+            failedFiles += [files[i]]
+
     results = _readAggregateResults()
     if not results:
         return True
@@ -1051,6 +1055,8 @@ def run(args: dict):
         st = "FAILED"
     print(f"TESTS {st}")
     print("\033[0m", end="")
+    if failedFiles:
+        print(f"Files with failure: \n{json.dumps(failedFiles, indent=2)}")
     return success
 
 

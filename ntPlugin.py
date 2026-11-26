@@ -24,6 +24,7 @@ import argparse
 import subprocess
 import time
 import json
+import shutil
 from testWrapper import test
 from JuceWrapper import package
 from JuceWrapper.package import RED, YELLOW, BLACK, PLUGINS_DIR
@@ -200,6 +201,47 @@ int main() {{
     return True
 
 
+def askForRootPassword() -> bool:
+    result = subprocess.run(["sudo", "-k", "-v"], check=False, text=True)
+    if result.returncode:
+        return False
+    return True
+
+
+def clean(args: dict) -> bool:
+    if args["deep"]:
+        shutil.rmtree(build.BUILD_DIR)
+    else:
+        if not build.clean():
+            return False
+    if args["plugins"] and args["plugins"] != ["all"]:
+        plugins = args["plugins"]
+    else:
+        plugins = package.readPlugins()
+    if sys.platform == "darwin":
+        if not cleanSignedPluginsMac(plugins):
+            return False
+    return True
+
+
+def cleanSignedPluginsMac(plugins: list[str]) -> bool:
+    paths = []
+    for plugin in plugins:
+        p = f"/Library/Application Support/Avid/Audio/Plug-Ins/{plugin}.aaxplugin"
+        if not os.path.exists(p):
+            continue
+        paths += [p]
+    for plugin in plugins:
+        p = f"{build.BUILD_DIR}/{plugin}_artefacts"
+        if not os.path.exists(p):
+            continue
+        paths += [p]
+    res = subprocess.run(["sudo", "rm", "-fr"] + paths, check=False)
+    if res.returncode:
+        return False
+    return True
+
+
 def process(args: dict) -> bool:
     """
     Configures, builds and tests all plugins.
@@ -233,6 +275,15 @@ def createParser() -> argparse.ArgumentParser:
         description="Builds and tests all plugins."
     )
     subParsers = parser.add_subparsers(dest="task")
+    cleanParser = subParsers.add_parser(
+        "clean", help="Cleans build dir and installed AAX plugins."
+    )
+    cleanParser.add_argument(
+        "--deep", help="Deletes the entire build dir.", action="store_true"
+    )
+    cleanParser.add_argument(
+        "plugins", nargs="*", help="Plugins to clean.", default=["all"]
+    )
     subParsers.add_parser(
         "build",
         help="Build plugins.",
@@ -279,6 +330,8 @@ def main(args: dict) -> bool:
     Returns:
         bool: True on success.
     """
+    if args["task"] == "clean":
+        return clean(args)
     if args["task"] == "build":
         return process(args)
     if args["task"] == "test":

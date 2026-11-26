@@ -465,6 +465,13 @@ def buildPlugins(
     return True
 
 
+def clean() -> bool:
+    res = subprocess.run(
+        ["cmake", "--build", BUILD_DIR, "--target", "clean"], check=False
+    )
+    return res.returncode == 0
+
+
 def main(args: dict) -> bool:
     plugins = args["plugins"]
     allPlugins = package.readPlugins()
