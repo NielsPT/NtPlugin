@@ -278,3 +278,4 @@ JuceWrapper/external/*
 .secrets.txt
 compile_commands.json
 JuceWrapper/Plugins.h
+JuceWrapper/microsoft.web.webview2*

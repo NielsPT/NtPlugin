@@ -177,11 +177,20 @@ target_sources(${NTFX_PLUGIN}
 # definitions will be visible both to your code, and also the JUCE module code, so for new
 # definitions, pick unique names that are unlikely to collide! This is a standard CMake command.
 
+
+
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   set(NTFX_WEB_BROWSER "JUCE_WEB_BROWSER=1")
 else()
-  set(NTFX_WEB_BROWSER "JUCE_WEB_BROWSER=0")
-  message(STATUS "Building without integrated web browser.")
+  set(NTFX_WEBKIT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/aax-sdk-2-9-0")
+  if(EXISTS ${NTFX_WEBKIT_DIR})
+    set(NTFX_WEB_BROWSER "JUCE_WEB_BROWSER=1")
+
+  else()
+    set(NTFX_WEB_BROWSER "JUCE_WEB_BROWSER=0")
+    message(STATUS "Building without integrated web browser.")
+  endif()
 endif()
 
 target_compile_definitions(${NTFX_PLUGIN}
