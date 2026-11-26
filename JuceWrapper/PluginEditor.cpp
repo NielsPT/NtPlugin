@@ -112,13 +112,15 @@ struct ManualWindow : public juce::DocumentWindow {
   }
 };
 #endif
-
+// file:///C:/git/NtPlugin/artifacts/VST3/ntKleinReverb.vst3/Contents/x86_64-win/ntKleinReverb.vst3/Contents/Resources/manual.html
 void _openManualInBrowser() {
   auto binPath    = _getAbsolutePathOfPlugin();
   size_t pos      = binPath.find("/Contents/");
   auto bundlePath = binPath.substr(0, pos);
   auto manPath    = bundlePath + "/Contents/Resources/manual.html";
+  DBG("binPath: " + binPath);
   DBG(NTFX_PLUGIN_NAME + ": Opening manual at '" + manPath + "'.");
+
 #if JUCE_WEB_BROWSER
   new ManualWindow("file://" + manPath);
 #else
@@ -126,6 +128,9 @@ void _openManualInBrowser() {
   #if JUCE_MAC
   cmd = "open ";
   #elif JUCE_WINDOWS
+  juce::NativeMessageBox::showMessageBoxAsync(
+      juce::MessageBoxIconType::WarningIcon,
+      "Opening manual at " + namPath + ". binPath: " + binPath);
   cmd = "start msedge ";
   #endif
   auto st = cmd + manPath;
