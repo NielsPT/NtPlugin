@@ -87,6 +87,7 @@ std::string _getAbsolutePathOfPlugin() {
 #endif
 }
 
+#if JUCE_WEB_BROWSER
 struct ManualWindow : public juce::DocumentWindow {
   juce::WebBrowserComponent* _browser;
   ManualWindow(const juce::String& url)
@@ -104,6 +105,7 @@ struct ManualWindow : public juce::DocumentWindow {
     delete this;
   }
 };
+#endif
 
 void _openManualInBrowser() {
   auto binPath    = _getAbsolutePathOfPlugin();
@@ -111,7 +113,18 @@ void _openManualInBrowser() {
   auto bundlePath = binPath.substr(0, pos);
   auto manPath    = bundlePath + "/Contents/Resources/manual.html";
   DBG(NTFX_PLUGIN_NAME + ": Opening manual at '" + manPath + "'.");
+#if JUCE_WEB_BROWSER
   new ManualWindow("file://" + manPath);
+#else
+  juce::String cmd = "xdg-open ";
+  #if JUCE_MAC
+  cmd = "open ";
+  #elif JUCE_WINDOWS
+  cmd = "start msedge "
+  #endif
+  auto st = cmd + manPath;
+  system(st.toRawUTF8());
+#endif
 }
 }
 
