@@ -771,15 +771,15 @@ def main(args: dict) -> bool:
         print(f"{RED}Version is not provided. Aborting.{BLACK}")
         return False
     if sys.platform == "win32":
-        if "AAX" in targets:
-            if not sign(
-                plugins,
-                ["AAX"],
-                secrets["devId"],
-                secrets["company"],
-                secrets["aaxCustomerNumber"],
-            ):
-                return False
+        # if "AAX" in targets:
+        #     if not sign(
+        #         plugins,
+        #         ["AAX"],
+        #         secrets["devId"],
+        #         secrets["company"],
+        #         secrets["aaxCustomerNumber"],
+        #     ):
+        #         return False
         return zipPackage(plugins, targets, version)
     if sys.platform != "darwin":
         return zipPackage(plugins, ["VST3"], version)
