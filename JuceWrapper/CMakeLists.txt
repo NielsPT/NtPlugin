@@ -230,7 +230,11 @@ if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
   add_subdirectory(tests)
 endif()
 
-set(VENV_PYTHON "${CMAKE_SOURCE_DIR}/../.venv/bin/python")
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+  set(VENV_PYTHON "${CMAKE_SOURCE_DIR}/../.venv/Scripts/python")
+else()
+  set(VENV_PYTHON "${CMAKE_SOURCE_DIR}/../.venv/bin/python")
+endif()
 
 # Build a list of only the targets that actually exist
 set(EXISTING_FORMAT_TARGETS "")
@@ -246,7 +250,7 @@ if(NOT EXISTING_FORMAT_TARGETS)
   message(FATAL_ERROR "No plugin format targets found for ${NTFX_PLUGIN}")
 endif()
 
-if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
   add_custom_command(TARGET ${NTFX_PLUGIN} POST_BUILD
     COMMAND ${VENV_PYTHON} -c
     "from ntPlugin import build; build.storeManual('${NTFX_PLUGIN}')"
