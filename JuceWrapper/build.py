@@ -346,7 +346,7 @@ def convertAndStoreManual(plugin: str, bundleDir: str) -> bool:
         return False
     manPath = f"{manualsDir}/{plugin}.md"
     if not os.path.exists(manPath):
-        print(f"{RED}File '{manPath}' does not exist.{BLACK}")
+        print(f"{YELLOW}No manual found at path '{manPath}' .{BLACK}")
         return False
     dst = f"{bundleDir}/Contents/Resources/manual.html"
     orgDir = os.getcwd()
