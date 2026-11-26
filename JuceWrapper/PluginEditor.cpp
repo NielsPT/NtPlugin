@@ -124,13 +124,14 @@ void _openManualInBrowser() {
 #if JUCE_WEB_BROWSER
   new ManualWindow("file://" + manPath);
 #else
+  juce::NativeMessageBox::showMessageBoxAsync(
+      juce::MessageBoxIconType::WarningIcon,
+      "Opening manual",
+      "Opening manual at " + manPath + ". binPath: " + binPath);
   juce::String cmd = "xdg-open ";
   #if JUCE_MAC
   cmd = "open ";
   #elif JUCE_WINDOWS
-  juce::NativeMessageBox::showMessageBoxAsync(
-      juce::MessageBoxIconType::WarningIcon,
-      "Opening manual at " + manPath + ". binPath: " + binPath);
   cmd = "start msedge ";
   #endif
   auto st = cmd + manPath;
