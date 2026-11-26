@@ -757,7 +757,8 @@ def main(args: dict) -> bool:
     plugins = args["plugins"]
     targets = list(TARGET_EXT_MAP.keys())
     if sys.platform != "darwin":
-        targets = ["VST3", "AAX"]
+        # TODO: Fix AAX build for windows and add AAX here.
+        targets = ["VST3"]
     if "targets" in args and args["targets"]:
         targets = args["targets"]
     if not plugins or plugins == ["all"]:
@@ -771,15 +772,15 @@ def main(args: dict) -> bool:
         print(f"{RED}Version is not provided. Aborting.{BLACK}")
         return False
     if sys.platform == "win32":
-        # if "AAX" in targets:
-        #     if not sign(
-        #         plugins,
-        #         ["AAX"],
-        #         secrets["devId"],
-        #         secrets["company"],
-        #         secrets["aaxCustomerNumber"],
-        #     ):
-        #         return False
+        if "AAX" in targets:
+            if not sign(
+                plugins,
+                ["AAX"],
+                secrets["devId"],
+                secrets["company"],
+                secrets["aaxCustomerNumber"],
+            ):
+                return False
         return zipPackage(plugins, targets, version)
     if sys.platform != "darwin":
         return zipPackage(plugins, ["VST3"], version)
