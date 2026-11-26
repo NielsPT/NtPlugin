@@ -180,7 +180,7 @@ def signNonAxxPlugin(plugin: str, target: str, devId: str) -> bool:
     print(f"{BLUE}Running codesign for '{file}'.{BLACK}")
     if not os.path.exists(file):
         print(f"{YELLOW}Artifact '{file}' not found. Skipping.{BLACK}")
-        return False
+        return True
     res = subprocess.run(
         [
             "codesign",
@@ -339,7 +339,7 @@ def notarizePlugin(
     res = subprocess.run(
         [
             "zip",
-            f"../../{tmpZipFile}",
+            f"{tmpZipFile}",
             f"{plugin}{TARGET_EXT_MAP[target]}",
             "-r",
         ],
@@ -479,13 +479,15 @@ def zipPackage(plugins: list[str], targets: list[str], version: str) -> bool:
     Returns:
         bool: True on success.
     """
-    targetDirs = [f"{ARTIFACTS_DIR}/{d}" for d in targets]
+    # targetDirs = [f"{ARTIFACTS_DIR}/{d}" for d in targets]
+    os.chdir(ARTIFACTS_DIR)
     files = []
-    for target in targetDirs:
+    for target in targets:
         _plugins = os.listdir(target)
         for _plugin in _plugins:
             if _plugin.split(".")[0] in plugins:
                 files += [f"{target}/{_plugin}"]
+
     zipFileName = PACKAGE_ARTIFACT
     if len(plugins) == 1:
         zipFileName = plugins[0]
@@ -494,6 +496,7 @@ def zipPackage(plugins: list[str], targets: list[str], version: str) -> bool:
         ["zip", "-r", outPath] + files,
         check=False,
     )
+    os.chdir(REPO_BASE_DIR)
     if res.returncode:
         print(f"{RED}Failed to zip.{BLACK}")
         return False
