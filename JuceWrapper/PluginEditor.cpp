@@ -116,7 +116,16 @@ struct ManualWindow : public juce::DocumentWindow {
 void _openManualInBrowser() {
   auto binPath = _getAbsolutePathOfPlugin();
   std::replace(binPath.begin(), binPath.end(), '\\', '/');
-  size_t pos      = binPath.find("/Contents/");
+  size_t pos = binPath.find("/Contents/");
+
+  if (pos == std::string::npos) {
+    juce::NativeMessageBox::showMessageBoxAsync(
+        juce::MessageBoxIconType::WarningIcon,
+        "Error",
+        "Failed to open manual.");
+    return;
+  }
+
   auto bundlePath = binPath.substr(0, pos);
   auto manPath    = bundlePath + "/Contents/Resources/manual.html";
   DBG("binPath: " + binPath);
@@ -125,10 +134,6 @@ void _openManualInBrowser() {
 #if JUCE_WEB_BROWSER
   new ManualWindow("file://" + manPath);
 #else
-  juce::NativeMessageBox::showMessageBoxAsync(
-      juce::MessageBoxIconType::WarningIcon,
-      "No integrated browser",
-      "binPath: " + binPath);
   juce::String cmd = "xdg-open ";
   #if JUCE_MAC
   cmd = "open ";
