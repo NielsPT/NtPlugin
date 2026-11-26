@@ -181,6 +181,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   set(NTFX_WEB_BROWSER "JUCE_WEB_BROWSER=1")
 else()
   set(NTFX_WEB_BROWSER "JUCE_WEB_BROWSER=0")
+  message(STATUS "Building without integrated web browser.")
 endif()
 
 target_compile_definitions(${NTFX_PLUGIN}
