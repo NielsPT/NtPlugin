@@ -114,7 +114,8 @@ struct ManualWindow : public juce::DocumentWindow {
 #endif
 // file:///C:/git/NtPlugin/artifacts/VST3/ntKleinReverb.vst3/Contents/x86_64-win/ntKleinReverb.vst3/Contents/Resources/manual.html
 void _openManualInBrowser() {
-  auto binPath    = _getAbsolutePathOfPlugin();
+  auto binPath = _getAbsolutePathOfPlugin();
+  std::replace(binPath.begin(), binPath.end(), '\\', '/');
   size_t pos      = binPath.find("/Contents/");
   auto bundlePath = binPath.substr(0, pos);
   auto manPath    = bundlePath + "/Contents/Resources/manual.html";
