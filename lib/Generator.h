@@ -26,6 +26,7 @@
 #include "lib/SoftClip.h"
 #include "lib/Tilt.h"
 #include <cstddef>
+#include <stdint.h>
 
 namespace NtFx {
 
