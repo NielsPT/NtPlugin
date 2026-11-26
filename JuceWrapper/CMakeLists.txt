@@ -246,7 +246,7 @@ if(NOT EXISTING_FORMAT_TARGETS)
   message(FATAL_ERROR "No plugin format targets found for ${NTFX_PLUGIN}")
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
   add_custom_command(TARGET ${NTFX_PLUGIN} POST_BUILD
     COMMAND ${VENV_PYTHON} -c
     "from ntPlugin import build; build.storeManual('${NTFX_PLUGIN}')"
