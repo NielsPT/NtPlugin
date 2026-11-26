@@ -88,6 +88,7 @@ std::string _getAbsolutePathOfPlugin() {
 }
 
 #if JUCE_WEB_BROWSER
+  #warning "JUCE_WEB_BROWSER"
 struct ManualWindow : public juce::DocumentWindow {
   juce::WebBrowserComponent* _browser;
   ManualWindow(const juce::String& url)
