@@ -162,7 +162,7 @@ struct UiSpec {
   float radioButtonHeight { 25 };     ///< Height of each separate radio button.
   float radioButtonAreaWidth { 125 }; ///< Width of the radio buttons ares.
   float knobWidth { 150 };            ///< Width of primary knobs.
-  float knobHeightRatio { 1.15 };
+  float knobHeightRatio { 1.33 };
   float secondaryKnobWidth { 75 };   ///< Width of secondary knobs in UI.
   float secondaryKnobHeight { 115 }; ///< Height of secondary knobs in UI.
   float titleBarHeight { 22 };       ///< Height of title bar in pixels.
