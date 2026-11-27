@@ -404,7 +404,8 @@ void Editor::_initWindowHeight(int nRows) {
   if (this->proc.plug.uiSpec.includeTitleBar) {
     height += this->proc.plug.uiSpec.titleBarHeight;
   }
-  auto primHeight = float(nRows) * this->proc.plug.uiSpec.knobHeight;
+  auto primHeight = float(nRows) * this->proc.plug.uiSpec.knobWidth
+      * this->proc.plug.uiSpec.knobHeightRatio;
   height += primHeight;
   if (this->proc.plug.secondaryKnobs.size() != 0) {
     height += this->proc.plug.uiSpec.secondaryKnobHeight;
@@ -715,9 +716,7 @@ void Editor::_placeKnobGroups(juce::Rectangle<int>& area) {
     this->knobGroupLabels[i]->setBounds(groupLableArea);
     auto nRhs = g.primaryKnobs.size() / 2;
     auto nLhs = nRhs + g.primaryKnobs.size() % 2;
-    if (g.primaryKnobs.size()
-        // if (this->_getNKnobsInLargestKnobGroup()
-        <= this->proc.plug.uiSpec.nGroupRows) {
+    if (g.primaryKnobs.size() <= this->proc.plug.uiSpec.nGroupRows) {
       this->_placeGruopKnobColumn(
           groupArea, g.primaryKnobs.size(), i, 1, false);
     } else {
@@ -778,9 +777,9 @@ void Editor::_placePrimaryKnobs(juce::Rectangle<int>& area) {
   size_t iKnob     = 0;
   auto columnWidth = knobsArea.getWidth() / int(nColumns);
   auto rowHeight   = knobsArea.getHeight() / int(nRows);
-  if (rowHeight > int(this->proc.plug.uiSpec.knobHeight * this->uiScale)) {
-    rowHeight = int(this->proc.plug.uiSpec.knobHeight * this->uiScale);
-  }
+  auto knobHeight  = int(this->proc.plug.uiSpec.knobWidth
+      * this->proc.plug.uiSpec.knobHeightRatio * this->uiScale);
+  if (rowHeight > knobHeight) { rowHeight = knobHeight; }
   for (size_t i = 0; i < nRows; i++) {
     auto rowArea = knobsArea.removeFromTop(rowHeight);
     rowArea.removeFromTop(pad);

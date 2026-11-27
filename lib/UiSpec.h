@@ -162,13 +162,13 @@ struct UiSpec {
   float radioButtonHeight { 25 };     ///< Height of each separate radio button.
   float radioButtonAreaWidth { 125 }; ///< Width of the radio buttons ares.
   float knobWidth { 150 };            ///< Width of primary knobs.
-  float knobHeight { 200 };           ///< Height or row of knobs in grid in UI.
-  float secondaryKnobWidth { 75 };    ///< Width of secondary knobs in UI.
-  float secondaryKnobHeight { 115 };  ///< Height of secondary knobs in UI.
-  float titleBarHeight { 22 };        ///< Height of title bar in pixels.
-  float meterWidth { 35 };            ///< Width of each meter in pixels.
-  float meterRefreshRate_hz { 50 };   ///< Refresh rate of meters in the UI.
-  float groupWidth { 200 };           ///< Width of each knob group, if in use.
+  float knobHeightRatio { 1.15 };
+  float secondaryKnobWidth { 75 };   ///< Width of secondary knobs in UI.
+  float secondaryKnobHeight { 115 }; ///< Height of secondary knobs in UI.
+  float titleBarHeight { 22 };       ///< Height of title bar in pixels.
+  float meterWidth { 35 };           ///< Width of each meter in pixels.
+  float meterRefreshRate_hz { 50 };  ///< Refresh rate of meters in the UI.
+  float groupWidth { 200 };          ///< Width of each knob group, if in use.
   float groupEvenColOffset {
     40
   }; ///< How many pixels the right column is moved down in relation to the left

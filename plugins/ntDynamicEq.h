@@ -155,9 +155,6 @@ struct ntDynamicEq final : public NtFx::Plugin {
       });
     }
     this->meters[meters.size() - 1].hasScale = true;
-    this->uiSpec.maxColumns                  = Bands::n;
-    this->uiSpec.maxRows                     = 8;
-    this->uiSpec.knobHeight                  = 140;
     this->bands[Bands::lf].settings.fc_hz    = 100;
     this->bands[Bands::loMid].settings.fc_hz = 500;
     this->bands[Bands::hiMid].settings.fc_hz = 2e3;
