@@ -401,11 +401,15 @@ def storeArtifacts(plugin: str) -> bool:
         os.makedirs(dstDir, exist_ok=True)
         if sys.platform == "darwin":
             print(f"{BLUE}Removing old artifact '{dst}'.{BLACK}")
-            subprocess.run(["/usr/bin/xattr", "-cr", dst], check=False)
-        try:
-            shutil.rmtree(dst)
-        except (FileNotFoundError, NotADirectoryError, PermissionError):
-            pass
+            res = subprocess.run(["rm", "-fr", dst], check=False)
+            if res.returncode:
+                print(f"{YELLOW}Failed to delete '{dst}'. Sudo needed.{BLACK}")
+                res = subprocess.run(["sudo", "rm", "-fr", dst], check=False)
+        else:
+            try:
+                shutil.rmtree(dst)
+            except (FileNotFoundError, NotADirectoryError, PermissionError):
+                pass
         src = f"{art}{target}"
         shutil.copytree(src, dstDir, dirs_exist_ok=True)
         print(f"{GREEN}Stored target {target} for plugin {plugin}.{BLACK}")
