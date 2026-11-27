@@ -349,8 +349,15 @@ def convertAndStoreManual(plugin: str, bundleDir: str) -> bool:
         print(f"{YELLOW}No manual found at path '{manPath}' .{BLACK}")
         return False
     dst = f"{bundleDir}/Contents/Resources/manual.html"
+    if not convertMdToHtml(manualsDir, manPath, dst):
+        return False
+    print(f"{GREEN}Stored manual for plugin '{plugin}' at '{dst}'.{BLACK}")
+    return True
+
+
+def convertMdToHtml(srcDir: str, src: str, dst: str) -> bool:
     orgDir = os.getcwd()
-    os.chdir(manualsDir)
+    os.chdir(srcDir)
     res = subprocess.run(
         [
             "pandoc",
@@ -362,7 +369,7 @@ def convertAndStoreManual(plugin: str, bundleDir: str) -> bool:
             "--css=style.css",
             "--embed-resources",
             "-i",
-            manPath,
+            src,
             "-o",
             dst,
         ],
@@ -372,7 +379,6 @@ def convertAndStoreManual(plugin: str, bundleDir: str) -> bool:
     if res.returncode:
         print(f"{RED}Failed to convert manual to html.{BLACK}")
         return False
-    print(f"{GREEN}Stored manual for plugin '{plugin}' at '{dst}'.{BLACK}")
     return True
 
 
