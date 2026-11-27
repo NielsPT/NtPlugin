@@ -24,6 +24,7 @@
 
 #include "lib/Audio.h"
 #include "lib/Component.h"
+#include "lib/gcem.h"
 #include "lib/utils.h"
 
 namespace NtFx {
@@ -78,6 +79,50 @@ namespace FirstOrder {
       this->_fs  = fs;
       this->_xn1 = 0;
       this->_yn1 = 0;
+      this->update();
+    }
+  };
+
+  template <class audio_t>
+  struct LoShelf : public ComponentBase<Audio> {
+    Filter<Shape::lpf> _filter;
+    signal_t gain_db { 0 };
+    signal_t fc_hz { 200 };
+    signal_t _gain_lin { 0 };
+    Audio process(Audio x) noexcept override {
+      return this->_filter.process(x) * this->_gain_lin + x;
+    }
+    void update() noexcept override {
+      auto a              = invDb(this->gain_db);
+      this->_gain_lin     = a - 1;
+      this->_filter.fc_hz = this->fc_hz / gcem::sqrt(a);
+      _filter.update();
+    }
+    void reset(signal_t fs) noexcept override {
+      this->_fs = fs;
+      _filter.reset(fs);
+      this->update();
+    }
+  };
+
+  template <class audio_t>
+  struct HiShelf : public ComponentBase<Audio> {
+    Filter<Shape::hpf> _filter;
+    signal_t gain_db { 0 };
+    signal_t fc_hz { 10000 };
+    signal_t _gain_lin { 0 };
+    Audio process(Audio x) noexcept override {
+      return this->_filter.process(x) * this->_gain_lin + x;
+    }
+    void update() noexcept override {
+      auto a              = invDb(this->gain_db);
+      this->_gain_lin     = a - 1;
+      this->_filter.fc_hz = this->fc_hz * gcem::sqrt(a);
+      _filter.update();
+    }
+    void reset(signal_t fs) noexcept override {
+      this->_fs = fs;
+      _filter.reset(fs);
       this->update();
     }
   };

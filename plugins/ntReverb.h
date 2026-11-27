@@ -42,8 +42,15 @@ struct ntReverb final : public NtFx::Plugin {
           {
               { &this->early.tBegin_ms, "First", " ms", 3, tEarlyMax_ms / 2 },
               { &this->early.tEnd_ms, "Last", " ms", 27, tEarlyMax_ms },
-              { &this->early.decayDepth, "Decay Depth", "", 0, 1 },
+              { &this->early.decayDepth, "Decay", "", 0, 1 },
               { &this->gEarly_db, "Level", " dB", -100, 0, -10 },
+          },
+      },
+      {
+          "Modulation",
+          {
+              { &this->tail.mod.depth_p, "Depth", " %", 0, 100 },
+              { &this->tail.mod.fMod_hz.ui, "Frequency", " Hz", 0.1, 20 },
           },
       },
       {
@@ -51,8 +58,6 @@ struct ntReverb final : public NtFx::Plugin {
           {
               { &this->tail.tBegin_ms, "First", " ms", 3, tLateMax_ms / 2 },
               { &this->tail.tEnd_ms, "Last", " ms", 27, tLateMax_ms },
-              { &this->tail.mod.depth_p, "Mod Depth", " %", 0, 100 },
-              { &this->tail.mod.fMod_hz.ui, "Mod Freq", " Hz", 0.1, 20 },
               { &this->tailClip.gain_db, "Drive", " dB", -24, 24 },
               { &this->gTail_db, "Level", " dB", -100, 0, -10 },
           },
@@ -122,7 +127,7 @@ struct ntReverb final : public NtFx::Plugin {
     this->bqCas.settings[1].fc_hz = 2e3;
     this->bqCas.settings[0].q     = 0.6;
     this->bqCas.settings[1].q     = 0.6;
-    this->uiSpec.nGroupRows       = 3;
+    this->uiSpec.nGroupRows       = 4;
     this->early.decayDepth        = 0.7;
     this->uiSpec.knobWidth        = 200;
     this->uiSpec.knobHeight       = 300;

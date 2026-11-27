@@ -112,7 +112,7 @@ struct ManualWindow : public juce::DocumentWindow {
   }
 };
 #endif
-// file:///C:/git/NtPlugin/artifacts/VST3/ntKleinReverb.vst3/Contents/x86_64-win/ntKleinReverb.vst3/Contents/Resources/manual.html
+
 void _openManualInBrowser() {
   auto binPath = _getAbsolutePathOfPlugin();
   std::replace(binPath.begin(), binPath.end(), '\\', '/');
@@ -128,7 +128,6 @@ void _openManualInBrowser() {
 
   auto bundlePath = binPath.substr(0, pos);
   auto manPath    = bundlePath + "/Contents/Resources/manual.html";
-  DBG("binPath: " + binPath);
   DBG(NTFX_PLUGIN_NAME + ": Opening manual at '" + manPath + "'.");
 
 #if JUCE_WEB_BROWSER
@@ -350,15 +349,6 @@ void Editor::_initWindowSize() {
   this->_initWindowHeight(int(nRows));
 }
 
-int Editor::_getNKnobsInLargestKnobGroup() {
-  int nGroupKnobsMax = 0;
-  for (auto& g : this->proc.plug.knobGroups) {
-    int s = int(g.primaryKnobs.size());
-    if (s > nGroupKnobsMax) { nGroupKnobsMax = s; }
-  }
-  return nGroupKnobsMax;
-}
-
 void Editor::_initWindowWidth(int nCols) {
   float pad              = 4.0f;
   float minDropDownWidth = 0;
@@ -396,14 +386,13 @@ void Editor::_initWindowWidth(int nCols) {
       + 4.0f * this->_pad;
   this->knobGroupWidth = 0;
   for (auto& g : this->proc.plug.knobGroups) {
-    float _w = 1;
-    if (g.primaryKnobs.size() <= this->proc.plug.uiSpec.nGroupRows) {
-      _w = 0.5;
+    if (int(g.primaryKnobs.size()) > this->proc.plug.uiSpec.nGroupRows) {
+      this->knobGroupWidth += this->proc.plug.uiSpec.groupWidth;
+    } else {
+      this->knobGroupWidth += this->proc.plug.uiSpec.groupWidth * 0.5f
+          + this->proc.plug.uiSpec.groupPad;
     }
-    this->knobGroupWidth += this->proc.plug.uiSpec.groupWidth * _w;
   }
-  // this->knobGroupWidth = float(this->proc.plug.knobGroups.size())
-  //     * this->proc.plug.uiSpec.groupWidth;
   this->knobGroupWidth += 2 * this->proc.plug.uiSpec.groupPad;
   auto mainAreaWidth = primKnobsWidth + this->knobGroupWidth;
   width += gcem::max(mainAreaWidth, secKnobWidth);
@@ -425,28 +414,28 @@ void Editor::_initWindowHeight(int nRows) {
   }
   if (this->proc.plug.knobGroups.size()) {
     height += this->proc.plug.uiSpec.labelHeight;
-    auto nGroupKnobsMax = this->_getNKnobsInLargestKnobGroup();
-    float groupsHeight { 0 };
-    if (nGroupKnobsMax <= this->proc.plug.uiSpec.nGroupRows) {
-      groupsHeight = (this->proc.plug.uiSpec.groupKnobHeight
-                         + this->proc.plug.uiSpec.groupPad)
-          * float(nGroupKnobsMax);
-    } else {
-      // groupsHeight += (this->proc.plug.uiSpec.groupKnobHeight
-      //                     + this->proc.plug.uiSpec.groupPad)
-      //     // * float(nGroupKnobsMax) * 0.5f;
-      //     * (float(nGroupKnobsMax % 2) + float(nGroupKnobsMax) * 0.5f);
-      // groupsHeight += float(!(nGroupKnobsMax % 2))
-      //     * this->proc.plug.uiSpec.groupEvenColOffset;
-      // groupsHeight -=
-      //     float(nGroupKnobsMax % 2) * this->proc.plug.uiSpec.groupKnobHeight;
-      // groupsHeight -=
-      //     this->proc.plug.uiSpec.groupEvenColOffset * float(nGroupKnobsMax %
-      //     2);
-      groupsHeight += (this->proc.plug.uiSpec.groupKnobHeight
-                          + this->proc.plug.uiSpec.groupPad)
-          * float(int(nGroupKnobsMax / 2) + nGroupKnobsMax % 2);
+    float heightLargestGroup { 0 };
+    for (auto& g : this->proc.plug.knobGroups) {
+      auto n = int(g.primaryKnobs.size());
+      float heightCurrGroup { 0 };
+      if (n <= this->proc.plug.uiSpec.nGroupRows) {
+        heightCurrGroup += (this->proc.plug.uiSpec.groupKnobHeight
+                               + this->proc.plug.uiSpec.groupPad)
+            * float(n);
+      } else {
+        heightCurrGroup += (this->proc.plug.uiSpec.groupKnobHeight
+                               + this->proc.plug.uiSpec.groupPad)
+            * float(int(n / 2) + n % 2);
+        if (!(n % 2)) {
+          heightCurrGroup += this->proc.plug.uiSpec.groupEvenColOffset;
+        }
+      }
+      if (heightCurrGroup > heightLargestGroup) {
+        heightLargestGroup = heightCurrGroup;
+      }
     }
+
+    float groupsHeight = heightLargestGroup;
     groupsHeight += this->proc.plug.uiSpec.labelHeight;
     groupsHeight += this->proc.plug.uiSpec.groupPad * 2;
     if (groupsHeight > primHeight) { height += groupsHeight - primHeight; }

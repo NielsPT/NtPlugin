@@ -164,13 +164,15 @@ struct ntEqualizer final : public NtFx::Plugin {
   }
 
   void _resetDefaultValues() {
+    this->orderHpf                       = second;
+    this->orderLpf                       = second;
     this->cascade.settings[fLo].shape    = NtFx::Biquad::Shape::loShelf;
-    this->cascade.settings[fLo].fc_hz    = 100;
-    this->cascade.settings[fLoMid].fc_hz = 200;
+    this->cascade.settings[fLo].fc_hz    = 200;
+    this->cascade.settings[fLoMid].fc_hz = 500;
     this->cascade.settings[fHiMid].fc_hz = 2e3;
     this->cascade.settings[fHi].shape    = NtFx::Biquad::Shape::hiShelf;
     this->cascade.settings[fHi].fc_hz    = 12e3;
-    this->uiSpec.groupWidth              = 120;
+    // this->uiSpec.groupWidth              = 120;
   }
 
   void _updateHpfLpf() {

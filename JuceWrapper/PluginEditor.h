@@ -143,7 +143,6 @@ struct Editor : public juce::AudioProcessorEditor,
   void _updateOversampling();
   void _updateTheme();
 
-  int _getNKnobsInLargestKnobGroup();
   void _placeGruopKnobColumn(juce::Rectangle<int>& groupArea,
       size_t n,
       size_t i,
