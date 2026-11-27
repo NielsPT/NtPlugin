@@ -365,12 +365,6 @@ void Editor::_initWindowWidth(int nCols) {
         juce::AttributedString(this->proc.titleBarSpec.dropdowns[i].name));
     titleBarWidth += minDropDownWidth + labelWidth;
   }
-  // if (this->proc.plug.knobGroups.size() != 0
-  //     && this->proc.plug.knobGroups.size() ==
-  //     this->proc.plug.dropdowns.size()
-  //     && float(minDropDownWidth) < this->proc.plug.uiSpec.groupWidth) {
-  //   this->proc.plug.uiSpec.groupWidth = float(minDropDownWidth);
-  // }
   titleBarWidth += pad * 2;
   float width = 0;
   if (this->proc.plug.uiSpec.includeMeters) {
@@ -381,7 +375,8 @@ void Editor::_initWindowWidth(int nCols) {
     width += this->proc.plug.uiSpec.radioButtonAreaWidth;
   }
   auto primKnobsWidth = float(nCols) * this->proc.plug.uiSpec.knobWidth;
-  auto secKnobWidth   = float(this->proc.plug.secondaryKnobs.size())
+  primKnobsWidth += 2 * this->proc.plug.uiSpec.pad;
+  auto secKnobWidth = float(this->proc.plug.secondaryKnobs.size())
           * this->proc.plug.uiSpec.secondaryKnobWidth
       + 4.0f * this->_pad;
   this->knobGroupWidth = 0;
@@ -720,11 +715,8 @@ void Editor::_placeKnobGroups(juce::Rectangle<int>& area) {
       this->_placeGruopKnobColumn(
           groupArea, g.primaryKnobs.size(), i, 1, false);
     } else {
-      auto lArea = groupArea.removeFromLeft(
-          int(float(this->proc.plug.uiSpec.groupWidth / 2.0f
-                  - this->proc.plug.uiSpec.groupPad)
-              * this->uiScale));
-      auto pad = int(this->proc.plug.uiSpec.groupPad / 2.0f * this->uiScale);
+      auto lArea = groupArea.removeFromLeft(groupArea.getWidth() / 2);
+      auto pad   = int(this->proc.plug.uiSpec.groupPad / 2.0f * this->uiScale);
       lArea.removeFromRight(pad);
       this->_placeGruopKnobColumn(lArea, nLhs, i, 2, false);
       auto rArea = groupArea;

@@ -81,17 +81,18 @@ struct ntReverb final : public NtFx::Plugin {
       { &this->tail.t60_s, "Time", " s", 0.2, 20, 2 },
       { &this->preDelay.t_ms, "Predelay", " ms", 0, 100 },
     };
-    this->tail.gDamp_db     = 0.8;
-    this->early.tEnd_ms     = 160;
-    this->tail.tBegin_ms    = 11;
-    this->tail.tEnd_ms      = 130;
-    this->lpf.fc_hz         = 20e3;
-    this->hpf.fc_hz         = 20;
+    this->tail.gDamp_db    = 0.8;
+    this->early.tEnd_ms    = 160;
+    this->tail.tBegin_ms   = 11;
+    this->tail.tEnd_ms     = 130;
+    this->lpf.fc_hz        = 20e3;
+    this->hpf.fc_hz        = 20;
+    this->early.decayDepth = 0.7;
+    this->lpf.fc_hz        = 6e3;
+    this->tail.fDamp       = 2e3;
+
     this->uiSpec.nGroupRows = 4;
-    this->early.decayDepth  = 0.7;
-    this->uiSpec.knobWidth  = 200;
-    this->lpf.fc_hz         = 6e3;
-    this->tail.fDamp        = 2e3;
+    // this->uiSpec.knobWidth  = 200;
     this->uiSpec.maxColumns = 1;
     this->updateDefaults();
   }
